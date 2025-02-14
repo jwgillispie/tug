@@ -2,8 +2,9 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:equatable/equatable.dart';
+import '../../repositories/auth_repository.dart';
 
-// Events
+// Events remain the same
 abstract class AuthEvent extends Equatable {
   const AuthEvent();
 
@@ -41,7 +42,7 @@ class SignUpEvent extends AuthEvent {
 
 class LogoutEvent extends AuthEvent {}
 
-// States
+// States remain the same
 abstract class AuthState extends Equatable {
   const AuthState();
 
@@ -73,11 +74,14 @@ class AuthError extends AuthState {
   List<Object?> get props => [message];
 }
 
-// BLoC
+// Updated BLoC with repository
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final IAuthRepository _authRepository;
 
-  AuthBloc() : super(AuthInitial()) {
+  AuthBloc({
+    required IAuthRepository authRepository,
+  }) : _authRepository = authRepository,
+       super(AuthInitial()) {
     on<LoginEvent>(_onLogin);
     on<SignUpEvent>(_onSignUp);
     on<LogoutEvent>(_onLogout);
@@ -89,18 +93,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      final userCredential = await _auth.signInWithEmailAndPassword(
-        email: event.email,
-        password: event.password,
+      final user = await _authRepository.signIn(
+        event.email,
+        event.password,
       );
       
-      if (userCredential.user != null) {
-        emit(Authenticated(userCredential.user!));
+      if (user != null) {
+        emit(Authenticated(user));
       } else {
         emit(const AuthError('Login failed'));
       }
-    } on FirebaseAuthException catch (e) {
-      emit(AuthError(e.message ?? 'Authentication failed'));
+    } catch (e) {
+      emit(AuthError(e.toString()));
     }
   }
 
@@ -110,19 +114,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      final userCredential = await _auth.createUserWithEmailAndPassword(
-        email: event.email,
-        password: event.password,
+      final user = await _authRepository.signUp(
+        event.name,
+        event.email,
+        event.password,
       );
       
-      if (userCredential.user != null) {
-        await userCredential.user!.updateDisplayName(event.name);
-        emit(Authenticated(userCredential.user!));
+      if (user != null) {
+        emit(Authenticated(user));
       } else {
         emit(const AuthError('Sign up failed'));
       }
-    } on FirebaseAuthException catch (e) {
-      emit(AuthError(e.message ?? 'Authentication failed'));
+    } catch (e) {
+      emit(AuthError(e.toString()));
     }
   }
 
@@ -132,7 +136,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      await _auth.signOut();
+      await _authRepository.signOut();
       emit(Unauthenticated());
     } catch (e) {
       emit(AuthError(e.toString()));
