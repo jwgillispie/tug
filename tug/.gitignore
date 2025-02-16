@@ -1,49 +1,50 @@
-# Miscellaneous
-*.class
-*.log
-*.pyc
-*.swp
-.DS_Store
-.atom/
-.build/
-.buildlog/
-.history
-.svn/
-.swiftpm/
-migrate_working_dir/
-.env
-*.env
-.env*
-!.env.example
-
-# IntelliJ related
-*.iml
-*.ipr
-*.iws
-.idea/
-
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
-#.vscode/
-
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
+# Flutter/Dart
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
+.packages
 .pub-cache/
 .pub/
-/build/
+build/
+ios/Pods/
+*.g.dart
 
-# Symbolication related
-app.*.symbols
+# Environment files
+.env
+.env.*
+!.env.example
 
-# Obfuscation related
-app.*.map.json
+# Firebase
+google-services.json
+firebase_options.dart
+GoogleService-Info.plist
+firebase-credentials.json
 
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
+# IDEs and editors
+.idea/
+.vscode/
+*.iml
+*.iws
+.DS_Store
+secret/*
+
+# Python backend
+backend/venv/
+backend/__pycache__/
+backend/*.pyc
+backend/*.pyo
+backend/*.pyd
+backend/.Python
+backend/*.py[cod]
+backend/*$py.class
+backend/.env
+
+# Node
+node_modules/
+npm-debug.log
+
+# Project-specific
+*.log
+coverage/
+.coverage
+htmlcov/
