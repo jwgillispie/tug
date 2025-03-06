@@ -1,39 +1,33 @@
 # app/core/database.py
+from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
+from typing import Optional
 from .config import settings
+from ..models.user import User
+from ..models.value import Value
+from ..models.activity import Activity
 
 class Database:
-    client: AsyncIOMotorClient = None
-    db = None
-
-db = Database()
-
-async def connect_to_mongodb():
-    """Create database connection."""
-    db.client = AsyncIOMotorClient(settings.MONGODB_URL)
-    db.db = db.client[settings.MONGODB_DB_NAME]
+    client: Optional[AsyncIOMotorClient] = None
     
-    # Verify connection
-    try:
-        await db.client.admin.command('ping')
-        print("Successfully connected to MongoDB")
-    except Exception as e:
-        print(f"Failed to connect to MongoDB: {e}")
-        raise e
+async def init_db():
+    """Initialize database connection and register models"""
+    client = AsyncIOMotorClient(settings.MONGODB_URL)
+    await init_beanie(
+        database=client[settings.MONGODB_DB_NAME],
+        document_models=[
+            User,
+            Value,
+            Activity,
+        ]
+    )
+    
+    # Store the client for later access if needed
+    Database.client = client
+    
+    return client
 
-async def close_mongodb_connection():
-    """Close database connection."""
-    if db.client:
-        db.client.close()
-        print("MongoDB connection closed")
-
-def get_database():
-    """Get database instance."""
-    if not db.db:
-        raise RuntimeError("Database not initialized. Call connect_to_mongodb() first.")
-    return db.db
-
-def get_collection(collection_name: str):
-    """Get a specific collection."""
-    database = get_database()
-    return database[collection_name]
+async def close_db():
+    """Close database connection"""
+    if Database.client:
+        Database.client.close()

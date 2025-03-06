@@ -1,154 +1,173 @@
 // lib/repositories/auth_repository.dart
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:dio/dio.dart';
-import 'package:tug/config/env_confg.dart';
+import 'package:flutter/foundation.dart';
 
-// Abstract class for auth repository
 abstract class IAuthRepository {
   Future<User?> signIn(String email, String password);
   Future<User?> signUp(String name, String email, String password);
   Future<void> signOut();
   Future<void> resetPassword(String email);
+  Future<void> sendEmailVerification();
+  Future<bool> isEmailVerified();
+  Future<void> reloadUser();
+  Stream<User?> authStateChanges();
   User? getCurrentUser();
 }
 
 class AuthRepository implements IAuthRepository {
   final FirebaseAuth _firebaseAuth;
-  final Dio _dio;
-  
-  // Static getter for baseUrl
-  static String get _baseUrl => EnvConfig.mongoDbUrl;
 
-  AuthRepository({
-    FirebaseAuth? firebaseAuth,
-    Dio? dio,
-  }) : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance,
-       _dio = dio ?? Dio(BaseOptions(baseUrl: _baseUrl));
+  // Constructor with optional FirebaseAuth instance for testing
+  AuthRepository({FirebaseAuth? firebaseAuth})
+      : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance;
+
+  @override
+  Stream<User?> authStateChanges() {
+    return _firebaseAuth.authStateChanges();
+  }
 
   @override
   Future<User?> signIn(String email, String password) async {
+// In auth_repository.dart, in signIn method
     try {
-      final credential = await _firebaseAuth.signInWithEmailAndPassword(
-        email: email,
+      debugPrint('AuthRepo: Attempting login with email: ${email.trim()}');
+
+      final userCredential = await _firebaseAuth.signInWithEmailAndPassword(
+        email: email.trim(),
         password: password,
       );
-      
-      // If successful, sync with MongoDB
-      if (credential.user != null) {
-        await _syncUserWithMongoDB(credential.user!);
+
+      // Check if user is null before returning
+      final user = userCredential.user;
+      if (user != null) {
+        debugPrint('AuthRepo: Login successful, user: ${user.uid}');
+        return user;
+      } else {
+        debugPrint('AuthRepo: Login succeeded but user is null');
+        return null;
       }
-      
-      return credential.user;
+    } on FirebaseAuthException catch (e) {
+      debugPrint('AuthRepo: Login error: ${e.code} - ${e.message}');
+      rethrow;
     } catch (e) {
-      throw _handleAuthError(e);
+      debugPrint('AuthRepo: Unexpected login error: $e');
+      rethrow;
     }
   }
 
   @override
   Future<User?> signUp(String name, String email, String password) async {
     try {
-      final credential = await _firebaseAuth.createUserWithEmailAndPassword(
-        email: email,
+      debugPrint('AuthRepo: Attempting signup with email: ${email.trim()}');
+
+      // Create user
+      final userCredential = await _firebaseAuth.createUserWithEmailAndPassword(
+        email: email.trim(),
         password: password,
       );
-      
-      if (credential.user != null) {
-        // Update display name
-        await credential.user!.updateDisplayName(name);
-        
-        // Create user in MongoDB
-        await _createUserInMongoDB(
-          credential.user!.uid,
-          name,
-          email,
-        );
+
+      // Update profile with name
+      if (userCredential.user != null) {
+        await userCredential.user!.updateDisplayName(name.trim());
+
+        // Force reload to get updated profile
+        await userCredential.user!.reload();
+        final updatedUser = _firebaseAuth.currentUser;
+
+        debugPrint('AuthRepo: Signup successful, user: ${updatedUser?.uid}');
+        return updatedUser;
       }
-      
-      return credential.user;
+
+      return null;
+    } on FirebaseAuthException catch (e) {
+      debugPrint('AuthRepo: Signup error: ${e.code} - ${e.message}');
+      rethrow;
     } catch (e) {
-      throw _handleAuthError(e);
+      debugPrint('AuthRepo: Unexpected signup error: $e');
+      rethrow;
     }
   }
 
   @override
   Future<void> signOut() async {
-    await _firebaseAuth.signOut();
+    try {
+      await _firebaseAuth.signOut();
+      debugPrint('AuthRepo: User signed out');
+    } catch (e) {
+      debugPrint('AuthRepo: Signout error: $e');
+      rethrow;
+    }
   }
 
   @override
   Future<void> resetPassword(String email) async {
     try {
-      await _firebaseAuth.sendPasswordResetEmail(email: email);
+      await _firebaseAuth.sendPasswordResetEmail(email: email.trim());
+      debugPrint('AuthRepo: Password reset email sent to $email');
+    } on FirebaseAuthException catch (e) {
+      debugPrint('AuthRepo: Password reset error: ${e.code} - ${e.message}');
+      rethrow;
     } catch (e) {
-      throw _handleAuthError(e);
+      debugPrint('AuthRepo: Unexpected password reset error: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<void> sendEmailVerification() async {
+    try {
+      final user = _firebaseAuth.currentUser;
+      if (user != null && !user.emailVerified) {
+        await user.sendEmailVerification();
+        debugPrint('AuthRepo: Email verification sent to ${user.email}');
+      } else if (user == null) {
+        throw Exception('User not authenticated');
+      } else if (user.emailVerified) {
+        debugPrint('AuthRepo: Email already verified');
+      }
+    } on FirebaseAuthException catch (e) {
+      debugPrint(
+          'AuthRepo: Email verification error: ${e.code} - ${e.message}');
+      rethrow;
+    } catch (e) {
+      debugPrint('AuthRepo: Unexpected email verification error: $e');
+      rethrow;
+    }
+  }
+
+  @override
+  Future<bool> isEmailVerified() async {
+    try {
+      final user = _firebaseAuth.currentUser;
+      if (user == null) return false;
+
+      // Force refresh to get the latest value
+      await user.reload();
+      return _firebaseAuth.currentUser?.emailVerified ?? false;
+    } catch (e) {
+      debugPrint('AuthRepo: Error checking email verification: $e');
+      return false;
+    }
+  }
+
+  @override
+  Future<void> reloadUser() async {
+    try {
+      final user = _firebaseAuth.currentUser;
+      if (user != null) {
+        await user.reload();
+        debugPrint('AuthRepo: User reloaded: ${user.uid}');
+      } else {
+        throw Exception('User not authenticated');
+      }
+    } catch (e) {
+      debugPrint('AuthRepo: Error reloading user: $e');
+      rethrow;
     }
   }
 
   @override
   User? getCurrentUser() {
     return _firebaseAuth.currentUser;
-  }
-
-  // Helper method to sync user with MongoDB
-  Future<void> _syncUserWithMongoDB(User user) async {
-    try {
-      await _dio.post(
-        '/users/sync',
-        data: {
-          'uid': user.uid,
-          'email': user.email,
-          'name': user.displayName,
-          'lastLogin': DateTime.now().toIso8601String(),
-        },
-      );
-    } catch (e) {
-      print('Error syncing user with MongoDB: $e');
-      // We might not want to throw here as this is a background sync
-    }
-  }
-
-  // Helper method to create user in MongoDB
-  Future<void> _createUserInMongoDB(
-    String uid,
-    String name,
-    String email,
-  ) async {
-    try {
-      await _dio.post(
-        '/users',
-        data: {
-          'uid': uid,
-          'email': email,
-          'name': name,
-          'createdAt': DateTime.now().toIso8601String(),
-          'lastLogin': DateTime.now().toIso8601String(),
-        },
-      );
-    } catch (e) {
-      print('Error creating user in MongoDB: $e');
-      // Consider if you want to delete the Firebase user if MongoDB creation fails
-      throw Exception('Failed to create user profile');
-    }
-  }
-
-  // Helper method to handle Firebase Auth errors
-  Exception _handleAuthError(dynamic e) {
-    if (e is FirebaseAuthException) {
-      switch (e.code) {
-        case 'user-not-found':
-          return Exception('No user found with this email');
-        case 'wrong-password':
-          return Exception('Wrong password');
-        case 'email-already-in-use':
-          return Exception('Email is already registered');
-        case 'weak-password':
-          return Exception('Password is too weak');
-        case 'invalid-email':
-          return Exception('Invalid email address');
-        default:
-          return Exception(e.message ?? 'Authentication failed');
-      }
-    }
-    return Exception('Something went wrong');
   }
 }

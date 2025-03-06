@@ -9,7 +9,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.example.tug</string>
+	<string>jozman.tug.tug</string>
 	<key>PROJECT_ID</key>
 	<string>tugg-d2a47</string>
 	<key>STORAGE_BUCKET</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:862340628342:ios:cbc76ba3b39acfbb208457</string>
+	<string>1:862340628342:ios:fb896b587a6d5e4f208457</string>
 </dict>
 </plist>

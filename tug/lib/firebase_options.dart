@@ -54,10 +54,11 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyB1lX9HrsTEw4VA9iceE3IZYdDfOw93kqQ',
-    appId: '1:862340628342:ios:cbc76ba3b39acfbb208457',
+    appId: '1:862340628342:ios:fb896b587a6d5e4f208457',
     messagingSenderId: '862340628342',
     projectId: 'tugg-d2a47',
     storageBucket: 'tugg-d2a47.firebasestorage.app',
-    iosBundleId: 'com.example.tug',
+    iosBundleId: 'jozman.tug.tug',
   );
+
 }

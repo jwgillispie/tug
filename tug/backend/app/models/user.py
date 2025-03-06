@@ -1,25 +1,39 @@
 # app/models/user.py
-from pydantic import BaseModel, EmailStr, Field
-from typing import Optional
+from beanie import Document, Indexed
+from pydantic import EmailStr, Field
+from typing import Dict, Any, Optional
 from datetime import datetime
 
-class UserBase(BaseModel):
-    email: EmailStr
-    display_name: str = Field(..., min_length=2, max_length=50)
-
-class UserCreate(UserBase):
-    pass
-
-class UserInDB(UserBase):
-    id: str
-    firebase_uid: str
-    created_at: datetime
-    last_login: datetime
+class User(Document):
+    """User model for MongoDB with Beanie ODM"""
+    firebase_uid: Indexed(str, unique=True)
+    email: Indexed(EmailStr, unique=True)
+    display_name: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    last_login: datetime = Field(default_factory=datetime.utcnow)
     onboarding_completed: bool = False
+    settings: Dict[str, Any] = Field(default_factory=dict)
+    version: int = 1
+
+    class Settings:
+        name = "users"
+        indexes = [
+            [("firebase_uid", 1), ("email", 1)],
+            [("created_at", -1)]
+        ]
 
     class Config:
-        from_attributes = True
-
-class UserUpdate(BaseModel):
-    display_name: Optional[str] = Field(None, min_length=2, max_length=50)
-    onboarding_completed: Optional[bool] = None
+        schema_extra = {
+            "example": {
+                "firebase_uid": "abc123",
+                "email": "user@example.com",
+                "display_name": "John Doe",
+                "created_at": "2024-02-12T00:00:00Z",
+                "last_login": "2024-02-12T00:00:00Z",
+                "onboarding_completed": True,
+                "settings": {
+                    "notifications_enabled": True,
+                    "theme": "light"
+                }
+            }
+        }

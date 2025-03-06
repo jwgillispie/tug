@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../blocs/auth/auth_bloc.dart';
-import '../../widgets/common/tug_text_field.dart';
 import '../../utils/theme/buttons.dart';
 import '../../utils/theme/colors.dart';
+import '../../widgets/common/tug_text_field.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -22,6 +22,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _confirmPasswordController = TextEditingController();
   bool _acceptedTerms = false;
   bool _isLoading = false;
+  String? _errorMessage;
 
   @override
   void dispose() {
@@ -33,25 +34,30 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   void _handleSignUp() {
-    if (_formKey.currentState?.validate() ?? false) {
-      if (!_acceptedTerms) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please accept the terms and conditions'),
-            backgroundColor: TugColors.error,
-          ),
-        );
-        return;
-      }
-      
-      context.read<AuthBloc>().add(
-        SignUpEvent(
-          name: _nameController.text,
-          email: _emailController.text,
-          password: _passwordController.text,
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      return;
+    }
+    
+    if (!_acceptedTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please accept the terms and conditions'),
+          backgroundColor: TugColors.error,
         ),
       );
+      return;
     }
+    
+    setState(() => _errorMessage = null);
+    
+    // Use BLoC for signup
+    context.read<AuthBloc>().add(
+      SignUpEvent(
+        name: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      ),
+    );
   }
 
   @override
@@ -59,17 +65,28 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthLoading) {
-          setState(() => _isLoading = true);
+          setState(() {
+            _isLoading = true;
+            _errorMessage = null;
+          });
         } else {
           setState(() => _isLoading = false);
           
           if (state is Authenticated) {
-            // TODO: Navigate to values input screen
-          } else if (state is AuthError) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: TugColors.error,
+              const SnackBar(
+                content: Text('Account created successfully! Please verify your email.'),
+                backgroundColor: TugColors.success,
+              ),
+            );
+            context.go('/values-input');
+          } else if (state is AuthError) {
+            setState(() => _errorMessage = state.message);
+          } else if (state is EmailVerificationSent) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Verification email sent. Please check your inbox.'),
+                backgroundColor: TugColors.success,
               ),
             );
           }
@@ -96,6 +113,36 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       color: TugColors.lightTextSecondary,
                     ),
                   ),
+                  
+                  // Error message display
+                  if (_errorMessage != null) ...[
+                    const SizedBox(height: 24),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: TugColors.error.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.error_outline,
+                            color: TugColors.error,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              _errorMessage!,
+                              style: TextStyle(
+                                color: TugColors.error,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                  
                   const SizedBox(height: 32),
                   TugTextField(
                     label: 'Full Name',
@@ -121,7 +168,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       if (value == null || value.isEmpty) {
                         return 'Please enter your email';
                       }
-                      if (!value.contains('@')) {
+                      if (!value.contains('@') || !value.contains('.')) {
                         return 'Please enter a valid email';
                       }
                       return null;

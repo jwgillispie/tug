@@ -1,11 +1,12 @@
 // lib/screens/auth/login_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../blocs/auth/auth_bloc.dart';
-import '../../widgets/common/tug_text_field.dart';
 import '../../utils/theme/colors.dart';
 import '../../utils/theme/buttons.dart';
+import '../../widgets/common/tug_text_field.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -19,6 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  String? _errorMessage;
 
   @override
   void dispose() {
@@ -29,12 +31,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _handleLogin() {
     if (_formKey.currentState?.validate() ?? false) {
+      setState(() => _errorMessage = null);
       context.read<AuthBloc>().add(
-        LoginEvent(
-          email: _emailController.text,
-          password: _passwordController.text,
-        ),
-      );
+            LoginEvent(
+              email: _emailController.text.trim(),
+              password: _passwordController.text,
+            ),
+          );
     }
   }
 
@@ -43,19 +46,31 @@ class _LoginScreenState extends State<LoginScreen> {
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthLoading) {
-          setState(() => _isLoading = true);
+          setState(() {
+            _isLoading = true;
+            _errorMessage = null;
+          });
         } else {
           setState(() => _isLoading = false);
-          
+
           if (state is Authenticated) {
-            // TODO: Navigate to home screen
-          } else if (state is AuthError) {
+            // Show a success message
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.message),
-                backgroundColor: TugColors.error,
+              const SnackBar(
+                content: Text('Login successful'),
+                backgroundColor: TugColors.success,
               ),
             );
+
+            // Navigate based on whether user has display name or not
+            final displayName = state.user.email;
+            print('Display name: $displayName');
+
+            if (displayName == null || displayName.isEmpty) {
+              context.go('/values-input');
+            } else {
+              context.go('/values-input');
+            }
           }
         }
       },
@@ -77,9 +92,39 @@ class _LoginScreenState extends State<LoginScreen> {
                   Text(
                     'Sign in to continue',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: TugColors.lightTextSecondary,
-                    ),
+                          color: TugColors.lightTextSecondary,
+                        ),
                   ),
+
+                  // Error message display
+                  if (_errorMessage != null) ...[
+                    const SizedBox(height: 24),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: TugColors.error.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.error_outline,
+                            color: TugColors.error,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              _errorMessage!,
+                              style: TextStyle(
+                                color: TugColors.error,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+
                   const SizedBox(height: 32),
                   TugTextField(
                     label: 'Email',
@@ -118,7 +163,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: TextButton(
                       style: TugButtons.textButtonStyle,
                       onPressed: () {
-                        // TODO: Implement forgot password
+                        context.go('/forgot-password');
                       },
                       child: const Text('Forgot Password?'),
                     ),
@@ -159,6 +204,20 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ],
                   ),
+
+                  // For development purposes - diagnostics link
+                  if (const bool.fromEnvironment('dart.vm.product') == false)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 24),
+                      child: Center(
+                        child: TextButton.icon(
+                          onPressed: () => context.go('/diagnostics'),
+                          icon: const Icon(Icons.settings),
+                          label: const Text('Diagnostics'),
+                          style: TugButtons.textButtonStyle,
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
