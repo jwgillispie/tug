@@ -151,21 +151,36 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
+      debugPrint('AuthBloc: Attempting login with ${event.email}');
       final user = await authRepository.signIn(
         event.email,
         event.password,
       );
 
       if (user != null) {
+        debugPrint('AuthBloc: Login successful, syncing with MongoDB');
         // Sync with MongoDB after successful authentication
-        final apiService = ApiService();
-        await apiService.syncUserWithMongoDB();
+        try {
+          final apiService = ApiService();
+          final syncSuccess = await apiService.syncUserWithMongoDB();
+
+          if (syncSuccess) {
+            debugPrint('AuthBloc: MongoDB sync completed successfully');
+          } else {
+            debugPrint(
+                'AuthBloc: MongoDB sync failed but continuing with login');
+          }
+        } catch (e) {
+          // Log but don't fail if sync fails
+          debugPrint('AuthBloc: MongoDB sync error: $e');
+        }
 
         emit(Authenticated(user, emailVerified: user.emailVerified));
       } else {
         emit(const AuthError('Login failed'));
       }
     } catch (e) {
+      debugPrint('AuthBloc: Login error: $e');
       emit(_mapFirebaseErrorToAuthError(e));
     }
   }
@@ -184,12 +199,26 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
 
       if (user != null) {
+        debugPrint('AuthBloc: Signup successful, syncing with MongoDB');
         // Sync with MongoDB after successful signup
-        final apiService = ApiService();
-        await apiService.syncUserWithMongoDB();
+        try {
+          final apiService = ApiService();
+          final syncSuccess = await apiService.syncUserWithMongoDB();
+
+          if (syncSuccess) {
+            debugPrint('AuthBloc: MongoDB sync completed successfully');
+          } else {
+            debugPrint(
+                'AuthBloc: MongoDB sync failed but continuing with signup flow');
+          }
+        } catch (e) {
+          // Log but don't fail if sync fails
+          debugPrint('AuthBloc: MongoDB sync error: $e');
+        }
 
         // Send email verification
         await authRepository.sendEmailVerification();
+        debugPrint('AuthBloc: Email verification sent');
 
         emit(Authenticated(user, emailVerified: user.emailVerified));
       } else {
@@ -200,30 +229,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(_mapFirebaseErrorToAuthError(e));
     }
   }
-  //   SignUpEvent event,
-  //   Emitter<AuthState> emit,
-  // ) async {
-  //   emit(AuthLoading());
-  //   try {
-  //     debugPrint('AuthBloc: Starting sign up process');
-  //     final user = await authRepository.signUp(
-  //       event.name,
-  //       event.email,
-  //       event.password,
-  //     );
-
-  //     if (user != null) {
-  //       // Send email verification
-  //       await authRepository.sendEmailVerification();
-  //       emit(Authenticated(user, emailVerified: user.emailVerified));
-  //     } else {
-  //       emit(const AuthError('Sign up failed'));
-  //     }
-  //   } catch (e) {
-  //     debugPrint('AuthBloc: Sign up error caught: $e');
-  //     emit(_mapFirebaseErrorToAuthError(e));
-  //   }
-  // }
 
   Future<void> _onLogout(
     LogoutEvent event,

@@ -25,7 +25,6 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await EnvConfig.load();
 
-
   try {
     // Initialize Firebase with explicit options
     await Firebase.initializeApp(
@@ -185,7 +184,7 @@ class _TugAppState extends State<TugApp> {
         BlocProvider.value(value: _authBloc),
       ],
       child: MaterialApp.router(
-        title: 'ValueAlign',
+        title: 'Tug', // Changed from 'ValueAlign' to 'Tug'
         theme: TugTheme.lightTheme,
         darkTheme: TugTheme.darkTheme,
         themeMode: ThemeMode.system,

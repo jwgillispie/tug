@@ -28,7 +28,6 @@ class AuthRepository implements IAuthRepository {
 
   @override
   Future<User?> signIn(String email, String password) async {
-// In auth_repository.dart, in signIn method
     try {
       debugPrint('AuthRepo: Attempting login with email: ${email.trim()}');
 
@@ -41,7 +40,10 @@ class AuthRepository implements IAuthRepository {
       final user = userCredential.user;
       if (user != null) {
         debugPrint('AuthRepo: Login successful, user: ${user.uid}');
-        return user;
+
+        // Force reload to get updated profile
+        await user.reload();
+        return _firebaseAuth.currentUser;
       } else {
         debugPrint('AuthRepo: Login succeeded but user is null');
         return null;
