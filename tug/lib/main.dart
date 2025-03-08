@@ -101,8 +101,8 @@ class ErrorApp extends StatelessWidget {
 }
 
 class TugApp extends StatefulWidget {
-  final IAuthRepository authRepository;
-  final IValuesRepository valuesRepository;
+  final AuthRepository authRepository;
+  final ValuesRepository valuesRepository;
 
   const TugApp({
     required this.authRepository,
