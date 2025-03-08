@@ -17,6 +17,14 @@ class ApiService {
               validateStatus: (status) => true, // Accept all status codes for logging
             ));
 
+  // Helper method to ensure trailing slash in URL
+  String ensureTrailingSlash(String path) {
+    if (!path.endsWith('/')) {
+      return '$path/';
+    }
+    return path;
+  }
+
   // Get Firebase token and set auth header
   Future<void> _setAuthHeader() async {
     try {
@@ -44,8 +52,11 @@ class ApiService {
         return false;
       }
       
+      // Add trailing slash
+      String path = ensureTrailingSlash('/api/v1/users/sync');
+      
       // Debug the full API URL we're trying to reach
-      final fullUrl = '${_dio.options.baseUrl}/api/v1/users/sync';
+      final fullUrl = '${_dio.options.baseUrl}$path';
       debugPrint('Syncing user with MongoDB: ${user.uid}');
       debugPrint('Full API URL: $fullUrl');
       
@@ -59,7 +70,7 @@ class ApiService {
       
       debugPrint('Sending user data: $userData');
       
-      final response = await _dio.post('/api/v1/users/sync', data: userData);
+      final response = await _dio.post(path, data: userData);
       
       debugPrint('User sync response status: ${response.statusCode}');
       debugPrint('Response data: ${response.data}');
@@ -90,8 +101,12 @@ class ApiService {
 
   // Generic GET request with proper error handling
   Future<dynamic> get(String path, {Map<String, dynamic>? queryParameters}) async {
+    // Add trailing slash
+    path = ensureTrailingSlash(path);
+    
     try {
       await _setAuthHeader();
+      debugPrint('GET request to: ${_dio.options.baseUrl}$path');
       final response = await _dio.get(path, queryParameters: queryParameters);
       
       // Check status code before returning data
@@ -117,6 +132,9 @@ class ApiService {
 
   // Generic POST request with proper error handling
   Future<dynamic> post(String path, {dynamic data}) async {
+    // Add trailing slash
+    path = ensureTrailingSlash(path);
+    
     try {
       await _setAuthHeader();
       final fullUrl = '${_dio.options.baseUrl}$path';
@@ -149,8 +167,12 @@ class ApiService {
 
   // Generic PUT request with proper error handling
   Future<dynamic> put(String path, {dynamic data}) async {
+    // Add trailing slash
+    path = ensureTrailingSlash(path);
+    
     try {
       await _setAuthHeader();
+      debugPrint('PUT request to: ${_dio.options.baseUrl}$path');
       final response = await _dio.put(path, data: data);
       
       // Check status code before returning data
@@ -174,8 +196,12 @@ class ApiService {
 
   // Generic PATCH request with proper error handling
   Future<dynamic> patch(String path, {dynamic data}) async {
+    // Add trailing slash
+    path = ensureTrailingSlash(path);
+    
     try {
       await _setAuthHeader();
+      debugPrint('PATCH request to: ${_dio.options.baseUrl}$path');
       final response = await _dio.patch(path, data: data);
       
       // Check status code before returning data
@@ -199,14 +225,20 @@ class ApiService {
 
   // Generic DELETE request with proper error handling
   Future<dynamic> delete(String path) async {
+    // Add trailing slash
+    path = ensureTrailingSlash(path);
+    
     try {
       await _setAuthHeader();
+      debugPrint('DELETE request to: ${_dio.options.baseUrl}$path');
       final response = await _dio.delete(path);
       
       // Check status code before returning data
       if (response.statusCode! >= 200 && response.statusCode! < 300) {
         return response.data;
       } else {
+        debugPrint('DELETE Error: ${response.statusCode}');
+        debugPrint('Response data: ${response.data}');
         throw DioException(
           requestOptions: response.requestOptions,
           response: response,
@@ -230,6 +262,8 @@ class ApiService {
 
       // Handle specific status codes
       switch (statusCode) {
+        case 307: // Handle redirect explicitly
+          throw Exception('Request failed with status: 307 (Temporary Redirect). Please check URL format.');
         case 401:
           throw Exception('Authentication required. Please log in again.');
         case 403:

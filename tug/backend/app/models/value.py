@@ -1,9 +1,8 @@
 # app/models/value.py
 from beanie import Document, Indexed, Link
-from typing import Optional
+from typing import Optional, Any, Dict
 from datetime import datetime
 from pydantic import Field
-from .user import User
 
 class Value(Document):
     """Value model for MongoDB with Beanie ODM"""
@@ -37,3 +36,13 @@ class Value(Document):
                 "active": True
             }
         }
+    
+    def dict(self, **kwargs) -> Dict[str, Any]:
+        """Override default dict to convert ObjectId to string."""
+        data = super().dict(**kwargs)
+        # Convert the _id field to a string
+        if '_id' in data:
+            data['id'] = str(data.pop('_id'))
+        elif 'id' in data and data['id'] is not None:
+            data['id'] = str(data['id'])
+        return data

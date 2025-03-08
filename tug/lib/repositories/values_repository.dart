@@ -20,30 +20,30 @@ class ValuesRepository implements IValuesRepository {
   ValuesRepository({
     ApiService? apiService,
     Box<String>? localValuesBox,
-  }) : _apiService = apiService ?? ApiService(),
-       _localValuesBox = localValuesBox ?? Hive.box<String>('values');
+  })  : _apiService = apiService ?? ApiService(),
+        _localValuesBox = localValuesBox ?? Hive.box<String>('values');
 
   @override
   Future<List<ValueModel>> getValues() async {
     try {
       // Try to get values from API
-      final response = await _apiService.get('/api/v1/values');
-      
+      final response = await _apiService.get('/api/v1/values/');
+
       if (response != null) {
         final List<dynamic> valuesData = response;
         final values = valuesData
             .map((valueData) => ValueModel.fromJson(valueData))
             .toList();
-        
+
         // Cache the values locally
         _cacheValues(values);
-        
+
         return values;
       }
     } catch (e) {
       debugPrint('Error fetching values from API: $e');
     }
-    
+
     // If API call fails or no data, return cached values
     return _getCachedValues();
   }
@@ -52,38 +52,38 @@ class ValuesRepository implements IValuesRepository {
   Future<ValueModel> addValue(ValueModel value) async {
     try {
       final response = await _apiService.post(
-        '/api/v1/values',
+        '/api/v1/values/',
         data: value.toJson(),
       );
-      
+
       if (response != null) {
         final newValue = ValueModel.fromJson(response);
-        
+
         // Update cache
         final cachedValues = _getCachedValues();
         cachedValues.add(newValue);
         _cacheValues(cachedValues);
-        
+
         return newValue;
       }
     } catch (e) {
       debugPrint('Error adding value to API: $e');
-      
+
       // Store locally if offline
       if (value.id == null) {
         // Generate a temporary ID
         final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
         final tempValue = value.copyWith(id: tempId);
-        
+
         // Add to cache
         final cachedValues = _getCachedValues();
         cachedValues.add(tempValue);
         _cacheValues(cachedValues);
-        
+
         return tempValue;
       }
     }
-    
+
     // Return original value if all else fails
     return value;
   }
@@ -94,15 +94,15 @@ class ValuesRepository implements IValuesRepository {
       if (value.id == null) {
         throw Exception('Cannot update value without ID');
       }
-      
+
       final response = await _apiService.patch(
         '/api/v1/values/${value.id}',
         data: value.toJson(),
       );
-      
+
       if (response != null) {
         final updatedValue = ValueModel.fromJson(response);
-        
+
         // Update cache
         final cachedValues = _getCachedValues();
         final index = cachedValues.indexWhere((v) => v.id == value.id);
@@ -110,12 +110,12 @@ class ValuesRepository implements IValuesRepository {
           cachedValues[index] = updatedValue;
           _cacheValues(cachedValues);
         }
-        
+
         return updatedValue;
       }
     } catch (e) {
       debugPrint('Error updating value on API: $e');
-      
+
       // Update locally if offline
       final cachedValues = _getCachedValues();
       final index = cachedValues.indexWhere((v) => v.id == value.id);
@@ -124,7 +124,7 @@ class ValuesRepository implements IValuesRepository {
         _cacheValues(cachedValues);
       }
     }
-    
+
     // Return original value if all else fails
     return value;
   }
@@ -132,15 +132,20 @@ class ValuesRepository implements IValuesRepository {
   @override
   Future<void> deleteValue(String id) async {
     try {
-      await _apiService.delete('/api/v1/values/$id');
-      
+      // Don't add trailing slash here - ApiService will handle it
+      final url = '/api/v1/values/$id';
+
+      debugPrint('Deleting value: $id');
+
+      await _apiService.delete(url);
+
       // Remove from cache
       final cachedValues = _getCachedValues();
       cachedValues.removeWhere((value) => value.id == id);
       _cacheValues(cachedValues);
     } catch (e) {
       debugPrint('Error deleting value from API: $e');
-      
+
       // Just mark as inactive locally if offline
       final cachedValues = _getCachedValues();
       final index = cachedValues.indexWhere((v) => v.id == id);

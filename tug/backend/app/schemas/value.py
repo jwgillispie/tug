@@ -8,7 +8,8 @@ class ValueBase(BaseModel):
     name: str = Field(..., min_length=2, max_length=30)
     importance: int = Field(..., ge=1, le=5)
     description: Optional[str] = None
-color: str = Field(..., pattern="^#[0-9a-fA-F]{6}$")
+    color: str = Field(..., pattern="^#[0-9a-fA-F]{6}$")
+
 class ValueCreate(ValueBase):
     """Schema for creating a new value"""
     pass
