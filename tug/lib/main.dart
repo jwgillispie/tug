@@ -1,15 +1,16 @@
 // lib/main.dart
-// Key changes to initialization sequence
-
 import 'dart:async';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:go_router/go_router.dart';
+import 'package:tug/blocs/values/bloc/values_bloc.dart';
 import 'package:tug/config/env_confg.dart';
+import 'package:tug/repositories/values_repository.dart';
 import 'package:tug/screens/auth/forgot_password_screen.dart';
 import 'package:tug/screens/diagnostics_screen.dart';
+import 'package:tug/screens/home/home_screen.dart';
+import 'package:tug/utils/local_storage.dart';
 import 'repositories/auth_repository.dart';
 import 'blocs/auth/auth_bloc.dart';
 import 'firebase_options.dart';
@@ -23,7 +24,12 @@ import 'screens/splash_screen.dart';
 Future<void> main() async {
   // Ensure Flutter is initialized
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Load environment configuration
   await EnvConfig.load();
+  
+  // Initialize local storage
+  await LocalStorage.initialize();
 
   try {
     // Initialize Firebase with explicit options
@@ -33,10 +39,14 @@ Future<void> main() async {
 
     debugPrint('Firebase initialized successfully');
 
-    // Create repository instance AFTER Firebase is ready
+    // Create repositories
     final authRepository = AuthRepository();
+    final valuesRepository = ValuesRepository();
 
-    runApp(TugApp(authRepository: authRepository));
+    runApp(TugApp(
+      authRepository: authRepository,
+      valuesRepository: valuesRepository,
+    ));
   } catch (e) {
     debugPrint('Failed to initialize Firebase: $e');
     // Show error UI
@@ -92,9 +102,11 @@ class ErrorApp extends StatelessWidget {
 
 class TugApp extends StatefulWidget {
   final IAuthRepository authRepository;
+  final IValuesRepository valuesRepository;
 
   const TugApp({
     required this.authRepository,
+    required this.valuesRepository,
     super.key,
   });
 
@@ -105,11 +117,13 @@ class TugApp extends StatefulWidget {
 class _TugAppState extends State<TugApp> {
   late final GoRouter _router;
   late final AuthBloc _authBloc;
+  late final ValuesBloc _valuesBloc;
 
   @override
   void initState() {
     super.initState();
     _authBloc = AuthBloc(authRepository: widget.authRepository);
+    _valuesBloc = ValuesBloc(valuesRepository: widget.valuesRepository);
 
     _router = GoRouter(
       initialLocation: '/splash',
@@ -135,12 +149,15 @@ class _TugAppState extends State<TugApp> {
           path: '/values-input',
           builder: (context, state) => const ValuesInputScreen(),
         ),
+        GoRoute(
+          path: '/home',
+          builder: (context, state) => const HomeScreen(),
+        ),
         // Add the diagnostic route
         GoRoute(
           path: '/diagnostics',
           builder: (context, state) => const DiagnosticScreen(),
         ),
-        // Add more routes here
       ],
       redirect: (context, state) {
         final currentState = _authBloc.state;
@@ -149,6 +166,7 @@ class _TugAppState extends State<TugApp> {
         final isLoginScreen = state.fullPath == '/login';
         final isSignupScreen = state.fullPath == '/signup';
         final isDiagnosticScreen = state.fullPath == '/diagnostics';
+        final isForgotPasswordScreen = state.fullPath == '/forgot-password';
 
         // Always allow access to diagnostic screen
         if (isDiagnosticScreen) {
@@ -160,14 +178,12 @@ class _TugAppState extends State<TugApp> {
           return null;
         }
 
-        // If not authenticated, redirect to login unless already on login or signup
-        if (!isLoggedIn && !(isLoginScreen || isSignupScreen)) {
+        // If not authenticated, redirect to login unless already on login, signup, or forgot password
+        if (!isLoggedIn && !(isLoginScreen || isSignupScreen || isForgotPasswordScreen)) {
           return '/login';
         }
 
         // If authenticated, don't allow going to login/signup screens
-        print("Here we can see if the user is logged in: $isLoggedIn");
-        print("the current state is: $currentState");
         if (isLoggedIn && (isLoginScreen || isSignupScreen)) {
           return '/values-input'; // Redirect to values input screen
         }
@@ -181,10 +197,11 @@ class _TugAppState extends State<TugApp> {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider.value(value: _authBloc),
+        BlocProvider<AuthBloc>.value(value: _authBloc),
+        BlocProvider<ValuesBloc>.value(value: _valuesBloc),
       ],
       child: MaterialApp.router(
-        title: 'Tug', // Changed from 'tug' to 'Tug'
+        title: 'Tug',
         theme: TugTheme.lightTheme,
         darkTheme: TugTheme.darkTheme,
         themeMode: ThemeMode.system,
@@ -197,6 +214,7 @@ class _TugAppState extends State<TugApp> {
   @override
   void dispose() {
     _authBloc.close();
+    _valuesBloc.close();
     super.dispose();
   }
 }
