@@ -1,11 +1,11 @@
-# ValueAlign
+# tug
 
 A Flutter application that helps users track and align their daily activities with their core values.
 
 ## Project Structure
 
 ```
-valuealign/
+tug/
 ├── lib/                     # Flutter app source code
 │   ├── blocs/              # BLoC state management
 │   ├── models/             # Data models
@@ -37,8 +37,8 @@ valuealign/
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/valuealign.git
-cd valuealign
+git clone https://github.com/yourusername/tug.git
+cd tug
 ```
 
 2. Install Flutter dependencies:

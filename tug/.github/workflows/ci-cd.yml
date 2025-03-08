@@ -1,4 +1,4 @@
-name: ValueAlign CI/CD
+name: tug CI/CD
 
 on:
   push:
@@ -158,7 +158,7 @@ jobs:
         with:
           context: ./backend
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/valuealign-api:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/tug-api:latest
           
       - name: Deploy to Production
         uses: appleboy/ssh-action@master

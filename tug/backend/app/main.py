@@ -69,7 +69,7 @@ async def health_check():
 async def root():
     """Root endpoint for basic API testing"""
     return {
-        "message": "ValueAlign API is running",
+        "message": "tug API is running",
         "version": "1.0.0",
         "api_prefix": settings.API_V1_PREFIX,
         "endpoints": [

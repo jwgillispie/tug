@@ -6,13 +6,30 @@ from .config import settings
 from ..models.user import User
 from ..models.value import Value
 from ..models.activity import Activity
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Database:
     client: Optional[AsyncIOMotorClient] = None
     
 async def init_db():
     """Initialize database connection and register models"""
-    client = AsyncIOMotorClient(settings.MONGODB_URL)
+    # Log the MongoDB URL we're trying to connect to (without credentials)
+    connection_url = settings.MONGODB_URL
+    safe_url = connection_url.split('@')[-1] if '@' in connection_url else connection_url
+    logger.info(f"Connecting to MongoDB: {safe_url}")
+    
+    client = AsyncIOMotorClient(connection_url)
+    
+    try:
+        # Test the connection
+        await client.admin.command('ping')
+        logger.info("Successfully connected to MongoDB")
+    except Exception as e:
+        logger.error(f"Failed to connect to MongoDB: {e}")
+        raise
+    
     await init_beanie(
         database=client[settings.MONGODB_DB_NAME],
         document_models=[

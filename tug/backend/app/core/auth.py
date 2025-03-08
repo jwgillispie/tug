@@ -8,67 +8,21 @@ from .config import settings
 import os
 from datetime import datetime
 
-
+# Initialize security
 security = HTTPBearer()
 
-# Initialize Firebase Admin SDK
-cred = credentials.Certificate("path/to/firebase-credentials.json")
-firebase_admin.initialize_app(cred)
-
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Security(security)):
-    """
-    Verify Firebase token and return user info
-    """
-    try:
-        token = credentials.credentials
-        # Verify the Firebase token
-        decoded_token = auth.verify_id_token(token)
-        return decoded_token
-    except Exception as e:
-        raise HTTPException(
-            status_code=401, 
-            detail=f"Invalid authentication credentials: {e}"
-        )
-
-
-# Initialize Firebase Admin SDK
-cred_path = settings.FIREBASE_CREDENTIALS_PATH
-if os.path.exists(cred_path):
-    cred = credentials.Certificate(cred_path)
-    try:
+# Initialize Firebase Admin SDK - only once
+try:
+    # Check if app is already initialized
+    default_app = firebase_admin.get_app()
+except ValueError:
+    # Not initialized, do it now
+    cred_path = settings.FIREBASE_CREDENTIALS_PATH
+    if os.path.exists(cred_path):
+        cred = credentials.Certificate(cred_path)
         firebase_admin.initialize_app(cred)
-    except ValueError:
-        # App already initialized
-        pass
-else:
-    raise FileNotFoundError(f"Firebase credentials file not found at {cred_path}")
-# app/core/auth.py
-import firebase_admin
-from firebase_admin import auth, credentials
-from fastapi import HTTPException, Security
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-
-security = HTTPBearer()
-
-# Initialize Firebase Admin SDK
-cred = credentials.Certificate("path/to/firebase-credentials.json")
-firebase_admin.initialize_app(cred)
-
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Security(security)):
-    """
-    Verify Firebase token and return user info
-    """
-    try:
-        token = credentials.credentials
-        # Verify the Firebase token
-        decoded_token = auth.verify_id_token(token)
-        return decoded_token
-    except Exception as e:
-        raise HTTPException(
-            status_code=401, 
-            detail=f"Invalid authentication credentials: {e}"
-        )
-security = HTTPBearer()
+    else:
+        raise FileNotFoundError(f"Firebase credentials file not found at {cred_path}")
 
 async def verify_firebase_token(token: str) -> dict:
     """Verify Firebase ID token and return decoded token data"""

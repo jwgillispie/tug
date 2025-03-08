@@ -2,9 +2,9 @@
 import firebase_admin
 from firebase_admin import auth, credentials
 from datetime import datetime
-from ..core.config import settings
-from ..core.database import get_collection
-from ..models.user import UserCreate, UserInDB
+from core.config import settings
+from core.database import get_collection
+from models.user import UserCreate, UserInDB
 
 class AuthService:
     def __init__(self):

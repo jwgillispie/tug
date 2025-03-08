@@ -184,7 +184,7 @@ class _TugAppState extends State<TugApp> {
         BlocProvider.value(value: _authBloc),
       ],
       child: MaterialApp.router(
-        title: 'Tug', // Changed from 'ValueAlign' to 'Tug'
+        title: 'Tug', // Changed from 'tug' to 'Tug'
         theme: TugTheme.lightTheme,
         darkTheme: TugTheme.darkTheme,
         themeMode: ThemeMode.system,

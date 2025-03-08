@@ -53,6 +53,8 @@ async def sync_user(request: Request):
         # Check if user exists
         firebase_uid = decoded_token.get('uid')
         user = await User.find_one(User.firebase_uid == firebase_uid)
+        logger.info(f"User found: {user is not None}")
+        logger.info(f"User ID: {user.id if user else 'None'}")
         
         # Extract user data from request body
         display_name = body.get('display_name', '')

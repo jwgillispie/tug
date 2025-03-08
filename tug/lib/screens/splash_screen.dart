@@ -59,7 +59,7 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
               const SizedBox(height: 24),
               Text(
-                'ValueAlign',
+                'tug',
                 style: Theme.of(context).textTheme.displayLarge?.copyWith(
                   color: Colors.white,
                 ),

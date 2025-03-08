@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     API_V1_PREFIX: str = "/api/v1"
     DEBUG: bool = os.environ.get("DEBUG", "False").lower() == "true"
     
+    # Add this line:
+    API_URL: str = os.environ.get("API_URL", "http://localhost:8000")
+    
     # CORS Settings
     CORS_ORIGINS: List[str] = ["*"]
     
@@ -27,5 +30,5 @@ class Settings(BaseSettings):
         env_file = ".env"
         case_sensitive = True
 
-# Instantiate settings
+# Create an instance of the Settings class
 settings = Settings()
