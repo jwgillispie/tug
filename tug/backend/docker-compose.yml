@@ -7,13 +7,13 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - MONGODB_URL=${MONGODB_URL}
+      - MONGODB_URL=mongodb://mongo:27017
       - MONGODB_DB_NAME=tug
       - FIREBASE_CREDENTIALS_PATH=/app/firebase-credentials.json
     volumes:
       - .:/app
-      # Add a volume mount for Firebase credentials
-      - ${FIREBASE_CREDENTIALS_PATH}:/app/firebase-credentials.json:ro
+      # Copy the Firebase credentials to a more accessible location
+      - ./firebase-credentials.json:/app/firebase-credentials.json:ro
     depends_on:
       - mongo
 
