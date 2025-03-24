@@ -1,6 +1,6 @@
 # app/schemas/activity.py
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 class ActivityBase(BaseModel):
@@ -39,8 +39,14 @@ class ActivityResponse(ActivityBase):
     created_at: datetime
     duration_hours: float
 
+    @property
+    def duration_hours(self) -> float:
+        """Convert minutes to hours"""
+        return round(self.duration / 60, 2)
+
     class Config:
         from_attributes = True
+        arbitrary_types_allowed = True
 
 class ActivityStatistics(BaseModel):
     """Schema for activity statistics"""

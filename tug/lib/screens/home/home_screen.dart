@@ -125,38 +125,120 @@ class _HomeScreenState extends State<HomeScreen> {
                   icon: const Icon(Icons.edit),
                   label: const Text('Edit Values'),
                 ),
+                
                 const Divider(height: 48),
+                
+                // Feature Cards Section
                 const Text(
-                  'Coming soon: Activity tracking',
+                  'Features',
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 16),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: TugColors.lightSurface,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: TugColors.primaryPurple.withOpacity(0.3)),
+                
+                // Activity Tracking Card
+                GestureDetector(
+                  onTap: () {
+                    context.go('/activities');
+                  },
+                  child: Card(
+                    color: Colors.white,
+                    elevation: 2,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: TugColors.primaryPurple.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.history,
+                              color: TugColors.primaryPurple,
+                              size: 32,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Activity Tracking',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Log time spent on your values',
+                                  style: TextStyle(
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(Icons.chevron_right),
+                        ],
+                      ),
+                    ),
                   ),
-                  child: const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Track your daily activities and see how they align with your values.',
-                        style: TextStyle(fontSize: 16),
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        'This feature is under development and will be available soon.',
-                        style: TextStyle(
-                          fontStyle: FontStyle.italic,
-                          color: TugColors.lightTextSecondary,
+                ),
+                
+                const SizedBox(height: 16),
+                
+                // Progress Tracking Card (Coming Soon)
+                Card(
+                  color: Colors.white,
+                  elevation: 2,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: TugColors.secondaryTeal.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.insights,
+                            color: TugColors.secondaryTeal,
+                            size: 32,
+                          ),
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Progress Tracking',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Coming Soon',
+                                style: TextStyle(
+                                  color: Colors.grey.shade600,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Icon(Icons.lock_outline),
+                      ],
+                    ),
                   ),
                 ),
               ],

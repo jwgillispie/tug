@@ -1,32 +1,15 @@
 // lib/screens/activity/activity_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:tug/blocs/activities/b.dart';
 import 'package:tug/blocs/values/bloc/values_bloc.dart';
-import 'package:tug/blocs/values/bloc/values_bevent.dart';
 import 'package:tug/blocs/values/bloc/values_state.dart';
+import 'package:tug/models/activity_model.dart';
 import 'package:tug/models/value_model.dart';
-import 'package:tug/utils/theme/buttons.dart';
 import 'package:tug/utils/theme/colors.dart';
-
-// Simple activity model for demonstration purposes
-class Activity {
-  final String id;
-  final String name;
-  final String valueId;
-  final int duration; // in minutes
-  final DateTime date;
-  final String? notes;
-
-  Activity({
-    required this.id,
-    required this.name,
-    required this.valueId,
-    required this.duration,
-    required this.date,
-    this.notes,
-  });
-}
+import 'package:tug/widgets/activity/activity_form.dart';
 
 class ActivityScreen extends StatefulWidget {
   const ActivityScreen({Key? key}) : super(key: key);
@@ -36,60 +19,19 @@ class ActivityScreen extends StatefulWidget {
 }
 
 class _ActivityScreenState extends State<ActivityScreen> {
-  // Mock activities for demonstration
-  final List<Activity> _activities = [
-    Activity(
-      id: '1',
-      name: 'Morning Jog',
-      valueId: 'health',
-      duration: 45,
-      date: DateTime.now().subtract(const Duration(hours: 5)),
-      notes: 'Felt great today!',
-    ),
-    Activity(
-      id: '2',
-      name: 'Family Dinner',
-      valueId: 'family',
-      duration: 90,
-      date: DateTime.now().subtract(const Duration(hours: 24)),
-      notes: 'Had a great conversation',
-    ),
-    Activity(
-      id: '3',
-      name: 'Coding Project',
-      valueId: 'career',
-      duration: 120,
-      date: DateTime.now().subtract(const Duration(hours: 30)),
-    ),
-    Activity(
-      id: '4',
-      name: 'Reading Book',
-      valueId: 'learning',
-      duration: 30,
-      date: DateTime.now().subtract(const Duration(hours: 48)),
-      notes: 'Half-way through',
-    ),
-  ];
-
-  // Value name lookup map
-  Map<String, String> _valueNames = {};
-  Map<String, String> _valueColors = {};
+  String? _filterValueId;
+  DateTime? _startDate;
+  DateTime? _endDate;
+  bool _showFilters = false;
 
   @override
   void initState() {
     super.initState();
-    // Load values for reference
-    context.read<ValuesBloc>().add(LoadValues());
+    // Load activities and values when screen is initialized
+    context.read<ActivitiesBloc>().add(const LoadActivities());
   }
 
-  void _showAddActivitySheet(BuildContext context) {
-    final formKey = GlobalKey<FormState>();
-    final nameController = TextEditingController();
-    final durationController = TextEditingController();
-    final notesController = TextEditingController();
-    String? selectedValueId;
-    DateTime selectedDate = DateTime.now();
-
+  void _showAddActivitySheet() {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -97,190 +39,76 @@ class _ActivityScreenState extends State<ActivityScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
       builder: (context) {
-        return BlocBuilder<ValuesBloc, ValuesState>(
-          builder: (context, state) {
-            List<ValueModel> values = [];
-            if (state is ValuesLoaded) {
-              values = state.values.where((v) => v.active).toList();
-            }
-
-            return Padding(
-              padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom,
-              ),
-              child: Container(
-                padding: const EdgeInsets.all(24),
-                child: Form(
-                  key: formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Log Activity',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: nameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Activity Name',
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter an activity name';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      DropdownButtonFormField<String>(
-                        decoration: const InputDecoration(
-                          labelText: 'Value',
-                          border: OutlineInputBorder(),
-                        ),
-                        value: selectedValueId,
-                        items: values.map((value) {
-                          return DropdownMenuItem(
-                            value: value.id,
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 16,
-                                  height: 16,
-                                  decoration: BoxDecoration(
-                                    color: Color(
-                                      int.parse(value.color.substring(1), radix: 16) + 
-                                      0xFF000000,
-                                    ),
-                                    shape: BoxShape.circle,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(value.name),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                        onChanged: (String? valueId) {
-                          selectedValueId = valueId;
-                        },
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please select a value';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextFormField(
-                              controller: durationController,
-                              decoration: const InputDecoration(
-                                labelText: 'Duration (minutes)',
-                                border: OutlineInputBorder(),
-                              ),
-                              keyboardType: TextInputType.number,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return 'Please enter duration';
-                                }
-                                final minutes = int.tryParse(value);
-                                if (minutes == null || minutes <= 0) {
-                                  return 'Enter a valid number of minutes';
-                                }
-                                return null;
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: InkWell(
-                              onTap: () async {
-                                final picked = await showDatePicker(
-                                  context: context,
-                                  initialDate: selectedDate,
-                                  firstDate: DateTime.now().subtract(
-                                    const Duration(days: 30),
-                                  ),
-                                  lastDate: DateTime.now(),
-                                );
-                                if (picked != null) {
-                                  selectedDate = picked;
-                                }
-                              },
-                              child: InputDecorator(
-                                decoration: const InputDecoration(
-                                  labelText: 'Date',
-                                  border: OutlineInputBorder(),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      '${selectedDate.month}/${selectedDate.day}/${selectedDate.year}',
-                                    ),
-                                    const Icon(Icons.calendar_today, size: 16),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: notesController,
-                        decoration: const InputDecoration(
-                          labelText: 'Notes (Optional)',
-                          border: OutlineInputBorder(),
-                        ),
-                        maxLines: 3,
-                      ),
-                      const SizedBox(height: 24),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          style: TugButtons.primaryButtonStyle,
-                          onPressed: () {
-                            if (formKey.currentState?.validate() ?? false) {
-                              // Add activity (in a real app, this would call a bloc/repository)
-                              setState(() {
-                                _activities.insert(
-                                  0,
-                                  Activity(
-                                    id: DateTime.now().millisecondsSinceEpoch.toString(),
-                                    name: nameController.text,
-                                    valueId: selectedValueId!,
-                                    duration: int.parse(durationController.text),
-                                    date: selectedDate,
-                                    notes: notesController.text.isEmpty
-                                        ? null
-                                        : notesController.text,
-                                  ),
-                                );
-                              });
-                              Navigator.pop(context);
-                            }
-                          },
-                          child: const Text('Save Activity'),
-                        ),
-                      ),
-                    ],
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            top: 24,
+            left: 24,
+            right: 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Log Activity',
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
+                  IconButton(
+                    icon: const Icon(Icons.close),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              BlocListener<ActivitiesBloc, ActivitiesState>(
+                listener: (context, state) {
+                  if (state is ActivityOperationSuccess) {
+                    Navigator.pop(context);
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(state.message),
+                        backgroundColor: TugColors.success,
+                      ),
+                    );
+                  } else if (state is ActivitiesError) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(state.message),
+                        backgroundColor: TugColors.error,
+                      ),
+                    );
+                  }
+                },
+                child: ActivityFormWidget(
+                  isLoading: context.watch<ActivitiesBloc>().state
+                      is ActivitiesLoading,
+                  onSave: (name, valueId, duration, date, notes) {
+                    final activity = ActivityModel(
+                      name: name,
+                      valueId: valueId,
+                      duration: duration,
+                      date: date,
+                      notes: notes,
+                    );
+
+                    context.read<ActivitiesBloc>().add(AddActivity(activity));
+                  },
                 ),
               ),
-            );
-          },
+              const SizedBox(height: 24),
+            ],
+          ),
         );
       },
     );
   }
 
-  void _showActivityDetails(BuildContext context, Activity activity) {
+  void _showActivityDetails(
+      ActivityModel activity, String valueName, String valueColor) {
     showDialog(
       context: context,
       builder: (context) {
@@ -290,11 +118,26 @@ class _ActivityScreenState extends State<ActivityScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Value: ${_valueNames[activity.valueId] ?? activity.valueId}'),
+              Row(
+                children: [
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: Color(
+                          int.parse(valueColor.substring(1), radix: 16) +
+                              0xFF000000),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text('Value: $valueName'),
+                ],
+              ),
               const SizedBox(height: 8),
               Text('Duration: ${activity.duration} minutes'),
               const SizedBox(height: 8),
-              Text('Date: ${activity.date.month}/${activity.date.day}/${activity.date.year}'),
+              Text('Date: ${DateFormat('MMM d, yyyy').format(activity.date)}'),
               if (activity.notes != null) ...[
                 const SizedBox(height: 16),
                 const Text(
@@ -315,11 +158,53 @@ class _ActivityScreenState extends State<ActivityScreen> {
             ),
             TextButton(
               onPressed: () {
-                // Delete activity (in a real app, this would call a bloc/repository)
-                setState(() {
-                  _activities.removeWhere((a) => a.id == activity.id);
-                });
                 Navigator.pop(context);
+                // Implement edit functionality
+                _showEditActivitySheet(activity);
+              },
+              child: const Text('Edit'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                _showDeleteConfirmation(activity);
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: TugColors.error,
+              ),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showEditActivitySheet(ActivityModel activity) {
+    // Implementation will be similar to _showAddActivitySheet but with pre-filled values
+    // This can be expanded later
+  }
+
+  void _showDeleteConfirmation(ActivityModel activity) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Delete Activity'),
+          content: Text('Are you sure you want to delete "${activity.name}"?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                context
+                    .read<ActivitiesBloc>()
+                    .add(DeleteActivity(activity.id!));
               },
               style: TextButton.styleFrom(
                 foregroundColor: TugColors.error,
@@ -354,250 +239,424 @@ class _ActivityScreenState extends State<ActivityScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Activity Tracking'),
+        actions: [
+          IconButton(
+            icon:
+                Icon(_showFilters ? Icons.filter_list_off : Icons.filter_list),
+            onPressed: () {
+              setState(() {
+                _showFilters = !_showFilters;
+              });
+            },
+          ),
+        ],
       ),
-      body: BlocListener<ValuesBloc, ValuesState>(
-        listener: (context, state) {
-          if (state is ValuesLoaded) {
-            // Update value name lookup map
-            _valueNames = {};
-            _valueColors = {};
-            for (final value in state.values) {
-              if (value.id != null) {
-                _valueNames[value.id!] = value.name;
-                _valueColors[value.id!] = value.color;
-              }
-            }
-          }
-        },
-        child: _activities.isEmpty
-            ? Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.history,
-                      size: 64,
-                      color: Colors.grey,
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'No activities logged yet',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Start tracking time spent on your values',
-                      style: TextStyle(
-                        color: Colors.grey,
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    ElevatedButton.icon(
-                      style: TugButtons.primaryButtonStyle,
-                      onPressed: () {
-                        _showAddActivitySheet(context);
-                      },
-                      icon: const Icon(Icons.add),
-                      label: const Text('Log Activity'),
-                    ),
-                  ],
-                ),
-              )
-            : BlocBuilder<ValuesBloc, ValuesState>(
-                builder: (context, state) {
-                  if (state is ValuesLoading) {
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  }
+      body: Column(
+        children: [
+          // Filters
+          if (_showFilters) _buildFilters(),
 
-                  return ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _activities.length + 1, // +1 for the summary
-                    itemBuilder: (context, index) {
-                      if (index == 0) {
-                        // Summary card
-                        final totalMinutes = _activities.fold(
-                          0,
-                          (sum, activity) => sum + activity.duration,
-                        );
-                        final hours = totalMinutes ~/ 60;
-                        final minutes = totalMinutes % 60;
-                        final timeDisplay = hours > 0
-                            ? '$hours hr ${minutes > 0 ? '$minutes min' : ''}'
-                            : '$minutes min';
+          // Activities List
+          Expanded(
+            child: BlocBuilder<ActivitiesBloc, ActivitiesState>(
+              builder: (context, state) {
+                if (state is ActivitiesLoading) {
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                }
 
-                        return Card(
-                          margin: const EdgeInsets.only(bottom: 24),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Activity Summary',
-                                  style: Theme.of(context).textTheme.titleLarge,
-                                ),
-                                const SizedBox(height: 16),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                  children: [
-                                    _buildSummaryItem(
-                                      'Total Time',
-                                      timeDisplay,
-                                      Icons.access_time,
-                                    ),
-                                    _buildSummaryItem(
-                                      'Activities',
-                                      _activities.length.toString(),
-                                      Icons.event_note,
-                                    ),
-                                    _buildSummaryItem(
-                                      'Values',
-                                      _activities
-                                          .map((a) => a.valueId)
-                                          .toSet()
-                                          .length
-                                          .toString(),
-                                      Icons.star,
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      }
-
-                      final activity = _activities[index - 1];
-                      final valueName = _valueNames[activity.valueId] ??
-                          activity.valueId;
-                      final valueColor = _valueColors[activity.valueId] ??
-                          '#7C3AED'; // Default to purple
-
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        child: InkWell(
-                          onTap: () {
-                            _showActivityDetails(context, activity);
+                if (state is ActivitiesError) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.error_outline,
+                          color: TugColors.error,
+                          size: 48,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Error: ${state.message}',
+                          textAlign: TextAlign.center,
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () {
+                            context
+                                .read<ActivitiesBloc>()
+                                .add(const LoadActivities());
                           },
-                          borderRadius: BorderRadius.circular(12),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Row(
-                              children: [
-                                Container(
-                                  width: 48,
-                                  height: 48,
-                                  decoration: BoxDecoration(
-                                    color: Color(
-                                      int.parse(valueColor.substring(1), radix: 16) +
-                                          0xFF000000,
-                                    ).withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      '${activity.duration}',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Color(
-                                          int.parse(valueColor.substring(1), radix: 16) +
-                                              0xFF000000,
-                                        ),
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                final List<ActivityModel> activities;
+                if (state is ActivitiesLoaded) {
+                  activities = state.activities;
+                } else {
+                  activities = [];
+                }
+
+                if (activities.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.history,
+                          size: 64,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'No activities logged yet',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          'Start tracking time spent on your values',
+                          style: TextStyle(
+                            color: Colors.grey,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        ElevatedButton.icon(
+                          onPressed: _showAddActivitySheet,
+                          icon: const Icon(Icons.add),
+                          label: const Text('Log Activity'),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: activities.length,
+                  itemBuilder: (context, index) {
+                    final activity = activities[index];
+
+                    // Find value name and color using BLoC
+                    String valueName = 'Unknown Value';
+                    String valueColor = '#7C3AED'; // Default purple
+
+                    // Get value name from BLoC state
+                    final valuesState = context.watch<ValuesBloc>().state;
+                    if (valuesState is ValuesLoaded) {
+                      final value = valuesState.values.firstWhere(
+                        (v) => v.id == activity.valueId,
+                        orElse: () => const ValueModel(
+                          name: 'Unknown Value',
+                          importance: 1,
+                          color: '#7C3AED',
+                        ),
+                      );
+                      valueName = value.name;
+                      valueColor = value.color;
+                    }
+
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      child: InkWell(
+                        onTap: () {
+                          _showActivityDetails(activity, valueName, valueColor);
+                        },
+                        borderRadius: BorderRadius.circular(12),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: Color(
+                                    int.parse(valueColor.substring(1),
+                                            radix: 16) +
+                                        0xFF000000,
+                                  ).withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    '${activity.duration}',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(
+                                        int.parse(valueColor.substring(1),
+                                                radix: 16) +
+                                            0xFF000000,
                                       ),
                                     ),
                                   ),
                                 ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        activity.name,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        valueName,
-                                        style: TextStyle(
-                                          color: Colors.grey.shade600,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.end,
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      _getRelativeTime(activity.date),
-                                      style: TextStyle(
-                                        color: Colors.grey.shade600,
-                                        fontSize: 12,
+                                      activity.name,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
                                       ),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      '${activity.duration} min',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
+                                      valueName,
+                                      style: TextStyle(
+                                        color: Colors.grey.shade600,
                                       ),
                                     ),
                                   ],
                                 ),
-                              ],
-                            ),
+                              ),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    _getRelativeTime(activity.date),
+                                    style: TextStyle(
+                                      color: Colors.grey.shade600,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '${activity.duration} min',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
-                      );
-                    },
-                  );
-                },
-              ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          _showAddActivitySheet(context);
-        },
+        onPressed: _showAddActivitySheet,
         backgroundColor: TugColors.primaryPurple,
         child: const Icon(Icons.add),
       ),
     );
   }
 
-  Widget _buildSummaryItem(String title, String value, IconData icon) {
-    return Column(
-      children: [
-        Icon(
-          icon,
-          color: TugColors.primaryPurple,
-          size: 24,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
+  Widget _buildFilters() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      color: Theme.of(context).colorScheme.surface,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Filter Activities',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 14,
-            color: Colors.grey,
+          const SizedBox(height: 16),
+
+          // Value Filter
+          BlocBuilder<ValuesBloc, ValuesState>(
+            builder: (context, state) {
+              final values = state is ValuesLoaded
+                  ? state.values.where((v) => v.active).toList()
+                  : <ValueModel>[];
+
+              return DropdownButtonFormField<String?>(
+                decoration: const InputDecoration(
+                  labelText: 'Filter by Value',
+                  border: OutlineInputBorder(),
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                ),
+                value: _filterValueId,
+                items: [
+                  const DropdownMenuItem<String?>(
+                    value: null,
+                    child: Text('All Values'),
+                  ),
+                  ...values.map((value) {
+                    final valueColor = Color(
+                      int.parse(value.color.substring(1), radix: 16) +
+                          0xFF000000,
+                    );
+
+                    return DropdownMenuItem(
+                      value: value.id,
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 12,
+                            height: 12,
+                            decoration: BoxDecoration(
+                              color: valueColor,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(value.name),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ],
+                onChanged: (String? valueId) {
+                  setState(() {
+                    _filterValueId = valueId;
+                  });
+
+                  context.read<ActivitiesBloc>().add(
+                        LoadActivities(
+                          valueId: valueId,
+                          startDate: _startDate,
+                          endDate: _endDate,
+                        ),
+                      );
+                },
+              );
+            },
           ),
-        ),
-      ],
+
+          const SizedBox(height: 16),
+
+          // Date Range Filter
+          Row(
+            children: [
+              Expanded(
+                child: InkWell(
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: _startDate ?? DateTime.now(),
+                      firstDate:
+                          DateTime.now().subtract(const Duration(days: 365)),
+                      lastDate: DateTime.now(),
+                    );
+                    if (picked != null) {
+                      setState(() {
+                        _startDate = picked;
+                      });
+
+                      context.read<ActivitiesBloc>().add(
+                            LoadActivities(
+                              valueId: _filterValueId,
+                              startDate: _startDate,
+                              endDate: _endDate,
+                            ),
+                          );
+                    }
+                  },
+                  child: InputDecorator(
+                    decoration: const InputDecoration(
+                      labelText: 'Start Date',
+                      border: OutlineInputBorder(),
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          _startDate != null
+                              ? DateFormat('MMM d, yyyy').format(_startDate!)
+                              : 'Any Date',
+                        ),
+                        const Icon(Icons.calendar_today, size: 16),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: InkWell(
+                  onTap: () async {
+                    final picked = await showDatePicker(
+                      context: context,
+                      initialDate: _endDate ?? DateTime.now(),
+                      firstDate: _startDate ??
+                          DateTime.now().subtract(const Duration(days: 365)),
+                      lastDate: DateTime.now(),
+                    );
+                    if (picked != null) {
+                      setState(() {
+                        _endDate = picked;
+                      });
+
+                      context.read<ActivitiesBloc>().add(
+                            LoadActivities(
+                              valueId: _filterValueId,
+                              startDate: _startDate,
+                              endDate: _endDate,
+                            ),
+                          );
+                    }
+                  },
+                  child: InputDecorator(
+                    decoration: const InputDecoration(
+                      labelText: 'End Date',
+                      border: OutlineInputBorder(),
+                      contentPadding:
+                          EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          _endDate != null
+                              ? DateFormat('MMM d, yyyy').format(_endDate!)
+                              : 'Today',
+                        ),
+                        const Icon(Icons.calendar_today, size: 16),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          // Reset Filters Button
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _filterValueId = null;
+                  _startDate = null;
+                  _endDate = null;
+                });
+
+                context.read<ActivitiesBloc>().add(const LoadActivities());
+              },
+              child: const Text('Reset Filters'),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

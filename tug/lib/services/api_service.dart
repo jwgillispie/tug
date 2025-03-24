@@ -6,7 +6,7 @@ import 'package:tug/config/env_confg.dart';
 
 class ApiService {
   final Dio _dio;
-  
+
   ApiService({Dio? dio})
       : _dio = dio ??
             Dio(BaseOptions(
@@ -14,13 +14,15 @@ class ApiService {
               connectTimeout: const Duration(seconds: 10),
               receiveTimeout: const Duration(seconds: 10),
               // Don't throw exceptions automatically for response status
-              validateStatus: (status) => true, // Accept all status codes for logging
+              validateStatus: (status) =>
+                  true, // Accept all status codes for logging
             ));
 
-  // Helper method to ensure trailing slash in URL
+// Helper method to ensure trailing slash in URL
   String ensureTrailingSlash(String path) {
-    if (!path.endsWith('/')) {
-      return '$path/';
+    // Remove trailing slash if present
+    if (path.endsWith('/')) {
+      path = path.substring(0, path.length - 1);
     }
     return path;
   }
@@ -45,21 +47,21 @@ class ApiService {
   Future<bool> syncUserWithMongoDB() async {
     try {
       await _setAuthHeader();
-      
+
       final user = firebase_auth.FirebaseAuth.instance.currentUser;
       if (user == null) {
         debugPrint('Cannot sync user: No current user');
         return false;
       }
-      
+
       // Add trailing slash
       String path = ensureTrailingSlash('/api/v1/users/sync');
-      
+
       // Debug the full API URL we're trying to reach
       final fullUrl = '${_dio.options.baseUrl}$path';
       debugPrint('Syncing user with MongoDB: ${user.uid}');
       debugPrint('Full API URL: $fullUrl');
-      
+
       final userData = {
         'display_name': user.displayName ?? '',
         'email': user.email ?? '',
@@ -67,20 +69,21 @@ class ApiService {
         'phone_number': user.phoneNumber,
         'uid': user.uid,
       };
-      
+
       debugPrint('Sending user data: $userData');
-      
+
       final response = await _dio.post(path, data: userData);
-      
+
       debugPrint('User sync response status: ${response.statusCode}');
       debugPrint('Response data: ${response.data}');
-      
+
       // Check if the status code indicates an error
       if (response.statusCode != 200 && response.statusCode != 201) {
-        debugPrint('Error syncing user with MongoDB: HTTP ${response.statusCode}');
+        debugPrint(
+            'Error syncing user with MongoDB: HTTP ${response.statusCode}');
         return false;
       }
-      
+
       return true;
     } catch (e) {
       if (e is DioException) {
@@ -100,15 +103,16 @@ class ApiService {
   }
 
   // Generic GET request with proper error handling
-  Future<dynamic> get(String path, {Map<String, dynamic>? queryParameters}) async {
+  Future<dynamic> get(String path,
+      {Map<String, dynamic>? queryParameters}) async {
     // Add trailing slash
     path = ensureTrailingSlash(path);
-    
+
     try {
       await _setAuthHeader();
       debugPrint('GET request to: ${_dio.options.baseUrl}$path');
       final response = await _dio.get(path, queryParameters: queryParameters);
-      
+
       // Check status code before returning data
       if (response.statusCode! >= 200 && response.statusCode! < 300) {
         return response.data;
@@ -134,18 +138,18 @@ class ApiService {
   Future<dynamic> post(String path, {dynamic data}) async {
     // Add trailing slash
     path = ensureTrailingSlash(path);
-    
+
     try {
       await _setAuthHeader();
       final fullUrl = '${_dio.options.baseUrl}$path';
       debugPrint('POST request to: $fullUrl');
-      
+
       final response = await _dio.post(path, data: data);
-      
+
       // Log the response regardless of status
       debugPrint('POST response status: ${response.statusCode}');
       debugPrint('POST response data: ${response.data}');
-      
+
       // Check status code before returning data
       if (response.statusCode! >= 200 && response.statusCode! < 300) {
         return response.data;
@@ -169,12 +173,12 @@ class ApiService {
   Future<dynamic> put(String path, {dynamic data}) async {
     // Add trailing slash
     path = ensureTrailingSlash(path);
-    
+
     try {
       await _setAuthHeader();
       debugPrint('PUT request to: ${_dio.options.baseUrl}$path');
       final response = await _dio.put(path, data: data);
-      
+
       // Check status code before returning data
       if (response.statusCode! >= 200 && response.statusCode! < 300) {
         return response.data;
@@ -198,12 +202,12 @@ class ApiService {
   Future<dynamic> patch(String path, {dynamic data}) async {
     // Add trailing slash
     path = ensureTrailingSlash(path);
-    
+
     try {
       await _setAuthHeader();
       debugPrint('PATCH request to: ${_dio.options.baseUrl}$path');
       final response = await _dio.patch(path, data: data);
-      
+
       // Check status code before returning data
       if (response.statusCode! >= 200 && response.statusCode! < 300) {
         return response.data;
@@ -227,12 +231,12 @@ class ApiService {
   Future<dynamic> delete(String path) async {
     // Add trailing slash
     path = ensureTrailingSlash(path);
-    
+
     try {
       await _setAuthHeader();
       debugPrint('DELETE request to: ${_dio.options.baseUrl}$path');
       final response = await _dio.delete(path);
-      
+
       // Check status code before returning data
       if (response.statusCode! >= 200 && response.statusCode! < 300) {
         return response.data;
@@ -263,7 +267,8 @@ class ApiService {
       // Handle specific status codes
       switch (statusCode) {
         case 307: // Handle redirect explicitly
-          throw Exception('Request failed with status: 307 (Temporary Redirect). Please check URL format.');
+          throw Exception(
+              'Request failed with status: 307 (Temporary Redirect). Please check URL format.');
         case 401:
           throw Exception('Authentication required. Please log in again.');
         case 403:

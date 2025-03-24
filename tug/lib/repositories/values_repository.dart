@@ -27,7 +27,7 @@ class ValuesRepository implements IValuesRepository {
   Future<List<ValueModel>> getValues() async {
     try {
       // Try to get values from API
-      final response = await _apiService.get('/api/v1/values/');
+      final response = await _apiService.get('/api/v1/values');
 
       if (response != null) {
         final List<dynamic> valuesData = response;
@@ -52,7 +52,7 @@ class ValuesRepository implements IValuesRepository {
   Future<ValueModel> addValue(ValueModel value) async {
     try {
       final response = await _apiService.post(
-        '/api/v1/values/',
+        '/api/v1/values',
         data: value.toJson(),
       );
 

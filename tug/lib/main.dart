@@ -4,9 +4,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:go_router/go_router.dart';
+import 'package:tug/blocs/activities/b.dart';
 import 'package:tug/blocs/values/bloc/values_bloc.dart';
 import 'package:tug/config/env_confg.dart';
+import 'package:tug/repositories/activity_repository.dart';
 import 'package:tug/repositories/values_repository.dart';
+import 'package:tug/screens/activity/activity_screen.dart';
 import 'package:tug/screens/auth/forgot_password_screen.dart';
 import 'package:tug/screens/diagnostics_screen.dart';
 import 'package:tug/screens/home/home_screen.dart';
@@ -42,10 +45,12 @@ Future<void> main() async {
     // Create repositories
     final authRepository = AuthRepository();
     final valuesRepository = ValuesRepository();
+    final activityRepository = ActivityRepository();
 
     runApp(TugApp(
       authRepository: authRepository,
       valuesRepository: valuesRepository,
+      activityRepository: activityRepository,
     ));
   } catch (e) {
     debugPrint('Failed to initialize Firebase: $e');
@@ -103,10 +108,12 @@ class ErrorApp extends StatelessWidget {
 class TugApp extends StatefulWidget {
   final AuthRepository authRepository;
   final ValuesRepository valuesRepository;
+  final ActivityRepository activityRepository;
 
   const TugApp({
     required this.authRepository,
     required this.valuesRepository,
+    required this.activityRepository,
     super.key,
   });
 
@@ -118,12 +125,14 @@ class _TugAppState extends State<TugApp> {
   late final GoRouter _router;
   late final AuthBloc _authBloc;
   late final ValuesBloc _valuesBloc;
+  late final ActivitiesBloc _activitiesBloc;
 
   @override
   void initState() {
     super.initState();
     _authBloc = AuthBloc(authRepository: widget.authRepository);
     _valuesBloc = ValuesBloc(valuesRepository: widget.valuesRepository);
+    _activitiesBloc = ActivitiesBloc(activityRepository: widget.activityRepository);
 
     _router = GoRouter(
       initialLocation: '/splash',
@@ -152,6 +161,10 @@ class _TugAppState extends State<TugApp> {
         GoRoute(
           path: '/home',
           builder: (context, state) => const HomeScreen(),
+        ),
+        GoRoute(
+          path: '/activities',
+          builder: (context, state) => const ActivityScreen(),
         ),
         // Add the diagnostic route
         GoRoute(
@@ -199,6 +212,7 @@ class _TugAppState extends State<TugApp> {
       providers: [
         BlocProvider<AuthBloc>.value(value: _authBloc),
         BlocProvider<ValuesBloc>.value(value: _valuesBloc),
+        BlocProvider<ActivitiesBloc>.value(value: _activitiesBloc),
       ],
       child: MaterialApp.router(
         title: 'Tug',
@@ -215,6 +229,7 @@ class _TugAppState extends State<TugApp> {
   void dispose() {
     _authBloc.close();
     _valuesBloc.close();
+    _activitiesBloc.close();
     super.dispose();
   }
 }
