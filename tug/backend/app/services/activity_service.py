@@ -1,5 +1,6 @@
 # app/services/activity_service.py
 from datetime import datetime, timedelta
+from bson import ObjectId
 from typing import List, Optional, Dict, Any
 from fastapi import HTTPException, status
 import logging 
@@ -20,7 +21,7 @@ class ActivityService:
         logger.info(f"Attempting to find value with ID: {activity_data.value_id} for user: {user.id}")
 
         value = await Value.find_one(
-            Value.id == activity_data.value_id,
+            Value.id == ObjectId(activity_data.value_id) if not isinstance(activity_data.value_id, ObjectId) else activity_data.value_id,
             Value.user_id == str(user.id)
         )
         
@@ -117,10 +118,10 @@ class ActivityService:
         update_data = activity_data.model_dump(exclude_unset=True)
         if "value_id" in update_data:
             value = await Value.find_one(
-                Value.id == update_data["value_id"],
+                Value.id == ObjectId(activity_data.value_id) if not isinstance(activity_data.value_id, ObjectId) else activity_data.value_id,
                 Value.user_id == str(user.id)
             )
-            
+                        
             if not value:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
@@ -201,9 +202,9 @@ class ActivityService:
     async def get_value_activity_summary(user: User) -> Dict[str, Any]:
         """Get summary of activities by value"""
         # Get all user values
-        values = await Value.find(
-            Value.user_id == str(user.id),
-            Value.active == True
+        value = await Value.find_one(
+            Value.id == ObjectId(activity_data.value_id) if not isinstance(activity_data.value_id, ObjectId) else activity_data.value_id,
+            Value.user_id == str(user.id)
         ).to_list()
         
         result = []
