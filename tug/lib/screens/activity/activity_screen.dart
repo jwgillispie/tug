@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
-import 'package:tug/blocs/activities/b.dart';
+import 'package:tug/blocs/activities/activities_bloc.dart';
 import 'package:tug/blocs/values/bloc/values_bloc.dart';
 import 'package:tug/blocs/values/bloc/values_state.dart';
 import 'package:tug/models/activity_model.dart';

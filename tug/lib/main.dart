@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:go_router/go_router.dart';
-import 'package:tug/blocs/activities/b.dart';
+import 'package:tug/blocs/activities/activities_bloc.dart';
 import 'package:tug/blocs/values/bloc/values_bloc.dart';
 import 'package:tug/config/env_confg.dart';
 import 'package:tug/repositories/activity_repository.dart';

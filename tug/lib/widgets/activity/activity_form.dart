@@ -134,6 +134,7 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
                 onChanged: (String? id) {
                   setState(() {
                     _selectedValueId = id;
+                    debugPrint('Selected value for activity: $_selectedValueId');
                   });
                 },
                 validator: (value) {

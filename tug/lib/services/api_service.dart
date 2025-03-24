@@ -14,15 +14,18 @@ class ApiService {
               connectTimeout: const Duration(seconds: 10),
               receiveTimeout: const Duration(seconds: 10),
               // Don't throw exceptions automatically for response status
-              validateStatus: (status) =>
-                  true, // Accept all status codes for logging
+              validateStatus: (status) => true,
+              followRedirects: true, // Accept all status codes for logging
             ));
 
 // Helper method to ensure trailing slash in URL
   String ensureTrailingSlash(String path) {
-    // Remove trailing slash if present
-    if (path.endsWith('/')) {
-      path = path.substring(0, path.length - 1);
+    // Add trailing slash if not present
+    if (path.endsWith('sync') || path.endsWith('activities')) {
+      return path;
+    }
+    if (!path.endsWith('/')) {
+      path = path + '/';
     }
     return path;
   }

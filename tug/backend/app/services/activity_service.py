@@ -2,12 +2,14 @@
 from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 from fastapi import HTTPException, status
-
+import logging 
 from ..models.user import User
 from ..models.value import Value
 from ..models.activity import Activity
 from ..schemas.activity import ActivityCreate, ActivityUpdate, ActivityStatistics
 
+
+logger = logging.getLogger(__name__)
 class ActivityService:
     """Service for handling activity-related operations"""
 
@@ -15,6 +17,8 @@ class ActivityService:
     async def create_activity(user: User, activity_data: ActivityCreate) -> Activity:
         """Create a new activity for a user"""
         # Check if value exists and belongs to user
+        logger.info(f"Attempting to find value with ID: {activity_data.value_id} for user: {user.id}")
+
         value = await Value.find_one(
             Value.id == activity_data.value_id,
             Value.user_id == str(user.id)
