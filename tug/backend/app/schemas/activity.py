@@ -37,16 +37,15 @@ class ActivityResponse(ActivityBase):
     id: str
     date: datetime
     created_at: datetime
-    duration_hours: float
-
-    @property
-    def duration_hours(self) -> float:
-        """Convert minutes to hours"""
-        return round(self.duration / 60, 2)
 
     class Config:
         from_attributes = True
         arbitrary_types_allowed = True
+        
+    @property
+    def duration_hours(self) -> float:
+        """Convert minutes to hours"""
+        return round(self.duration / 60, 2)
 
 class ActivityStatistics(BaseModel):
     """Schema for activity statistics"""
