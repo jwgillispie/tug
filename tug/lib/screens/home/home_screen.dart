@@ -193,51 +193,55 @@ class _HomeScreenState extends State<HomeScreen> {
                 
                 const SizedBox(height: 16),
                 
-                // Progress Tracking Card (Coming Soon)
-                Card(
-                  color: Colors.white,
-                  elevation: 2,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: TugColors.secondaryTeal.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
+                // Progress Tracking Card (now clickable)
+                GestureDetector(
+                  onTap: () {
+                    context.go('/progress');
+                  },
+                  child: Card(
+                    color: Colors.white,
+                    elevation: 2,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: TugColors.secondaryTeal.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.insights,
+                              color: TugColors.secondaryTeal,
+                              size: 32,
+                            ),
                           ),
-                          child: const Icon(
-                            Icons.insights,
-                            color: TugColors.secondaryTeal,
-                            size: 32,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Progress Tracking',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Progress Tracking',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'Coming Soon',
-                                style: TextStyle(
-                                  color: Colors.grey.shade600,
-                                  fontStyle: FontStyle.italic,
+                                const SizedBox(height: 4),
+                                Text(
+                                  'View your value alignment progress',
+                                  style: TextStyle(
+                                    color: Colors.grey.shade600,
+                                  ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                        const Icon(Icons.lock_outline),
-                      ],
+                          const Icon(Icons.chevron_right),
+                        ],
+                      ),
                     ),
                   ),
                 ),

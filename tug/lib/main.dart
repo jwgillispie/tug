@@ -13,6 +13,9 @@ import 'package:tug/screens/activity/activity_screen.dart';
 import 'package:tug/screens/auth/forgot_password_screen.dart';
 import 'package:tug/screens/diagnostics_screen.dart';
 import 'package:tug/screens/home/home_screen.dart';
+import 'package:tug/screens/main_layout.dart';
+import 'package:tug/screens/profile/profile_screen.dart';
+import 'package:tug/screens/progress/progress_screen.dart';
 import 'package:tug/utils/local_storage.dart';
 import 'repositories/auth_repository.dart';
 import 'blocs/auth/auth_bloc.dart';
@@ -138,6 +141,7 @@ class _TugAppState extends State<TugApp> {
       initialLocation: '/splash',
       refreshListenable: GoRouterRefreshStream(_authBloc.stream),
       routes: [
+        // Auth and splash routes
         GoRoute(
           path: '/splash',
           builder: (context, state) => const SplashScreen(),
@@ -158,15 +162,45 @@ class _TugAppState extends State<TugApp> {
           path: '/values-input',
           builder: (context, state) => const ValuesInputScreen(),
         ),
+        
+        // Main app routes with shared layout
         GoRoute(
           path: '/home',
-          builder: (context, state) => const HomeScreen(),
+          builder: (context, state) => const MainLayout(
+            child: HomeScreen(),
+            currentIndex: 0,
+          ),
+        ),
+        GoRoute(
+          path: '/progress',
+          builder: (context, state) => const MainLayout(
+            child: ProgressScreen(),
+            currentIndex: 1,
+          ),
         ),
         GoRoute(
           path: '/activities',
-          builder: (context, state) => const ActivityScreen(),
+          builder: (context, state) => const MainLayout(
+            child: ActivityScreen(),
+            currentIndex: 2,
+          ),
         ),
-        // Add the diagnostic route
+        GoRoute(
+          path: '/activities/new',
+          builder: (context, state) => const MainLayout(
+            child: ActivityScreen(showAddForm: true),
+            currentIndex: 2,
+          ),
+        ),
+        GoRoute(
+          path: '/profile',
+          builder: (context, state) => const MainLayout(
+            child: ProfileScreen(),
+            currentIndex: 3,
+          ),
+        ),
+        
+        // Diagnostic route (for debugging)
         GoRoute(
           path: '/diagnostics',
           builder: (context, state) => const DiagnosticScreen(),
@@ -180,6 +214,7 @@ class _TugAppState extends State<TugApp> {
         final isSignupScreen = state.fullPath == '/signup';
         final isDiagnosticScreen = state.fullPath == '/diagnostics';
         final isForgotPasswordScreen = state.fullPath == '/forgot-password';
+        final isValuesInputScreen = state.fullPath == '/values-input';
 
         // Always allow access to diagnostic screen
         if (isDiagnosticScreen) {
@@ -191,14 +226,16 @@ class _TugAppState extends State<TugApp> {
           return null;
         }
 
-        // If not authenticated, redirect to login unless already on login, signup, or forgot password
+        // If not authenticated, redirect to login unless already on auth screens
         if (!isLoggedIn && !(isLoginScreen || isSignupScreen || isForgotPasswordScreen)) {
           return '/login';
         }
 
         // If authenticated, don't allow going to login/signup screens
         if (isLoggedIn && (isLoginScreen || isSignupScreen)) {
-          return '/values-input'; // Redirect to values input screen
+          // Check if values input is completed
+          // For now, we'll always redirect to values input for simplicity
+          return isValuesInputScreen ? null : '/values-input';
         }
 
         return null; // Allow the navigation to proceed

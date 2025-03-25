@@ -1,18 +1,24 @@
 // lib/screens/activity/activity_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:tug/blocs/activities/activities_bloc.dart';
 import 'package:tug/blocs/values/bloc/values_bloc.dart';
+import 'package:tug/blocs/values/bloc/values_bevent.dart';
 import 'package:tug/blocs/values/bloc/values_state.dart';
 import 'package:tug/models/activity_model.dart';
 import 'package:tug/models/value_model.dart';
 import 'package:tug/utils/theme/colors.dart';
+import 'package:tug/utils/theme/buttons.dart';
 import 'package:tug/widgets/activity/activity_form.dart';
 
 class ActivityScreen extends StatefulWidget {
-  const ActivityScreen({Key? key}) : super(key: key);
+  final bool showAddForm;
+  
+  const ActivityScreen({
+    Key? key,
+    this.showAddForm = false,
+  }) : super(key: key);
 
   @override
   State<ActivityScreen> createState() => _ActivityScreenState();
@@ -29,6 +35,14 @@ class _ActivityScreenState extends State<ActivityScreen> {
     super.initState();
     // Load activities and values when screen is initialized
     context.read<ActivitiesBloc>().add(const LoadActivities());
+    context.read<ValuesBloc>().add(LoadValues());
+    
+    // Show add activity form if flagged
+    if (widget.showAddForm) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _showAddActivitySheet();
+      });
+    }
   }
 
   void _showAddActivitySheet() {
@@ -131,7 +145,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Text('Value: $valueName'),
+                  Expanded(child: Text('Value: $valueName')),
                 ],
               ),
               const SizedBox(height: 8),
@@ -182,7 +196,10 @@ class _ActivityScreenState extends State<ActivityScreen> {
 
   void _showEditActivitySheet(ActivityModel activity) {
     // Implementation will be similar to _showAddActivitySheet but with pre-filled values
-    // This can be expanded later
+    // For now we'll just show a placeholder message
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Edit functionality coming soon')),
+    );
   }
 
   void _showDeleteConfirmation(ActivityModel activity) {
@@ -202,9 +219,11 @@ class _ActivityScreenState extends State<ActivityScreen> {
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
-                context
-                    .read<ActivitiesBloc>()
-                    .add(DeleteActivity(activity.id!));
+                if (activity.id != null) {
+                  context
+                      .read<ActivitiesBloc>()
+                      .add(DeleteActivity(activity.id!));
+                }
               },
               style: TextButton.styleFrom(
                 foregroundColor: TugColors.error,
@@ -238,7 +257,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Activity Tracking'),
+        title: const Text('Activities'),
         actions: [
           IconButton(
             icon:
@@ -249,10 +268,23 @@ class _ActivityScreenState extends State<ActivityScreen> {
               });
             },
           ),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              context.read<ActivitiesBloc>().add(const LoadActivities(
+                valueId: null,
+                startDate: null,
+                endDate: null,
+              ));
+            },
+          ),
         ],
       ),
       body: Column(
         children: [
+          // Activity Summary Card
+          _buildActivitySummary(),
+          
           // Filters
           if (_showFilters) _buildFilters(),
 
@@ -329,6 +361,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
                         ),
                         const SizedBox(height: 24),
                         ElevatedButton.icon(
+                          style: TugButtons.primaryButtonStyle,
                           onPressed: _showAddActivitySheet,
                           icon: const Icon(Icons.add),
                           label: const Text('Log Activity'),
@@ -365,6 +398,10 @@ class _ActivityScreenState extends State<ActivityScreen> {
 
                     return Card(
                       margin: const EdgeInsets.only(bottom: 12),
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                       child: InkWell(
                         onTap: () {
                           _showActivityDetails(activity, valueName, valueColor);
@@ -412,11 +449,28 @@ class _ActivityScreenState extends State<ActivityScreen> {
                                       ),
                                     ),
                                     const SizedBox(height: 4),
-                                    Text(
-                                      valueName,
-                                      style: TextStyle(
-                                        color: Colors.grey.shade600,
-                                      ),
+                                    Row(
+                                      children: [
+                                        Container(
+                                          width: 8,
+                                          height: 8,
+                                          decoration: BoxDecoration(
+                                            color: Color(
+                                              int.parse(valueColor.substring(1),
+                                                      radix: 16) +
+                                                  0xFF000000,
+                                            ),
+                                            shape: BoxShape.circle,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          valueName,
+                                          style: TextStyle(
+                                            color: Colors.grey.shade600,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
@@ -432,10 +486,21 @@ class _ActivityScreenState extends State<ActivityScreen> {
                                     ),
                                   ),
                                   const SizedBox(height: 4),
-                                  Text(
-                                    '${activity.duration} min',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: TugColors.primaryPurple.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    child: Text(
+                                      '${activity.duration} min',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: TugColors.primaryPurple,
+                                      ),
                                     ),
                                   ),
                                 ],
@@ -452,11 +517,111 @@ class _ActivityScreenState extends State<ActivityScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showAddActivitySheet,
-        backgroundColor: TugColors.primaryPurple,
-        child: const Icon(Icons.add),
+    );
+  }
+
+  Widget _buildActivitySummary() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      margin: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: TugColors.lightSurface,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
+      child: BlocBuilder<ActivitiesBloc, ActivitiesState>(
+        builder: (context, state) {
+          if (state is ActivitiesLoaded) {
+            final activities = state.activities;
+            
+            if (activities.isEmpty) {
+              return const Center(
+                child: Text(
+                  'No activities yet',
+                  style: TextStyle(fontStyle: FontStyle.italic),
+                ),
+              );
+            }
+            
+            // Calculate total time
+            final totalTime = activities.fold<int>(
+              0, (sum, activity) => sum + activity.duration);
+            
+            // Calculate activities per value
+            final valuesMap = <String, int>{};
+            for (final activity in activities) {
+              valuesMap.update(
+                activity.valueId,
+                (count) => count + 1,
+                ifAbsent: () => 1,
+              );
+            }
+            
+            return Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildSummaryItem(
+                  title: 'Activities',
+                  value: activities.length.toString(),
+                  icon: Icons.history,
+                ),
+                _buildSummaryItem(
+                  title: 'Values',
+                  value: valuesMap.length.toString(),
+                  icon: Icons.star,
+                ),
+                _buildSummaryItem(
+                  title: 'Total Time',
+                  value: '${totalTime}m',
+                  icon: Icons.access_time,
+                ),
+              ],
+            );
+          }
+          
+          return const Center(
+            child: Text('Loading summary...'),
+          );
+        },
+      ),
+    );
+  }
+  
+  Widget _buildSummaryItem({
+    required String title,
+    required String value,
+    required IconData icon,
+  }) {
+    return Column(
+      children: [
+        Icon(
+          icon,
+          color: TugColors.primaryPurple,
+          size: 24,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 12,
+            color: Colors.grey.shade600,
+          ),
+        ),
+      ],
     );
   }
 
@@ -467,12 +632,31 @@ class _ActivityScreenState extends State<ActivityScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Filter Activities',
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Filter Activities',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
+              TextButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _filterValueId = null;
+                    _startDate = null;
+                    _endDate = null;
+                    _showFilters = false;
+                  });
+
+                  context.read<ActivitiesBloc>().add(const LoadActivities());
+                },
+                icon: const Icon(Icons.clear, size: 16),
+                label: const Text('Reset'),
+              ),
+            ],
           ),
           const SizedBox(height: 16),
 
@@ -635,25 +819,6 @@ class _ActivityScreenState extends State<ActivityScreen> {
                 ),
               ),
             ],
-          ),
-
-          const SizedBox(height: 16),
-
-          // Reset Filters Button
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () {
-                setState(() {
-                  _filterValueId = null;
-                  _startDate = null;
-                  _endDate = null;
-                });
-
-                context.read<ActivitiesBloc>().add(const LoadActivities());
-              },
-              child: const Text('Reset Filters'),
-            ),
           ),
         ],
       ),
