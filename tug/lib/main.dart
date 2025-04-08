@@ -1,4 +1,3 @@
-// lib/main.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -24,28 +23,18 @@ import 'utils/theme/theme.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/signup_screen.dart';
 import 'screens/values/values_input_screen.dart';
-import 'screens/splash_screen.dart';
 
-// IMPORTANT: Simplified initialization with proper error trapping
 Future<void> main() async {
-  // Ensure Flutter is initialized
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load environment configuration
-  await EnvConfig.load();
-
-  // Initialize local storage
-  await LocalStorage.initialize();
-
   try {
-    // Initialize Firebase with explicit options
+    await EnvConfig.load();
+    await LocalStorage.initialize();
+
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
-    debugPrint('Firebase initialized successfully');
-
-    // Create repositories
     final authRepository = AuthRepository();
     final valuesRepository = ValuesRepository();
     final activityRepository = ActivityRepository();
@@ -56,13 +45,11 @@ Future<void> main() async {
       activityRepository: activityRepository,
     ));
   } catch (e) {
-    debugPrint('Failed to initialize Firebase: $e');
-    // Show error UI
+    debugPrint('App initialization failed: $e');
     runApp(ErrorApp(error: e.toString()));
   }
 }
 
-// Error fallback app
 class ErrorApp extends StatelessWidget {
   final String error;
 
@@ -93,10 +80,7 @@ class ErrorApp extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(
-                  onPressed: () {
-                    // Try to restart the app
-                    main();
-                  },
+                  onPressed: main,
                   child: const Text('Retry'),
                 ),
               ],
@@ -135,18 +119,12 @@ class _TugAppState extends State<TugApp> {
     super.initState();
     _authBloc = AuthBloc(authRepository: widget.authRepository);
     _valuesBloc = ValuesBloc(valuesRepository: widget.valuesRepository);
-    _activitiesBloc =
-        ActivitiesBloc(activityRepository: widget.activityRepository);
+    _activitiesBloc = ActivitiesBloc(activityRepository: widget.activityRepository);
 
     _router = GoRouter(
-      initialLocation: '/splash',
+      initialLocation: '/login',
       refreshListenable: GoRouterRefreshStream(_authBloc.stream),
       routes: [
-        // Auth and splash routes
-        GoRoute(
-          path: '/splash',
-          builder: (context, state) => const SplashScreen(),
-        ),
         GoRoute(
           path: '/login',
           builder: (context, state) => const LoginScreen(),
@@ -163,8 +141,6 @@ class _TugAppState extends State<TugApp> {
           path: '/values-input',
           builder: (context, state) => const ValuesInputScreen(),
         ),
-
-        // Main app routes with shared layout
         GoRoute(
           path: '/home',
           builder: (context, state) => const MainLayout(
@@ -200,8 +176,6 @@ class _TugAppState extends State<TugApp> {
             currentIndex: 3,
           ),
         ),
-
-        // Diagnostic route (for debugging)
         GoRoute(
           path: '/diagnostics',
           builder: (context, state) => const DiagnosticScreen(),
@@ -210,42 +184,34 @@ class _TugAppState extends State<TugApp> {
       redirect: (context, state) {
         final currentState = _authBloc.state;
         final isLoggedIn = currentState is Authenticated;
-        final isSplashScreen = state.fullPath == '/splash';
         final isLoginScreen = state.fullPath == '/login';
         final isSignupScreen = state.fullPath == '/signup';
         final isDiagnosticScreen = state.fullPath == '/diagnostics';
         final isForgotPasswordScreen = state.fullPath == '/forgot-password';
         final isValuesInputScreen = state.fullPath == '/values-input';
 
-        final isStartingApp = state.uri.toString() == '/';
-        if (isStartingApp) {
-          return '/splash';
-        }
-
-        // Always allow access to diagnostic screen
         if (isDiagnosticScreen) {
           return null;
         }
 
-        // Allow access to splash screen for initial loading
-        if (isSplashScreen) {
-          return null;
+        if (isLoggedIn) {
+          final hasCompletedOnboarding = true;
+          
+          if (!hasCompletedOnboarding) {
+            return isValuesInputScreen ? null : '/values-input';
+          } else {
+            return isLoginScreen || isSignupScreen || isForgotPasswordScreen 
+                ? '/home' 
+                : null;
+          }
         }
 
-        // If not authenticated, redirect to login unless already on auth screens
         if (!isLoggedIn &&
             !(isLoginScreen || isSignupScreen || isForgotPasswordScreen)) {
           return '/login';
         }
 
-        // If authenticated, don't allow going to login/signup screens
-        if (isLoggedIn && (isLoginScreen || isSignupScreen)) {
-          // Check if values input is completed
-          // For now, we'll always redirect to values input for simplicity
-          return isValuesInputScreen ? null : '/values-input';
-        }
-
-        return null; // Allow the navigation to proceed
+        return null;
       },
     );
   }
@@ -278,7 +244,6 @@ class _TugAppState extends State<TugApp> {
   }
 }
 
-// Helper class to refresh GoRouter based on BLoC stream
 class GoRouterRefreshStream extends ChangeNotifier {
   late final StreamSubscription<dynamic> _subscription;
 

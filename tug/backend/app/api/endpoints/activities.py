@@ -1,10 +1,12 @@
 # app/api/endpoints/activities.py
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from typing import List, Optional
-from datetime import datetime
+from typing import Any, Dict, List, Optional
+from datetime import datetime, timedelta
 import logging
 
 from ...models.user import User
+from ...models.value import Value
+from ...models.activity import Activity
 from ...schemas.activity import (
     ActivityCreate, 
     ActivityUpdate, 
@@ -111,13 +113,19 @@ async def get_activity_statistics(
 
 @router.get("/summary")
 async def get_value_activity_summary(
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
+    start_date: Optional[datetime] = None,
+    end_date: Optional[datetime] = None
 ):
     """Get summary of activities by value"""
     try:
-        logger.info(f"Getting value activity summary for user: {current_user.id}")
+        logger.info(f"Getting activity summary for user: {current_user.id}")
         
-        summary = await ActivityService.get_value_activity_summary(current_user)
+        summary = await ActivityService.get_value_activity_summary(
+            current_user, 
+            start_date=start_date, 
+            end_date=end_date
+        )
         
         # Convert to dictionary and encode MongoDB types
         summary = MongoJSONEncoder.encode_mongo_data(summary)
