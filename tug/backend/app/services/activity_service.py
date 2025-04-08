@@ -202,8 +202,7 @@ class ActivityService:
     async def get_value_activity_summary(user: User) -> Dict[str, Any]:
         """Get summary of activities by value"""
         # Get all user values
-        value = await Value.find_one(
-            Value.id == ObjectId(activity_data.value_id) if not isinstance(activity_data.value_id, ObjectId) else activity_data.value_id,
+        values = await Value.find(
             Value.user_id == str(user.id)
         ).to_list()
         
@@ -223,6 +222,9 @@ class ActivityService:
             # Calculate total time
             total_minutes = sum(activity.duration for activity in activities)
             
+            # Calculate daily average (avoid division by zero)
+            daily_average = round(total_minutes / 30, 2) if total_minutes > 0 else 0
+            
             # Add to result
             result.append({
                 "value_id": str(value.id),
@@ -231,7 +233,7 @@ class ActivityService:
                 "value_importance": value.importance,
                 "total_minutes": total_minutes,
                 "activity_count": len(activities),
-                "daily_average": round(total_minutes / 30, 2)
+                "daily_average": daily_average
             })
         
         return {

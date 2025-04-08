@@ -22,12 +22,12 @@ class ApiService {
 // Helper method to ensure trailing slash in URL
   String ensureTrailingSlash(String path) {
     // Add trailing slash if not present
-    if (path.endsWith('sync') || path.endsWith('activities')) {
-      return path;
-    }
-    if (!path.endsWith('/')) {
-      path = path + '/';
-    }
+    // if (path.endsWith('sync') || path.endsWith('activities')) {
+    //   return path;
+    // }
+    // if (!path.endsWith('/')) {
+    //   path = path + '/';
+    // }
     return path;
   }
 
