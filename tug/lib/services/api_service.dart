@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:flutter/foundation.dart';
 import 'package:tug/config/env_confg.dart';
+import '../utils/api_error.dart';
 
 class ApiService {
   final Dio _dio;
@@ -261,39 +262,43 @@ class ApiService {
     }
   }
 
+void _handleDioError(DioException e) {
+  final apiError = ApiError.fromException(e);
+  throw apiError;
+}
   // Error handling for Dio errors
-  void _handleDioError(DioException e) {
-    if (e.response != null) {
-      final statusCode = e.response!.statusCode;
-      final data = e.response!.data;
+  // void _handleDioError(DioException e) {
+  //   if (e.response != null) {
+  //     final statusCode = e.response!.statusCode;
+  //     final data = e.response!.data;
 
-      // Handle specific status codes
-      switch (statusCode) {
-        case 307: // Handle redirect explicitly
-          throw Exception(
-              'Request failed with status: 307 (Temporary Redirect). Please check URL format.');
-        case 401:
-          throw Exception('Authentication required. Please log in again.');
-        case 403:
-          throw Exception('You do not have permission to perform this action.');
-        case 404:
-          throw Exception('Resource not found. URL: ${e.requestOptions.uri}');
-        case 500:
-          throw Exception('Server error. Please try again later.');
-        default:
-          if (data is Map && data.containsKey('detail')) {
-            throw Exception(data['detail']);
-          } else {
-            throw Exception('Request failed with status: $statusCode');
-          }
-      }
-    } else if (e.type == DioExceptionType.connectionTimeout ||
-        e.type == DioExceptionType.sendTimeout ||
-        e.type == DioExceptionType.receiveTimeout) {
-      throw Exception(
-          'Connection timeout. Please check your internet connection.');
-    } else {
-      throw Exception('Network error: ${e.message}');
-    }
-  }
+  //     // Handle specific status codes
+  //     switch (statusCode) {
+  //       case 307: // Handle redirect explicitly
+  //         throw Exception(
+  //             'Request failed with status: 307 (Temporary Redirect). Please check URL format.');
+  //       case 401:
+  //         throw Exception('Authentication required. Please log in again.');
+  //       case 403:
+  //         throw Exception('You do not have permission to perform this action.');
+  //       case 404:
+  //         throw Exception('Resource not found. URL: ${e.requestOptions.uri}');
+  //       case 500:
+  //         throw Exception('Server error. Please try again later.');
+  //       default:
+  //         if (data is Map && data.containsKey('detail')) {
+  //           throw Exception(data['detail']);
+  //         } else {
+  //           throw Exception('Request failed with status: $statusCode');
+  //         }
+  //     }
+  //   } else if (e.type == DioExceptionType.connectionTimeout ||
+  //       e.type == DioExceptionType.sendTimeout ||
+  //       e.type == DioExceptionType.receiveTimeout) {
+  //     throw Exception(
+  //         'Connection timeout. Please check your internet connection.');
+  //   } else {
+  //     throw Exception('Network error: ${e.message}');
+  //   }
+  // }
 }

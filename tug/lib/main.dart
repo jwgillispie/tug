@@ -30,10 +30,10 @@ import 'screens/splash_screen.dart';
 Future<void> main() async {
   // Ensure Flutter is initialized
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Load environment configuration
   await EnvConfig.load();
-  
+
   // Initialize local storage
   await LocalStorage.initialize();
 
@@ -135,7 +135,8 @@ class _TugAppState extends State<TugApp> {
     super.initState();
     _authBloc = AuthBloc(authRepository: widget.authRepository);
     _valuesBloc = ValuesBloc(valuesRepository: widget.valuesRepository);
-    _activitiesBloc = ActivitiesBloc(activityRepository: widget.activityRepository);
+    _activitiesBloc =
+        ActivitiesBloc(activityRepository: widget.activityRepository);
 
     _router = GoRouter(
       initialLocation: '/splash',
@@ -162,7 +163,7 @@ class _TugAppState extends State<TugApp> {
           path: '/values-input',
           builder: (context, state) => const ValuesInputScreen(),
         ),
-        
+
         // Main app routes with shared layout
         GoRoute(
           path: '/home',
@@ -199,7 +200,7 @@ class _TugAppState extends State<TugApp> {
             currentIndex: 3,
           ),
         ),
-        
+
         // Diagnostic route (for debugging)
         GoRoute(
           path: '/diagnostics',
@@ -216,6 +217,11 @@ class _TugAppState extends State<TugApp> {
         final isForgotPasswordScreen = state.fullPath == '/forgot-password';
         final isValuesInputScreen = state.fullPath == '/values-input';
 
+        final isStartingApp = state.uri.toString() == '/';
+        if (isStartingApp) {
+          return '/splash';
+        }
+
         // Always allow access to diagnostic screen
         if (isDiagnosticScreen) {
           return null;
@@ -227,7 +233,8 @@ class _TugAppState extends State<TugApp> {
         }
 
         // If not authenticated, redirect to login unless already on auth screens
-        if (!isLoggedIn && !(isLoginScreen || isSignupScreen || isForgotPasswordScreen)) {
+        if (!isLoggedIn &&
+            !(isLoginScreen || isSignupScreen || isForgotPasswordScreen)) {
           return '/login';
         }
 

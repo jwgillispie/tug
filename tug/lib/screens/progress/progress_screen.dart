@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tug/blocs/values/bloc/values_bloc.dart';
 import 'package:tug/blocs/values/bloc/values_bevent.dart';
 import 'package:tug/blocs/values/bloc/values_state.dart';
+import 'package:tug/services/activity_service.dart';
 import 'package:tug/utils/theme/colors.dart';
 import 'package:tug/widgets/tug_of_war/tug_of_war_widget.dart';
 
@@ -17,21 +18,203 @@ class ProgressScreen extends StatefulWidget {
 class _ProgressScreenState extends State<ProgressScreen> {
   String _selectedTimeframe = 'Daily';
   final List<String> _timeframes = ['Daily', 'Weekly', 'Monthly'];
-
-  // Mock data for demonstration
-  final Map<String, Map<String, dynamic>> _mockActivityData = {
-    'Health': {'minutes': 45, 'community_avg': 60},
-    'Family': {'minutes': 120, 'community_avg': 90},
-    'Career': {'minutes': 360, 'community_avg': 300},
-    'Learning': {'minutes': 30, 'community_avg': 60},
-    'Creativity': {'minutes': 15, 'community_avg': 45},
-  };
+  
+  bool _isLoading = false;
+  Map<String, Map<String, dynamic>> _activityData = {};
+  Map<String, dynamic>? _statistics;
+  
+  final ActivityService _activityService = ActivityService();
 
   @override
   void initState() {
     super.initState();
     // Load values when screen is initialized
     context.read<ValuesBloc>().add(LoadValues());
+    // Also load activity data
+    _fetchActivityData();
+  }
+  
+  Future<void> _fetchActivityData() async {
+    setState(() {
+      _isLoading = true;
+    });
+    
+    try {
+      // Determine date range based on selected timeframe
+      DateTime? startDate;
+      final now = DateTime.now();
+      
+      if (_selectedTimeframe == 'Daily') {
+        // Today
+        startDate = DateTime(now.year, now.month, now.day);
+      } else if (_selectedTimeframe == 'Weekly') {
+        // Last 7 days
+        startDate = now.subtract(const Duration(days: 7));
+      } else if (_selectedTimeframe == 'Monthly') {
+        // Last 30 days
+        startDate = now.subtract(const Duration(days: 30));
+      }
+      
+      // Fetch activity statistics
+      final statistics = await _activityService.getActivityStatistics(
+        startDate: startDate,
+      );
+      
+      // Fetch the summary data
+      final summary = await _activityService.getActivitySummary();
+      
+      // Create a proper data structure from the summary
+      final newData = <String, Map<String, dynamic>>{};
+      
+      if (summary['values'] is List) {
+        for (var valueData in summary['values']) {
+          if (valueData['value_name'] != null) {
+            newData[valueData['value_name']] = {
+              'minutes': valueData['total_minutes'] ?? 0,
+              'community_avg': valueData['daily_average'] ?? 0,
+            };
+          }
+        }
+      }
+      
+      setState(() {
+        _activityData = newData;
+        _statistics = statistics;
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Error fetching activity data: $e');
+      setState(() {
+        _isLoading = false;
+      });
+      
+      // Show an error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error loading activity data: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
+  int _calculateTotalTime(List<dynamic> values) {
+    int total = 0;
+    for (final value in values) {
+      final activityData = _activityData[value.name];
+      if (activityData != null) {
+        total += activityData['minutes'] as int;
+      }
+    }
+    return total;
+  }
+  
+  String _calculateAlignment(List<dynamic> values) {
+    if (values.isEmpty) return 'N/A';
+    
+    int alignedCount = 0;
+    for (final value in values) {
+      final activityData = _activityData[value.name];
+      if (activityData != null) {
+        final minutes = activityData['minutes'] as int;
+        final communityAvg = activityData['community_avg'] as int;
+        
+        // Convert stated importance to percentage
+        final statedImportancePercent = (value.importance / 5) * 100;
+        
+        // Calculate actual behavior as percentage of community average
+        final actualBehaviorPercent = (minutes / communityAvg) * 100;
+        
+        // Calculate difference
+        final difference = (actualBehaviorPercent - statedImportancePercent).abs();
+        
+        // Count as aligned if within 30% difference
+        if (difference <= 30) {
+          alignedCount++;
+        }
+      }
+    }
+    
+    final percentage = values.isEmpty ? 0 : (alignedCount / values.length) * 100;
+    return '${percentage.round()}%';
+  }
+  
+  String _generateInsight(List<dynamic> values) {
+    // Find most and least aligned values
+    dynamic mostAligned;
+    dynamic leastAligned;
+    double mostAlignedDiff = double.infinity;
+    double leastAlignedDiff = -1;
+    
+    for (final value in values) {
+      final activityData = _activityData[value.name];
+      if (activityData != null) {
+        final minutes = activityData['minutes'] as int;
+        final communityAvg = activityData['community_avg'] as int;
+        
+        final statedImportancePercent = (value.importance / 5) * 100;
+        final actualBehaviorPercent = (minutes / communityAvg) * 100;
+        final difference = (actualBehaviorPercent - statedImportancePercent).abs();
+        
+        if (difference < mostAlignedDiff) {
+          mostAlignedDiff = difference;
+          mostAligned = value;
+        }
+        
+        if (difference > leastAlignedDiff) {
+          leastAlignedDiff = difference;
+          leastAligned = value;
+        }
+      }
+    }
+    
+    if (values.isEmpty) {
+      return 'Add values and track activities to get personalized insights.';
+    }
+    
+    if (mostAligned != null && leastAligned != null) {
+      final activityData = _activityData[leastAligned.name];
+      if (activityData != null) {
+        final minutes = activityData['minutes'] as int;
+        final communityAvg = activityData['community_avg'] as int;
+        
+        if (minutes < communityAvg) {
+          return 'Your "${mostAligned.name}" value shows great alignment! Consider dedicating more time to "${leastAligned.name}" to better reflect its importance to you.';
+        } else {
+          return 'Your "${mostAligned.name}" value shows great alignment! You\'re spending more time than average on "${leastAligned.name}", consider if this reflects its true importance to you.';
+        }
+      }
+    }
+    
+    return 'Continue tracking your activities to get personalized insights about your value alignment.';
+  }
+  
+  Widget _buildSummaryItem(BuildContext context, String title, String value, IconData icon) {
+    return Column(
+      children: [
+        Icon(
+          icon,
+          color: TugColors.primaryPurple,
+          size: 28,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 14,
+            color: Colors.grey.shade600,
+          ),
+        ),
+      ],
+    );
   }
 
   @override
@@ -39,6 +222,12 @@ class _ProgressScreenState extends State<ProgressScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Progress'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _fetchActivityData,
+          ),
+        ],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -72,6 +261,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                 setState(() {
                                   _selectedTimeframe = timeframe;
                                 });
+                                _fetchActivityData();
                               }
                             },
                             selectedColor: TugColors.primaryPurple.withOpacity(0.8),
@@ -91,7 +281,11 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
           // Main content
           Expanded(
-            child: BlocBuilder<ValuesBloc, ValuesState>(
+            child: _isLoading 
+            ? const Center(
+                child: CircularProgressIndicator(),
+              )
+            : BlocBuilder<ValuesBloc, ValuesState>(
               builder: (context, state) {
                 if (state is ValuesLoading) {
                   return const Center(
@@ -157,7 +351,9 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                   _buildSummaryItem(
                                     context,
                                     'Total Time',
-                                    '${_calculateTotalTime(values)} mins',
+                                    _statistics != null 
+                                        ? '${_statistics!['total_duration_minutes'] ?? 0} mins'
+                                        : '${_calculateTotalTime(values)} mins',
                                     Icons.access_time,
                                   ),
                                   _buildSummaryItem(
@@ -190,8 +386,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
                       
                       // Tug of war visualizations for each value
                       ...values.map((value) {
-                        // Get activity data from mock data
-                        final activityData = _mockActivityData[value.name] ?? {
+                        // Get activity data
+                        final activityData = _activityData[value.name] ?? {
                           'minutes': 0,
                           'community_avg': 60,
                         };
@@ -201,8 +397,8 @@ class _ProgressScreenState extends State<ProgressScreen> {
                           child: TugOfWarWidget(
                             valueName: value.name,
                             statedImportance: value.importance,
-                            actualBehavior: activityData['minutes'],
-                            communityAverage: activityData['community_avg'],
+                            actualBehavior: activityData['minutes'] as int,
+                            communityAverage: activityData['community_avg'] as int,
                           ),
                         );
                       }).toList(),
@@ -248,122 +444,6 @@ class _ProgressScreenState extends State<ProgressScreen> {
           ),
         ],
       ),
-    );
-  }
-  
-  // Helper methods for summary calculations
-  int _calculateTotalTime(List<dynamic> values) {
-    int total = 0;
-    for (final value in values) {
-      final activityData = _mockActivityData[value.name];
-      if (activityData != null) {
-        total += activityData['minutes'] as int;
-      }
-    }
-    return total;
-  }
-  
-  String _calculateAlignment(List<dynamic> values) {
-    if (values.isEmpty) return 'N/A';
-    
-    int alignedCount = 0;
-    for (final value in values) {
-      final activityData = _mockActivityData[value.name];
-      if (activityData != null) {
-        final minutes = activityData['minutes'] as int;
-        final communityAvg = activityData['community_avg'] as int;
-        
-        // Convert stated importance to percentage
-        final statedImportancePercent = (value.importance / 5) * 100;
-        
-        // Calculate actual behavior as percentage of community average
-        final actualBehaviorPercent = (minutes / communityAvg) * 100;
-        
-        // Calculate difference
-        final difference = (actualBehaviorPercent - statedImportancePercent).abs();
-        
-        // Count as aligned if within 30% difference
-        if (difference <= 30) {
-          alignedCount++;
-        }
-      }
-    }
-    
-    final percentage = (alignedCount / values.length) * 100;
-    return '${percentage.round()}%';
-  }
-  
-  String _generateInsight(List<dynamic> values) {
-    // Find most and least aligned values
-    dynamic mostAligned;
-    dynamic leastAligned;
-    double mostAlignedDiff = double.infinity;
-    double leastAlignedDiff = -1;
-    
-    for (final value in values) {
-      final activityData = _mockActivityData[value.name];
-      if (activityData != null) {
-        final minutes = activityData['minutes'] as int;
-        final communityAvg = activityData['community_avg'] as int;
-        
-        final statedImportancePercent = (value.importance / 5) * 100;
-        final actualBehaviorPercent = (minutes / communityAvg) * 100;
-        final difference = (actualBehaviorPercent - statedImportancePercent).abs();
-        
-        if (difference < mostAlignedDiff) {
-          mostAlignedDiff = difference;
-          mostAligned = value;
-        }
-        
-        if (difference > leastAlignedDiff) {
-          leastAlignedDiff = difference;
-          leastAligned = value;
-        }
-      }
-    }
-    
-    if (mostAligned != null && leastAligned != null) {
-      final activityData = _mockActivityData[leastAligned.name];
-      if (activityData != null) {
-        final minutes = activityData['minutes'] as int;
-        final communityAvg = activityData['community_avg'] as int;
-        
-        if (minutes < communityAvg) {
-          return 'Your "${mostAligned.name}" value shows great alignment! Consider dedicating more time to "${leastAligned.name}" to better reflect its importance to you.';
-        } else {
-          return 'Your "${mostAligned.name}" value shows great alignment! You\'re spending more time than average on "${leastAligned.name}", consider if this reflects its true importance to you.';
-        }
-      }
-    }
-    
-    return 'Continue tracking your activities to get personalized insights about your value alignment.';
-  }
-  
-  Widget _buildSummaryItem(BuildContext context, String title, String value, IconData icon) {
-    return Column(
-      children: [
-        Icon(
-          icon,
-          color: TugColors.primaryPurple,
-          size: 28,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey.shade600,
-          ),
-        ),
-      ],
     );
   }
 }
