@@ -6,7 +6,7 @@ import 'api_service.dart';
 class ActivityService {
   final ApiService _apiService;
 
-  ActivityService({ApiService? apiService}) 
+  ActivityService({ApiService? apiService})
       : _apiService = apiService ?? ApiService();
 
   // Fetch activities with optional filtering
@@ -17,24 +17,24 @@ class ActivityService {
   }) async {
     try {
       final queryParams = <String, dynamic>{};
-      
+
       if (valueId != null) {
         queryParams['value_id'] = valueId;
       }
-      
+
       if (startDate != null) {
-        queryParams['start_date'] = startDate.toIso8601String();
+        queryParams['start_date'] = _formatDateForApi(startDate);
       }
-      
+
       if (endDate != null) {
-        queryParams['end_date'] = endDate.toIso8601String();
+        queryParams['end_date'] = _formatDateForApi(endDate);
       }
-      
+
       final response = await _apiService.get(
         '/api/v1/activities',
         queryParameters: queryParams,
       );
-      
+
       if (response is List) {
         return response.map((json) => ActivityModel.fromJson(json)).toList();
       }
@@ -65,7 +65,7 @@ class ActivityService {
       if (activity.id == null) {
         throw Exception('Cannot update activity without ID');
       }
-      
+
       final response = await _apiService.patch(
         '/api/v1/activities/${activity.id}',
         data: activity.toJson(),
@@ -88,7 +88,7 @@ class ActivityService {
     }
   }
 
-  // Get activity statistics
+  // Get activity statistics with date range support
   Future<Map<String, dynamic>> getActivityStatistics({
     String? valueId,
     DateTime? startDate,
@@ -96,39 +96,87 @@ class ActivityService {
   }) async {
     try {
       final queryParams = <String, dynamic>{};
-      
+
       if (valueId != null) {
         queryParams['value_id'] = valueId;
       }
-      
+
       if (startDate != null) {
-        queryParams['start_date'] = startDate.toIso8601String();
+        queryParams['start_date'] = _formatDateForApi(startDate);
       }
-      
+
       if (endDate != null) {
-        queryParams['end_date'] = endDate.toIso8601String();
+        queryParams['end_date'] = _formatDateForApi(endDate);
       }
-      
+
       final response = await _apiService.get(
         '/api/v1/activities/statistics',
         queryParameters: queryParams,
       );
-      
-      return response;
+
+      // Ensure the response has all required fields
+      return {
+        'total_activities': response['total_activities'] ?? 0,
+        'total_duration_minutes': response['total_duration_minutes'] ?? 0,
+        'total_duration_hours': response['total_duration_hours'] ?? 0.0,
+        'average_duration_minutes': response['average_duration_minutes'] ?? 0.0,
+        'start_date': startDate?.toIso8601String(),
+        'end_date': endDate?.toIso8601String(),
+      };
     } catch (e) {
       debugPrint('Error getting activity statistics: $e');
-      rethrow;
+      // Return a default statistics object with date info
+      return {
+        "total_activities": 0,
+        "total_duration_minutes": 0,
+        "total_duration_hours": 0.0,
+        "average_duration_minutes": 0.0,
+        "start_date": startDate?.toIso8601String(),
+        "end_date": endDate?.toIso8601String(),
+      };
     }
   }
 
-  // Get activity summary by value
-  Future<Map<String, dynamic>> getActivitySummary() async {
+  // Get activity summary by value with date range support
+  Future<Map<String, dynamic>> getActivitySummary({
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
     try {
-      final response = await _apiService.get('/api/v1/activities/summary');
-      return response;
+      final queryParams = <String, dynamic>{};
+
+      if (startDate != null) {
+        queryParams['start_date'] = _formatDateForApi(startDate);
+      }
+
+      if (endDate != null) {
+        queryParams['end_date'] = _formatDateForApi(endDate);
+      }
+
+      final response = await _apiService.get(
+        '/api/v1/activities/summary',
+        queryParameters: queryParams,
+      );
+
+      // Ensure the response has a values array
+      return {
+        'values': response['values'] ?? [],
+        'start_date': startDate?.toIso8601String(),
+        'end_date': endDate?.toIso8601String(),
+      };
     } catch (e) {
       debugPrint('Error getting activity summary: $e');
-      rethrow;
+      // Return a default summary with date info
+      return {
+        "values": [],
+        "start_date": startDate?.toIso8601String(),
+        "end_date": endDate?.toIso8601String(),
+      };
     }
+  }
+
+  // Helper method to format dates consistently for API
+  String _formatDateForApi(DateTime date) {
+    return date.toUtc().toIso8601String();
   }
 }
