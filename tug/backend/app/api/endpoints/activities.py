@@ -84,7 +84,7 @@ async def get_activities(
             detail=f"Failed to get activities: {str(e)}"
         )
 
-@router.get("/statistics", response_model=ActivityStatistics)
+@router.get("/statistics")
 async def get_activity_statistics(
     current_user: User = Depends(get_current_user),
     value_id: Optional[str] = None,

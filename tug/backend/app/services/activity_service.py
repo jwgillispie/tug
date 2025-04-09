@@ -169,7 +169,7 @@ class ActivityService:
         value_id: Optional[str] = None,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None
-    ) -> ActivityStatistics:
+    ) -> Dict[str, Any]:
         """Get activity statistics"""
         # If no dates provided, use last 30 days
         if start_date is None:
@@ -196,12 +196,12 @@ class ActivityService:
         total_duration = await Activity.find(query).sum("duration") or 0
         
         # Calculate statistics
-        return ActivityStatistics(
-            total_activities=total_activities,
-            total_duration_minutes=total_duration,
-            total_duration_hours=round(total_duration / 60, 2) if total_duration else 0,
-            average_duration_minutes=round(total_duration / total_activities, 2) if total_activities > 0 else 0
-        )
+        return {
+            "total_activities": total_activities,
+            "total_duration_minutes": total_duration,
+            "total_duration_hours": round(total_duration / 60, 2) if total_duration else 0,
+            "average_duration_minutes": round(total_duration / total_activities, 2) if total_activities > 0 else 0
+        }
 
     @staticmethod
     async def get_value_activity_summary(
@@ -220,7 +220,8 @@ class ActivityService:
         
         # Get all user values
         values = await Value.find(
-            Value.user_id == str(user.id)
+            Value.user_id == str(user.id),
+            Value.active == True
         ).to_list()
         
         result = []
@@ -245,15 +246,16 @@ class ActivityService:
             
             # Add to result
             result.append({
-                "value_id": str(value.id),
-                "value_name": value.name,
-                "value_color": value.color,
-                "value_importance": value.importance,
-                "total_minutes": total_minutes,
-                "activity_count": len(activities),
+                "id": str(value.id),
+                "name": value.name,
+                "color": value.color,
+                "importance": value.importance,
+                "minutes": total_minutes,
+                "count": len(activities),
                 "daily_average": daily_average,
-                # Add community average calculation if needed
-                "community_avg": 60  # Placeholder - replace with actual community average calculation
+                # For demo purposes, set community average as a function of importance
+                # In a real app, this would come from actual community data
+                "community_avg": value.importance * 20  # Simple placeholder calculation
             })
         
         return {

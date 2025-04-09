@@ -6,7 +6,11 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from ..models.user import User
 from .config import settings
 import os
+import logging
 from datetime import datetime
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 # Initialize security
 security = HTTPBearer()
@@ -27,12 +31,63 @@ except ValueError:
 async def verify_firebase_token(token: str) -> dict:
     """Verify Firebase ID token and return decoded token data"""
     try:
-        decoded_token = auth.verify_id_token(token)
+        # Add generous clock skew tolerance (10 seconds)
+        decoded_token = auth.verify_id_token(
+            token, 
+            clock_skew_seconds=10  # Increased tolerance for clock skew
+        )
         return decoded_token
     except Exception as e:
+        error_msg = str(e)
+        logger.warning(f"Token verification error: {error_msg}")
+        
+        # Special handling for "Token used too early" errors
+        if "Token used too early" in error_msg:
+            try:
+                # Try to decode the token without verification first
+                # This is just to get the payload for logging purposes
+                import jwt
+                
+                # Split the token to get the payload part
+                parts = token.split('.')
+                if len(parts) == 3:  # Valid JWT format: header.payload.signature
+                    # Add padding if needed
+                    payload = parts[1]
+                    payload += '=' * (-len(payload) % 4)
+                    
+                    try:
+                        # Import base64 for decoding
+                        import base64
+                        import json
+                        
+                        # Decode the payload part
+                        decoded_bytes = base64.b64decode(payload)
+                        payload_data = json.loads(decoded_bytes.decode('utf-8'))
+                        
+                        # Log the timing information for debugging
+                        iat = payload_data.get('iat', 0)
+                        current_time = int(datetime.utcnow().timestamp())
+                        
+                        logger.warning(f"Clock skew detected: Token iat={iat}, Server time={current_time}, " 
+                                      f"Difference={current_time - iat} seconds")
+                    except Exception as decode_error:
+                        logger.error(f"Error decoding token payload: {decode_error}")
+                
+                # Attempt with a more permissive approach
+                logger.info("Attempting token verification with very high tolerance...")
+                decoded_token = auth.verify_id_token(
+                    token, 
+                    clock_skew_seconds=30  # Use an even higher tolerance as last resort
+                )
+                logger.info("Token verification successful with high tolerance")
+                return decoded_token
+            except Exception as retry_error:
+                logger.error(f"Retry token verification failed: {retry_error}")
+        
+        # If all attempts fail, raise the HTTP exception
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Invalid authentication credentials: {str(e)}",
+            detail=f"Invalid authentication credentials: {error_msg}",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
