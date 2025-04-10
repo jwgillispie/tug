@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:go_router/go_router.dart';
@@ -12,6 +14,7 @@ import 'package:tug/screens/activity/activity_screen.dart';
 import 'package:tug/screens/auth/forgot_password_screen.dart';
 import 'package:tug/screens/diagnostics_screen.dart';
 import 'package:tug/screens/home/home_screen.dart';
+import 'package:tug/screens/landing/landing_page.dart'; // Import the landing page
 import 'package:tug/screens/main_layout.dart';
 import 'package:tug/screens/profile/profile_screen.dart';
 import 'package:tug/screens/progress/progress_screen.dart';
@@ -29,7 +32,11 @@ Future<void> main() async {
 
   try {
     await EnvConfig.load();
-    await LocalStorage.initialize();
+    
+    // Only initialize storage for non-web platforms
+    if (!kIsWeb) {
+      await LocalStorage.initialize();
+    }
 
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
@@ -122,9 +129,16 @@ class _TugAppState extends State<TugApp> {
     _activitiesBloc = ActivitiesBloc(activityRepository: widget.activityRepository);
 
     _router = GoRouter(
-      initialLocation: '/login',
+      initialLocation: kIsWeb ? '/' : '/login', // Start at landing page for web
       refreshListenable: GoRouterRefreshStream(_authBloc.stream),
       routes: [
+        // Landing page route (only for web)
+        GoRoute(
+          path: '/',
+          builder: (context, state) => kIsWeb
+              ? const TugLandingPage() // Show landing page for web
+              : const LoginScreen(), // Default to login for mobile
+        ),
         GoRoute(
           path: '/login',
           builder: (context, state) => const LoginScreen(),
@@ -182,6 +196,11 @@ class _TugAppState extends State<TugApp> {
         ),
       ],
       redirect: (context, state) {
+        // Skip redirection for landing page on web
+        if (kIsWeb && state.fullPath == '/') {
+          return null;
+        }
+
         final currentState = _authBloc.state;
         final isLoggedIn = currentState is Authenticated;
         final isLoginScreen = state.fullPath == '/login';

@@ -1,1 +1,36 @@
-{"flutter":{"platforms":{"ios":{"default":{"projectId":"tugg-d2a47","appId":"1:862340628342:ios:fb896b587a6d5e4f208457","uploadDebugSymbols":false,"fileOutput":"ios/Runner/GoogleService-Info.plist"}},"dart":{"lib/firebase_options.dart":{"projectId":"tugg-d2a47","configurations":{"ios":"1:862340628342:ios:fb896b587a6d5e4f208457"}}}}}}
+{
+  "flutter": {
+    "platforms": {
+      "ios": {
+        "default": {
+          "projectId": "tugg-d2a47",
+          "appId": "1:862340628342:ios:fb896b587a6d5e4f208457",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "tugg-d2a47",
+          "configurations": {
+            "ios": "1:862340628342:ios:fb896b587a6d5e4f208457"
+          }
+        }
+      }
+    }
+  },
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}

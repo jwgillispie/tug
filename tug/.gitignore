@@ -7,6 +7,7 @@
 .pub/
 build/
 ios/Pods/
+lib/firebase_options.dart
 *.g.dart
 
 # Environment files
@@ -16,7 +17,6 @@ ios/Pods/
 
 # Firebase
 google-services.json
-firebase_options.dart
 GoogleService-Info.plist
 firebase-credentials.json
 

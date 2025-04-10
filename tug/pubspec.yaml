@@ -25,6 +25,7 @@ dependencies:
   firebase_storage: ^12.3.6
   cloud_firestore: ^5.5.0
   
+  
   # Local Storage
   hive: ^2.2.3
   hive_flutter: ^1.1.0
@@ -42,6 +43,8 @@ dependencies:
   json_annotation: ^4.8.1
   dio: ^5.8.0+1
   flutter_dotenv: ^5.0.0
+  font_awesome_flutter: ^10.6.0 
+  shared_preferences: ^2.5.3
 
 dev_dependencies:
   flutter_test:
