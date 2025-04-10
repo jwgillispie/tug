@@ -8,18 +8,34 @@ class TugLandingPage extends StatefulWidget {
   State<TugLandingPage> createState() => _TugLandingPageState();
 }
 
-class _TugLandingPageState extends State<TugLandingPage> {
+class _TugLandingPageState extends State<TugLandingPage>
+    with SingleTickerProviderStateMixin {
   final _emailController = TextEditingController();
   bool _submitted = false;
+  late AnimationController _animationController;
+  late Animation<double> _tugAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 3),
+    )..repeat(reverse: true);
+
+    _tugAnimation = Tween<double>(begin: -0.1, end: 0.1).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+  }
 
   @override
   void dispose() {
     _emailController.dispose();
+    _animationController.dispose();
     super.dispose();
   }
 
   void _handleSubscribe() {
-    // In a real implementation, you would send this to your backend
     debugPrint('Subscription email: ${_emailController.text}');
     setState(() {
       _submitted = true;
@@ -35,28 +51,49 @@ class _TugLandingPageState extends State<TugLandingPage> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFF5F3FF), Colors.white],
+            colors: [Color(0xFFF9F5FF), Color(0xFFF0FDFA)],
           ),
         ),
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              // Navigation
-              _buildNavigation(),
-              
-              // Hero Section
-              _buildHeroSection(),
-              
-              // Features Section
-              _buildFeaturesSection(),
-              
-              // Contact Section
-              _buildContactSection(),
-              
-              // Footer
-              _buildFooter(),
-            ],
-          ),
+        child: CustomScrollView(
+          slivers: [
+            // App Bar
+            SliverAppBar(
+              expandedHeight: 100,
+              floating: true,
+              pinned: true,
+              flexibleSpace: FlexibleSpaceBar(
+                background: _buildNavigation(),
+                collapseMode: CollapseMode.pin,
+              ),
+              backgroundColor: Colors.white.withOpacity(0.9),
+              elevation: 0,
+            ),
+
+            // Hero Section
+            SliverToBoxAdapter(
+              child: _buildHeroSection(),
+            ),
+
+            // Features Section
+            SliverToBoxAdapter(
+              child: _buildFeaturesSection(),
+            ),
+
+            // Testimonials
+            SliverToBoxAdapter(
+              child: _buildTestimonials(),
+            ),
+
+            // Pricing/CTA
+            SliverToBoxAdapter(
+              child: _buildPricing(),
+            ),
+
+            // Footer
+            SliverToBoxAdapter(
+              child: _buildFooter(),
+            ),
+          ],
         ),
       ),
     );
@@ -104,7 +141,6 @@ class _TugLandingPageState extends State<TugLandingPage> {
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
       child: Column(
         children: [
-          // Left Column - Text and form
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -126,25 +162,24 @@ class _TugLandingPageState extends State<TugLandingPage> {
                 ),
               ),
               const SizedBox(height: 32),
-              
-              // Email form
               if (!_submitted)
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     TextField(
-                      
                       controller: _emailController,
                       decoration: InputDecoration(
-                        labelStyle: TextStyle(color: Colors.black),
+                        hintStyle: const TextStyle(color: Colors.black),
                         hintText: 'Enter your email',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                          borderSide:
+                              const BorderSide(color: Color(0xFFD1D5DB)),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Color(0xFF7C3AED)),
+                          borderSide:
+                              const BorderSide(color: Color(0xFF7C3AED)),
                         ),
                       ),
                       keyboardType: TextInputType.emailAddress,
@@ -170,7 +205,7 @@ class _TugLandingPageState extends State<TugLandingPage> {
                     ),
                     const SizedBox(height: 8),
                     const Text(
-                      'Be the first to know when we launch. No spam, ever.',
+                      'Be the first to know when we launch.',
                       style: TextStyle(
                         color: Color(0xFF6B7280),
                         fontSize: 14,
@@ -196,10 +231,7 @@ class _TugLandingPageState extends State<TugLandingPage> {
                 ),
             ],
           ),
-          
           const SizedBox(height: 48),
-          
-          // Right Column - App visualization
           _buildAppVisualization(),
         ],
       ),
@@ -223,7 +255,7 @@ class _TugLandingPageState extends State<TugLandingPage> {
       child: Column(
         children: [
           const Text(
-            'Tug of War Visualization',
+            'Tug, like tug of war or tug of time.',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -231,25 +263,21 @@ class _TugLandingPageState extends State<TugLandingPage> {
             ),
           ),
           const SizedBox(height: 24),
-          
-          // Tug of war visualization
           SizedBox(
             height: 32,
             child: Stack(
               children: [
-                // Background bar
                 Container(
                   decoration: BoxDecoration(
                     color: const Color(0xFFF3F4F6),
                     borderRadius: BorderRadius.circular(16),
                   ),
                 ),
-                // Purple side
                 Positioned(
                   left: 0,
                   top: 0,
                   bottom: 0,
-                  width: MediaQuery.of(context).size.width * 0.5 * 0.5, // Half the container, which is already constrained
+                  width: MediaQuery.of(context).size.width * 0.25,
                   child: Container(
                     decoration: const BoxDecoration(
                       color: Color(0xFFE9D5FF),
@@ -260,12 +288,11 @@ class _TugLandingPageState extends State<TugLandingPage> {
                     ),
                   ),
                 ),
-                // Teal side
                 Positioned(
                   right: 0,
                   top: 0,
                   bottom: 0,
-                  width: MediaQuery.of(context).size.width * 0.5 * 0.5, // Half the container, which is already constrained
+                  width: MediaQuery.of(context).size.width * 0.25,
                   child: Container(
                     decoration: const BoxDecoration(
                       color: Color(0xFFAFFEEC),
@@ -276,7 +303,6 @@ class _TugLandingPageState extends State<TugLandingPage> {
                     ),
                   ),
                 ),
-                // Center divider
                 const Positioned(
                   left: 0,
                   right: 0,
@@ -289,11 +315,10 @@ class _TugLandingPageState extends State<TugLandingPage> {
                     ),
                   ),
                 ),
-                // Knob
                 Positioned(
                   top: 0,
                   bottom: 0,
-                  left: MediaQuery.of(context).size.width * 0.3, // Positioned at 60% from the left
+                  left: MediaQuery.of(context).size.width * 0.3,
                   child: Center(
                     child: Container(
                       width: 24,
@@ -313,7 +338,6 @@ class _TugLandingPageState extends State<TugLandingPage> {
                     ),
                   ),
                 ),
-                // Labels
                 Positioned(
                   left: 8,
                   top: 0,
@@ -347,14 +371,10 @@ class _TugLandingPageState extends State<TugLandingPage> {
               ],
             ),
           ),
-          
           const SizedBox(height: 24),
-          
-          // Example activities
           _buildActivityCard('Family', 120, const Color(0xFF7C3AED)),
           const SizedBox(height: 16),
           _buildActivityCard('Health', 45, const Color(0xFFEF4444)),
-          
           const SizedBox(height: 24),
           const Text(
             'Coming soon to App Store',
@@ -432,8 +452,6 @@ class _TugLandingPageState extends State<TugLandingPage> {
             ),
           ),
           const SizedBox(height: 48),
-          
-          // Features grid
           Wrap(
             spacing: 24,
             runSpacing: 40,
@@ -526,12 +544,10 @@ class _TugLandingPageState extends State<TugLandingPage> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 32),
-          
-          // Contact info
           Column(
             children: [
-              _buildContactItem(Icons.email, 'Email', 'jordangillispie@outlook.com'),
-              // Add more contact methods as needed
+              _buildContactItem(
+                  Icons.email, 'Email', 'jordangillispie@outlook.com'),
             ],
           ),
         ],
@@ -569,26 +585,412 @@ class _TugLandingPageState extends State<TugLandingPage> {
     return Container(
       color: const Color(0xFF1F2937),
       padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
         children: [
-          const Text(
-            'tug',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          Text(
-            '© ${DateTime.now().year} Tug App. All rights reserved.',
-            style: const TextStyle(
-              color: Color(0xFF9CA3AF),
-              fontSize: 14,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'tug',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                '© ${DateTime.now().year} Tug App. All rights reserved.',
+                style: const TextStyle(
+                  color: Color(0xFF9CA3AF),
+                  fontSize: 14,
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
+}
+
+// Add these methods to your _TugLandingPageState class
+Widget _buildTestimonials() {
+  return Container(
+    padding: const EdgeInsets.symmetric(vertical: 80, horizontal: 24),
+    color: const Color(0xFFF0FDFA),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        const Text(
+          'Loved by early users',
+          style: TextStyle(
+            fontSize: 42,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF111827),
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'See how Tug is helping people align their actions with their values',
+          style: TextStyle(
+            fontSize: 18,
+            color: Color(0xFF4B5563),
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 60),
+
+        // Testimonial cards
+        Wrap(
+          spacing: 24,
+          runSpacing: 24,
+          alignment: WrapAlignment.center,
+          children: [
+            _buildTestimonialCard(
+              'Sarah K.',
+              'Product Designer',
+              'Tug made me realize I was spending 80% of my time on things I only valued at 20%. The visualization was a wake-up call!',
+              Icons.star,
+              Icons.star,
+              Icons.star,
+              Icons.star,
+              Icons.star,
+              const Color(0xFF7C3AED),
+            ),
+            _buildTestimonialCard(
+              'Michael T.',
+              'Startup Founder',
+              'As someone who struggles with work-life balance, seeing the literal tug-of-war between my values and actions was transformative.',
+              Icons.star,
+              Icons.star,
+              Icons.star,
+              Icons.star,
+              Icons.star_half,
+              const Color(0xFF0D9488),
+            ),
+            _buildTestimonialCard(
+              'Priya M.',
+              'Medical Resident',
+              'The simple act of tracking against my stated values created accountability I never got from regular habit trackers.',
+              Icons.star,
+              Icons.star,
+              Icons.star,
+              Icons.star,
+              Icons.star,
+              const Color(0xFFEF4444),
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildTestimonialCard(
+  String name,
+  String role,
+  String quote,
+  IconData star1,
+  IconData star2,
+  IconData star3,
+  IconData star4,
+  IconData star5,
+  Color color,
+) {
+  return Container(
+    width: 360,
+    padding: const EdgeInsets.all(32),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.05),
+          blurRadius: 20,
+          offset: const Offset(0, 10),
+        ),
+      ],
+    ),
+    child: Column(
+      children: [
+        Row(
+          children: [
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: color.withOpacity(0.1),
+              ),
+              child: Center(
+                child: Text(
+                  name.substring(0, 1),
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                    color: Colors.deepPurple,
+                  ),
+                ),
+                Text(
+                  role,
+                  style: const TextStyle(
+                    color: Colors.deepPurple,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+        Text(
+          quote,
+          style: const TextStyle(
+            fontSize: 16,
+            color: Color(0xFF4B5563),
+            height: 1.6,
+            fontStyle: FontStyle.italic,
+          ),
+        ),
+        const SizedBox(height: 24),
+        Row(
+          children: [
+            Icon(star1, color: const Color(0xFFF59E0B)),
+            Icon(star2, color: const Color(0xFFF59E0B)),
+            Icon(star3, color: const Color(0xFFF59E0B)),
+            Icon(star4, color: const Color(0xFFF59E0B)),
+            Icon(star5, color: const Color(0xFFF59E0B)),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildPricing() {
+  return Container(
+    padding: const EdgeInsets.symmetric(vertical: 80, horizontal: 24),
+    decoration: const BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [Color(0xFFF9F5FF), Colors.white],
+      ),
+    ),
+    child: Column(
+      children: [
+        const Text(
+          'Simple, transparent pricing',
+          style: TextStyle(
+            fontSize: 42,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF111827),
+          ),
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'Start aligning your life today',
+          style: TextStyle(
+            fontSize: 18,
+            color: Color(0xFF4B5563),
+          ),
+        ),
+        const SizedBox(height: 60),
+
+        // Pricing cards
+        Wrap(
+          spacing: 24,
+          runSpacing: 24,
+          alignment: WrapAlignment.center,
+          children: [
+            _buildPricingCard(
+              'Free',
+              '\$0',
+              'Forever',
+              [
+                'Basic value tracking',
+                'Limited behavior logging',
+                'Weekly alignment reports',
+                'Community benchmarks',
+              ],
+              false,
+              const Color(0xFF9CA3AF),
+            ),
+            _buildPricingCard(
+              'Pro',
+              '\$4.99',
+              'per month',
+              [
+                'Unlimited values & tracking',
+                'Daily insights & notifications',
+                'Advanced visualizations',
+                'Custom alignment goals',
+                'Priority support',
+                'Beta feature access',
+              ],
+              true,
+              const Color(0xFF7C3AED),
+            ),
+            _buildPricingCard(
+              'Founder',
+              '\$49',
+              'one-time',
+              [
+                'All Pro features',
+                'Lifetime access',
+                'Exclusive founder badge',
+                'Early feature voting',
+                'Personalized onboarding',
+              ],
+              false,
+              const Color(0xFF0D9488),
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildPricingCard(
+  String title,
+  String price,
+  String period,
+  List<String> features,
+  bool highlighted,
+  Color color,
+) {
+  return Container(
+    width: 320,
+    padding: const EdgeInsets.all(32),
+    decoration: BoxDecoration(
+      color: highlighted ? color : Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      border: Border.all(
+        color: highlighted ? color : const Color(0xFFE5E7EB),
+        width: 2,
+      ),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withOpacity(0.05),
+          blurRadius: 20,
+          offset: const Offset(0, 10),
+        ),
+      ],
+    ),
+    child: Column(
+      children: [
+        Text(
+          title,
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: highlighted ? Colors.white : const Color(0xFF111827),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Text(
+          price,
+          style: TextStyle(
+            fontSize: 48,
+            fontWeight: FontWeight.bold,
+            color: highlighted ? Colors.white : const Color(0xFF111827),
+          ),
+        ),
+        Text(
+          period,
+          style: TextStyle(
+            fontSize: 16,
+            color: highlighted
+                ? Colors.white.withOpacity(0.8)
+                : const Color(0xFF6B7280),
+          ),
+        ),
+        const SizedBox(height: 32),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: features
+              .map((feature) => Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.check_circle,
+                          color: highlighted
+                              ? Colors.white
+                              : const Color(0xFF10B981),
+                          size: 20,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          feature,
+                          style: TextStyle(
+                            color: highlighted
+                                ? Colors.white
+                                : const Color(0xFF6B7280),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ))
+              .toList(),
+        ),
+        const SizedBox(height: 32),
+        ElevatedButton(
+          onPressed: () {},
+          style: ElevatedButton.styleFrom(
+            backgroundColor: highlighted ? Colors.white : color,
+            foregroundColor: highlighted ? color : Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          child: const SizedBox(
+            width: double.infinity,
+            child: Center(
+              child: Text(
+                'Get Started',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+Widget _buildSocialIcon(IconData icon) {
+  return Container(
+    width: 40,
+    height: 40,
+    decoration: BoxDecoration(
+      shape: BoxShape.circle,
+      color: const Color(0xFF1F2937),
+    ),
+    child: Center(
+      child: Icon(
+        icon,
+        size: 16,
+        color: const Color(0xFF9CA3AF),
+      ),
+    ),
+  );
 }
