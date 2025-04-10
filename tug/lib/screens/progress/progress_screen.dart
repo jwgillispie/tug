@@ -34,83 +34,99 @@ class _ProgressScreenState extends State<ProgressScreen> {
     _fetchActivityData();
   }
 
-Future<void> _fetchActivityData() async {
-  setState(() {
-    _isLoading = true;
-  });
+  Future<void> _fetchActivityData() async {
+    setState(() {
+      _isLoading = true;
+    });
 
-  try {
-    // Get current date and time
-    final DateTime currentDate = DateTime.now();
-    
-    // For the start date: Go back 7 days from now
-    final DateTime startDate = currentDate.subtract(const Duration(days: 7));
-    
-    // End date is today
-    final DateTime endDate = currentDate;
-
-    // Try to fetch activity statistics, but handle failure gracefully
-    Map<String, dynamic>? statistics;
     try {
-      statistics = await _activityService.getActivityStatistics(
-        startDate: startDate,
-        endDate: endDate,
-      );
-    } catch (e) {
-      debugPrint('Error fetching statistics: $e');
-      statistics = {
-        "total_activities": 0,
-        "total_duration_minutes": 0,
-        "total_duration_hours": 0.0,
-        "average_duration_minutes": 0.0
-      };
-    }
+      // Get current date and time
+      final DateTime currentDate = DateTime.now();
 
-    // Try to fetch the summary data, but handle failure gracefully
-    Map<String, dynamic> summary;
-    try {
-      summary = await _activityService.getActivitySummary(
-        startDate: startDate,
-        endDate: endDate,
-      );
-    } catch (e) {
-      debugPrint('Error fetching summary: $e');
-      summary = {"values": []};
-    }
+      // Use the timeframe selector to determine the start date
+      final DateTime startDate = getStartDate(_selectedTimeframe);
 
-    // Process the summary data into the format we need
-    final Map<String, Map<String, dynamic>> processedData = {};
-    
-    if (summary['values'] is List) {
-      for (final value in summary['values']) {
-        if (value is Map<String, dynamic> && value['name'] != null) {
-          processedData[value['name']] = {
-            'minutes': value['minutes'] ?? 0,
-            'community_avg': value['community_avg'] ?? 60,
-          };
+      // End date is today
+      final DateTime endDate = currentDate;
+
+      // Try to fetch activity statistics, but handle failure gracefully
+      Map<String, dynamic>? statistics;
+      try {
+        statistics = await _activityService.getActivityStatistics(
+          startDate: startDate,
+          endDate: endDate,
+        );
+      } catch (e) {
+        debugPrint('Error fetching statistics: $e');
+        statistics = {
+          "total_activities": 0,
+          "total_duration_minutes": 0,
+          "total_duration_hours": 0.0,
+          "average_duration_minutes": 0.0
+        };
+      }
+
+      // Try to fetch the summary data, but handle failure gracefully
+      Map<String, dynamic> summary;
+      try {
+        summary = await _activityService.getActivitySummary(
+          startDate: startDate,
+          endDate: endDate,
+        );
+      } catch (e) {
+        debugPrint('Error fetching summary: $e');
+        summary = {"values": []};
+      }
+
+      // Process the summary data into the format we need
+      final Map<String, Map<String, dynamic>> processedData = {};
+
+      if (summary['values'] is List) {
+        for (final value in summary['values']) {
+          if (value is Map<String, dynamic> && value['name'] != null) {
+            processedData[value['name']] = {
+              'minutes': value['minutes'] ?? 0,
+              'community_avg': value['community_avg'] ?? 60,
+            };
+          }
         }
       }
+
+      setState(() {
+        _activityData =
+            processedData; // Use the processed data instead of newData
+        _statistics = statistics;
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Error fetching activity data: $e');
+      setState(() {
+        _isLoading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content:
+              Text('Could not load activity data. Please try again later.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
     }
-
-    setState(() {
-      _activityData = processedData; // Use the processed data instead of newData
-      _statistics = statistics;
-      _isLoading = false;
-    });
-  } catch (e) {
-    debugPrint('Error fetching activity data: $e');
-    setState(() {
-      _isLoading = false;
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Could not load activity data. Please try again later.'),
-        backgroundColor: Colors.orange,
-      ),
-    );
   }
-}
+
+  DateTime getStartDate(String timeframe) {
+    final now = DateTime.now();
+    switch (timeframe) {
+      case 'Daily':
+        return DateTime(now.year, now.month, now.day); // Start of today
+      case 'Weekly':
+        return now.subtract(const Duration(days: 7));
+      case 'Monthly':
+        return now.subtract(const Duration(days: 30));
+      default:
+        return now.subtract(const Duration(days: 7));
+    }
+  }
 
   int _calculateTotalTime(List<dynamic> values) {
     int total = 0;
