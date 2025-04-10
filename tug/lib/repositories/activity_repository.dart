@@ -1,8 +1,6 @@
-// lib/repositories/activity_repository.dart
 import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/activity_model.dart';
 import '../services/api_service.dart';
 
@@ -15,13 +13,19 @@ abstract class IActivityRepository {
 
 class ActivityRepository implements IActivityRepository {
   final ApiService _apiService;
-  final Box<String> _localActivitiesBox;
+  late final SharedPreferences _prefs;
 
   ActivityRepository({
     ApiService? apiService,
-    Box<String>? localActivitiesBox,
-  })  : _apiService = apiService ?? ApiService(),
-        _localActivitiesBox = localActivitiesBox ?? Hive.box<String>('activities');
+    SharedPreferences? prefs,
+  }) : _apiService = apiService ?? ApiService() {
+    // Initialize SharedPreferences
+    _initializePrefs(prefs);
+  }
+
+  Future<void> _initializePrefs(SharedPreferences? prefs) async {
+    _prefs = prefs ?? await SharedPreferences.getInstance();
+  }
 
   @override
   Future<List<ActivityModel>> getActivities({
@@ -58,7 +62,7 @@ class ActivityRepository implements IActivityRepository {
             .toList();
 
         // Cache the activities locally
-        _cacheActivities(activities);
+        await _cacheActivities(activities);
 
         return activities;
       }
@@ -67,7 +71,11 @@ class ActivityRepository implements IActivityRepository {
     }
 
     // If API call fails or no data, return cached activities
-    return _getCachedActivities(valueId: valueId, startDate: startDate, endDate: endDate);
+    return await _getCachedActivities(
+      valueId: valueId,
+      startDate: startDate,
+      endDate: endDate,
+    );
   }
 
   @override
@@ -82,9 +90,9 @@ class ActivityRepository implements IActivityRepository {
         final newActivity = ActivityModel.fromJson(response);
 
         // Update cache
-        final cachedActivities = _getCachedActivities();
+        final cachedActivities = await _getCachedActivities();
         cachedActivities.add(newActivity);
-        _cacheActivities(cachedActivities);
+        await _cacheActivities(cachedActivities);
 
         return newActivity;
       }
@@ -101,9 +109,9 @@ class ActivityRepository implements IActivityRepository {
         );
 
         // Add to cache
-        final cachedActivities = _getCachedActivities();
+        final cachedActivities = await _getCachedActivities();
         cachedActivities.add(tempActivity);
-        _cacheActivities(cachedActivities);
+        await _cacheActivities(cachedActivities);
 
         return tempActivity;
       }
@@ -129,11 +137,11 @@ class ActivityRepository implements IActivityRepository {
         final updatedActivity = ActivityModel.fromJson(response);
 
         // Update cache
-        final cachedActivities = _getCachedActivities();
+        final cachedActivities = await _getCachedActivities();
         final index = cachedActivities.indexWhere((a) => a.id == activity.id);
         if (index != -1) {
           cachedActivities[index] = updatedActivity;
-          _cacheActivities(cachedActivities);
+          await _cacheActivities(cachedActivities);
         }
 
         return updatedActivity;
@@ -142,11 +150,11 @@ class ActivityRepository implements IActivityRepository {
       debugPrint('Error updating activity on API: $e');
 
       // Update locally if offline
-      final cachedActivities = _getCachedActivities();
+      final cachedActivities = await _getCachedActivities();
       final index = cachedActivities.indexWhere((a) => a.id == activity.id);
       if (index != -1) {
         cachedActivities[index] = activity;
-        _cacheActivities(cachedActivities);
+        await _cacheActivities(cachedActivities);
       }
     }
 
@@ -160,27 +168,28 @@ class ActivityRepository implements IActivityRepository {
       await _apiService.delete('/api/v1/activities/$id');
 
       // Remove from cache
-      final cachedActivities = _getCachedActivities();
+      final cachedActivities = await _getCachedActivities();
       cachedActivities.removeWhere((activity) => activity.id == id);
-      _cacheActivities(cachedActivities);
+      await _cacheActivities(cachedActivities);
     } catch (e) {
       debugPrint('Error deleting activity from API: $e');
 
       // Just remove locally if offline (will need to handle sync conflicts later)
-      final cachedActivities = _getCachedActivities();
+      final cachedActivities = await _getCachedActivities();
       cachedActivities.removeWhere((activity) => activity.id == id);
-      _cacheActivities(cachedActivities);
+      await _cacheActivities(cachedActivities);
     }
   }
 
   // Helper methods for local caching
-  List<ActivityModel> _getCachedActivities({
+  Future<List<ActivityModel>> _getCachedActivities({
     String? valueId,
     DateTime? startDate,
     DateTime? endDate,
-  }) {
+  }) async {
     try {
-      final cachedData = _localActivitiesBox.get('activities');
+      await _ensurePrefsInitialized();
+      final cachedData = _prefs.getString('activities');
       if (cachedData != null) {
         final List<dynamic> activitiesData = jsonDecode(cachedData);
         var activities = activitiesData
@@ -193,7 +202,9 @@ class ActivityRepository implements IActivityRepository {
         }
         
         if (startDate != null) {
-          activities = activities.where((a) => a.date.isAfter(startDate) || a.date.isAtSameMomentAs(startDate)).toList();
+          activities = activities.where((a) => 
+            a.date.isAfter(startDate) || a.date.isAtSameMomentAs(startDate)
+          ).toList();
         }
         
         if (endDate != null) {
@@ -211,12 +222,19 @@ class ActivityRepository implements IActivityRepository {
     return [];
   }
 
-  void _cacheActivities(List<ActivityModel> activities) {
+  Future<void> _cacheActivities(List<ActivityModel> activities) async {
     try {
+      await _ensurePrefsInitialized();
       final activitiesJson = activities.map((activity) => activity.toJson()).toList();
-      _localActivitiesBox.put('activities', jsonEncode(activitiesJson));
+      await _prefs.setString('activities', jsonEncode(activitiesJson));
     } catch (e) {
       debugPrint('Error caching activities: $e');
+    }
+  }
+
+  Future<void> _ensurePrefsInitialized() async {
+    if (_prefs == null) {
+      await _initializePrefs(null);
     }
   }
 }

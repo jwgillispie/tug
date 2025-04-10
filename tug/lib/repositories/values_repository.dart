@@ -1,10 +1,8 @@
-// lib/repositories/values_repository.dart
 import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
 import '../models/value_model.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 
 abstract class IValuesRepository {
   Future<List<ValueModel>> getValues();
@@ -15,13 +13,19 @@ abstract class IValuesRepository {
 
 class ValuesRepository implements IValuesRepository {
   final ApiService _apiService;
-  final Box<String> _localValuesBox;
+  late final SharedPreferences _prefs;
 
   ValuesRepository({
     ApiService? apiService,
-    Box<String>? localValuesBox,
-  })  : _apiService = apiService ?? ApiService(),
-        _localValuesBox = localValuesBox ?? Hive.box<String>('values');
+    SharedPreferences? prefs,
+  }) : _apiService = apiService ?? ApiService() {
+    // Initialize SharedPreferences
+    _initializePrefs(prefs);
+  }
+
+  Future<void> _initializePrefs(SharedPreferences? prefs) async {
+    _prefs = prefs ?? await SharedPreferences.getInstance();
+  }
 
   @override
   Future<List<ValueModel>> getValues() async {
@@ -60,9 +64,9 @@ class ValuesRepository implements IValuesRepository {
         final newValue = ValueModel.fromJson(response);
 
         // Update cache
-        final cachedValues = _getCachedValues();
+        final cachedValues = await _getCachedValues();
         cachedValues.add(newValue);
-        _cacheValues(cachedValues);
+        await _cacheValues(cachedValues);
 
         return newValue;
       }
@@ -76,9 +80,9 @@ class ValuesRepository implements IValuesRepository {
         final tempValue = value.copyWith(id: tempId);
 
         // Add to cache
-        final cachedValues = _getCachedValues();
+        final cachedValues = await _getCachedValues();
         cachedValues.add(tempValue);
-        _cacheValues(cachedValues);
+        await _cacheValues(cachedValues);
 
         return tempValue;
       }
@@ -104,11 +108,11 @@ class ValuesRepository implements IValuesRepository {
         final updatedValue = ValueModel.fromJson(response);
 
         // Update cache
-        final cachedValues = _getCachedValues();
+        final cachedValues = await _getCachedValues();
         final index = cachedValues.indexWhere((v) => v.id == value.id);
         if (index != -1) {
           cachedValues[index] = updatedValue;
-          _cacheValues(cachedValues);
+          await _cacheValues(cachedValues);
         }
 
         return updatedValue;
@@ -117,11 +121,11 @@ class ValuesRepository implements IValuesRepository {
       debugPrint('Error updating value on API: $e');
 
       // Update locally if offline
-      final cachedValues = _getCachedValues();
+      final cachedValues = await _getCachedValues();
       final index = cachedValues.indexWhere((v) => v.id == value.id);
       if (index != -1) {
         cachedValues[index] = value;
-        _cacheValues(cachedValues);
+        await _cacheValues(cachedValues);
       }
     }
 
@@ -140,26 +144,27 @@ class ValuesRepository implements IValuesRepository {
       await _apiService.delete(url);
 
       // Remove from cache
-      final cachedValues = _getCachedValues();
+      final cachedValues = await _getCachedValues();
       cachedValues.removeWhere((value) => value.id == id);
-      _cacheValues(cachedValues);
+      await _cacheValues(cachedValues);
     } catch (e) {
       debugPrint('Error deleting value from API: $e');
 
       // Just mark as inactive locally if offline
-      final cachedValues = _getCachedValues();
+      final cachedValues = await _getCachedValues();
       final index = cachedValues.indexWhere((v) => v.id == id);
       if (index != -1) {
         cachedValues[index] = cachedValues[index].copyWith(active: false);
-        _cacheValues(cachedValues);
+        await _cacheValues(cachedValues);
       }
     }
   }
 
   // Helper methods for local caching
-  List<ValueModel> _getCachedValues() {
+  Future<List<ValueModel>> _getCachedValues() async {
     try {
-      final cachedData = _localValuesBox.get('values');
+      await _ensurePrefsInitialized();
+      final cachedData = _prefs.getString('values');
       if (cachedData != null) {
         final List<dynamic> valuesData = jsonDecode(cachedData);
         return valuesData
@@ -172,12 +177,19 @@ class ValuesRepository implements IValuesRepository {
     return [];
   }
 
-  void _cacheValues(List<ValueModel> values) {
+  Future<void> _cacheValues(List<ValueModel> values) async {
     try {
+      await _ensurePrefsInitialized();
       final valuesJson = values.map((value) => value.toJson()).toList();
-      _localValuesBox.put('values', jsonEncode(valuesJson));
+      await _prefs.setString('values', jsonEncode(valuesJson));
     } catch (e) {
       debugPrint('Error caching values: $e');
+    }
+  }
+
+  Future<void> _ensurePrefsInitialized() async {
+    if (_prefs == null) {
+      await _initializePrefs(null);
     }
   }
 }

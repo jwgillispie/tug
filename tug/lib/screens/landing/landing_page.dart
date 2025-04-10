@@ -133,8 +133,10 @@ class _TugLandingPageState extends State<TugLandingPage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     TextField(
+                      
                       controller: _emailController,
                       decoration: InputDecoration(
+                        labelStyle: TextStyle(color: Colors.black),
                         hintText: 'Enter your email',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
@@ -528,9 +530,7 @@ class _TugLandingPageState extends State<TugLandingPage> {
           // Contact info
           Column(
             children: [
-              _buildContactItem(Icons.email, 'Email', 'contact@tugapp.com'),
-              const SizedBox(height: 8),
-              _buildContactItem(Icons.chat_bubble_outline, 'Twitter', '@tugapp'),
+              _buildContactItem(Icons.email, 'Email', 'jordangillispie@outlook.com'),
               // Add more contact methods as needed
             ],
           ),
