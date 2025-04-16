@@ -6,9 +6,11 @@
 .pub-cache/
 .pub/
 build/
-ios/Pods/
-lib/firebase_options.dart
+ios/Pods/firebase_options.dart
 *.g.dart
+*./lib/firebase_options.dart
+lib/firebase_options.dart
+firebase.json
 
 # Environment files
 .env
@@ -17,8 +19,8 @@ lib/firebase_options.dart
 
 # Firebase
 google-services.json
-GoogleService-Info.plist
-firebase-credentials.json
+*/.plist
+*/firebase-credentials.json
 
 # IDEs and editors
 .idea/
