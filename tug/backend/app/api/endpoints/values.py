@@ -127,6 +127,8 @@ async def update_value(
         )
 
 @router.delete("/{value_id}")
+@router.delete("/{value_id}")
+
 async def delete_value(
     value_id: str,
     current_user: User = Depends(get_current_user)

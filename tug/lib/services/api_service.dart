@@ -16,18 +16,21 @@ class ApiService {
               receiveTimeout: const Duration(seconds: 10),
               // Don't throw exceptions automatically for response status
               validateStatus: (status) => true,
-              followRedirects: true, // Accept all status codes for logging
+              followRedirects: true,
             ));
 
-// Helper method to ensure trailing slash in URL
-  String ensureTrailingSlash(String path) {
-    // Add trailing slash if not present
-    if (path.endsWith('sync') || path.endsWith('activities')) {
-      return path;
+  // Helper method to ensure consistent URL format
+  String _normalizeUrl(String path) {
+    // Remove trailing slash if present
+    if (path.endsWith('/')) {
+      path = path.substring(0, path.length - 1);
     }
-    if (!path.endsWith('/')) {
-      path = path + '/';
+
+    // Ensure leading slash
+    if (!path.startsWith('/')) {
+      path = '/' + path;
     }
+
     return path;
   }
 
@@ -58,8 +61,8 @@ class ApiService {
         return false;
       }
 
-      // Add trailing slash
-      String path = ensureTrailingSlash('/api/v1/users/sync');
+      // Use the exact path without modifying it
+      String path = '/api/v1/users/sync';
 
       // Debug the full API URL we're trying to reach
       final fullUrl = '${_dio.options.baseUrl}$path';
@@ -109,13 +112,16 @@ class ApiService {
   // Generic GET request with proper error handling
   Future<dynamic> get(String path,
       {Map<String, dynamic>? queryParameters}) async {
-    // Add trailing slash
-    path = ensureTrailingSlash(path);
+    // Normalize path
+    path = _normalizeUrl(path);
 
     try {
       await _setAuthHeader();
       debugPrint('GET request to: ${_dio.options.baseUrl}$path');
-      final response = await _dio.get(path, queryParameters: queryParameters);
+
+      // For GET requests, always include trailing slash to avoid redirects
+      final response =
+          await _dio.get('$path/', queryParameters: queryParameters);
 
       // Check status code before returning data
       if (response.statusCode! >= 200 && response.statusCode! < 300) {
@@ -140,15 +146,15 @@ class ApiService {
 
   // Generic POST request with proper error handling
   Future<dynamic> post(String path, {dynamic data}) async {
-    // Add trailing slash
-    path = ensureTrailingSlash(path);
+    // Normalize path
+    path = _normalizeUrl(path);
 
     try {
       await _setAuthHeader();
-      final fullUrl = '${_dio.options.baseUrl}$path';
+      final fullUrl = '${_dio.options.baseUrl}$path/';
       debugPrint('POST request to: $fullUrl');
 
-      final response = await _dio.post(path, data: data);
+      final response = await _dio.post('$path/', data: data);
 
       // Log the response regardless of status
       debugPrint('POST response status: ${response.statusCode}');
@@ -175,13 +181,13 @@ class ApiService {
 
   // Generic PUT request with proper error handling
   Future<dynamic> put(String path, {dynamic data}) async {
-    // Add trailing slash
-    path = ensureTrailingSlash(path);
+    // Normalize path
+    path = _normalizeUrl(path);
 
     try {
       await _setAuthHeader();
-      debugPrint('PUT request to: ${_dio.options.baseUrl}$path');
-      final response = await _dio.put(path, data: data);
+      debugPrint('PUT request to: ${_dio.options.baseUrl}$path/');
+      final response = await _dio.put('$path/', data: data);
 
       // Check status code before returning data
       if (response.statusCode! >= 200 && response.statusCode! < 300) {
@@ -204,13 +210,13 @@ class ApiService {
 
   // Generic PATCH request with proper error handling
   Future<dynamic> patch(String path, {dynamic data}) async {
-    // Add trailing slash
-    path = ensureTrailingSlash(path);
+    // Normalize path
+    path = _normalizeUrl(path);
 
     try {
       await _setAuthHeader();
-      debugPrint('PATCH request to: ${_dio.options.baseUrl}$path');
-      final response = await _dio.patch(path, data: data);
+      debugPrint('PATCH request to: ${_dio.options.baseUrl}$path/');
+      final response = await _dio.patch('$path/', data: data);
 
       // Check status code before returning data
       if (response.statusCode! >= 200 && response.statusCode! < 300) {
@@ -233,13 +239,22 @@ class ApiService {
 
   // Generic DELETE request with proper error handling
   Future<dynamic> delete(String path) async {
-    // Add trailing slash
-    path = ensureTrailingSlash(path);
+    // Normalize path
+    path = _normalizeUrl(path);
 
     try {
       await _setAuthHeader();
+      if (path.endsWith('/')) {
+        path = path.substring(0, path.length - 1);
+      }
+
       debugPrint('DELETE request to: ${_dio.options.baseUrl}$path');
-      final response = await _dio.delete(path);
+
+      // For DELETE requests, always include trailing slash to avoid redirects
+      final requestUrl = '$path/';
+      debugPrint('DELETE request to: ${_dio.options.baseUrl}$requestUrl');
+
+      final response = await _dio.delete(requestUrl);
 
       // Check status code before returning data
       if (response.statusCode! >= 200 && response.statusCode! < 300) {
@@ -266,39 +281,4 @@ class ApiService {
     final apiError = ApiError.fromException(e);
     throw apiError;
   }
-  // Error handling for Dio errors
-  // void _handleDioError(DioException e) {
-  //   if (e.response != null) {
-  //     final statusCode = e.response!.statusCode;
-  //     final data = e.response!.data;
-
-  //     // Handle specific status codes
-  //     switch (statusCode) {
-  //       case 307: // Handle redirect explicitly
-  //         throw Exception(
-  //             'Request failed with status: 307 (Temporary Redirect). Please check URL format.');
-  //       case 401:
-  //         throw Exception('Authentication required. Please log in again.');
-  //       case 403:
-  //         throw Exception('You do not have permission to perform this action.');
-  //       case 404:
-  //         throw Exception('Resource not found. URL: ${e.requestOptions.uri}');
-  //       case 500:
-  //         throw Exception('Server error. Please try again later.');
-  //       default:
-  //         if (data is Map && data.containsKey('detail')) {
-  //           throw Exception(data['detail']);
-  //         } else {
-  //           throw Exception('Request failed with status: $statusCode');
-  //         }
-  //     }
-  //   } else if (e.type == DioExceptionType.connectionTimeout ||
-  //       e.type == DioExceptionType.sendTimeout ||
-  //       e.type == DioExceptionType.receiveTimeout) {
-  //     throw Exception(
-  //         'Connection timeout. Please check your internet connection.');
-  //   } else {
-  //     throw Exception('Network error: ${e.message}');
-  //   }
-  // }
 }

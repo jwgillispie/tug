@@ -198,6 +198,8 @@ async def update_activity(
         )
 
 @router.delete("/{activity_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{activity_id}/", status_code=status.HTTP_204_NO_CONTENT)
+
 async def delete_activity(
     activity_id: str,
     current_user: User = Depends(get_current_user)
