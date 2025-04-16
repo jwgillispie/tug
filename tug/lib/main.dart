@@ -26,7 +26,6 @@ import 'utils/theme/theme.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/signup_screen.dart';
 import 'screens/values/values_input_screen.dart';
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -38,6 +37,7 @@ Future<void> main() async {
       await LocalStorage.initialize();
     }
 
+    // Initialize Firebase with the correct options
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
@@ -56,7 +56,6 @@ Future<void> main() async {
     runApp(ErrorApp(error: e.toString()));
   }
 }
-
 class ErrorApp extends StatelessWidget {
   final String error;
 
