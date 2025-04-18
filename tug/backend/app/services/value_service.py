@@ -56,88 +56,79 @@ class ValueService:
 
     @staticmethod
     async def get_value(user: User, value_id: str) -> Value:
+        """Get a specific value by ID"""
         try:
+            # Convert string ID to ObjectId
             object_id = ObjectId(value_id)
-        except:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid value ID format"
-            )
-
-        value = await Value.find_one(
-            Value.id == object_id,
-            Value.user_id == user.id
-        )
-        
-        if not value:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Value not found"
-            )
-        return value
-
-    @staticmethod
-    async def update_value(user: User, value_id: str, value_data: ValueUpdate) -> Value:
-        """Update a specific value"""
-        value = await Value.find_one(
-            Value.id == value_id,
-            Value.user_id == str(user.id)
-        )
-        
-        if not value:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Value not found"
-            )
-        
-        # Update value with provided data
-        update_data = value_data.model_dump(exclude_unset=True)
-        
-        if update_data:
-            for field, field_value in update_data.items():
-                setattr(value, field, field_value)
             
-            value.updated_at = datetime.utcnow()
-            await value.save()
-        
-        return value
-
-    @staticmethod
-    async def delete_value(user: User, value_id: str) -> None:
-        """Delete (deactivate) a value"""
-        try:
-            # Try to find the value first
             value = await Value.find_one(
-                Value.id == value_id,
+                Value.id == object_id,
                 Value.user_id == str(user.id)
             )
             
             if not value:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Value not found"
+                    detail="Value not found"
+                )
+            return value
+        except Exception as e:
+            # Log the error
+            print(f"Error in get_value: {e}")
+            # Re-raise as HTTP exception
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Value not found"
+            )
+
+    @staticmethod
+    async def update_value(user: User, value_id: str, value_data: ValueUpdate) -> Value:
+        """Update a specific value"""
+        try:
+            # Convert string ID to ObjectId
+            object_id = ObjectId(value_id)
+            
+            value = await Value.find_one(
+                Value.id == object_id,
+                Value.user_id == str(user.id)
+            )
+            
+            if not value:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Value not found"
                 )
             
-            # Soft delete (deactivate)
-            value.active = False
-            value.updated_at = datetime.utcnow()
-            await value.save()
+            # Update value with provided data
+            update_data = value_data.model_dump(exclude_unset=True)
             
-            return None
+            if update_data:
+                for field, field_value in update_data.items():
+                    setattr(value, field, field_value)
+                
+                value.updated_at = datetime.utcnow()
+                await value.save()
+            
+            return value
         except Exception as e:
-            # Log the error for debugging
-            print(f"Error in delete_value: {e}")
-            # Re-raise to be handled by the caller
+            # Log the error
+            print(f"Error in update_value: {e}")
             raise
     
     @staticmethod
     async def check_value_exists(user: User, value_id: str) -> bool:
         """Check if a value exists and belongs to the user"""
-        value = await Value.find_one(
-            Value.id == value_id,
-            Value.user_id == str(user.id)
-        )
-        return value is not None
+        try:
+            # Convert string ID to ObjectId
+            object_id = ObjectId(value_id)
+            
+            value = await Value.find_one(
+                Value.id == object_id,
+                Value.user_id == str(user.id)
+            )
+            return value is not None
+        except:
+            return False
     
     @staticmethod
     async def get_value_counts_by_user(user: User) -> dict:

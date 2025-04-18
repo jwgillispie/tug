@@ -217,7 +217,7 @@ async def delete_activity(
     # Find the activity with proper ObjectId conversion
     activity = await Activity.find_one(
         Activity.id == object_id,
-        Activity.user_id == current_user.id
+        Activity.user_id == str(current_user.id)
     )
     
     if not activity:
