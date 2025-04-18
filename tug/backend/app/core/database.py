@@ -17,6 +17,7 @@ async def init_db():
     """Initialize database connection and register models"""
     # Log the MongoDB URL we're trying to connect to (without credentials)
     connection_url = settings.MONGODB_URL
+    # Safely log the URL by removing credentials
     safe_url = connection_url.split('@')[-1] if '@' in connection_url else connection_url
     logger.info(f"Connecting to MongoDB: {safe_url}")
     
@@ -25,9 +26,9 @@ async def init_db():
     try:
         # Test the connection
         await client.admin.command('ping')
-        logger.info("Successfully connected to MongoDB")
+        logger.info("Successfully connected to MongoDB Atlas")
     except Exception as e:
-        logger.error(f"Failed to connect to MongoDB: {e}")
+        logger.error(f"Failed to connect to MongoDB Atlas: {e}")
         raise
     
     await init_beanie(
@@ -43,7 +44,6 @@ async def init_db():
     Database.client = client
     
     return client
-
 async def close_db():
     """Close database connection"""
     if Database.client:

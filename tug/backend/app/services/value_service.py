@@ -1,7 +1,9 @@
 # app/services/value_service.py
 from datetime import datetime
 from typing import List, Optional
+from bson import ObjectId
 from fastapi import HTTPException, status
+
 
 from ..models.user import User
 from ..models.value import Value
@@ -53,11 +55,18 @@ class ValueService:
         return values
 
     @staticmethod
-    async def get_value(user: User, value_id: str) -> Optional[Value]:
-        """Get a specific value by ID"""
+    async def get_value(user: User, value_id: str) -> Value:
+        try:
+            object_id = ObjectId(value_id)
+        except:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid value ID format"
+            )
+
         value = await Value.find_one(
-            Value.id == value_id,
-            Value.user_id == str(user.id)
+            Value.id == object_id,
+            Value.user_id == user.id
         )
         
         if not value:
@@ -65,7 +74,6 @@ class ValueService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Value not found"
             )
-        
         return value
 
     @staticmethod

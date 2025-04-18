@@ -146,22 +146,14 @@ class ActivityService:
 
     @staticmethod
     async def delete_activity(user: User, activity_id: str) -> None:
-        """Delete an activity"""
-        # Find activity
-        activity = await Activity.find_one(
-            Activity.id == activity_id,
-            Activity.user_id == str(user.id)
-        )
-        
+        """Delete an activity after validating ownership"""
+        activity = await Activity.get_by_id(activity_id, user.id)
         if not activity:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Activity not found"
             )
-        
-        # Delete activity
         await activity.delete()
-        return None
 
     @staticmethod
     async def get_activity_statistics(

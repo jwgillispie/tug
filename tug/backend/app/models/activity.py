@@ -22,7 +22,17 @@ class Activity(Document):
             [("value_id", 1), ("date", -1)],
             [("user_id", 1), ("value_id", 1), ("date", -1)]
         ]
-
+    @classmethod
+    async def get_by_id(cls, id: str, user_id: str):
+        try:
+            object_id = ObjectId(id)
+        except:
+            return None
+            
+        return await cls.find_one(
+            cls.id == object_id,
+            cls.user_id == user_id
+        )
     @property
     def duration_hours(self) -> float:
         """Convert minutes to hours"""

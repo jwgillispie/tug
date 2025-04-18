@@ -251,7 +251,7 @@ class ApiService {
       debugPrint('DELETE request to: ${_dio.options.baseUrl}$path');
 
       // For DELETE requests, always include trailing slash to avoid redirects
-      final requestUrl = '$path/';
+      var requestUrl = path;
       debugPrint('DELETE request to: ${_dio.options.baseUrl}$requestUrl');
 
       final response = await _dio.delete(requestUrl);

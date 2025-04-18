@@ -1,4 +1,5 @@
 # app/api/endpoints/activities.py
+from bson import ObjectId
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from typing import Any, Dict, List, Optional
 from datetime import datetime, timedelta
@@ -198,23 +199,38 @@ async def update_activity(
         )
 
 @router.delete("/{activity_id}", status_code=status.HTTP_204_NO_CONTENT)
-@router.delete("/{activity_id}/", status_code=status.HTTP_204_NO_CONTENT)
-
 async def delete_activity(
     activity_id: str,
     current_user: User = Depends(get_current_user)
 ):
-    """Delete an activity"""
     try:
-        logger.info(f"Deleting activity {activity_id} for user: {current_user.id}")
-        
-        await ActivityService.delete_activity(current_user, activity_id)
-        
-        logger.info(f"Activity deleted successfully")
+        # Convert string ID to ObjectId
+        object_id = ObjectId(activity_id)
+    except:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid activity ID format"
+        )
+
+    logger.info(f"Deleting activity {activity_id} for user: {current_user.id}")
+    
+    # Find the activity with proper ObjectId conversion
+    activity = await Activity.find_one(
+        Activity.id == object_id,
+        Activity.user_id == current_user.id
+    )
+    
+    if not activity:
+        logger.warning(f"Activity {activity_id} not found for user {current_user.id}")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Activity not found"
+        )
+    
+    try:
+        await activity.delete()
+        logger.info(f"Activity {activity_id} deleted successfully")
         return None
-    except HTTPException:
-        # Re-raise HTTP exceptions
-        raise
     except Exception as e:
         logger.error(f"Error deleting activity: {e}", exc_info=True)
         raise HTTPException(

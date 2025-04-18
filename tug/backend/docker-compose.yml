@@ -6,24 +6,26 @@ services:
     container_name: tug-api
     ports:
       - "8000:8000"
+    env_file:
+      - .env
+    
     environment:
-      - MONGODB_URL=mongodb://mongo:27017
       - MONGODB_DB_NAME=tug
       - FIREBASE_CREDENTIALS_PATH=/app/firebase-credentials.json
     volumes:
       - .:/app
       # Copy the Firebase credentials to a more accessible location
       - ./firebase-credentials.json:/app/firebase-credentials.json:ro
-    depends_on:
-      - mongo
+    # depends_on:
+    #   - mongo
 
-  mongo:
-    image: mongo:6
-    container_name: tug-mongo
-    ports:
-      - "27017:27017"
-    volumes:
-      - tug_mongo_data:/data/db
+  # mongo:
+  #   image: mongo:6
+  #   container_name: tug-mongo
+  #   ports:
+  #     - "27017:27017"
+  #   volumes:
+  #     - tug_mongo_data:/data/db
 
 volumes:
   tug_mongo_data:

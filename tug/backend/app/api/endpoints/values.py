@@ -5,6 +5,8 @@ from datetime import datetime
 import logging
 from bson import ObjectId
 
+from ...models.activity import Activity
+
 from ...models.user import User
 from ...schemas.value import ValueCreate, ValueUpdate
 from ...services.value_service import ValueService
@@ -126,47 +128,34 @@ async def update_value(
             detail=f"Error updating value: {str(e)}"
         )
 
-@router.delete("/{value_id}")
-@router.delete("/{value_id}")
-
+@router.delete("/{value_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_value(
     value_id: str,
     current_user: User = Depends(get_current_user)
 ):
-    """Delete (deactivate) a value"""
+    logger.info(f"Deleting value {value_id} for user: {current_user.id}")
+    
     try:
-        logger.info(f"Deleting value {value_id} for user: {current_user.id}")
+        # First delete all activities associated with this value
+        await Activity.find(
+            Activity.value_id == value_id,
+            Activity.user_id == current_user.id
+        ).delete()
         
-        # First check if the value exists
-        try:
-            value = await ValueService.get_value(current_user, value_id)
-            if not value:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Value with ID {value_id} not found"
-                )
-        except Exception as e:
-            logger.error(f"Error finding value to delete: {e}", exc_info=True)
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Value with ID {value_id} not found"
-            )
+        # Then delete the value
+        value = await ValueService.get_value(current_user, value_id)
+        await value.delete()
         
-        # Now delete it
-        await ValueService.delete_value(current_user, value_id)
-        logger.info(f"Value deleted successfully: {value_id}")
-        
-        # Return success response
-        return {"status": "success", "message": f"Value {value_id} deleted successfully"}
+        logger.info(f"Value {value_id} deleted successfully")
+        return None
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Error deleting value: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error deleting value: {str(e)}"
+            detail=f"Failed to delete value: {str(e)}"
         )
-        
         
 @router.get("/stats/count")
 async def get_value_counts(
