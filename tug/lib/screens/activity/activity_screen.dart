@@ -11,10 +11,11 @@ import 'package:tug/models/value_model.dart';
 import 'package:tug/utils/theme/colors.dart';
 import 'package:tug/utils/theme/buttons.dart';
 import 'package:tug/widgets/activity/activity_form.dart';
+import 'package:tug/widgets/activity/edit_activity_dialog.dart';
 
 class ActivityScreen extends StatefulWidget {
   final bool showAddForm;
-  
+
   const ActivityScreen({
     Key? key,
     this.showAddForm = false,
@@ -36,7 +37,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
     // Load activities and values when screen is initialized
     context.read<ActivitiesBloc>().add(const LoadActivities());
     context.read<ValuesBloc>().add(LoadValues());
-    
+
     // Show add activity form if flagged
     if (widget.showAddForm) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -194,13 +195,20 @@ class _ActivityScreenState extends State<ActivityScreen> {
     );
   }
 
-  void _showEditActivitySheet(ActivityModel activity) {
-    // Implementation will be similar to _showAddActivitySheet but with pre-filled values
-    // For now we'll just show a placeholder message
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Edit functionality coming soon')),
-    );
-  }
+    void _showEditActivitySheet(ActivityModel activity) {
+      // Show the edit activity dialog
+      showDialog(
+        context: context,
+        builder: (context) => EditActivityDialog(
+          activity: activity,
+          onSave: (updatedActivity) {
+            // Update the activity using the bloc
+            context.read<ActivitiesBloc>().add(UpdateActivity(updatedActivity));
+          },
+        ),
+      );
+    }
+  
 
   void _showDeleteConfirmation(ActivityModel activity) {
     showDialog(
@@ -272,10 +280,10 @@ class _ActivityScreenState extends State<ActivityScreen> {
             icon: const Icon(Icons.refresh),
             onPressed: () {
               context.read<ActivitiesBloc>().add(const LoadActivities(
-                valueId: null,
-                startDate: null,
-                endDate: null,
-              ));
+                    valueId: null,
+                    startDate: null,
+                    endDate: null,
+                  ));
             },
           ),
         ],
@@ -284,7 +292,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
         children: [
           // Activity Summary Card
           _buildActivitySummary(),
-          
+
           // Filters
           if (_showFilters) _buildFilters(),
 
@@ -492,7 +500,8 @@ class _ActivityScreenState extends State<ActivityScreen> {
                                       vertical: 2,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: TugColors.primaryPurple.withOpacity(0.1),
+                                      color: TugColors.primaryPurple
+                                          .withOpacity(0.1),
                                       borderRadius: BorderRadius.circular(16),
                                     ),
                                     child: Text(
@@ -539,7 +548,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
         builder: (context, state) {
           if (state is ActivitiesLoaded) {
             final activities = state.activities;
-            
+
             if (activities.isEmpty) {
               return const Center(
                 child: Text(
@@ -548,11 +557,11 @@ class _ActivityScreenState extends State<ActivityScreen> {
                 ),
               );
             }
-            
+
             // Calculate total time
             final totalTime = activities.fold<int>(
-              0, (sum, activity) => sum + activity.duration);
-            
+                0, (sum, activity) => sum + activity.duration);
+
             // Calculate activities per value
             final valuesMap = <String, int>{};
             for (final activity in activities) {
@@ -562,7 +571,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
                 ifAbsent: () => 1,
               );
             }
-            
+
             return Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -584,7 +593,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
               ],
             );
           }
-          
+
           return const Center(
             child: Text('Loading summary...'),
           );
@@ -592,7 +601,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
       ),
     );
   }
-  
+
   Widget _buildSummaryItem({
     required String title,
     required String value,

@@ -166,7 +166,9 @@ async def get_activity(
             detail=f"Failed to get activity: {str(e)}"
         )
 
-@router.patch("/{activity_id}", response_model=ActivityResponse)
+# Fix for PATCH endpoint in app/api/endpoints/activities.py
+
+@router.patch("/{activity_id}")
 async def update_activity(
     activity_id: str,
     activity_update: ActivityUpdate,
@@ -176,26 +178,55 @@ async def update_activity(
     try:
         logger.info(f"Updating activity {activity_id} for user: {current_user.id}")
         
-        updated_activity = await ActivityService.update_activity(
-            current_user,
-            activity_id,
-            activity_update
+        # Log the value_update content for debugging
+        update_data = activity_update.model_dump(exclude_unset=True)
+        logger.info(f"Update data received: {update_data}")
+        
+        # First, try to convert the string ID to ObjectId
+        try:
+            object_id = ObjectId(activity_id)
+        except:
+            logger.error(f"Invalid ObjectId format: {activity_id}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid activity ID format"
+            )
+            
+        # Verify the activity exists and belongs to this user
+        activity = await Activity.find_one(
+            Activity.id == object_id,
+            Activity.user_id == str(current_user.id)
         )
         
-        # Convert to dictionary and encode MongoDB types
-        activity_dict = updated_activity.dict()
+        if not activity:
+            logger.warning(f"Activity not found: {activity_id} for user {current_user.id}")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Activity not found"
+            )
+        
+        # Update fields from request data
+        for field, value in update_data.items():
+            setattr(activity, field, value)
+        
+        # Save the updated activity
+        await activity.save()
+        logger.info(f"Activity updated successfully: {activity_id}")
+        
+        # Convert the activity to a dictionary and serialize MongoDB types
+        activity_dict = activity.dict()
         activity_dict = MongoJSONEncoder.encode_mongo_data(activity_dict)
         
-        logger.info(f"Activity updated successfully")
         return activity_dict
-    except HTTPException:
-        # Re-raise HTTP exceptions
+    except HTTPException as he:
+        # Explicitly log and re-raise HTTP exceptions
+        logger.error(f"HTTP exception in update_activity: {he.detail} (status: {he.status_code})")
         raise
     except Exception as e:
         logger.error(f"Error updating activity: {e}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to update activity: {str(e)}"
+            detail=f"Error updating activity: {str(e)}"
         )
 
 @router.delete("/{activity_id}", status_code=status.HTTP_204_NO_CONTENT)

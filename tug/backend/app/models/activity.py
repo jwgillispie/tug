@@ -2,6 +2,8 @@
 from beanie import Document, Indexed, Link
 from typing import Optional
 from datetime import datetime, timedelta
+from bson import ObjectId
+from fastapi import logger
 from pydantic import Field
 
 class Activity(Document):
@@ -22,17 +24,29 @@ class Activity(Document):
             [("value_id", 1), ("date", -1)],
             [("user_id", 1), ("value_id", 1), ("date", -1)]
         ]
+# Add this method to the Activity model in app/models/activity.py if it doesn't exist or update it
+
     @classmethod
     async def get_by_id(cls, id: str, user_id: str):
+        """Get activity by ID with proper ObjectId conversion"""
         try:
-            object_id = ObjectId(id)
-        except:
+            # Convert string ID to ObjectId if it's not already
+            if not isinstance(id, ObjectId):
+                try:
+                    object_id = ObjectId(id)
+                except:
+                    return None
+            else:
+                object_id = id
+                
+            # Find the activity by ID and user_id
+            return await cls.find_one(
+                cls.id == object_id,
+                cls.user_id == user_id
+            )
+        except Exception as e:
+            logger.error(f"Error in get_by_id: {e}")
             return None
-            
-        return await cls.find_one(
-            cls.id == object_id,
-            cls.user_id == user_id
-        )
     @property
     def duration_hours(self) -> float:
         """Convert minutes to hours"""
