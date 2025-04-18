@@ -11,21 +11,10 @@ from ...models.user import User
 from ...schemas.value import ValueCreate, ValueUpdate
 from ...services.value_service import ValueService
 from ...core.auth import get_current_user
+from ...utils.json_utils import MongoJSONEncoder
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
-
-# Helper function to convert MongoDB data to JSON-serializable format
-def serialize_mongo_doc(obj: Any) -> Any:
-    if isinstance(obj, ObjectId):
-        return str(obj)
-    elif isinstance(obj, datetime):
-        return obj.isoformat()
-    elif isinstance(obj, dict):
-        return {k: serialize_mongo_doc(v) for k, v in obj.items()}
-    elif isinstance(obj, list):
-        return [serialize_mongo_doc(item) for item in obj]
-    return obj
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_value(
@@ -40,7 +29,7 @@ async def create_value(
         
         # Convert the value to a dictionary and serialize MongoDB types
         value_dict = new_value.dict()
-        value_dict = serialize_mongo_doc(value_dict)
+        value_dict = MongoJSONEncoder.encode_mongo_data(value_dict)
         
         return value_dict
     except HTTPException:
@@ -66,7 +55,7 @@ async def get_values(
         values_list = []
         for value in values:
             value_dict = value.dict()
-            value_dict = serialize_mongo_doc(value_dict)
+            value_dict = MongoJSONEncoder.encode_mongo_data(value_dict)
             values_list.append(value_dict)
         
         logger.info(f"Retrieved {len(values)} values")
@@ -90,7 +79,7 @@ async def get_value(
         
         # Convert the value to a dictionary and serialize MongoDB types
         value_dict = value.dict()
-        value_dict = serialize_mongo_doc(value_dict)
+        value_dict = MongoJSONEncoder.encode_mongo_data(value_dict)
         
         return value_dict
     except HTTPException:
@@ -111,15 +100,23 @@ async def update_value(
     """Update a specific value"""
     try:
         logger.info(f"Updating value {value_id} for user: {current_user.id}")
+        
+        # Log the value_update content for debugging
+        update_data = value_update.model_dump(exclude_unset=True)
+        logger.info(f"Update data received: {update_data}")
+        
         updated_value = await ValueService.update_value(current_user, value_id, value_update)
+        
         logger.info(f"Value updated successfully: {value_id}")
         
         # Convert the value to a dictionary and serialize MongoDB types
         value_dict = updated_value.dict()
-        value_dict = serialize_mongo_doc(value_dict)
+        value_dict = MongoJSONEncoder.encode_mongo_data(value_dict)
         
         return value_dict
-    except HTTPException:
+    except HTTPException as he:
+        # Explicitly log and re-raise HTTP exceptions
+        logger.error(f"HTTP exception in update_value: {he.detail} (status: {he.status_code})")
         raise
     except Exception as e:
         logger.error(f"Error updating value: {e}", exc_info=True)
@@ -167,19 +164,4 @@ async def delete_value(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to delete value: {str(e)}"
-        )
-        
-@router.get("/stats/count")
-async def get_value_counts(
-    current_user: User = Depends(get_current_user)
-):
-    """Get counts of values for the current user"""
-    try:
-        counts = await ValueService.get_value_counts_by_user(current_user)
-        return counts
-    except Exception as e:
-        logger.error(f"Error getting value counts: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error getting value counts: {str(e)}"
         )

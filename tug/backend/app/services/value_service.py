@@ -3,12 +3,13 @@ from datetime import datetime
 from typing import List, Optional
 from bson import ObjectId
 from fastapi import HTTPException, status
-
+import logging
 
 from ..models.user import User
 from ..models.value import Value
 from ..schemas.value import ValueCreate, ValueUpdate, ValueResponse
 
+logger = logging.getLogger(__name__)
 
 class ValueService:
     """Service for handling value-related operations"""
@@ -58,8 +59,10 @@ class ValueService:
     async def get_value(user: User, value_id: str) -> Value:
         """Get a specific value by ID"""
         try:
+            logger.info(f"Getting value with ID: {value_id}")
             # Convert string ID to ObjectId
             object_id = ObjectId(value_id)
+            logger.info(f"Converted to ObjectId: {object_id}")
             
             value = await Value.find_one(
                 Value.id == object_id,
@@ -67,6 +70,7 @@ class ValueService:
             )
             
             if not value:
+                logger.warning(f"Value not found: {value_id} for user {user.id}")
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Value not found"
@@ -74,19 +78,24 @@ class ValueService:
             return value
         except Exception as e:
             # Log the error
-            print(f"Error in get_value: {e}")
+            logger.error(f"Error in get_value: {e}")
             # Re-raise as HTTP exception
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Value not found"
+                detail=f"Value not found: {str(e)}"
             )
 
     @staticmethod
     async def update_value(user: User, value_id: str, value_data: ValueUpdate) -> Value:
         """Update a specific value"""
         try:
+            logger.info(f"Updating value with ID: {value_id}")
             # Convert string ID to ObjectId
             object_id = ObjectId(value_id)
+            logger.info(f"Converted to ObjectId: {object_id}")
+            
+            # Explicitly log the query we're about to make
+            logger.info(f"Looking for value with id={object_id} and user_id={str(user.id)}")
             
             value = await Value.find_one(
                 Value.id == object_id,
@@ -94,6 +103,7 @@ class ValueService:
             )
             
             if not value:
+                logger.warning(f"Value not found: {value_id} for user {user.id}")
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
                     detail="Value not found"
@@ -101,6 +111,7 @@ class ValueService:
             
             # Update value with provided data
             update_data = value_data.model_dump(exclude_unset=True)
+            logger.info(f"Update data: {update_data}")
             
             if update_data:
                 for field, field_value in update_data.items():
@@ -108,12 +119,16 @@ class ValueService:
                 
                 value.updated_at = datetime.utcnow()
                 await value.save()
+                logger.info(f"Value updated successfully: {value_id}")
             
             return value
         except Exception as e:
             # Log the error
-            print(f"Error in update_value: {e}")
-            raise
+            logger.error(f"Error in update_value: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to update value: {str(e)}"
+            )
     
     @staticmethod
     async def check_value_exists(user: User, value_id: str) -> bool:

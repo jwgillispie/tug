@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import '../../utils/theme/colors.dart';
 
+// A simpler, non-stateful approach that guarantees the controller is never used improperly
 class TugTextField extends StatelessWidget {
   final String label;
   final String? hint;
@@ -11,14 +12,14 @@ class TugTextField extends StatelessWidget {
   final TextInputType keyboardType;
 
   const TugTextField({
-    super.key,
+    Key? key,
     required this.label,
     this.hint,
     this.isPassword = false,
     this.controller,
     this.validator,
     this.keyboardType = TextInputType.text,
-  });
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {

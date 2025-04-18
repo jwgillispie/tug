@@ -209,19 +209,29 @@ class ApiService {
   }
 
   // Generic PATCH request with proper error handling
+// In the patch method of ApiService
   Future<dynamic> patch(String path, {dynamic data}) async {
     // Normalize path
     path = _normalizeUrl(path);
 
     try {
       await _setAuthHeader();
-      debugPrint('PATCH request to: ${_dio.options.baseUrl}$path/');
-      final response = await _dio.patch('$path/', data: data);
+      // Log the exact URL and headers
+      debugPrint('PATCH request to: ${_dio.options.baseUrl}$path');
+      debugPrint('PATCH headers: ${_dio.options.headers}');
+      debugPrint('PATCH data: $data');
+
+      // Make the request
+      final response = await _dio.patch('$path', data: data);
+      debugPrint('PATCH response status: ${response.statusCode}');
+      debugPrint('PATCH response data: ${response.data}');
 
       // Check status code before returning data
       if (response.statusCode! >= 200 && response.statusCode! < 300) {
         return response.data;
       } else {
+        debugPrint('PATCH Error: ${response.statusCode}');
+        debugPrint('PATCH Response data: ${response.data}');
         throw DioException(
           requestOptions: response.requestOptions,
           response: response,
@@ -230,6 +240,10 @@ class ApiService {
       }
     } on DioException catch (e) {
       debugPrint('PATCH request error: $e');
+      if (e.response != null) {
+        debugPrint('Response status: ${e.response?.statusCode}');
+        debugPrint('Response data: ${e.response?.data}');
+      }
       _handleDioError(e);
     } catch (e) {
       debugPrint('Unexpected error during PATCH request: $e');

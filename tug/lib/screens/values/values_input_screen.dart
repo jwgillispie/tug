@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tug/blocs/values/bloc/values_bloc.dart';
-import 'package:tug/blocs/values/bloc/values_bevent.dart';
+import 'package:tug/blocs/values/bloc/values_event.dart';
 import 'package:tug/blocs/values/bloc/values_state.dart';
 import 'package:tug/widgets/values/color_picker.dart';
+// Import the new EditValueDialog widget
+import 'package:tug/widgets/values/edit_value_dialog.dart'; 
 import '../../models/value_model.dart';
 import '../../utils/theme/colors.dart';
 import '../../utils/theme/buttons.dart';
@@ -64,6 +66,20 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
   void _handleContinue() {
     // Navigate to home screen or next onboarding step
     context.go('/home');
+  }
+
+  // New method to show the edit dialog using our new widget
+  void _showEditDialog(BuildContext context, ValueModel value) {
+    showDialog(
+      context: context,
+      builder: (context) => EditValueDialog(
+        value: value,
+        onSave: (updatedValue) {
+          // Update the value using the bloc
+          context.read<ValuesBloc>().add(UpdateValue(updatedValue));
+        },
+      ),
+    );
   }
 
   @override
@@ -272,105 +288,6 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
         ),
       ),
     );
-  }
-
-  Future<void> _showEditDialog(BuildContext context, ValueModel value) async {
-    final nameController = TextEditingController(text: value.name);
-    final descriptionController = TextEditingController(text: value.description);
-    double importance = value.importance.toDouble();
-    String color = value.color;
-
-    await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Edit Value'),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TugTextField(
-                label: 'Value',
-                controller: nameController,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter a value';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Importance: ${importance.round()}',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              StatefulBuilder(
-                builder: (context, setState) => Slider(
-                  value: importance,
-                  min: 1,
-                  max: 5,
-                  divisions: 4,
-                  label: importance.round().toString(),
-                  activeColor: TugColors.primaryPurple,
-                  onChanged: (value) {
-                    setState(() {
-                      importance = value;
-                    });
-                  },
-                ),
-              ),
-              const SizedBox(height: 16),
-              TugTextField(
-                label: 'Description (Optional)',
-                controller: descriptionController,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Color',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 8),
-              StatefulBuilder(
-                builder: (context, setState) => ColorPicker(
-                  selectedColor: color,
-                  onColorSelected: (newColor) {
-                    setState(() {
-                      color = newColor;
-                    });
-                  },
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            style: TugButtons.primaryButtonStyle,
-            onPressed: () {
-              if (nameController.text.trim().isNotEmpty) {
-                final updatedValue = value.copyWith(
-                  name: nameController.text.trim(),
-                  importance: importance.round(),
-                  description: descriptionController.text.trim(),
-                  color: color,
-                );
-                
-                context.read<ValuesBloc>().add(UpdateValue(updatedValue));
-                Navigator.of(context).pop();
-              }
-            },
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-
-    nameController.dispose();
-    descriptionController.dispose();
   }
 }
 

@@ -2,7 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tug/blocs/values/bloc/values_bloc.dart';
-import 'package:tug/blocs/values/bloc/values_bevent.dart';
+import 'package:tug/blocs/values/bloc/values_event.dart';
 import 'package:tug/blocs/values/bloc/values_state.dart';
 import 'package:tug/services/activity_service.dart';
 import 'package:tug/utils/theme/colors.dart';
