@@ -2,12 +2,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tug/blocs/values/bloc/values_bloc.dart';
 import 'package:tug/blocs/values/bloc/values_event.dart';
 import 'package:tug/blocs/values/bloc/values_state.dart';
 import 'package:tug/widgets/values/color_picker.dart';
-// Import the new EditValueDialog widget
-import 'package:tug/widgets/values/edit_value_dialog.dart'; 
+import 'package:tug/widgets/values/edit_value_dialog.dart';
+import 'package:tug/widgets/values/first_value_celebration.dart'; // Import the new widget
 import '../../models/value_model.dart';
 import '../../utils/theme/colors.dart';
 import '../../utils/theme/buttons.dart';
@@ -27,12 +28,33 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
   double _currentImportance = 3;
   String _selectedColor = '#7C3AED'; // Default to purple
   bool _isLoading = false;
+  bool _showCelebration = false; // Track if we should show the celebration animation
+  String _newValueName = ''; // Track the name of the first value for the celebration
+  bool _isFirstLoad = true; // Track if this is the first load of the app
 
   @override
   void initState() {
     super.initState();
     // Load values when screen is initialized
     context.read<ValuesBloc>().add(LoadValues());
+    // Check if this is the user's first time adding a value
+    _checkFirstValueStatus();
+  }
+
+  // Check if the user has already added a value before
+  Future<void> _checkFirstValueStatus() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    bool hasAddedFirstValue = prefs.getBool('has_added_first_value') ?? false;
+    setState(() {
+      // We'll only show the celebration if they haven't added a value before
+      _showCelebration = !hasAddedFirstValue;
+    });
+  }
+
+  // Mark that the user has added their first value
+  Future<void> _markFirstValueAdded() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('has_added_first_value', true);
   }
 
   @override
@@ -51,8 +73,12 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
         color: _selectedColor,
       );
 
+      // Store the name of the newly added value if it's their first
+      final String valueNameForCelebration = _valueController.text.trim();
+      
+      // Add the value via BLoC
       context.read<ValuesBloc>().add(AddValue(newValue));
-
+      
       // Reset form
       _valueController.clear();
       _descriptionController.clear();
@@ -60,12 +86,22 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
         _currentImportance = 3;
         _selectedColor = '#7C3AED'; // Reset to default purple
       });
+      
+      // We'll check if we should show the celebration when the state updates
+      // in the BlocListener, not right away
     }
   }
 
   void _handleContinue() {
     // Navigate to home screen or next onboarding step
     context.go('/home');
+  }
+
+  // New method to hide the celebration overlay
+  void _dismissCelebration() {
+    setState(() {
+      _showCelebration = false;
+    });
   }
 
   // New method to show the edit dialog using our new widget
@@ -96,196 +132,242 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
             ),
           );
         }
+
+        // Check if values were successfully loaded
+        if (state is ValuesLoaded) {
+          // Only show celebration when transitioning from 0 to 1 value
+          // We need to track if this is a new value being added vs. app startup
+          
+          // If this is their first value and they CAN see the celebration
+          if (state.values.length == 1 && _showCelebration) {
+            // But ONLY show it if this isn't the first load of the app
+            // (i.e., only show when they actually add the value, not when loading existing values)
+            if (!_isFirstLoad) {
+              setState(() {
+                _newValueName = state.values.first.name;
+                // Show the celebration overlay
+                _showCelebration = true;
+              });
+              
+              // Mark that they've added their first value to not show again
+              _markFirstValueAdded();
+            }
+          }
+          
+          // After first load, mark that subsequent state changes aren't initial loads
+          if (_isFirstLoad) {
+            _isFirstLoad = false;
+          }
+        }
       },
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Your Values'),
-        ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'What matters most to you?',
-                style: Theme.of(context).textTheme.displayLarge,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Add up to 5 values that guide your life',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: TugColors.lightTextSecondary,
-                ),
-              ),
-              const SizedBox(height: 32),
-              Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    TugTextField(
-                      label: 'Value',
-                      hint: 'Enter a value (e.g., Health, Family)',
-                      controller: _valueController,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter a value';
-                        }
-                        if (value.length < 2) {
-                          return 'Value must be at least 2 characters';
-                        }
-                        if (value.length > 30) {
-                          return 'Value must be at most 30 characters';
-                        }
-                        return null;
-                      },
+      child: Stack(
+        children: [
+          Scaffold(
+            appBar: AppBar(
+              title: const Text('Your Values'),
+            ),
+            body: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'What matters most to you?',
+                    style: Theme.of(context).textTheme.displayLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Add up to 5 values that guide your life',
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: TugColors.lightTextSecondary,
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'How important is this value? (1-5)',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    Slider(
-                      value: _currentImportance,
-                      min: 1,
-                      max: 5,
-                      divisions: 4,
-                      label: _currentImportance.round().toString(),
-                      activeColor: TugColors.primaryPurple,
-                      onChanged: (value) {
-                        setState(() {
-                          _currentImportance = value;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                    TugTextField(
-                      label: 'Description (Optional)',
-                      hint: 'Describe why this value matters to you',
-                      controller: _descriptionController,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Choose a color',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    const SizedBox(height: 8),
-                    ColorPicker(
-                      selectedColor: _selectedColor,
-                      onColorSelected: (color) {
-                        setState(() {
-                          _selectedColor = color;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 24),
-                    BlocBuilder<ValuesBloc, ValuesState>(
-                      builder: (context, state) {
-                        // Disable add button if we already have 5 values
-                        final maxValuesReached = state is ValuesLoaded && 
-                            state.values.where((v) => v.active).length >= 5;
-                        
-                        return SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            style: TugButtons.secondaryButtonStyle,
-                            onPressed: (_isLoading || maxValuesReached) 
-                                ? null 
-                                : _addValue,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4),
-                              child: _isLoading
-                                  ? const SizedBox(
-                                      height: 20,
-                                      width: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: TugColors.primaryPurple,
-                                      ),
-                                    )
-                                  : Text(maxValuesReached 
-                                      ? 'Maximum 5 values reached' 
-                                      : 'Add Value'),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 32),
-              BlocBuilder<ValuesBloc, ValuesState>(
-                builder: (context, state) {
-                  if (state is ValuesLoaded) {
-                    final activeValues = state.values.where((v) => v.active).toList();
-                    
-                    if (activeValues.isEmpty) {
-                      return const Center(
-                        child: Text('Add at least one value to continue'),
-                      );
-                    }
-                    
-                    return Column(
+                  ),
+                  const SizedBox(height: 32),
+                  Form(
+                    key: _formKey,
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'Your Values',
-                          style: Theme.of(context).textTheme.titleLarge,
+                        TugTextField(
+                          label: 'Value',
+                          hint: 'Enter a value (e.g., Health, Family)',
+                          controller: _valueController,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Please enter a value';
+                            }
+                            if (value.length < 2) {
+                              return 'Value must be at least 2 characters';
+                            }
+                            if (value.length > 30) {
+                              return 'Value must be at most 30 characters';
+                            }
+                            return null;
+                          },
                         ),
                         const SizedBox(height: 16),
-                        ...activeValues.map((value) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: ValueCard(
-                            value: value,
-                            onDelete: () {
-                              context.read<ValuesBloc>().add(
-                                DeleteValue(value.id!),
-                              );
-                            },
-                            onEdit: () {
-                              _showEditDialog(context, value);
-                            },
-                          ),
-                        )),
-                        const SizedBox(height: 32),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            style: TugButtons.primaryButtonStyle,
-                            onPressed: _isLoading 
-                                ? null 
-                                : (activeValues.isNotEmpty 
-                                    ? _handleContinue 
-                                    : null),
-                            child: _isLoading
-                                ? const SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Colors.white,
-                                    ),
-                                  )
-                                : const Text('Continue'),
-                          ),
+                        Text(
+                          'How important is this value? (1-5)',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        Slider(
+                          value: _currentImportance,
+                          min: 1,
+                          max: 5,
+                          divisions: 4,
+                          label: _currentImportance.round().toString(),
+                          activeColor: TugColors.primaryPurple,
+                          onChanged: (value) {
+                            setState(() {
+                              _currentImportance = value;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        TugTextField(
+                          label: 'Description (Optional)',
+                          hint: 'Describe why this value matters to you',
+                          controller: _descriptionController,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Choose a color',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        ColorPicker(
+                          selectedColor: _selectedColor,
+                          onColorSelected: (color) {
+                            setState(() {
+                              _selectedColor = color;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 24),
+                        BlocBuilder<ValuesBloc, ValuesState>(
+                          builder: (context, state) {
+                            // Disable add button if we already have 5 values
+                            final maxValuesReached = state is ValuesLoaded && 
+                                state.values.where((v) => v.active).length >= 5;
+                            
+                            return SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                style: TugButtons.secondaryButtonStyle,
+                                onPressed: (_isLoading || maxValuesReached) 
+                                    ? null 
+                                    : _addValue,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 4),
+                                  child: _isLoading
+                                      ? const SizedBox(
+                                          height: 20,
+                                          width: 20,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            color: TugColors.primaryPurple,
+                                          ),
+                                        )
+                                      : Text(maxValuesReached 
+                                          ? 'Maximum 5 values reached' 
+                                          : 'Add Value'),
+                                ),
+                              ),
+                            );
+                          },
                         ),
                       ],
-                    );
-                  }
-                  
-                  if (state is ValuesLoading) {
-                    return const Center(
-                      child: CircularProgressIndicator(),
-                    );
-                  }
-                  
-                  return const SizedBox.shrink();
-                },
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  BlocBuilder<ValuesBloc, ValuesState>(
+                    builder: (context, state) {
+                      if (state is ValuesLoaded) {
+                        final activeValues = state.values.where((v) => v.active).toList();
+                        
+                        if (activeValues.isEmpty) {
+                          return const Center(
+                            child: Text('Add at least one value to continue'),
+                          );
+                        }
+                        
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Your Values',
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
+                            const SizedBox(height: 16),
+                            ...activeValues.map((value) => Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: ValueCard(
+                                value: value,
+                                onDelete: () {
+                                  context.read<ValuesBloc>().add(
+                                    DeleteValue(value.id!),
+                                  );
+                                },
+                                onEdit: () {
+                                  _showEditDialog(context, value);
+                                },
+                              ),
+                            )),
+                            const SizedBox(height: 32),
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                style: TugButtons.primaryButtonStyle,
+                                onPressed: _isLoading 
+                                    ? null 
+                                    : (activeValues.isNotEmpty 
+                                        ? _handleContinue 
+                                        : null),
+                                child: _isLoading
+                                    ? const SizedBox(
+                                        height: 20,
+                                        width: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : const Text('Continue'),
+                              ),
+                            ),
+                          ],
+                        );
+                      }
+                      
+                      if (state is ValuesLoading) {
+                        return const Center(
+                          child: CircularProgressIndicator(),
+                        );
+                      }
+                      
+                      return const SizedBox.shrink();
+                    },
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
+          
+          // Show the celebration overlay if this is the first value added
+          if (_showCelebration)
+            BlocBuilder<ValuesBloc, ValuesState>(
+              builder: (context, state) {
+                String valueName = 'Your First Value';
+                if (state is ValuesLoaded && state.values.isNotEmpty) {
+                  valueName = state.values.first.name;
+                }
+                return FirstValueCelebration(
+                  valueName: valueName,
+                  onDismiss: _dismissCelebration,
+                );
+              },
+            ),
+        ],
       ),
     );
   }

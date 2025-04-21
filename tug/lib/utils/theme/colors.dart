@@ -17,6 +17,7 @@ class TugColors {
   static const lightTextPrimary = Color(0xFF202124);
   static const lightTextSecondary = Color(0xFF5F6368);
   static const lightBorder = Color(0xFFE8EAED);
+  static const tertiaryGold = Color(0x00ffd700);
 
   // Dark Theme Neutrals - more refined
   static const darkBackground = Color(0xFF202124);
@@ -24,7 +25,7 @@ class TugColors {
   static const darkTextPrimary = Color(0xFFE8EAED);
   static const darkTextSecondary = Color(0xFFBDC1C6);
   static const darkBorder = Color(0xFF3C4043);
-  
+
   // Gradient colors for effects
   static const gradientStart = Color(0xFF6C38D4);
   static const gradientEnd = Color(0xFF9C64FF);
