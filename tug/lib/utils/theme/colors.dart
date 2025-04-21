@@ -17,7 +17,7 @@ class TugColors {
   static const lightTextPrimary = Color(0xFF202124);
   static const lightTextSecondary = Color(0xFF5F6368);
   static const lightBorder = Color(0xFFE8EAED);
-  static const tertiaryGold = Color(0x00ffd700);
+  static const tertiaryGold = Color.fromARGB(238, 186, 162, 30);
 
   // Dark Theme Neutrals - more refined
   static const darkBackground = Color(0xFF202124);

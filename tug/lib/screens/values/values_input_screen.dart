@@ -2,13 +2,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:tug/blocs/values/bloc/values_bloc.dart';
 import 'package:tug/blocs/values/bloc/values_event.dart';
 import 'package:tug/blocs/values/bloc/values_state.dart';
 import 'package:tug/widgets/values/color_picker.dart';
 import 'package:tug/widgets/values/edit_value_dialog.dart';
-import 'package:tug/widgets/values/first_value_celebration.dart'; // Import the new widget
+import 'package:tug/widgets/values/first_value_celebration.dart';
 import '../../models/value_model.dart';
 import '../../utils/theme/colors.dart';
 import '../../utils/theme/buttons.dart';
@@ -28,33 +27,18 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
   double _currentImportance = 3;
   String _selectedColor = '#7C3AED'; // Default to purple
   bool _isLoading = false;
-  bool _showCelebration = false; // Track if we should show the celebration animation
-  String _newValueName = ''; // Track the name of the first value for the celebration
-  bool _isFirstLoad = true; // Track if this is the first load of the app
+  bool _showCelebration = false;
+  String _newValueName = '';
+  
+  // Keep track of previous state to detect transitions
+  int _previousValueCount = 0;
+  bool _isFirstLoad = true;
 
   @override
   void initState() {
     super.initState();
     // Load values when screen is initialized
     context.read<ValuesBloc>().add(LoadValues());
-    // Check if this is the user's first time adding a value
-    _checkFirstValueStatus();
-  }
-
-  // Check if the user has already added a value before
-  Future<void> _checkFirstValueStatus() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    bool hasAddedFirstValue = prefs.getBool('has_added_first_value') ?? false;
-    setState(() {
-      // We'll only show the celebration if they haven't added a value before
-      _showCelebration = !hasAddedFirstValue;
-    });
-  }
-
-  // Mark that the user has added their first value
-  Future<void> _markFirstValueAdded() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('has_added_first_value', true);
   }
 
   @override
@@ -73,8 +57,8 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
         color: _selectedColor,
       );
 
-      // Store the name of the newly added value if it's their first
-      final String valueNameForCelebration = _valueController.text.trim();
+      // Store the name of the newly added value for celebration
+      _newValueName = _valueController.text.trim();
       
       // Add the value via BLoC
       context.read<ValuesBloc>().add(AddValue(newValue));
@@ -86,9 +70,6 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
         _currentImportance = 3;
         _selectedColor = '#7C3AED'; // Reset to default purple
       });
-      
-      // We'll check if we should show the celebration when the state updates
-      // in the BlocListener, not right away
     }
   }
 
@@ -97,14 +78,14 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
     context.go('/home');
   }
 
-  // New method to hide the celebration overlay
+  // Method to hide the celebration overlay
   void _dismissCelebration() {
     setState(() {
       _showCelebration = false;
     });
   }
 
-  // New method to show the edit dialog using our new widget
+  // Method to show the edit dialog
   void _showEditDialog(BuildContext context, ValueModel value) {
     showDialog(
       context: context,
@@ -135,26 +116,21 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
 
         // Check if values were successfully loaded
         if (state is ValuesLoaded) {
-          // Only show celebration when transitioning from 0 to 1 value
-          // We need to track if this is a new value being added vs. app startup
+          final currentValues = state.values.where((v) => v.active).toList();
+          final currentCount = currentValues.length;
           
-          // If this is their first value and they CAN see the celebration
-          if (state.values.length == 1 && _showCelebration) {
-            // But ONLY show it if this isn't the first load of the app
-            // (i.e., only show when they actually add the value, not when loading existing values)
-            if (!_isFirstLoad) {
-              setState(() {
-                _newValueName = state.values.first.name;
-                // Show the celebration overlay
-                _showCelebration = true;
-              });
-              
-              // Mark that they've added their first value to not show again
-              _markFirstValueAdded();
-            }
+          // Detect transition from 0 to 1 values, but not on first load
+          if (currentCount == 1 && _previousValueCount == 0 && !_isFirstLoad) {
+            setState(() {
+              _showCelebration = true;
+              _newValueName = currentValues.first.name;
+            });
           }
           
-          // After first load, mark that subsequent state changes aren't initial loads
+          // Store the current count for next comparison
+          _previousValueCount = currentCount;
+          
+          // After first load, mark that we're no longer in initial load
           if (_isFirstLoad) {
             _isFirstLoad = false;
           }
@@ -353,19 +329,11 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
             ),
           ),
           
-          // Show the celebration overlay if this is the first value added
+          // Show the celebration overlay if we just added the first value
           if (_showCelebration)
-            BlocBuilder<ValuesBloc, ValuesState>(
-              builder: (context, state) {
-                String valueName = 'Your First Value';
-                if (state is ValuesLoaded && state.values.isNotEmpty) {
-                  valueName = state.values.first.name;
-                }
-                return FirstValueCelebration(
-                  valueName: valueName,
-                  onDismiss: _dismissCelebration,
-                );
-              },
+            FirstValueCelebration(
+              valueName: _newValueName,
+              onDismiss: _dismissCelebration,
             ),
         ],
       ),
