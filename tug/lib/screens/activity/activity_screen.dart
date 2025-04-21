@@ -25,11 +25,13 @@ class ActivityScreen extends StatefulWidget {
   State<ActivityScreen> createState() => _ActivityScreenState();
 }
 
-class _ActivityScreenState extends State<ActivityScreen> {
+class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProviderStateMixin {
   String? _filterValueId;
   DateTime? _startDate;
   DateTime? _endDate;
   bool _showFilters = false;
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
@@ -38,6 +40,19 @@ class _ActivityScreenState extends State<ActivityScreen> {
     context.read<ActivitiesBloc>().add(const LoadActivities());
     context.read<ValuesBloc>().add(LoadValues());
 
+    // Setup animation
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    
+    _fadeAnimation = CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeIn,
+    );
+    
+    _animationController.forward();
+
     // Show add activity form if flagged
     if (widget.showAddForm) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -45,11 +60,20 @@ class _ActivityScreenState extends State<ActivityScreen> {
       });
     }
   }
+  
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
 
   void _showAddActivitySheet() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: isDarkMode ? TugColors.darkSurface : Colors.white,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -124,10 +148,17 @@ class _ActivityScreenState extends State<ActivityScreen> {
 
   void _showActivityDetails(
       ActivityModel activity, String valueName, String valueColor) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final color = Color(int.parse(valueColor.substring(1), radix: 16) + 0xFF000000);
+    
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
+          backgroundColor: isDarkMode ? TugColors.darkSurface : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           title: Text(activity.name),
           content: Column(
             mainAxisSize: MainAxisSize.min,
@@ -139,9 +170,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
                     width: 12,
                     height: 12,
                     decoration: BoxDecoration(
-                      color: Color(
-                          int.parse(valueColor.substring(1), radix: 16) +
-                              0xFF000000),
+                      color: color,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -174,7 +203,6 @@ class _ActivityScreenState extends State<ActivityScreen> {
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
-                // Implement edit functionality
                 _showEditActivitySheet(activity);
               },
               child: const Text('Edit'),
@@ -195,26 +223,28 @@ class _ActivityScreenState extends State<ActivityScreen> {
     );
   }
 
-    void _showEditActivitySheet(ActivityModel activity) {
-      // Show the edit activity dialog
-      showDialog(
-        context: context,
-        builder: (context) => EditActivityDialog(
-          activity: activity,
-          onSave: (updatedActivity) {
-            // Update the activity using the bloc
-            context.read<ActivitiesBloc>().add(UpdateActivity(updatedActivity));
-          },
-        ),
-      );
-    }
-  
+  void _showEditActivitySheet(ActivityModel activity) {
+    // Show the edit activity dialog
+    showDialog(
+      context: context,
+      builder: (context) => EditActivityDialog(
+        activity: activity,
+        onSave: (updatedActivity) {
+          // Update the activity using the bloc
+          context.read<ActivitiesBloc>().add(UpdateActivity(updatedActivity));
+        },
+      ),
+    );
+  }
 
   void _showDeleteConfirmation(ActivityModel activity) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
+          backgroundColor: isDarkMode ? TugColors.darkSurface : Colors.white,
           title: const Text('Delete Activity'),
           content: Text('Are you sure you want to delete "${activity.name}"?'),
           actions: [
@@ -263,6 +293,8 @@ class _ActivityScreenState extends State<ActivityScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Activities'),
@@ -288,261 +320,287 @@ class _ActivityScreenState extends State<ActivityScreen> {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Activity Summary Card
-          _buildActivitySummary(),
-
-          // Filters
-          if (_showFilters) _buildFilters(),
-
-          // Activities List
-          Expanded(
-            child: BlocBuilder<ActivitiesBloc, ActivitiesState>(
-              builder: (context, state) {
-                if (state is ActivitiesLoading) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
-                }
-
-                if (state is ActivitiesError) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.error_outline,
-                          color: TugColors.error,
-                          size: 48,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Error: ${state.message}',
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: () {
-                            context
-                                .read<ActivitiesBloc>()
-                                .add(const LoadActivities());
-                          },
-                          child: const Text('Retry'),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                final List<ActivityModel> activities;
-                if (state is ActivitiesLoaded) {
-                  activities = state.activities;
-                } else {
-                  activities = [];
-                }
-
-                if (activities.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.history,
-                          size: 64,
-                          color: Colors.grey,
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'No activities logged yet',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: Column(
+          children: [
+            // Activity Summary Card
+            _buildActivitySummary(),
+    
+            // Filters
+            if (_showFilters) _buildFilters(),
+    
+            // Activities List
+            Expanded(
+              child: BlocBuilder<ActivitiesBloc, ActivitiesState>(
+                builder: (context, state) {
+                  if (state is ActivitiesLoading) {
+                    return const Center(
+                      child: CircularProgressIndicator(),
+                    );
+                  }
+    
+                  if (state is ActivitiesError) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.error_outline,
+                            color: TugColors.error,
+                            size: 48,
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Start tracking time spent on your values',
-                          style: TextStyle(
-                            color: Colors.grey,
+                          const SizedBox(height: 16),
+                          Text(
+                            'Error: ${state.message}',
+                            textAlign: TextAlign.center,
                           ),
-                        ),
-                        const SizedBox(height: 24),
-                        ElevatedButton.icon(
-                          style: TugButtons.primaryButtonStyle,
-                          onPressed: _showAddActivitySheet,
-                          icon: const Icon(Icons.add),
-                          label: const Text('Log Activity'),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
-                return ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: activities.length,
-                  itemBuilder: (context, index) {
-                    final activity = activities[index];
-
-                    // Find value name and color using BLoC
-                    String valueName = 'Unknown Value';
-                    String valueColor = '#7C3AED'; // Default purple
-
-                    // Get value name from BLoC state
-                    final valuesState = context.watch<ValuesBloc>().state;
-                    if (valuesState is ValuesLoaded) {
-                      final value = valuesState.values.firstWhere(
-                        (v) => v.id == activity.valueId,
-                        orElse: () => const ValueModel(
-                          name: 'Unknown Value',
-                          importance: 1,
-                          color: '#7C3AED',
-                        ),
-                      );
-                      valueName = value.name;
-                      valueColor = value.color;
-                    }
-
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      elevation: 2,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: InkWell(
-                        onTap: () {
-                          _showActivityDetails(activity, valueName, valueColor);
-                        },
-                        borderRadius: BorderRadius.circular(12),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 48,
-                                height: 48,
-                                decoration: BoxDecoration(
-                                  color: Color(
-                                    int.parse(valueColor.substring(1),
-                                            radix: 16) +
-                                        0xFF000000,
-                                  ).withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    '${activity.duration}',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(
-                                        int.parse(valueColor.substring(1),
-                                                radix: 16) +
-                                            0xFF000000,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      activity.name,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Row(
-                                      children: [
-                                        Container(
-                                          width: 8,
-                                          height: 8,
-                                          decoration: BoxDecoration(
-                                            color: Color(
-                                              int.parse(valueColor.substring(1),
-                                                      radix: 16) +
-                                                  0xFF000000,
-                                            ),
-                                            shape: BoxShape.circle,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          valueName,
-                                          style: TextStyle(
-                                            color: Colors.grey.shade600,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text(
-                                    _getRelativeTime(activity.date),
-                                    style: TextStyle(
-                                      color: Colors.grey.shade600,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: TugColors.primaryPurple
-                                          .withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                    child: Text(
-                                      '${activity.duration} min',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: TugColors.primaryPurple,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                          const SizedBox(height: 16),
+                          ElevatedButton(
+                            onPressed: () {
+                              context
+                                  .read<ActivitiesBloc>()
+                                  .add(const LoadActivities());
+                            },
+                            child: const Text('Retry'),
                           ),
-                        ),
+                        ],
                       ),
                     );
-                  },
-                );
-              },
+                  }
+    
+                  final List<ActivityModel> activities;
+                  if (state is ActivitiesLoaded) {
+                    activities = state.activities;
+                  } else {
+                    activities = [];
+                  }
+    
+                  if (activities.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.history,
+                            size: 64,
+                            color: isDarkMode ? Colors.grey.shade600 : Colors.grey,
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'No activities logged yet',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Start tracking time spent on your values',
+                            style: TextStyle(
+                              color: isDarkMode ? Colors.grey.shade400 : Colors.grey,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          ElevatedButton.icon(
+                            style: TugButtons.primaryButtonStyle,
+                            onPressed: _showAddActivitySheet,
+                            icon: const Icon(Icons.add),
+                            label: const Text('Log Activity'),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+    
+                  return ListView.builder(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: activities.length,
+                    itemBuilder: (context, index) {
+                      final activity = activities[index];
+    
+                      // Find value name and color using BLoC
+                      String valueName = 'Unknown Value';
+                      String valueColor = '#7C3AED'; // Default purple
+    
+                      // Get value name from BLoC state
+                      final valuesState = context.watch<ValuesBloc>().state;
+                      if (valuesState is ValuesLoaded) {
+                        final value = valuesState.values.firstWhere(
+                          (v) => v.id == activity.valueId,
+                          orElse: () => const ValueModel(
+                            name: 'Unknown Value',
+                            importance: 1,
+                            color: '#7C3AED',
+                          ),
+                        );
+                        valueName = value.name;
+                        valueColor = value.color;
+                      }
+    
+                      return _buildActivityCard(activity, valueName, valueColor);
+                    },
+                  );
+                },
+              ),
             ),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: TugColors.primaryPurple,
+        foregroundColor: Colors.white,
+        onPressed: _showAddActivitySheet,
+        child: const Icon(Icons.add),
+        elevation: isDarkMode ? 4 : 2,
+      ),
+    );
+  }
+
+  Widget _buildActivityCard(ActivityModel activity, String valueName, String valueColor) {
+    final color = Color(int.parse(valueColor.substring(1), radix: 16) + 0xFF000000);
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: isDarkMode ? TugColors.darkSurface : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: isDarkMode 
+                ? Colors.black.withOpacity(0.2) 
+                : Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
+        border: Border.all(
+          color: isDarkMode 
+              ? Colors.white.withOpacity(0.05) 
+              : Colors.black.withOpacity(0.03),
+          width: 0.5,
+        ),
+      ),
+      child: InkWell(
+        onTap: () {
+          _showActivityDetails(activity, valueName, valueColor);
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 54,
+                height: 54,
+                decoration: BoxDecoration(
+                  color: color.withOpacity(isDarkMode ? 0.15 : 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: color.withOpacity(isDarkMode ? 0.3 : 0.2),
+                    width: 1,
+                  ),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      '${activity.duration}',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: color,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'min',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: color.withOpacity(0.7),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      activity.name,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: color,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          valueName,
+                          style: TextStyle(
+                            color: color.withOpacity(0.8),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                        const Spacer(),
+                        Text(
+                          _getRelativeTime(activity.date),
+                          style: TextStyle(
+                            color: isDarkMode 
+                                ? Colors.grey.shade400 
+                                : Colors.grey.shade600,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildActivitySummary() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
     return Container(
       padding: const EdgeInsets.all(16),
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: TugColors.lightSurface,
-        borderRadius: BorderRadius.circular(12),
+        color: isDarkMode ? TugColors.darkSurface : TugColors.lightSurface,
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 4,
+            color: isDarkMode 
+                ? Colors.black.withOpacity(0.2) 
+                : Colors.black.withOpacity(0.05),
+            blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
+        border: Border.all(
+          color: isDarkMode 
+              ? Colors.white.withOpacity(0.05) 
+              : Colors.black.withOpacity(0.03),
+          width: 0.5,
+        ),
       ),
       child: BlocBuilder<ActivitiesBloc, ActivitiesState>(
         builder: (context, state) {
@@ -550,10 +608,13 @@ class _ActivityScreenState extends State<ActivityScreen> {
             final activities = state.activities;
 
             if (activities.isEmpty) {
-              return const Center(
+              return Center(
                 child: Text(
                   'No activities yet',
-                  style: TextStyle(fontStyle: FontStyle.italic),
+                  style: TextStyle(
+                    fontStyle: FontStyle.italic,
+                    color: isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600,
+                  ),
                 ),
               );
             }
@@ -594,8 +655,13 @@ class _ActivityScreenState extends State<ActivityScreen> {
             );
           }
 
-          return const Center(
-            child: Text('Loading summary...'),
+          return Center(
+            child: Text(
+              'Loading summary...',
+              style: TextStyle(
+                color: isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600,
+              ),
+            ),
           );
         },
       ),
@@ -607,6 +673,8 @@ class _ActivityScreenState extends State<ActivityScreen> {
     required String value,
     required IconData icon,
   }) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
     return Column(
       children: [
         Icon(
@@ -627,7 +695,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
           title,
           style: TextStyle(
             fontSize: 12,
-            color: Colors.grey.shade600,
+            color: isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600,
           ),
         ),
       ],
@@ -635,9 +703,11 @@ class _ActivityScreenState extends State<ActivityScreen> {
   }
 
   Widget _buildFilters() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
     return Container(
       padding: const EdgeInsets.all(16),
-      color: Theme.of(context).colorScheme.surface,
+      color: isDarkMode ? TugColors.darkBackground : Theme.of(context).colorScheme.surface,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -677,17 +747,28 @@ class _ActivityScreenState extends State<ActivityScreen> {
                   : <ValueModel>[];
 
               return DropdownButtonFormField<String?>(
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Filter by Value',
-                  border: OutlineInputBorder(),
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  filled: true,
+                  fillColor: isDarkMode ? Colors.black.withOpacity(0.2) : Colors.white,
                 ),
                 value: _filterValueId,
+                dropdownColor: isDarkMode ? TugColors.darkSurface : Colors.white,
                 items: [
-                  const DropdownMenuItem<String?>(
+                  DropdownMenuItem<String?>(
                     value: null,
-                    child: Text('All Values'),
+                    child: Text(
+                      'All Values',
+                      style: TextStyle(
+                        color: isDarkMode 
+                            ? TugColors.darkTextPrimary 
+                            : TugColors.lightTextPrimary,
+                      ),
+                    ),
                   ),
                   ...values.map((value) {
                     final valueColor = Color(
@@ -708,7 +789,14 @@ class _ActivityScreenState extends State<ActivityScreen> {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Text(value.name),
+                          Text(
+                            value.name,
+                            style: TextStyle(
+                              color: isDarkMode 
+                                  ? TugColors.darkTextPrimary 
+                                  : TugColors.lightTextPrimary,
+                            ),
+                          ),
                         ],
                       ),
                     );
@@ -745,6 +833,26 @@ class _ActivityScreenState extends State<ActivityScreen> {
                       firstDate:
                           DateTime.now().subtract(const Duration(days: 365)),
                       lastDate: DateTime.now(),
+                      builder: (context, child) {
+                        return Theme(
+                          data: Theme.of(context).copyWith(
+                            colorScheme: isDarkMode
+                                ? const ColorScheme.dark(
+                                    primary: TugColors.primaryPurple,
+                                    onPrimary: Colors.white,
+                                    surface: TugColors.darkSurface,
+                                    onSurface: TugColors.darkTextPrimary,
+                                  )
+                                : const ColorScheme.light(
+                                    primary: TugColors.primaryPurple,
+                                    onPrimary: Colors.white,
+                                    surface: Colors.white,
+                                    onSurface: TugColors.lightTextPrimary,
+                                  ),
+                          ),
+                          child: child!,
+                        );
+                      },
                     );
                     if (picked != null) {
                       setState(() {
@@ -761,11 +869,14 @@ class _ActivityScreenState extends State<ActivityScreen> {
                     }
                   },
                   child: InputDecorator(
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Start Date',
-                      border: OutlineInputBorder(),
-                      contentPadding:
-                          EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      filled: true,
+                      fillColor: isDarkMode ? Colors.black.withOpacity(0.2) : Colors.white,
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -791,6 +902,26 @@ class _ActivityScreenState extends State<ActivityScreen> {
                       firstDate: _startDate ??
                           DateTime.now().subtract(const Duration(days: 365)),
                       lastDate: DateTime.now(),
+                      builder: (context, child) {
+                        return Theme(
+                          data: Theme.of(context).copyWith(
+                            colorScheme: isDarkMode
+                                ? const ColorScheme.dark(
+                                    primary: TugColors.primaryPurple,
+                                    onPrimary: Colors.white,
+                                    surface: TugColors.darkSurface,
+                                    onSurface: TugColors.darkTextPrimary,
+                                  )
+                                : const ColorScheme.light(
+                                    primary: TugColors.primaryPurple,
+                                    onPrimary: Colors.white,
+                                    surface: Colors.white,
+                                    onSurface: TugColors.lightTextPrimary,
+                                  ),
+                          ),
+                          child: child!,
+                        );
+                      },
                     );
                     if (picked != null) {
                       setState(() {
@@ -807,11 +938,14 @@ class _ActivityScreenState extends State<ActivityScreen> {
                     }
                   },
                   child: InputDecorator(
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'End Date',
-                      border: OutlineInputBorder(),
-                      contentPadding:
-                          EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      filled: true,
+                      fillColor: isDarkMode ? Colors.black.withOpacity(0.2) : Colors.white,
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,

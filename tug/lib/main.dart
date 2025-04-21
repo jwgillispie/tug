@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tug/blocs/activities/activities_bloc.dart';
+import 'package:tug/blocs/theme/theme_bloc.dart';
 import 'package:tug/blocs/values/bloc/values_bloc.dart';
 import 'package:tug/config/env_confg.dart';
 import 'package:tug/repositories/activity_repository.dart';
@@ -14,7 +15,7 @@ import 'package:tug/screens/activity/activity_screen.dart';
 import 'package:tug/screens/auth/forgot_password_screen.dart';
 import 'package:tug/screens/diagnostics_screen.dart';
 import 'package:tug/screens/home/home_screen.dart';
-import 'package:tug/screens/landing/landing_page.dart'; // Import the landing page
+import 'package:tug/screens/landing/landing_page.dart';
 import 'package:tug/screens/main_layout.dart';
 import 'package:tug/screens/profile/profile_screen.dart';
 import 'package:tug/screens/progress/progress_screen.dart';
@@ -26,6 +27,7 @@ import 'utils/theme/theme.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/signup_screen.dart';
 import 'screens/values/values_input_screen.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -56,6 +58,7 @@ Future<void> main() async {
     runApp(ErrorApp(error: e.toString()));
   }
 }
+
 class ErrorApp extends StatelessWidget {
   final String error;
 
@@ -119,6 +122,7 @@ class _TugAppState extends State<TugApp> {
   late final AuthBloc _authBloc;
   late final ValuesBloc _valuesBloc;
   late final ActivitiesBloc _activitiesBloc;
+  late final ThemeBloc _themeBloc;
 
   @override
   void initState() {
@@ -126,6 +130,10 @@ class _TugAppState extends State<TugApp> {
     _authBloc = AuthBloc(authRepository: widget.authRepository);
     _valuesBloc = ValuesBloc(valuesRepository: widget.valuesRepository);
     _activitiesBloc = ActivitiesBloc(activityRepository: widget.activityRepository);
+    _themeBloc = ThemeBloc();
+    
+    // Load theme preference
+    _themeBloc.add(ThemeLoaded());
 
     _router = GoRouter(
       initialLocation: kIsWeb ? '/' : '/login', // Start at landing page for web
@@ -241,14 +249,19 @@ class _TugAppState extends State<TugApp> {
         BlocProvider<AuthBloc>.value(value: _authBloc),
         BlocProvider<ValuesBloc>.value(value: _valuesBloc),
         BlocProvider<ActivitiesBloc>.value(value: _activitiesBloc),
+        BlocProvider<ThemeBloc>.value(value: _themeBloc),
       ],
-      child: MaterialApp.router(
-        title: 'Tug',
-        theme: TugTheme.lightTheme,
-        darkTheme: TugTheme.darkTheme,
-        themeMode: ThemeMode.system,
-        routerConfig: _router,
-        debugShowCheckedModeBanner: false,
+      child: BlocBuilder<ThemeBloc, ThemeState>(
+        builder: (context, themeState) {
+          return MaterialApp.router(
+            title: 'Tug',
+            theme: TugTheme.lightTheme,
+            darkTheme: TugTheme.darkTheme,
+            themeMode: themeState.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+            routerConfig: _router,
+            debugShowCheckedModeBanner: false,
+          );
+        },
       ),
     );
   }
@@ -258,6 +271,7 @@ class _TugAppState extends State<TugApp> {
     _authBloc.close();
     _valuesBloc.close();
     _activitiesBloc.close();
+    _themeBloc.close();
     super.dispose();
   }
 }

@@ -1,27 +1,31 @@
-// lib/utils/theme/colors.dart
+// Updated colors.dart
 import 'package:flutter/material.dart';
 
 class TugColors {
-  // Primary Colors
-  static const primaryPurple = Color(0xFF7C3AED);
-  static const secondaryTeal = Color(0xFF03DAC6);
+  // Primary Colors - refined palette
+  static const primaryPurple = Color(0xFF6C38D4); // slightly less saturated
+  static const secondaryTeal = Color(0xFF06B6B6); // more sophisticated teal
 
-  // Supporting Colors
-  static const success = Color(0xFF4CAF50);
-  static const warning = Color(0xFFFFC107);
-  static const error = Color(0xFFDC2626);
+  // Supporting Colors - more subtle
+  static const success = Color(0xFF34A853);
+  static const warning = Color(0xFFFBBC05);
+  static const error = Color(0xFFD93025);
 
-  // Light Theme Neutrals
-  static const lightBackground = Color(0xFFFFFFFF);
-  static const lightSurface = Color(0xFFF8F9FA);
-  static const lightTextPrimary = Color(0xFF111827);
-  static const lightTextSecondary = Color(0xFF4B5563);
-  static const lightBorder = Color(0xFFE5E7EB);
+  // Light Theme Neutrals - cleaner grays
+  static const lightBackground = Color(0xFFFAFAFC);
+  static const lightSurface = Color(0xFFF0F2F5);
+  static const lightTextPrimary = Color(0xFF202124);
+  static const lightTextSecondary = Color(0xFF5F6368);
+  static const lightBorder = Color(0xFFE8EAED);
 
-  // Dark Theme Neutrals
-  static const darkBackground = Color(0xFF121212);
-  static const darkSurface = Color(0xFF1E1E1E);
-  static const darkTextPrimary = Color(0xFFF9FAFB);
-  static const darkTextSecondary = Color(0xFFD1D5DB);
-  static const darkBorder = Color(0xFF2D2D2D);
+  // Dark Theme Neutrals - more refined
+  static const darkBackground = Color(0xFF202124);
+  static const darkSurface = Color(0xFF292A2D);
+  static const darkTextPrimary = Color(0xFFE8EAED);
+  static const darkTextSecondary = Color(0xFFBDC1C6);
+  static const darkBorder = Color(0xFF3C4043);
+  
+  // Gradient colors for effects
+  static const gradientStart = Color(0xFF6C38D4);
+  static const gradientEnd = Color(0xFF9C64FF);
 }

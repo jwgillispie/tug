@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tug/blocs/auth/auth_bloc.dart';
+import 'package:tug/blocs/theme/theme_bloc.dart';
 import 'package:tug/utils/theme/colors.dart';
 import 'package:tug/utils/theme/buttons.dart';
 
@@ -16,6 +17,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _notificationsEnabled = true;
   bool _darkModeEnabled = false;
   bool _shareCommunityData = true;
+  @override
+  void initState() {
+    super.initState();
+    // Load the current theme state
+    final themeState = context.read<ThemeBloc>().state;
+    _darkModeEnabled = themeState.isDarkMode;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +36,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             // Profile header
             _buildProfileHeader(),
-            
+
             // Settings sections
             _buildSettingsSection(
               title: 'ACCOUNT',
@@ -38,7 +46,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   title: 'Edit Profile',
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Edit Profile coming soon!')),
+                      const SnackBar(
+                          content: Text('Edit Profile coming soon!')),
                     );
                   },
                 ),
@@ -47,13 +56,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   title: 'Change Password',
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Change Password coming soon!')),
+                      const SnackBar(
+                          content: Text('Change Password coming soon!')),
                     );
                   },
                 ),
               ],
             ),
-            
+
             _buildSettingsSection(
               title: 'PREFERENCES',
               items: [
@@ -75,9 +85,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     setState(() {
                       _darkModeEnabled = value;
                     });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Theme changing coming soon!')),
-                    );
+                    // Dispatch theme changed event to update app theme
+                    context.read<ThemeBloc>().add(ThemeChanged(value));
                   },
                 ),
                 _buildSwitchSettingsItem(
@@ -92,7 +101,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ],
             ),
-            
+
             _buildSettingsSection(
               title: 'ABOUT',
               items: [
@@ -110,7 +119,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   title: 'Help & Support',
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Help & Support coming soon!')),
+                      const SnackBar(
+                          content: Text('Help & Support coming soon!')),
                     );
                   },
                 ),
@@ -119,13 +129,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   title: 'Privacy Policy',
                   onTap: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Privacy Policy coming soon!')),
+                      const SnackBar(
+                          content: Text('Privacy Policy coming soon!')),
                     );
                   },
                 ),
               ],
             ),
-            
+
             // Logout button
             Padding(
               padding: const EdgeInsets.all(16.0),
@@ -145,7 +156,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ),
-            
+
             // App version
             const Padding(
               padding: EdgeInsets.only(bottom: 24.0),
@@ -162,30 +173,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
-  
+// In profile_screen.dart, update the header section
+
   Widget _buildProfileHeader() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
         String displayName = 'User';
         String email = '';
-        
+
         if (state is Authenticated) {
           displayName = state.user.displayName ?? 'User';
           email = state.user.email ?? '';
         }
-        
+
         return Container(
           padding: const EdgeInsets.all(24),
-          color: TugColors.primaryPurple.withOpacity(0.05),
+          color: isDarkMode
+              ? TugColors.primaryPurple.withOpacity(0.15)
+              : TugColors.primaryPurple.withOpacity(0.05),
           child: Column(
             children: [
-              const CircleAvatar(
-                radius: 48,
-                backgroundColor: TugColors.primaryPurple,
-                child: Icon(
-                  Icons.person,
-                  size: 48,
-                  color: Colors.white,
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: TugColors.primaryPurple.withOpacity(0.3),
+                    width: 2,
+                  ),
+                ),
+                child: const CircleAvatar(
+                  radius: 48,
+                  backgroundColor: TugColors.primaryPurple,
+                  child: Icon(
+                    Icons.person,
+                    size: 48,
+                    color: Colors.white,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -201,7 +227,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 email,
                 style: TextStyle(
                   fontSize: 16,
-                  color: Colors.grey.shade600,
+                  color: isDarkMode
+                      ? TugColors.darkTextSecondary
+                      : TugColors.lightTextSecondary,
                 ),
               ),
               const SizedBox(height: 16),
@@ -220,7 +248,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       },
     );
   }
-  
+
   Widget _buildSettingsSection({
     required String title,
     required List<Widget> items,
@@ -264,7 +292,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ],
     );
   }
-  
+
   Widget _buildSettingsItem({
     required IconData icon,
     required String title,
@@ -319,7 +347,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
-  
+
   Widget _buildSwitchSettingsItem({
     required IconData icon,
     required String title,
@@ -356,7 +384,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     subtitle,
                     style: TextStyle(
                       fontSize: 14,
-                      color: Colors.grey.shade600,
+                      color: Theme.of(context).brightness == Brightness.light
+                          ? TugColors.lightTextSecondary
+                          : TugColors.darkTextSecondary,
                     ),
                   ),
                 ],
@@ -372,7 +402,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
-  
+
   void _showLogoutConfirmationDialog() {
     showDialog(
       context: context,
