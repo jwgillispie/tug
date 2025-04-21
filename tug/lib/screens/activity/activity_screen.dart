@@ -447,13 +447,13 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: TugColors.primaryPurple,
-        foregroundColor: Colors.white,
-        onPressed: _showAddActivitySheet,
-        child: const Icon(Icons.add),
-        elevation: isDarkMode ? 4 : 2,
-      ),
+      // floatingActionButton: FloatingActionButton(
+      //   backgroundColor: TugColors.primaryPurple,
+      //   foregroundColor: Colors.white,
+      //   onPressed: _showAddActivitySheet,
+      //   child: const Icon(Icons.add),
+      //   elevation: isDarkMode ? 4 : 2,
+      // ),
     );
   }
 

@@ -6,6 +6,7 @@ import 'package:tug/blocs/values/bloc/values_bloc.dart';
 import 'package:tug/blocs/values/bloc/values_event.dart';
 import 'package:tug/blocs/values/bloc/values_state.dart';
 import 'package:tug/blocs/theme/theme_bloc.dart';
+import 'package:tug/widgets/home/swipeable_quotes.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../utils/theme/colors.dart';
 import '../../utils/theme/buttons.dart';
@@ -22,7 +23,6 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
-  int _currentQuoteIndex = 0;
   
   // Collection of inspirational quotes about values
   final List<Map<String, String>> _quotes = [
@@ -70,9 +70,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     // Load values when screen is initialized
     context.read<ValuesBloc>().add(LoadValues());
     
-    // Randomly select a quote to display
-    _currentQuoteIndex = Random().nextInt(_quotes.length);
-    
     // Setup animation
     _animationController = AnimationController(
       vsync: this,
@@ -92,22 +89,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   void dispose() {
     _animationController.dispose();
     super.dispose();
-  }
-  
-  void _changeQuote() {
-    setState(() {
-      // Select a different quote
-      int newIndex;
-      do {
-        newIndex = Random().nextInt(_quotes.length);
-      } while (newIndex == _currentQuoteIndex);
-      
-      _currentQuoteIndex = newIndex;
-    });
-    
-    // Animate the change
-    _animationController.reset();
-    _animationController.forward();
   }
 
   // Navigate to values edit with return flag
@@ -217,113 +198,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 return ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
-                    // Quote Card
-                    GestureDetector(
-                      onTap: _changeQuote,
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 24),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              TugColors.primaryPurple.withOpacity(isDarkMode ? 0.9 : 0.8),
-                              TugColors.primaryPurple,
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: [
-                            BoxShadow(
-                              color: TugColors.primaryPurple.withOpacity(isDarkMode ? 0.4 : 0.3),
-                              blurRadius: 16,
-                              offset: const Offset(0, 8),
-                              spreadRadius: -4,
-                            ),
-                          ],
-                        ),
-                        child: Stack(
-                          children: [
-                            // Background patterns
-                            Positioned(
-                              right: -20,
-                              top: -20,
-                              child: Icon(
-                                Icons.format_quote,
-                                size: 100,
-                                color: Colors.white.withOpacity(0.05),
-                              ),
-                            ),
-                            Positioned(
-                              left: -20,
-                              bottom: -20,
-                              child: Icon(
-                                Icons.format_quote,
-                                size: 100,
-                                color: Colors.white.withOpacity(0.05),
-                              ),
-                            ),
-                            // Main content
-                            Padding(
-                              padding: const EdgeInsets.all(24),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Row(
-                                    children: [
-                                      Icon(
-                                        Icons.format_quote,
-                                        color: Colors.white,
-                                        size: 24,
-                                      ),
-                                      SizedBox(width: 8),
-                                      Text(
-                                        'Values Wisdom',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    _quotes[_currentQuoteIndex]['quote'] ?? '',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w600,
-                                      height: 1.4,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 12),
-                                  Text(
-                                    '— ${_quotes[_currentQuoteIndex]['author'] ?? ''}',
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(0.8),
-                                      fontSize: 14,
-                                      fontStyle: FontStyle.italic,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 24),
-                                  Center(
-                                    child: Text(
-                                      'Tap to see another quote',
-                                      style: TextStyle(
-                                        color: Colors.white.withOpacity(0.7),
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                    // Swipeable Quotes
+                    SwipeableQuotes(quotes: _quotes),
                     
                     // Values List
+                    const SizedBox(height: 24),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
