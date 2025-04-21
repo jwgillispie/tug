@@ -8,9 +8,10 @@
 build/
 ios/Pods/firebase_options.dart
 *.g.dart
-*./lib/firebase_options.dart
+/lib/firebase_options.dart
 lib/firebase_options.dart
 firebase.json
+**/GoogleService-Info.plist
 
 # Environment files
 .env
