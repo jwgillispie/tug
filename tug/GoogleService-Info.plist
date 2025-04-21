@@ -3,17 +3,17 @@
 <plist version="1.0">
 <dict>
 	<key>API_KEY</key>
-	<string>AIzaSyB1lX9HrsTEw4VA9iceE3IZYdDfOw93kqQ</string>
+	<string>AIzaSyDg8vMGYVlciatUOf9fGRGnwgeUgoIZ_K8</string>
 	<key>GCM_SENDER_ID</key>
-	<string>862340628342</string>
+	<string>543067850318</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>tug</string>
+	<string>com.tug.tug</string>
 	<key>PROJECT_ID</key>
-	<string>tugg-d2a47</string>
+	<string>tugg-app</string>
 	<key>STORAGE_BUCKET</key>
-	<string>tugg-d2a47.firebasestorage.app</string>
+	<string>tugg-app.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:862340628342:ios:c7bd73892669b03e208457</string>
+	<string>1:543067850318:ios:986bfca61c9cb9f8ec251f</string>
 </dict>
 </plist>
