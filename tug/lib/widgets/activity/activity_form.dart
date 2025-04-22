@@ -9,7 +9,8 @@ import 'package:tug/utils/theme/buttons.dart';
 import 'package:tug/utils/theme/colors.dart';
 
 class ActivityFormWidget extends StatefulWidget {
-  final Function(String name, String valueId, int duration, DateTime date, String? notes) onSave;
+  final Function(String name, String valueId, int duration, DateTime date,
+      String? notes) onSave;
   final bool isLoading;
 
   const ActivityFormWidget({
@@ -24,11 +25,11 @@ class ActivityFormWidget extends StatefulWidget {
 
 class _ActivityFormWidgetState extends State<ActivityFormWidget> {
   final _formKey = GlobalKey<FormState>();
-  
+
   final _nameController = TextEditingController();
   final _durationController = TextEditingController();
   final _notesController = TextEditingController();
-  
+
   String? _selectedValueId;
   DateTime _selectedDate = DateTime.now();
   bool _showDurationPresets = true;
@@ -55,7 +56,8 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
 
       final name = _nameController.text.trim();
       final duration = int.tryParse(_durationController.text) ?? 0;
-      final notes = _notesController.text.isEmpty ? null : _notesController.text;
+      final notes =
+          _notesController.text.isEmpty ? null : _notesController.text;
 
       widget.onSave(name, _selectedValueId!, duration, _selectedDate, notes);
     }
@@ -71,9 +73,14 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
   Widget build(BuildContext context) {
     return BlocBuilder<ValuesBloc, ValuesState>(
       builder: (context, state) {
-        final values = state is ValuesLoaded 
+        final values = state is ValuesLoaded
             ? state.values.where((v) => v.active).toList()
             : <ValueModel>[];
+
+        // Set default selected value ID if values are available and no value is selected yet
+        if (values.isNotEmpty && _selectedValueId == null) {
+          _selectedValueId = values.first.id;
+        }
 
         return Form(
           key: _formKey,
@@ -99,7 +106,7 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
                 },
               ),
               const SizedBox(height: 16),
-              
+
               // Value Selector
               DropdownButtonFormField<String>(
                 decoration: const InputDecoration(
@@ -112,7 +119,7 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
                   final valueColor = Color(
                     int.parse(value.color.substring(1), radix: 16) + 0xFF000000,
                   );
-                  
+
                   return DropdownMenuItem(
                     value: value.id,
                     child: Row(
@@ -134,7 +141,8 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
                 onChanged: (String? id) {
                   setState(() {
                     _selectedValueId = id;
-                    debugPrint('Selected value for activity: $_selectedValueId');
+                    debugPrint(
+                        'Selected value for activity: $_selectedValueId');
                   });
                 },
                 validator: (value) {
@@ -145,7 +153,7 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
                 },
               ),
               const SizedBox(height: 16),
-              
+
               // Duration Input
               if (_showDurationPresets) ...[
                 const Text(
@@ -153,7 +161,7 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
-                
+
                 // Duration presets
                 Wrap(
                   spacing: 8,
@@ -162,9 +170,10 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
                     return ActionChip(
                       label: Text('$minutes min'),
                       onPressed: () => _selectDuration(minutes),
-                      backgroundColor: _durationController.text == minutes.toString()
-                          ? TugColors.primaryPurple
-                          : null,
+                      backgroundColor:
+                          _durationController.text == minutes.toString()
+                              ? TugColors.primaryPurple
+                              : null,
                       labelStyle: TextStyle(
                         color: _durationController.text == minutes.toString()
                             ? Colors.white
@@ -173,7 +182,7 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
                     );
                   }).toList(),
                 ),
-                
+
                 Row(
                   children: [
                     Expanded(
@@ -212,7 +221,7 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
                   ],
                 ),
               ],
-              
+
               if (!_showDurationPresets) ...[
                 Row(
                   children: [
@@ -286,9 +295,9 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
                   child: const Text('Simple View'),
                 ),
               ],
-              
+
               const SizedBox(height: 16),
-              
+
               // Notes
               TextFormField(
                 controller: _notesController,
@@ -299,9 +308,9 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
                 ),
                 maxLines: 3,
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Submit Button
               SizedBox(
                 width: double.infinity,

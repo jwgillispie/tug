@@ -33,7 +33,7 @@ Future<void> main() async {
 
   try {
     await EnvConfig.load();
-    
+
     // Only initialize storage for non-web platforms
     if (!kIsWeb) {
       await LocalStorage.initialize();
@@ -129,9 +129,10 @@ class _TugAppState extends State<TugApp> {
     super.initState();
     _authBloc = AuthBloc(authRepository: widget.authRepository);
     _valuesBloc = ValuesBloc(valuesRepository: widget.valuesRepository);
-    _activitiesBloc = ActivitiesBloc(activityRepository: widget.activityRepository);
+    _activitiesBloc =
+        ActivitiesBloc(activityRepository: widget.activityRepository);
     _themeBloc = ThemeBloc();
-    
+
     // Load theme preference
     _themeBloc.add(ThemeLoaded());
 
@@ -142,9 +143,7 @@ class _TugAppState extends State<TugApp> {
         // Landing page route (only for web)
         GoRoute(
           path: '/',
-          builder: (context, state) => kIsWeb
-              ? const TugLandingPage() // Show landing page for web
-              : const LoginScreen(), // Default to login for mobile
+          builder: (context, state) => const LoginScreen(),// Default to login for mobile
         ),
         GoRoute(
           path: '/login',
@@ -222,12 +221,12 @@ class _TugAppState extends State<TugApp> {
 
         if (isLoggedIn) {
           final hasCompletedOnboarding = true;
-          
+
           if (!hasCompletedOnboarding) {
             return isValuesInputScreen ? null : '/values-input';
           } else {
-            return isLoginScreen || isSignupScreen || isForgotPasswordScreen 
-                ? '/home' 
+            return isLoginScreen || isSignupScreen || isForgotPasswordScreen
+                ? '/home'
                 : null;
           }
         }
