@@ -1,10 +1,10 @@
 import 'dart:async';
-import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:go_router/go_router.dart';
+import 'package:dio/dio.dart';
 import 'package:tug/blocs/activities/activities_bloc.dart';
 import 'package:tug/blocs/theme/theme_bloc.dart';
 import 'package:tug/blocs/values/bloc/values_bloc.dart';
@@ -15,11 +15,11 @@ import 'package:tug/screens/activity/activity_screen.dart';
 import 'package:tug/screens/auth/forgot_password_screen.dart';
 import 'package:tug/screens/diagnostics_screen.dart';
 import 'package:tug/screens/home/home_screen.dart';
-import 'package:tug/screens/landing/landing_page.dart';
 import 'package:tug/screens/main_layout.dart';
 import 'package:tug/screens/profile/profile_screen.dart';
 import 'package:tug/screens/progress/progress_screen.dart';
 import 'package:tug/utils/local_storage.dart';
+import 'package:tug/utils/render_utils.dart';
 import 'repositories/auth_repository.dart';
 import 'blocs/auth/auth_bloc.dart';
 import 'firebase_options.dart';
@@ -43,6 +43,17 @@ Future<void> main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+
+    // Ping the backend to wake it up if it's in cold start
+    // This helps reduce latency for the first API call
+    final dio = Dio(BaseOptions(baseUrl: EnvConfig.apiUrl));
+    try {
+      debugPrint('Pinging backend at ${EnvConfig.apiUrl}');
+      await RenderUtils.pingBackend(dio);
+    } catch (e) {
+      // Don't fail app startup if backend ping fails
+      debugPrint('Backend ping failed: $e');
+    }
 
     final authRepository = AuthRepository();
     final valuesRepository = ValuesRepository();
@@ -137,13 +148,12 @@ class _TugAppState extends State<TugApp> {
     _themeBloc.add(ThemeLoaded());
 
     _router = GoRouter(
-      initialLocation: kIsWeb ? '/' : '/login', // Start at landing page for web
+      initialLocation: '/login',
       refreshListenable: GoRouterRefreshStream(_authBloc.stream),
       routes: [
-        // Landing page route (only for web)
         GoRoute(
           path: '/',
-          builder: (context, state) => const LoginScreen(),// Default to login for mobile
+          builder: (context, state) => const LoginScreen(),
         ),
         GoRoute(
           path: '/login',
@@ -202,11 +212,6 @@ class _TugAppState extends State<TugApp> {
         ),
       ],
       redirect: (context, state) {
-        // Skip redirection for landing page on web
-        if (kIsWeb && state.fullPath == '/') {
-          return null;
-        }
-
         final currentState = _authBloc.state;
         final isLoggedIn = currentState is Authenticated;
         final isLoginScreen = state.fullPath == '/login';

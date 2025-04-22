@@ -11,9 +11,9 @@ class ApiService {
   ApiService({Dio? dio})
       : _dio = dio ??
             Dio(BaseOptions(
-              baseUrl: EnvConfig.apiUrl,
-              connectTimeout: const Duration(seconds: 10),
-              receiveTimeout: const Duration(seconds: 10),
+              baseUrl: EnvConfig.apiUrl, // This will use your Render URL
+              connectTimeout: const Duration(seconds: 15), // Increased timeouts for potential API latency
+              receiveTimeout: const Duration(seconds: 15),
               // Don't throw exceptions automatically for response status
               validateStatus: (status) => true,
               followRedirects: true,
@@ -76,8 +76,6 @@ class ApiService {
         'phone_number': user.phoneNumber,
         'uid': user.uid,
       };
-
-      debugPrint('Sending user data: $userData');
 
       final response = await _dio.post(path, data: userData);
 
@@ -209,7 +207,6 @@ class ApiService {
   }
 
   // Generic PATCH request with proper error handling
-// In the patch method of ApiService
   Future<dynamic> patch(String path, {dynamic data}) async {
     // Normalize path
     path = _normalizeUrl(path);

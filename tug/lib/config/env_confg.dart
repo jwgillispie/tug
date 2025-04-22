@@ -7,7 +7,7 @@ class EnvConfig {
 
   static String get mongoDbUrl {
     _checkInitialized();
-    return dotenv.env['MONGODB_URL'] ?? 'http://localhost:8000';
+    return dotenv.env['MONGODB_URL'] ?? 'mongodb://localhost:27017';
   }
 
   static String get apiUrl {
@@ -19,9 +19,9 @@ class EnvConfig {
       return url;
     }
 
-    // Default value for development
-    const defaultUrl = 'http://localhost:8000'; // Android emulator default
-    debugPrint('No API_URL found in .env, using default: $defaultUrl');
+    // Default value for production
+    const defaultUrl = 'https://tug-backend.onrender.com'; 
+    debugPrint('Using backend URL: $defaultUrl');
     return defaultUrl;
   }
 

@@ -25,12 +25,21 @@ class ApiError implements Exception {
         );
       }
       
+      // Handle Render-specific errors
+      if (statusCode == 503) {
+        return ApiError(
+          message: 'Backend service temporarily unavailable. The server might be starting up if it was idle.',
+          code: 'server_unavailable',
+          statusCode: statusCode,
+        );
+      }
+      
       switch (exception.type) {
         case DioExceptionType.connectionTimeout:
         case DioExceptionType.sendTimeout:
         case DioExceptionType.receiveTimeout:
           return ApiError(
-            message: 'Connection timeout. Please check your internet connection.',
+            message: 'Connection timeout. Please check your internet connection or try again later.',
             code: 'timeout',
           );
         case DioExceptionType.badResponse:
@@ -41,7 +50,7 @@ class ApiError implements Exception {
           );
         case DioExceptionType.connectionError:
           return ApiError(
-            message: 'No internet connection',
+            message: 'No internet connection or server is unreachable',
             code: 'no_connection',
           );
         default:
