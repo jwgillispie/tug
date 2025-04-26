@@ -194,13 +194,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                   const SizedBox(height: 24),
                   TugTextField(
-                    label: 'One more time please :)',
+                    label: 'Can you do that one more time please :)',
                     hint: 'Confirm your password',
                     controller: _confirmPasswordController,
                     isPassword: true,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'One more time please >:()';
+                        return 'One more time PLEASE!';
                       }
                       if (value != _passwordController.text) {
                         return 'Passwords aren\'t twinning';
@@ -292,7 +292,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Already in?',
+                        'Already have an account?',
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       TextButton(

@@ -363,8 +363,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
                         if (values.isEmpty) {
                           return const Center(
-                            child: Text(
-                                'Hello? Values? Add some!'),
+                            child: Text('Hello? Values? Add some!'),
                           );
                         }
 
@@ -437,16 +436,17 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                   };
 
                               return Padding(
-                                padding: const EdgeInsets.only(bottom: 16),
-                                child: TugOfWarWidget(
-                                  valueName: value.name,
-                                  statedImportance: value.importance,
-                                  actualBehavior:
-                                      activityData['minutes'] as int,
-                                  communityAverage:
-                                      activityData['community_avg'] as int,
-                                ),
-                              );
+                                  padding: const EdgeInsets.only(bottom: 16),
+                                  child: TugOfWarWidget(
+                                    valueName: value.name,
+                                    statedImportance: value.importance,
+                                    actualBehavior:
+                                        activityData['minutes'] as int,
+                                    communityAverage:
+                                        activityData['community_avg'] as int,
+                                    valueColor:
+                                        value.color, // Pass the value's color
+                                  ));
                             }).toList(),
 
                             const SizedBox(height: 16),

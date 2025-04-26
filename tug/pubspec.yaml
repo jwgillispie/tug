@@ -24,6 +24,7 @@ dependencies:
   firebase_auth_web: ^5.8.12
   firebase_storage: ^12.3.6
   cloud_firestore: ^5.5.0
+  flutter_launcher_icons: ^0.14.3
   
   
   # Local Storage
@@ -64,6 +65,17 @@ dev_dependencies:
   integration_test:
     sdk: flutter
 
+flutter_icons:
+  android: "launcher_icon"
+  ios: true
+  web:
+    generate: true
+    image_path: "assets/images/tug_logo.png"
+    background_color: "#6C38D4"
+    theme_color: "#6C38D4"
+  image_path: "assets/images/tug_logo.png"
+  min_sdk_android: 21 # Android min sdk min:16, default 21
+      
 flutter:
   uses-material-design: true
 
