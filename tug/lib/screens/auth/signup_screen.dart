@@ -1,4 +1,5 @@
 // lib/screens/auth/signup_screen.dart
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -37,27 +38,27 @@ class _SignUpScreenState extends State<SignUpScreen> {
     if (!(_formKey.currentState?.validate() ?? false)) {
       return;
     }
-    
+
     if (!_acceptedTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please accept the terms and conditions'),
+          content: Text('\$5 if you read this'),
           backgroundColor: TugColors.error,
         ),
       );
       return;
     }
-    
+
     setState(() => _errorMessage = null);
-    
+
     // Use BLoC for signup
     context.read<AuthBloc>().add(
-      SignUpEvent(
-        name: _nameController.text.trim(),
-        email: _emailController.text.trim(),
-        password: _passwordController.text,
-      ),
-    );
+          SignUpEvent(
+            name: _nameController.text.trim(),
+            email: _emailController.text.trim(),
+            password: _passwordController.text,
+          ),
+        );
   }
 
   @override
@@ -71,11 +72,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
           });
         } else {
           setState(() => _isLoading = false);
-          
+
           if (state is Authenticated) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Account created successfully! Please verify your email.'),
+                content: Text('You\'re in there!!.'),
                 backgroundColor: TugColors.success,
               ),
             );
@@ -85,7 +86,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
           } else if (state is EmailVerificationSent) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Verification email sent. Please check your inbox.'),
+                content:
+                    Text('Verification email sent. Please check your inbox.'),
                 backgroundColor: TugColors.success,
               ),
             );
@@ -108,12 +110,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Start tracking your value alignment',
+                    'Start tugging them values',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: TugColors.lightTextSecondary,
-                    ),
+                          color: TugColors.lightTextSecondary,
+                        ),
                   ),
-                  
+
                   // Error message display
                   if (_errorMessage != null) ...[
                     const SizedBox(height: 24),
@@ -142,7 +144,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                     ),
                   ],
-                  
+
                   const SizedBox(height: 32),
                   TugTextField(
                     label: 'Full Name',
@@ -153,7 +155,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         return 'Please enter your name';
                       }
                       if (value.length < 2) {
-                        return 'Name must be at least 2 characters';
+                        return 'Your name is 1 letter fr?';
                       }
                       return null;
                     },
@@ -169,7 +171,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         return 'Please enter your email';
                       }
                       if (!value.contains('@') || !value.contains('.')) {
-                        return 'Please enter a valid email';
+                        return 'Try again, that email fake';
                       }
                       return null;
                     },
@@ -185,28 +187,29 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         return 'Please enter a password';
                       }
                       if (value.length < 6) {
-                        return 'Password must be at least 6 characters';
+                        return 'Password must be longer than that';
                       }
                       return null;
                     },
                   ),
                   const SizedBox(height: 24),
                   TugTextField(
-                    label: 'Confirm Password',
+                    label: 'One more time please :)',
                     hint: 'Confirm your password',
                     controller: _confirmPasswordController,
                     isPassword: true,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please confirm your password';
+                        return 'One more time please >:()';
                       }
                       if (value != _passwordController.text) {
-                        return 'Passwords do not match';
+                        return 'Passwords aren\'t twinning';
                       }
                       return null;
                     },
                   ),
                   const SizedBox(height: 24),
+
                   Row(
                     children: [
                       SizedBox(
@@ -227,34 +230,37 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: GestureDetector(
-                          onTap: () {
-                            setState(() {
-                              _acceptedTerms = !_acceptedTerms;
-                            });
-                          },
-                          child: Text.rich(
-                            TextSpan(
-                              text: 'I agree to the ',
-                              style: Theme.of(context).textTheme.bodyMedium,
-                              children: [
-                                TextSpan(
-                                  text: 'Terms of Service',
-                                  style: TextStyle(
-                                    color: TugColors.primaryPurple,
-                                    decoration: TextDecoration.underline,
-                                  ),
+                        child: Text.rich(
+                          TextSpan(
+                            text: 'I agree to the ',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                            children: [
+                              TextSpan(
+                                text: 'Terms of Service',
+                                style: TextStyle(
+                                  color: TugColors.primaryPurple,
+                                  decoration: TextDecoration.underline,
                                 ),
-                                const TextSpan(text: ' and '),
-                                TextSpan(
-                                  text: 'Privacy Policy',
-                                  style: TextStyle(
-                                    color: TugColors.primaryPurple,
-                                    decoration: TextDecoration.underline,
-                                  ),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () {
+                                    // Use absolute path instead of relative
+                                    context.push('/terms');
+                                  },
+                              ),
+                              const TextSpan(text: ' and '),
+                              TextSpan(
+                                text: 'Privacy Policy',
+                                style: TextStyle(
+                                  color: TugColors.primaryPurple,
+                                  decoration: TextDecoration.underline,
                                 ),
-                              ],
-                            ),
+                                recognizer: TapGestureRecognizer()
+                                  ..onTap = () {
+                                    // Use absolute path instead of relative
+                                    context.push('/privacy');
+                                  },
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -286,7 +292,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Already have an account?',
+                        'Already in?',
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       TextButton(

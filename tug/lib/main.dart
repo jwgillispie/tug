@@ -15,6 +15,8 @@ import 'package:tug/screens/activity/activity_screen.dart';
 import 'package:tug/screens/auth/forgot_password_screen.dart';
 import 'package:tug/screens/diagnostics_screen.dart';
 import 'package:tug/screens/home/home_screen.dart';
+import 'package:tug/screens/legal/privacy_policy_screen.dart';
+import 'package:tug/screens/legal/terms_screen.dart';
 import 'package:tug/screens/main_layout.dart';
 import 'package:tug/screens/profile/profile_screen.dart';
 import 'package:tug/screens/progress/progress_screen.dart';
@@ -152,6 +154,14 @@ class _TugAppState extends State<TugApp> {
       refreshListenable: GoRouterRefreshStream(_authBloc.stream),
       routes: [
         GoRoute(
+          path: '/terms',
+          builder: (context, state) => const TermsScreen(),
+        ),
+        GoRoute(
+          path: '/privacy',
+          builder: (context, state) => const PrivacyPolicyScreen(),
+        ),
+        GoRoute(
           path: '/',
           builder: (context, state) => const LoginScreen(),
         ),
@@ -219,6 +229,8 @@ class _TugAppState extends State<TugApp> {
         final isDiagnosticScreen = state.fullPath == '/diagnostics';
         final isForgotPasswordScreen = state.fullPath == '/forgot-password';
         final isValuesInputScreen = state.fullPath == '/values-input';
+        final isTermsScreen = state.fullPath == '/terms';
+        final isPrivacyScreen = state.fullPath == '/privacy';
 
         if (isDiagnosticScreen) {
           return null;
@@ -237,7 +249,8 @@ class _TugAppState extends State<TugApp> {
         }
 
         if (!isLoggedIn &&
-            !(isLoginScreen || isSignupScreen || isForgotPasswordScreen)) {
+            !(isLoginScreen || isSignupScreen || isForgotPasswordScreen || 
+              isTermsScreen || isPrivacyScreen)) {
           return '/login';
         }
 

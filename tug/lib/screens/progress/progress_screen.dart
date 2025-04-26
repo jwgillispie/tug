@@ -202,7 +202,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
     }
 
     if (values.isEmpty) {
-      return 'Add values and track activities to get personalized insights.';
+      return 'Add some values and we\'ll give you some super helpful advice.';
     }
 
     if (mostAligned != null && leastAligned != null) {
@@ -212,14 +212,14 @@ class _ProgressScreenState extends State<ProgressScreen> {
         final communityAvg = activityData['community_avg'] as int;
 
         if (minutes < communityAvg) {
-          return 'Your "${mostAligned.name}" value shows great alignment! Consider dedicating more time to "${leastAligned.name}" to better reflect its importance to you.';
+          return 'Your "${mostAligned.name}" value is looking GOOD! Put some more time towards "${leastAligned.name}" if you\'re fr about it.';
         } else {
-          return 'Your "${mostAligned.name}" value shows great alignment! You\'re spending more time than average on "${leastAligned.name}", consider if this reflects its true importance to you.';
+          return 'Your "${mostAligned.name}" value has a real nice tug! You\'re spending hella time on "${leastAligned.name}", just making sure you\'re all good with that';
         }
       }
     }
 
-    return 'Continue tracking your activities to get personalized insights about your value alignment.';
+    return 'Tug some activities and we\'ll get you some fantastic insights.';
   }
 
   Widget _buildSummaryItem(
@@ -364,7 +364,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                         if (values.isEmpty) {
                           return const Center(
                             child: Text(
-                                'No values defined yet. Add some values to track your progress.'),
+                                'Hello? Values? Add some!'),
                           );
                         }
 

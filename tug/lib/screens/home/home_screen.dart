@@ -24,43 +24,44 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   
-  // Collection of inspirational quotes about values
-  final List<Map<String, String>> _quotes = [
+final List<Map<String, String>> _quotes = [
     {
-      'quote': 'When your values are clear to you, making decisions becomes easier.',
-      'author': 'Roy E. Disney'
+      'quote': 'Imperfection is beauty, madness is genius, and it’s better to be absolutely ridiculous than absolutely boring.',
+      'author': 'Marilyn Monroe'
     },
     {
-      'quote': 'If you don\'t stick to your values when they are being tested, they\'re not values, they\'re hobbies.',
-      'author': 'Jon Stewart'
+      'quote': 'The difference between ordinary and extraordinary is that little extra.',
+      'author': 'Jimmy Johnson'
     },
     {
-      'quote': 'Your beliefs become your thoughts. Your thoughts become your words. Your words become your actions.',
-      'author': 'Gandhi'
+      'quote': 'The only way to get rid of temptation is to yield to it.',
+      'author': 'Oscar Wilde',
     },
     {
-      'quote': 'It\'s not hard to make decisions when you know what your values are.',
-      'author': 'Roy Disney'
+      'quote': 'I am not afraid of storms, for I am learning how to sail my ship.',
+      'author': 'Louisa May Alcott',
     },
     {
-      'quote': 'Living with integrity means behaving in ways that are in harmony with your personal values.',
-      'author': 'Barbara De Angelis'
+      'quote': 'You miss 100% of the shots you don’t take.',
+      'author': 'Wayne Gretzky',
     },
     {
-      'quote': 'Your personal core values define who you are.',
-      'author': 'Tony Hsieh'
+      'quote': 'The future is uncertain, but the end is always near.',
+      'author': 'Jim Morrison',
+    },
+
+    {
+      'quote': 'If you tell the truth, you don’t have to remember anything.',
+      'author': 'Mark Twain',
+    },
+
+    {
+      'quote': 'You gotta pay taxes. That’s just life. Unless you famous, then you gotta pay *more* taxes. That’s just facts.',
+      'author': 'Lil Baby',
     },
     {
-      'quote': 'A highly developed value system is like a compass. It serves as a guide to point you in the right direction.',
-      'author': 'Idowu Koyenikan'
-    },
-    {
-      'quote': 'When values, thoughts, feelings, and actions are in alignment, a person becomes focused and character is strengthened.',
-      'author': 'John C. Maxwell'
-    },
-    {
-      'quote': 'In moments like this, it doesn\'t matter what you were born to be. It matters what you choose to become.',
-      'author': 'Kristin Harmel'
+      'quote': 'When you hear Nicki Minaj in the traffic, you know you gon’ be late to work.',
+      'author': 'Nicki Minaj',
     },
   ];
   
@@ -174,7 +175,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'Add some values to start tracking your progress',
+                          'You gotta add some values first cuzzo',
                           style: TextStyle(
                             color: isDarkMode 
                                 ? TugColors.darkTextSecondary 
@@ -392,7 +393,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      'Log time spent on your values',
+                                      'Log time spent on your values, and don\'t be lying',
                                       style: TextStyle(
                                         color: isDarkMode 
                                             ? TugColors.darkTextSecondary 
@@ -473,7 +474,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     const Text(
-                                      'Progress Tracking',
+                                      'Progress',
                                       style: TextStyle(
                                         fontSize: 18,
                                         fontWeight: FontWeight.w600,
@@ -481,7 +482,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      'View your value alignment progress',
+                                      'See how you\'re doing',
                                       style: TextStyle(
                                         color: isDarkMode 
                                             ? TugColors.darkTextSecondary 
@@ -515,7 +516,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               }
               
               return const Center(
-                child: Text('No values loaded'),
+                child: Text('You need a value first'),
               );
             },
           ),
@@ -529,7 +530,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Logout'),
-        content: const Text('Are you sure you want to log out?'),
+        content: const Text('Deadass?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),

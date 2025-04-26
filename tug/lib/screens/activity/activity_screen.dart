@@ -246,13 +246,13 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
         return AlertDialog(
           backgroundColor: isDarkMode ? TugColors.darkSurface : Colors.white,
           title: const Text('Delete Activity'),
-          content: Text('Are you sure you want to delete "${activity.name}"?'),
+          content: Text('You deadass want to delete "${activity.name}"?'),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: const Text('Cancel'),
+              child: const Text('Nah'),
             ),
             TextButton(
               onPressed: () {
@@ -266,7 +266,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
               style: TextButton.styleFrom(
                 foregroundColor: TugColors.error,
               ),
-              child: const Text('Delete'),
+              child: const Text('Yes bro'),
             ),
           ],
         );
@@ -388,7 +388,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                           ),
                           const SizedBox(height: 16),
                           const Text(
-                            'No activities logged yet',
+                            'Not shit here',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -396,7 +396,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            'Start tracking time spent on your values',
+                            'Get tugging on them activities',
                             style: TextStyle(
                               color: isDarkMode ? Colors.grey.shade400 : Colors.grey,
                             ),
@@ -610,7 +610,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
             if (activities.isEmpty) {
               return Center(
                 child: Text(
-                  'No activities yet',
+                  'It\'s empty and lonley over here',
                   style: TextStyle(
                     fontStyle: FontStyle.italic,
                     color: isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600,
@@ -657,7 +657,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
 
           return Center(
             child: Text(
-              'Loading summary...',
+              'Hold onnnn...',
               style: TextStyle(
                 color: isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600,
               ),

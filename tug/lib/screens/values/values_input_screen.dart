@@ -140,7 +140,7 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
         children: [
           Scaffold(
             appBar: AppBar(
-              title: const Text('Your Values'),
+              title: const Text('Values'),
             ),
             body: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
@@ -148,12 +148,12 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'What matters most to you?',
+                    'What do you care about more than anything else?',
                     style: Theme.of(context).textTheme.displayLarge,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Add up to 5 values that guide your life',
+                    'You can get up to 5',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       color: TugColors.lightTextSecondary,
                     ),
@@ -166,24 +166,24 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
                       children: [
                         TugTextField(
                           label: 'Value',
-                          hint: 'Enter a value (e.g., Health, Family)',
+                          hint: 'Think Health, Family, Creativity, Learning ',
                           controller: _valueController,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'Please enter a value';
                             }
                             if (value.length < 2) {
-                              return 'Value must be at least 2 characters';
+                              return 'Value gotta be longer than that';
                             }
                             if (value.length > 30) {
-                              return 'Value must be at most 30 characters';
+                              return 'Okay that\'s awesome but can you make it a little shorter?';
                             }
                             return null;
                           },
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'How important is this value? (1-5)',
+                          'How important is this value? (meh - everything)',
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                         Slider(
@@ -202,7 +202,7 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
                         const SizedBox(height: 16),
                         TugTextField(
                           label: 'Description (Optional)',
-                          hint: 'Describe why this value matters to you',
+                          hint: 'Why?',
                           controller: _descriptionController,
                         ),
                         const SizedBox(height: 16),
@@ -245,8 +245,8 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
                                           ),
                                         )
                                       : Text(maxValuesReached 
-                                          ? 'Maximum 5 values reached' 
-                                          : 'Add Value'),
+                                          ? 'Okay! 5 values! AWESOME' 
+                                          : 'Add Another'),
                                 ),
                               ),
                             );
@@ -263,7 +263,7 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
                         
                         if (activeValues.isEmpty) {
                           return const Center(
-                            child: Text('Add at least one value to continue'),
+                            child: Text('Gotta have at least one value :)'),
                           );
                         }
                         
@@ -308,7 +308,7 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
                                           color: Colors.white,
                                         ),
                                       )
-                                    : const Text('Continue'),
+                                    : const Text('GO!'),
                               ),
                             ),
                           ],

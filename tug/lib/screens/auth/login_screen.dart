@@ -57,7 +57,7 @@ class _LoginScreenState extends State<LoginScreen> {
             // Show a success message
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Login successful'),
+                content: Text('Hello beautiful'),
                 backgroundColor: TugColors.success,
               ),
             );
@@ -152,7 +152,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         return 'Please enter your password';
                       }
                       if (value.length < 6) {
-                        return 'Password must be at least 6 characters';
+                        return 'Password gotta be longer than that';
                       }
                       return null;
                     },

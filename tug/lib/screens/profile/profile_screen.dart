@@ -1,6 +1,7 @@
 // lib/screens/profile/profile_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:tug/blocs/auth/auth_bloc.dart';
 import 'package:tug/blocs/theme/theme_bloc.dart';
 import 'package:tug/utils/theme/colors.dart';
@@ -125,13 +126,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   },
                 ),
                 _buildSettingsItem(
+                  icon: Icons.description_outlined,
+                  title: 'Terms of Service',
+                  onTap: () {
+                    context.push('/terms');
+                  },
+                ),
+                _buildSettingsItem(
                   icon: Icons.privacy_tip_outlined,
                   title: 'Privacy Policy',
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('Privacy Policy coming soon!')),
-                    );
+                    context.push('/privacy');
                   },
                 ),
               ],
