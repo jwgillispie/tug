@@ -301,7 +301,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
                             selectedColor:
                                 TugColors.primaryPurple.withOpacity(0.8),
                             labelStyle: TextStyle(
-                              color: isSelected ? Colors.white : Colors.black87,
+                              color: isSelected ? Colors.white : TugColors.secondaryTeal,
                               fontWeight: isSelected
                                   ? FontWeight.bold
                                   : FontWeight.normal,
