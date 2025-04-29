@@ -167,6 +167,7 @@ async def get_current_user_profile(request: Request):
         logger.error(f"Get user profile error: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get user: {e}")
 
+# Update the patch endpoint
 @router.patch("/me", response_model=UserResponse)
 async def update_user_profile(
     user_update: UserUpdate,
@@ -194,6 +195,9 @@ async def update_user_profile(
                 detail="User not found"
             )
         
+        # Log the user ID for debugging
+        logger.info(f"Updating user with ID: {user.id}, type: {type(user.id)}")
+        
         # Update fields
         update_data = user_update.model_dump(exclude_unset=True)
         if update_data:
@@ -205,3 +209,36 @@ async def update_user_profile(
     except Exception as e:
         logger.error(f"Update user profile error: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to update user: {e}")
+# Additional endpoint for app/api/endpoints/users.py
+
+@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_user_profile(request: Request):
+    """Delete current user profile"""
+    try:
+        # Extract token manually
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Missing or invalid Authorization header"
+            )
+        
+        token = auth_header.split(' ')[1]
+        decoded_token = auth.verify_id_token(token)
+        firebase_uid = decoded_token.get('uid')
+        
+        # Get user
+        user = await User.find_one(User.firebase_uid == firebase_uid)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        # Delete the user
+        await user.delete()
+        
+        return None
+    except Exception as e:
+        logger.error(f"Delete user profile error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to delete user: {e}")

@@ -1,4 +1,5 @@
 # app/services/user_service.py
+from bson import ObjectId
 from ..models.user import User
 from ..schemas.user import UserCreate, UserUpdate
 from datetime import datetime
@@ -25,14 +26,28 @@ class UserService:
         return new_user
     
     @staticmethod
-    async def update_user(user: User, user_data: UserUpdate) -> User:
+    async def update_user(user_id: str, user_data: UserUpdate) -> Optional[User]:
         """Update user data"""
-        update_data = user_data.model_dump(exclude_unset=True)
-        if update_data:
-            for field, value in update_data.items():
-                setattr(user, field, value)
-            await user.save()
-        return user
+        try:
+            # Convert string ID to ObjectId if needed
+            object_id = user_id if isinstance(user_id, ObjectId) else ObjectId(user_id)
+            
+            # Find the user by ID
+            user = await User.get(object_id)
+            if not user:
+                return None
+                
+            # Update user with provided data
+            update_data = user_data.model_dump(exclude_unset=True)
+            if update_data:
+                for field, value in update_data.items():
+                    setattr(user, field, value)
+                await user.save()
+            
+            return user
+        except Exception as e:
+            print(f"Error updating user: {e}")
+            return None
     
     @staticmethod
     async def get_user_by_id(user_id: str) -> Optional[User]:
