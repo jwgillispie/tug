@@ -46,20 +46,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   icon: Icons.person_outline,
                   title: 'Edit Profile',
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('Edit Profile coming soon!')),
-                    );
+                    context.push('/edit-profile');
                   },
                 ),
                 _buildSettingsItem(
                   icon: Icons.lock_outline,
                   title: 'Change Password',
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('Change Password coming soon!')),
-                    );
+                    context.push('/change-password');
                   },
                 ),
               ],
@@ -110,19 +104,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   icon: Icons.info_outline,
                   title: 'About Tug',
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('About page coming soon!')),
-                    );
+                    context.push('/about');
                   },
                 ),
                 _buildSettingsItem(
                   icon: Icons.help_outline,
                   title: 'Help & Support',
                   onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('Help & Support coming soon!')),
-                    );
+                    context.push('/help');
                   },
                 ),
                 _buildSettingsItem(
@@ -178,7 +167,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
-// In profile_screen.dart, update the header section
 
   Widget _buildProfileHeader() {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
@@ -241,9 +229,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               OutlinedButton(
                 style: TugButtons.secondaryButtonStyle,
                 onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Edit Profile coming soon!')),
-                  );
+                  context.push('/edit-profile');
                 },
                 child: const Text('Edit Profile'),
               ),

@@ -14,6 +14,7 @@ import 'package:tug/repositories/values_repository.dart';
 import 'package:tug/screens/activity/activity_screen.dart';
 import 'package:tug/screens/auth/forgot_password_screen.dart';
 import 'package:tug/screens/diagnostics_screen.dart';
+import 'package:tug/screens/help/help_screen.dart';
 import 'package:tug/screens/home/home_screen.dart';
 import 'package:tug/screens/legal/privacy_policy_screen.dart';
 import 'package:tug/screens/legal/terms_screen.dart';
@@ -29,6 +30,11 @@ import 'utils/theme/theme.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/signup_screen.dart';
 import 'screens/values/values_input_screen.dart';
+
+// Import new screens
+import 'screens/about/about_screen.dart';
+import 'screens/profile/edit_profile_screen.dart';
+import 'screens/profile/change_password_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -160,6 +166,26 @@ class _TugAppState extends State<TugApp> {
         GoRoute(
           path: '/privacy',
           builder: (context, state) => const PrivacyPolicyScreen(),
+        ),
+        // New About Screen
+        GoRoute(
+          path: '/about',
+          builder: (context, state) => const AboutScreen(),
+        ),
+        // New Help & Support Screen
+        GoRoute(
+          path: '/help',
+          builder: (context, state) => const HelpSupportScreen(),
+        ),
+        // New Edit Profile Screen
+        GoRoute(
+          path: '/edit-profile',
+          builder: (context, state) => const EditProfileScreen(),
+        ),
+        // New Change Password Screen
+        GoRoute(
+          path: '/change-password',
+          builder: (context, state) => const ChangePasswordScreen(),
         ),
         GoRoute(
           path: '/',
