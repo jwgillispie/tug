@@ -19,7 +19,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _darkModeEnabled = false;
   bool _isDeleting = false;
-  
+
   @override
   void initState() {
     super.initState();
@@ -489,86 +489,102 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
+// Fix for the TextEditingController issue in _promptForCredentials method
 
   Future<AuthCredential?> _promptForCredentials() async {
     final TextEditingController passwordController = TextEditingController();
     AuthCredential? credential;
-    
-    await showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        title: const Text('Confirm Your Password'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'For security reasons, please enter your password to confirm account deletion',
-              style: TextStyle(height: 1.5),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: passwordController,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Password',
-                border: OutlineInputBorder(),
+
+    try {
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext dialogContext) => AlertDialog(
+          title: const Text('Confirm Your Password'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'For security reasons, please enter your password to confirm account deletion',
+                style: TextStyle(height: 1.5),
               ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: passwordController,
+                obscureText: true,
+                decoration: const InputDecoration(
+                  labelText: 'Password',
+                  border: OutlineInputBorder(),
+                ),
+                onSubmitted: (value) {
+                  // Handle submit on enter key
+                  final user = FirebaseAuth.instance.currentUser;
+                  if (user != null && user.email != null) {
+                    credential = EmailAuthProvider.credential(
+                      email: user.email!,
+                      password: value,
+                    );
+                  }
+                  Navigator.of(dialogContext).pop();
+                },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              onPressed: () {
+                final user = FirebaseAuth.instance.currentUser;
+                if (user != null && user.email != null) {
+                  credential = EmailAuthProvider.credential(
+                    email: user.email!,
+                    password: passwordController.text,
+                  );
+                }
+                Navigator.of(dialogContext).pop();
+              },
+              child: const Text('Confirm'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            onPressed: () {
-              final user = FirebaseAuth.instance.currentUser;
-              if (user != null && user.email != null) {
-                credential = EmailAuthProvider.credential(
-                  email: user.email!,
-                  password: passwordController.text,
-                );
-              }
-              Navigator.pop(context);
-            },
-            child: const Text('Confirm'),
-          ),
-        ],
-      ),
-    );
-    
-    // Dispose of the controller
-    passwordController.dispose();
-    
+      );
+    } finally {
+      // Make sure we dispose the controller in all cases
+      passwordController.dispose();
+    }
+
     return credential;
   }
+
+// Full _deleteAccount method with improved error handling
 
   Future<void> _deleteAccount() async {
     // Prevent multiple deletion attempts
     if (_isDeleting) return;
-    
+
     setState(() {
       _isDeleting = true;
     });
 
     Navigator.pop(context); // Close the confirmation dialog
-    
+
     // Show loading indicator
     _showLoadingDialog('Preparing to delete account...');
-    
+
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
         throw Exception('No user is currently signed in');
       }
-      
+
       // 1. Re-authenticate the user before deletion (required by Firebase)
       // We'll need to collect the user's credentials again
       final credentials = await _promptForCredentials();
-      
+
       if (credentials == null) {
         // User cancelled re-authentication
         Navigator.pop(context); // Close loading dialog
@@ -577,40 +593,80 @@ class _ProfileScreenState extends State<ProfileScreen> {
         });
         return;
       }
-      
+
       // Update loading message
       Navigator.pop(context); // Close previous loading dialog
       _showLoadingDialog('Authenticating...');
-      
-      // Re-authenticate with Firebase
-      await user.reauthenticateWithCredential(credentials);
-      
+
+      try {
+        // Re-authenticate with Firebase
+        await user.reauthenticateWithCredential(credentials);
+      } catch (authError) {
+        // Handle authentication errors specifically
+        Navigator.pop(context); // Close loading dialog
+
+        setState(() {
+          _isDeleting = false;
+        });
+
+        String errorMessage = 'Authentication failed';
+        if (authError is FirebaseAuthException) {
+          switch (authError.code) {
+            case 'wrong-password':
+              errorMessage = 'Incorrect password';
+              break;
+            case 'user-mismatch':
+              errorMessage =
+                  'The provided credentials do not match the current user';
+              break;
+            default:
+              errorMessage = 'Authentication error: ${authError.message}';
+          }
+        }
+
+        // Show error dialog
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Authentication Failed'),
+            content: Text(errorMessage),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+        return;
+      }
+
       // Update loading message
       Navigator.pop(context); // Close previous loading dialog
       _showLoadingDialog('Deleting account data (values, activities, etc.)...');
-      
+
       // 2. Delete account from your backend
       final userService = UserService();
       final backendDeleteSuccess = await userService.deleteAccount();
-      
+
       if (!backendDeleteSuccess) {
-        throw Exception('Failed to delete account data from the server.');
+        throw Exception('Failed to delete account data from the server');
       }
-      
+
       // Update loading message
       Navigator.pop(context); // Close previous loading dialog
       _showLoadingDialog('Finalizing account deletion...');
-      
+
       // 3. Delete the Firebase account
       await user.delete();
-      
+
       // 4. Log out the user
       context.read<AuthBloc>().add(LogoutEvent());
-      
+
       // Close loading dialog and navigate to login
       Navigator.pop(context); // Close loading dialog
       context.go('/login');
-      
+
       // Show a snackbar on the login screen
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -620,35 +676,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
     } catch (e) {
       // Close loading dialog
-      Navigator.pop(context);
-      
+      if (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+
       // Reset deleting state
       setState(() {
         _isDeleting = false;
       });
-      
+
       // Show more specific error message based on the error type
       String errorMessage = 'Failed to delete account';
-      
+
       if (e is FirebaseAuthException) {
         switch (e.code) {
           case 'requires-recent-login':
-            errorMessage = 'For security reasons, please log out and log back in before trying again.';
-            break;
-          case 'user-mismatch':
-            errorMessage = 'The provided credentials do not match the current user.';
+            errorMessage =
+                'For security reasons, please log out and log back in before trying again';
             break;
           case 'user-not-found':
-            errorMessage = 'User account not found.';
+            errorMessage = 'User account not found';
             break;
           case 'invalid-credential':
-            errorMessage = 'Invalid credentials provided.';
+            errorMessage = 'Invalid credentials provided';
             break;
           case 'invalid-email':
-            errorMessage = 'The email address is invalid.';
-            break;
-          case 'wrong-password':
-            errorMessage = 'Incorrect password.';
+            errorMessage = 'The email address is invalid';
             break;
           default:
             errorMessage = 'Authentication error: ${e.message}';
@@ -656,7 +709,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       } else {
         errorMessage = 'Error: ${e.toString()}';
       }
-      
+
       // Show error dialog
       showDialog(
         context: context,
