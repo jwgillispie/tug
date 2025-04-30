@@ -7,6 +7,8 @@ import logging
 from firebase_admin import auth
 from bson import ObjectId
 from ...models.user import User
+from ...models.value import Value
+from ...models.activity import Activity
 from ...schemas.user import UserCreate, UserUpdate, UserResponse
 from ...utils.json_utils import MongoJSONEncoder
 
@@ -263,7 +265,7 @@ async def update_user_profile(
 
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user_profile(request: Request):
-    """Delete current user profile"""
+    """Delete current user profile and all associated data"""
     try:
         # Extract token manually
         auth_header = request.headers.get('Authorization')
@@ -285,8 +287,22 @@ async def delete_user_profile(request: Request):
                 detail="User not found"
             )
         
-        # Delete the user
+        user_id_str = str(user.id)
+        
+        # Log deletion process
+        logger.info(f"Starting deletion of user {user_id_str} and all associated data")
+        
+        # Delete all user values
+        values_result = await Value.find(Value.user_id == user_id_str).delete()
+        logger.info(f"Deleted {values_result.deleted_count} values for user {user_id_str}")
+        
+        # Delete all user activities
+        activities_result = await Activity.find(Activity.user_id == user_id_str).delete()
+        logger.info(f"Deleted {activities_result.deleted_count} activities for user {user_id_str}")
+        
+        # Finally delete the user
         await user.delete()
+        logger.info(f"User {user_id_str} successfully deleted")
         
         return None
     except Exception as e:

@@ -18,6 +18,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _darkModeEnabled = false;
+  bool _isDeleting = false;
   
   @override
   void initState() {
@@ -126,9 +127,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     foregroundColor: Colors.red,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  onPressed: () {
-                    _showLogoutConfirmationDialog();
-                  },
+                  onPressed: _isDeleting ? null : _showLogoutConfirmationDialog,
                   icon: const Icon(Icons.logout),
                   label: const Text('Log Out'),
                 ),
@@ -412,7 +411,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ],
           ),
           child: InkWell(
-            onTap: _showDeleteAccountConfirmation,
+            onTap: _isDeleting ? null : _showDeleteAccountConfirmation,
             borderRadius: BorderRadius.circular(12),
             child: Padding(
               padding: const EdgeInsets.symmetric(
@@ -468,7 +467,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       builder: (context) => AlertDialog(
         title: const Text('Delete Account'),
         content: const Text(
-          'Are you sure you want to permanently delete your account? This action cannot be undone and all your data will be lost.',
+          'Are you sure you want to delete your account? This will permanently delete ALL your data including:\n\n'
+          '• Your profile information\n'
+          '• All your values\n'
+          '• All your activities\n'
+          '• All your settings\n\n'
+          'This action cannot be undone.',
           style: TextStyle(height: 1.5),
         ),
         actions: [
@@ -479,31 +483,128 @@ class _ProfileScreenState extends State<ProfileScreen> {
           TextButton(
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             onPressed: _deleteAccount,
-            child: const Text('Delete Account'),
+            child: const Text('Delete Everything'),
           ),
         ],
       ),
     );
   }
 
+  Future<AuthCredential?> _promptForCredentials() async {
+    final TextEditingController passwordController = TextEditingController();
+    AuthCredential? credential;
+    
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirm Your Password'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'For security reasons, please enter your password to confirm account deletion',
+              style: TextStyle(height: 1.5),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: passwordController,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: 'Password',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            onPressed: () {
+              final user = FirebaseAuth.instance.currentUser;
+              if (user != null && user.email != null) {
+                credential = EmailAuthProvider.credential(
+                  email: user.email!,
+                  password: passwordController.text,
+                );
+              }
+              Navigator.pop(context);
+            },
+            child: const Text('Confirm'),
+          ),
+        ],
+      ),
+    );
+    
+    // Dispose of the controller
+    passwordController.dispose();
+    
+    return credential;
+  }
+
   Future<void> _deleteAccount() async {
+    // Prevent multiple deletion attempts
+    if (_isDeleting) return;
+    
+    setState(() {
+      _isDeleting = true;
+    });
+
     Navigator.pop(context); // Close the confirmation dialog
     
     // Show loading indicator
-    _showLoadingDialog('Deleting account...');
+    _showLoadingDialog('Preparing to delete account...');
     
     try {
-      // 1. Delete account from your backend
-      final userService = UserService();
-      await userService.deleteAccount();
-      
-      // 2. Delete the Firebase account
       final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        await user.delete();
+      if (user == null) {
+        throw Exception('No user is currently signed in');
       }
       
-      // 3. Log out the user
+      // 1. Re-authenticate the user before deletion (required by Firebase)
+      // We'll need to collect the user's credentials again
+      final credentials = await _promptForCredentials();
+      
+      if (credentials == null) {
+        // User cancelled re-authentication
+        Navigator.pop(context); // Close loading dialog
+        setState(() {
+          _isDeleting = false;
+        });
+        return;
+      }
+      
+      // Update loading message
+      Navigator.pop(context); // Close previous loading dialog
+      _showLoadingDialog('Authenticating...');
+      
+      // Re-authenticate with Firebase
+      await user.reauthenticateWithCredential(credentials);
+      
+      // Update loading message
+      Navigator.pop(context); // Close previous loading dialog
+      _showLoadingDialog('Deleting account data (values, activities, etc.)...');
+      
+      // 2. Delete account from your backend
+      final userService = UserService();
+      final backendDeleteSuccess = await userService.deleteAccount();
+      
+      if (!backendDeleteSuccess) {
+        throw Exception('Failed to delete account data from the server.');
+      }
+      
+      // Update loading message
+      Navigator.pop(context); // Close previous loading dialog
+      _showLoadingDialog('Finalizing account deletion...');
+      
+      // 3. Delete the Firebase account
+      await user.delete();
+      
+      // 4. Log out the user
       context.read<AuthBloc>().add(LogoutEvent());
       
       // Close loading dialog and navigate to login
@@ -521,12 +622,47 @@ class _ProfileScreenState extends State<ProfileScreen> {
       // Close loading dialog
       Navigator.pop(context);
       
+      // Reset deleting state
+      setState(() {
+        _isDeleting = false;
+      });
+      
+      // Show more specific error message based on the error type
+      String errorMessage = 'Failed to delete account';
+      
+      if (e is FirebaseAuthException) {
+        switch (e.code) {
+          case 'requires-recent-login':
+            errorMessage = 'For security reasons, please log out and log back in before trying again.';
+            break;
+          case 'user-mismatch':
+            errorMessage = 'The provided credentials do not match the current user.';
+            break;
+          case 'user-not-found':
+            errorMessage = 'User account not found.';
+            break;
+          case 'invalid-credential':
+            errorMessage = 'Invalid credentials provided.';
+            break;
+          case 'invalid-email':
+            errorMessage = 'The email address is invalid.';
+            break;
+          case 'wrong-password':
+            errorMessage = 'Incorrect password.';
+            break;
+          default:
+            errorMessage = 'Authentication error: ${e.message}';
+        }
+      } else {
+        errorMessage = 'Error: ${e.toString()}';
+      }
+      
       // Show error dialog
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
           title: const Text('Error'),
-          content: Text('Failed to delete account: ${e.toString()}'),
+          content: Text(errorMessage),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -547,7 +683,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             const CircularProgressIndicator(),
             const SizedBox(width: 20),
-            Text(message),
+            Expanded(child: Text(message)),
           ],
         ),
       ),
