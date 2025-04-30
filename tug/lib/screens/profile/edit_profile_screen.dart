@@ -18,23 +18,23 @@ class EditProfileScreen extends StatefulWidget {
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   final _displayNameController = TextEditingController();
-  
+
   bool _isLoading = false;
   String? _errorMessage;
   String? _successMessage;
-  
+
   @override
   void initState() {
     super.initState();
     _loadUserData();
   }
-  
+
   @override
   void dispose() {
     _displayNameController.dispose();
     super.dispose();
   }
-  
+
   Future<void> _loadUserData() {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
@@ -44,34 +44,43 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
     return Future.value();
   }
-  
+
   Future<void> _handleSave() async {
     if (!(_formKey.currentState?.validate() ?? false)) {
       return;
     }
-    
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
       _successMessage = null;
     });
-    
+
     try {
       final user = FirebaseAuth.instance.currentUser;
-      
+
       if (user != null) {
         // Update Firebase display name
         await user.updateDisplayName(_displayNameController.text.trim());
-        
+
         // Update user profile in MongoDB
         final userService = UserService();
         await userService.updateUserProfile({
           'display_name': _displayNameController.text.trim(),
         });
-        
-        // Refresh auth state
-        context.read<AuthBloc>().add(CheckAuthStatusEvent());
-        
+
+        if (mounted) {
+          final authState = context.read<AuthBloc>().state;
+          if (authState is Authenticated) {
+            // Force reload to get the latest Firebase user data
+            await user.reload();
+            // Only update the state, don't check full auth status
+            context
+                .read<AuthBloc>()
+                .add(AuthStateChangedEvent(FirebaseAuth.instance.currentUser));
+          }
+        }
+
         setState(() {
           _successMessage = 'Profile updated successfully';
           _isLoading = false;
@@ -126,7 +135,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
                 const SizedBox(height: 24),
               ],
-              
+
               // Success message display
               if (_successMessage != null) ...[
                 Container(
@@ -155,7 +164,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
                 const SizedBox(height: 24),
               ],
-              
+
               // Profile picture (Currently just a placeholder)
               Center(
                 child: Column(
@@ -183,7 +192,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         // Profile picture update functionality could be added here
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Profile picture update will be available in a future update!'),
+                            content: Text(
+                                'Profile picture update will be available in a future update!'),
                           ),
                         );
                       },
@@ -192,9 +202,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ],
                 ),
               ),
-              
+
               const SizedBox(height: 24),
-              
+
               // Display Name Field
               TugTextField(
                 label: 'Display Name',
@@ -210,9 +220,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   return null;
                 },
               ),
-              
+
               const SizedBox(height: 16),
-              
+
               // Email Field (Read-only)
               BlocBuilder<AuthBloc, AuthState>(
                 builder: (context, state) {
@@ -220,7 +230,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   if (state is Authenticated) {
                     email = state.user.email ?? '';
                   }
-                  
+
                   return TugTextField(
                     label: 'Email',
                     hint: 'Your email address',
@@ -230,9 +240,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   );
                 },
               ),
-              
+
               const SizedBox(height: 32),
-              
+
               // Save Button
               SizedBox(
                 width: double.infinity,

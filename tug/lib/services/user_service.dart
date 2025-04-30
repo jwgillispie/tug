@@ -6,7 +6,7 @@ import 'api_service.dart';
 class UserService {
   final ApiService _apiService;
 
-  UserService({ApiService? apiService}) 
+  UserService({ApiService? apiService})
       : _apiService = apiService ?? ApiService();
 
   // Fetch current user profile from backend
@@ -21,7 +21,8 @@ class UserService {
   }
 
   // Update user profile
-  Future<Map<String, dynamic>> updateUserProfile(Map<String, dynamic> data) async {
+  Future<Map<String, dynamic>> updateUserProfile(
+      Map<String, dynamic> data) async {
     try {
       final response = await _apiService.patch('/api/v1/users/me', data: data);
       return response;
@@ -34,9 +35,8 @@ class UserService {
   // Complete onboarding process
   Future<bool> completeOnboarding() async {
     try {
-      await _apiService.patch('/api/v1/users/me', data: {
-        'onboarding_completed': true
-      });
+      await _apiService
+          .patch('/api/v1/users/me', data: {'onboarding_completed': true});
       return true;
     } catch (e) {
       debugPrint('Error completing onboarding: $e');
@@ -52,6 +52,19 @@ class UserService {
     } catch (e) {
       debugPrint('Error checking if user exists: $e');
       return false;
+    }
+  }
+
+// Add to lib/services/user_service.dart
+
+// Delete user account
+  Future<bool> deleteAccount() async {
+    try {
+      await _apiService.delete('/api/v1/users/me');
+      return true;
+    } catch (e) {
+      debugPrint('Error deleting account: $e');
+      throw e;
     }
   }
 }

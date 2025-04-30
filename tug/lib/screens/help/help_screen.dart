@@ -84,7 +84,7 @@ class HelpSupportScreen extends StatelessWidget {
             _buildFaqItem(
               context,
               'What does the community average represent?',
-              'The community average represents the typical time spent by other users for each value. It provides a benchmark to help you understand how your behavior compares.'
+              'The community average is simply the rating of importance (1 - 5) assigned to a value multiplied It provides a benchmark to help you understand how your behavior compares.'
             ),
             
             const SizedBox(height: 32),
