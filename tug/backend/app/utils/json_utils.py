@@ -8,7 +8,7 @@ class MongoJSONEncoder:
     def encode_mongo_data(obj: Any) -> Any:
         """Recursively convert MongoDB types to JSON-serializable types."""
         if isinstance(obj, ObjectId):
-            return str(obj)
+            return str(obj)  # Convert ObjectId to string
         elif isinstance(obj, datetime):
             return obj.isoformat()
         elif isinstance(obj, dict):

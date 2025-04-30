@@ -5,8 +5,10 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from typing import List, Dict, Any, Optional
 import logging
 from firebase_admin import auth
+from bson import ObjectId
 from ...models.user import User
 from ...schemas.user import UserCreate, UserUpdate, UserResponse
+from ...utils.json_utils import MongoJSONEncoder
 
 router = APIRouter()
 security = HTTPBearer()
@@ -133,7 +135,15 @@ async def create_user(
             )
             await user.insert()
         
-        return user
+        # Manually convert to response format
+        response = {
+            "id": str(user.id),
+            "email": user.email,
+            "display_name": user.display_name,
+            "onboarding_completed": user.onboarding_completed
+        }
+        
+        return response
     except Exception as e:
         logger.error(f"Create user error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to create user: {e}")
@@ -162,12 +172,19 @@ async def get_current_user_profile(request: Request):
                 detail="User not found"
             )
         
-        return user
+        # Manually convert to response format
+        response = {
+            "id": str(user.id),
+            "email": user.email,
+            "display_name": user.display_name,
+            "onboarding_completed": user.onboarding_completed
+        }
+        
+        return response
     except Exception as e:
         logger.error(f"Get user profile error: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get user: {e}")
 
-# Update the patch endpoint
 @router.patch("/me", response_model=UserResponse)
 async def update_user_profile(
     user_update: UserUpdate,
@@ -184,32 +201,65 @@ async def update_user_profile(
             )
         
         token = auth_header.split(' ')[1]
-        decoded_token = auth.verify_id_token(token)
-        firebase_uid = decoded_token.get('uid')
+        
+        try:
+            decoded_token = auth.verify_id_token(token)
+            firebase_uid = decoded_token.get('uid')
+        except Exception as e:
+            logger.error(f"Token verification failed: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=f"Invalid token: {e}"
+            )
         
         # Get user
         user = await User.find_one(User.firebase_uid == firebase_uid)
         if not user:
+            logger.error(f"User not found for firebase_uid: {firebase_uid}")
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
             )
         
-        # Log the user ID for debugging
-        logger.info(f"Updating user with ID: {user.id}, type: {type(user.id)}")
+        # Log the user ID and the update data
+        logger.info(f"Updating user: {user.id} (type: {type(user.id)})")
+        update_data = user_update.model_dump(exclude_unset=True)
+        logger.info(f"Update data: {update_data}")
         
         # Update fields
-        update_data = user_update.model_dump(exclude_unset=True)
         if update_data:
-            for field, value in update_data.items():
-                setattr(user, field, value)
-            await user.save()
+            try:
+                for field, value in update_data.items():
+                    if hasattr(user, field):
+                        setattr(user, field, value)
+                    else:
+                        logger.warning(f"Field '{field}' not found in user model")
+                
+                # Save the user
+                await user.save()
+                logger.info(f"User updated successfully: {user.id}")
+            except Exception as e:
+                logger.error(f"Error updating user fields: {e}")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail=f"Failed to update user fields: {e}"
+                )
         
-        return user
+        # Manually convert to response format
+        response = {
+            "id": str(user.id),
+            "email": user.email,
+            "display_name": user.display_name,
+            "onboarding_completed": user.onboarding_completed
+        }
+        
+        return response
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
     except Exception as e:
-        logger.error(f"Update user profile error: {e}")
+        logger.error(f"Update user profile error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to update user: {e}")
-# Additional endpoint for app/api/endpoints/users.py
 
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user_profile(request: Request):
@@ -240,5 +290,5 @@ async def delete_user_profile(request: Request):
         
         return None
     except Exception as e:
-        logger.error(f"Delete user profile error: {e}")
+        logger.error(f"Delete user profile error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to delete user: {e}")
