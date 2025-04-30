@@ -153,7 +153,7 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'You can get up to 5',
+                    'You can pick up to 5 things',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       color: TugColors.lightTextSecondary,
                     ),
@@ -246,7 +246,7 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
                                         )
                                       : Text(maxValuesReached 
                                           ? 'Okay! 5 values! AWESOME' 
-                                          : 'Add Another'),
+                                          : 'Add'),
                                 ),
                               ),
                             );

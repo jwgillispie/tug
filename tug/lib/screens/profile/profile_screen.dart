@@ -489,10 +489,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
-// Fix for the TextEditingController issue in _promptForCredentials method
 
   Future<AuthCredential?> _promptForCredentials() async {
-    final TextEditingController passwordController = TextEditingController();
+    // Create controller outside the dialog to manage its lifecycle properly
+    final passwordController = TextEditingController();
     AuthCredential? credential;
 
     try {
@@ -516,17 +516,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   labelText: 'Password',
                   border: OutlineInputBorder(),
                 ),
-                onSubmitted: (value) {
-                  // Handle submit on enter key
-                  final user = FirebaseAuth.instance.currentUser;
-                  if (user != null && user.email != null) {
-                    credential = EmailAuthProvider.credential(
-                      email: user.email!,
-                      password: value,
-                    );
-                  }
-                  Navigator.of(dialogContext).pop();
-                },
               ),
             ],
           ),
@@ -553,13 +542,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       );
     } finally {
-      // Make sure we dispose the controller in all cases
+      // Ensure the controller is always disposed
       passwordController.dispose();
     }
 
     return credential;
   }
-
 // Full _deleteAccount method with improved error handling
 
   Future<void> _deleteAccount() async {

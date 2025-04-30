@@ -76,7 +76,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           if (state is Authenticated) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('You\'re in there!!.'),
+                content: Text('YAYYYYYYYYYYYYYYY'),
                 backgroundColor: TugColors.success,
               ),
             );
