@@ -491,64 +491,120 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<AuthCredential?> _promptForCredentials() async {
-    // Create controller outside the dialog to manage its lifecycle properly
-    final passwordController = TextEditingController();
     AuthCredential? credential;
 
-    try {
-      await showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext dialogContext) => AlertDialog(
-          title: const Text('Confirm Your Password'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'For security reasons, please enter your password to confirm account deletion',
-                style: TextStyle(height: 1.5),
-              ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(
-                  labelText: 'Password',
-                  border: OutlineInputBorder(),
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        // Controller is created when the dialog builds
+        final passwordController = TextEditingController();
+        bool isDialogOpen = true;
+
+        // Helper function to safely close the dialog
+        void safePop() {
+          if (isDialogOpen) {
+            isDialogOpen = false;
+            Navigator.of(dialogContext).pop();
+            // Dispose after the dialog animation completes
+            Future.delayed(const Duration(milliseconds: 200), () {
+              passwordController.dispose();
+            });
+          }
+        }
+
+        return WillPopScope(
+          onWillPop: () async {
+            safePop();
+            return true;
+          },
+          child: AlertDialog(
+            title: const Text('Confirm Your Password'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'For security reasons, please enter your password to confirm account deletion',
+                  style: TextStyle(height: 1.5),
                 ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: passwordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'Password',
+                    border: OutlineInputBorder(),
+                  ),
+                  onSubmitted: (value) {
+                    final user = FirebaseAuth.instance.currentUser;
+                    if (user != null &&
+                        user.email != null &&
+                        value.isNotEmpty) {
+                      credential = EmailAuthProvider.credential(
+                        email: user.email!,
+                        password: value,
+                      );
+                    }
+                    safePop();
+                  },
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: safePop,
+                child: const Text('Cancel'),
+              ),
+              TextButton(
+                style: TextButton.styleFrom(foregroundColor: Colors.red),
+                onPressed: () {
+                  final user = FirebaseAuth.instance.currentUser;
+                  if (user != null &&
+                      user.email != null &&
+                      passwordController.text.isNotEmpty) {
+                    credential = EmailAuthProvider.credential(
+                      email: user.email!,
+                      password: passwordController.text,
+                    );
+                  }
+                  safePop();
+                },
+                child: const Text('Confirm'),
               ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              style: TextButton.styleFrom(foregroundColor: Colors.red),
-              onPressed: () {
-                final user = FirebaseAuth.instance.currentUser;
-                if (user != null && user.email != null) {
-                  credential = EmailAuthProvider.credential(
-                    email: user.email!,
-                    password: passwordController.text,
-                  );
-                }
-                Navigator.of(dialogContext).pop();
-              },
-              child: const Text('Confirm'),
-            ),
-          ],
-        ),
-      );
-    } finally {
-      // Ensure the controller is always disposed
-      passwordController.dispose();
-    }
+        );
+      },
+    );
 
     return credential;
   }
-// Full _deleteAccount method with improved error handling
+
+  void _showLoadingDialog(String message) {
+    // Check if any dialog is open and close it first
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    }
+
+    // Show the new dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => WillPopScope(
+        onWillPop: () async =>
+            false, // Prevent accidental back button dismissal
+        child: AlertDialog(
+          content: Row(
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(width: 20),
+              Expanded(child: Text(message)),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   Future<void> _deleteAccount() async {
     // Prevent multiple deletion attempts
@@ -575,7 +631,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       if (credentials == null) {
         // User cancelled re-authentication
-        Navigator.pop(context); // Close loading dialog
+        // Close any open dialogs
+        while (Navigator.canPop(context)) {
+          Navigator.pop(context);
+        }
+
         setState(() {
           _isDeleting = false;
         });
@@ -583,7 +643,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
 
       // Update loading message
-      Navigator.pop(context); // Close previous loading dialog
       _showLoadingDialog('Authenticating...');
 
       try {
@@ -591,7 +650,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         await user.reauthenticateWithCredential(credentials);
       } catch (authError) {
         // Handle authentication errors specifically
-        Navigator.pop(context); // Close loading dialog
+        // Close any open dialogs
+        while (Navigator.canPop(context)) {
+          Navigator.pop(context);
+        }
 
         setState(() {
           _isDeleting = false;
@@ -612,25 +674,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
           }
         }
 
-        // Show error dialog
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Authentication Failed'),
-            content: Text(errorMessage),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
+        // Show error dialog after a short delay to ensure UI stability
+        Future.delayed(const Duration(milliseconds: 300), () {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Authentication Failed'),
+              content: Text(errorMessage),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          );
+        });
         return;
       }
 
       // Update loading message
-      Navigator.pop(context); // Close previous loading dialog
       _showLoadingDialog('Deleting account data (values, activities, etc.)...');
 
       // 2. Delete account from your backend
@@ -642,93 +705,66 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
 
       // Update loading message
-      Navigator.pop(context); // Close previous loading dialog
       _showLoadingDialog('Finalizing account deletion...');
 
       // 3. Delete the Firebase account
       await user.delete();
 
-      // 4. Log out the user
-      context.read<AuthBloc>().add(LogoutEvent());
+      // 4. Sign out and trigger auth state change
+      await FirebaseAuth.instance.signOut();
 
-      // Close loading dialog and navigate to login
-      Navigator.pop(context); // Close loading dialog
-      context.go('/login');
-
-      // Show a snackbar on the login screen
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Your account has been deleted'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } catch (e) {
-      // Close loading dialog
-      if (Navigator.canPop(context)) {
+      // Make sure all dialogs are closed
+      while (Navigator.canPop(context)) {
         Navigator.pop(context);
       }
 
-      // Reset deleting state
+      // Then trigger auth state change and navigation
+      if (mounted) {
+        context.read<AuthBloc>().add(LogoutEvent());
+        context.go('/login');
+
+        // Show a snackbar after navigation completes
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Your account has been deleted'),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        });
+      }
+    } catch (e) {
+      // Close all dialogs
+      while (Navigator.canPop(context)) {
+        Navigator.pop(context);
+      }
+
+      // Reset state
       setState(() {
         _isDeleting = false;
       });
 
-      // Show more specific error message based on the error type
-      String errorMessage = 'Failed to delete account';
-
-      if (e is FirebaseAuthException) {
-        switch (e.code) {
-          case 'requires-recent-login':
-            errorMessage =
-                'For security reasons, please log out and log back in before trying again';
-            break;
-          case 'user-not-found':
-            errorMessage = 'User account not found';
-            break;
-          case 'invalid-credential':
-            errorMessage = 'Invalid credentials provided';
-            break;
-          case 'invalid-email':
-            errorMessage = 'The email address is invalid';
-            break;
-          default:
-            errorMessage = 'Authentication error: ${e.message}';
-        }
-      } else {
-        errorMessage = 'Error: ${e.toString()}';
-      }
-
-      // Show error dialog
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Error'),
-          content: Text(errorMessage),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('OK'),
+      // Show error after a short delay to ensure UI stability
+      Future.delayed(const Duration(milliseconds: 300), () {
+        if (mounted) {
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Error'),
+              content: Text('Error deleting account: ${e.toString()}'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('OK'),
+                ),
+              ],
             ),
-          ],
-        ),
-      );
+          );
+        }
+      });
     }
-  }
-
-  void _showLoadingDialog(String message) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        content: Row(
-          children: [
-            const CircularProgressIndicator(),
-            const SizedBox(width: 20),
-            Expanded(child: Text(message)),
-          ],
-        ),
-      ),
-    );
   }
 
   void _showLogoutConfirmationDialog() {
