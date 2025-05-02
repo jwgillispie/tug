@@ -206,18 +206,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
 
                   // For development purposes - diagnostics link
-                  if (const bool.fromEnvironment('dart.vm.product') == false)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 24),
-                      child: Center(
-                        child: TextButton.icon(
-                          onPressed: () => context.go('/diagnostics'),
-                          icon: const Icon(Icons.settings),
-                          label: const Text('Diagnostics'),
-                          style: TugButtons.textButtonStyle,
-                        ),
-                      ),
-                    ),
+                  // if (const bool.fromEnvironment('dart.vm.product') == false)
+                  //   Padding(
+                  //     padding: const EdgeInsets.only(top: 24),
+                  //     child: Center(
+                  //       child: TextButton.icon(
+                  //         onPressed: () => context.go('/diagnostics'),
+                  //         icon: const Icon(Icons.settings),
+                  //         label: const Text('Diagnostics'),
+                  //         style: TugButtons.textButtonStyle,
+                  //       ),
+                  //     ),
+                  //   ),
                 ],
               ),
             ),

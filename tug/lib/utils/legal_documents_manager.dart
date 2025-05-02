@@ -20,7 +20,7 @@ class LegalDocumentsManager {
 
   // Contact email addresses
   static const String supportEmail = 'jordangillispie@outlook.com';
-  static const String privacyEmail = 'privacy@tugapp.example.com';
+  static const String privacyEmail = 'jordangillispie@outlookcom';
 
   // Web URLs for the documents (if you have a website)
   static const String termsUrl = 'https://www.tugapp.example.com/terms';
