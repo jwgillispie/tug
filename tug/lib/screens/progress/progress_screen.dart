@@ -15,11 +15,13 @@ class ProgressScreen extends StatefulWidget {
   State<ProgressScreen> createState() => _ProgressScreenState();
 }
 
-class _ProgressScreenState extends State<ProgressScreen> {
+class _ProgressScreenState extends State<ProgressScreen>
+    with AutomaticKeepAliveClientMixin {
   String _selectedTimeframe = 'Daily';
   final List<String> _timeframes = ['Daily', 'Weekly', 'Monthly'];
 
   bool _isLoading = false;
+  bool _isFirstLoad = true;
   Map<String, Map<String, dynamic>> _activityData = {};
   Map<String, dynamic>? _statistics;
 
@@ -28,15 +30,24 @@ class _ProgressScreenState extends State<ProgressScreen> {
   @override
   void initState() {
     super.initState();
-    // Load values when screen is initialized
-    context.read<ValuesBloc>().add(LoadValues());
+    // Load values without forcing refresh if we have cached data
+    context.read<ValuesBloc>().add(LoadValues(forceRefresh: false));
     // Also load activity data
-    _fetchActivityData();
+    _fetchActivityData(forceRefresh: false);
   }
 
-  Future<void> _fetchActivityData() async {
+  // Implement wantKeepAlive for AutomaticKeepAliveClientMixin
+  @override
+  bool get wantKeepAlive => true;
+
+  Future<void> _fetchActivityData({bool forceRefresh = false}) async {
+    if (!mounted) return;
+
+    // Only show loading indicator on first load or forced refresh
     setState(() {
-      _isLoading = true;
+      if (_isFirstLoad || forceRefresh) {
+        _isLoading = true;
+      }
     });
 
     try {
@@ -55,6 +66,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
         statistics = await _activityService.getActivityStatistics(
           startDate: startDate,
           endDate: endDate,
+          forceRefresh: forceRefresh,
         );
       } catch (e) {
         debugPrint('Error fetching statistics: $e');
@@ -72,6 +84,7 @@ class _ProgressScreenState extends State<ProgressScreen> {
         summary = await _activityService.getActivitySummary(
           startDate: startDate,
           endDate: endDate,
+          forceRefresh: forceRefresh,
         );
       } catch (e) {
         debugPrint('Error fetching summary: $e');
@@ -92,26 +105,43 @@ class _ProgressScreenState extends State<ProgressScreen> {
         }
       }
 
-      setState(() {
-        _activityData =
-            processedData; // Use the processed data instead of newData
-        _statistics = statistics;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _activityData = processedData;
+          _statistics = statistics;
+          _isLoading = false;
+          _isFirstLoad = false;
+        });
+      }
     } catch (e) {
       debugPrint('Error fetching activity data: $e');
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _isFirstLoad = false;
+        });
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content:
-              Text('Could not load activity data. Please try again later.'),
-          backgroundColor: Colors.orange,
-        ),
-      );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content:
+                Text('Could not load activity data. Please try again later.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
     }
+  }
+
+  // Add a refresh method to force reload from server
+  void _refreshData() {
+    _fetchActivityData(forceRefresh: true);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Refreshing data...'),
+        duration: Duration(seconds: 1),
+      ),
+    );
   }
 
   DateTime getStartDate(String timeframe) {
@@ -253,13 +283,16 @@ class _ProgressScreenState extends State<ProgressScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Must call super.build for AutomaticKeepAliveClientMixin
+    super.build(context);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Progress'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: _fetchActivityData,
+            onPressed: _refreshData,
           ),
         ],
       ),
@@ -295,13 +328,15 @@ class _ProgressScreenState extends State<ProgressScreen> {
                                 setState(() {
                                   _selectedTimeframe = timeframe;
                                 });
-                                _fetchActivityData();
+                                _fetchActivityData(forceRefresh: true);
                               }
                             },
                             selectedColor:
                                 TugColors.primaryPurple.withOpacity(0.8),
                             labelStyle: TextStyle(
-                              color: isSelected ? Colors.white : TugColors.secondaryTeal,
+                              color: isSelected
+                                  ? Colors.white
+                                  : TugColors.secondaryTeal,
                               fontWeight: isSelected
                                   ? FontWeight.bold
                                   : FontWeight.normal,
@@ -348,7 +383,9 @@ class _ProgressScreenState extends State<ProgressScreen> {
                               const SizedBox(height: 16),
                               ElevatedButton(
                                 onPressed: () {
-                                  context.read<ValuesBloc>().add(LoadValues());
+                                  context
+                                      .read<ValuesBloc>()
+                                      .add(LoadValues(forceRefresh: true));
                                 },
                                 child: const Text('Retry'),
                               ),

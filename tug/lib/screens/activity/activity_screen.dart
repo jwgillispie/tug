@@ -25,20 +25,21 @@ class ActivityScreen extends StatefulWidget {
   State<ActivityScreen> createState() => _ActivityScreenState();
 }
 
-class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProviderStateMixin {
+class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   String? _filterValueId;
   DateTime? _startDate;
   DateTime? _endDate;
   bool _showFilters = false;
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  bool _isFirstLoad = true;
 
   @override
   void initState() {
     super.initState();
-    // Load activities and values when screen is initialized
-    context.read<ActivitiesBloc>().add(const LoadActivities());
-    context.read<ValuesBloc>().add(LoadValues());
+    // Load activities and values when screen is initialized, but don't force a refresh
+    context.read<ActivitiesBloc>().add(const LoadActivities(forceRefresh: false));
+    context.read<ValuesBloc>().add(const LoadValues(forceRefresh: false));
 
     // Setup animation
     _animationController = AnimationController(
@@ -65,6 +66,27 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
   void dispose() {
     _animationController.dispose();
     super.dispose();
+  }
+  
+  // Implement wantKeepAlive for AutomaticKeepAliveClientMixin
+  @override
+  bool get wantKeepAlive => true;
+  
+  // Add a refresh method
+  void _refreshActivities() {
+    context.read<ActivitiesBloc>().add(LoadActivities(
+      valueId: _filterValueId,
+      startDate: _startDate,
+      endDate: _endDate,
+      forceRefresh: true, // Force refresh from server
+    ));
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Refreshing activities...'),
+        duration: Duration(seconds: 1),
+      ),
+    );
   }
 
   void _showAddActivitySheet() {
@@ -293,6 +315,9 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
 
   @override
   Widget build(BuildContext context) {
+    // Must call super.build for AutomaticKeepAliveClientMixin
+    super.build(context);
+    
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     
     return Scaffold(
@@ -310,13 +335,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
           ),
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () {
-              context.read<ActivitiesBloc>().add(const LoadActivities(
-                    valueId: null,
-                    startDate: null,
-                    endDate: null,
-                  ));
-            },
+            onPressed: _refreshActivities,
           ),
         ],
       ),
@@ -334,7 +353,8 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
             Expanded(
               child: BlocBuilder<ActivitiesBloc, ActivitiesState>(
                 builder: (context, state) {
-                  if (state is ActivitiesLoading) {
+                  if (state is ActivitiesLoading && _isFirstLoad) {
+                    // Only show loading indicator on first load
                     return const Center(
                       child: CircularProgressIndicator(),
                     );
@@ -357,17 +377,16 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                           ),
                           const SizedBox(height: 16),
                           ElevatedButton(
-                            onPressed: () {
-                              context
-                                  .read<ActivitiesBloc>()
-                                  .add(const LoadActivities());
-                            },
+                            onPressed: _refreshActivities,
                             child: const Text('Retry'),
                           ),
                         ],
                       ),
                     );
                   }
+    
+                  // We're no longer on first load
+                  _isFirstLoad = false;
     
                   final List<ActivityModel> activities;
                   if (state is ActivitiesLoaded) {
@@ -447,13 +466,6 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
           ],
         ),
       ),
-      // floatingActionButton: FloatingActionButton(
-      //   backgroundColor: TugColors.primaryPurple,
-      //   foregroundColor: Colors.white,
-      //   onPressed: _showAddActivitySheet,
-      //   child: const Icon(Icons.add),
-      //   elevation: isDarkMode ? 4 : 2,
-      // ),
     );
   }
 

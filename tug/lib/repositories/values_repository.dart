@@ -2,10 +2,11 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
+import '../services/cache_service.dart';
 import '../models/value_model.dart';
 
 abstract class IValuesRepository {
-  Future<List<ValueModel>> getValues();
+  Future<List<ValueModel>> getValues({bool forceRefresh = false});
   Future<ValueModel> addValue(ValueModel value);
   Future<ValueModel> updateValue(ValueModel value);
   Future<void> deleteValue(String id);
@@ -13,12 +14,20 @@ abstract class IValuesRepository {
 
 class ValuesRepository implements IValuesRepository {
   final ApiService _apiService;
+  final CacheService _cacheService;
   late final SharedPreferences _prefs;
+
+  // Cache keys
+  static const String _valuesCacheKey = 'values_list';
+  static const Duration _cacheValidity = Duration(minutes: 15);
 
   ValuesRepository({
     ApiService? apiService,
+    CacheService? cacheService,
     SharedPreferences? prefs,
-  }) : _apiService = apiService ?? ApiService() {
+  }) : 
+    _apiService = apiService ?? ApiService(),
+    _cacheService = cacheService ?? CacheService() {
     // Initialize SharedPreferences
     _initializePrefs(prefs);
   }
@@ -28,9 +37,28 @@ class ValuesRepository implements IValuesRepository {
   }
 
   @override
-  Future<List<ValueModel>> getValues() async {
+  Future<List<ValueModel>> getValues({bool forceRefresh = false}) async {
+    // If force refresh is requested, don't use cache
+    if (!forceRefresh) {
+      try {
+        // Try to get from cache first
+        final cachedValues = await _cacheService.get<List<dynamic>>(_valuesCacheKey);
+        
+        if (cachedValues != null) {
+          debugPrint('Values retrieved from cache');
+          return cachedValues
+              .map((valueData) => ValueModel.fromJson(Map<String, dynamic>.from(valueData)))
+              .toList();
+        }
+      } catch (e) {
+        debugPrint('Error fetching values from cache: $e');
+      }
+    } else {
+      debugPrint('Force refresh requested, skipping cache');
+    }
+
     try {
-      // Try to get values from API
+      // Fetch from API if cache didn't work or force refresh was requested
       final response = await _apiService.get('/api/v1/values');
 
       if (response != null) {
@@ -39,8 +67,14 @@ class ValuesRepository implements IValuesRepository {
             .map((valueData) => ValueModel.fromJson(valueData))
             .toList();
 
-        // Cache the values locally
-        _cacheValues(values);
+        // Cache the values
+        await _cacheService.set(
+          _valuesCacheKey, 
+          valuesData, 
+          memoryCacheDuration: _cacheValidity,
+          diskCacheDuration: Duration(hours: 3),
+        );
+        debugPrint('Values fetched from API and cached');
 
         return values;
       }
@@ -48,7 +82,7 @@ class ValuesRepository implements IValuesRepository {
       debugPrint('Error fetching values from API: $e');
     }
 
-    // If API call fails or no data, return cached values
+    // If API call fails or no data, return cached values (which might be empty)
     return _getCachedValues();
   }
 
@@ -63,10 +97,9 @@ class ValuesRepository implements IValuesRepository {
       if (response != null) {
         final newValue = ValueModel.fromJson(response);
 
-        // Update cache
-        final cachedValues = await _getCachedValues();
-        cachedValues.add(newValue);
-        await _cacheValues(cachedValues);
+        // Invalidate cache
+        await _cacheService.remove(_valuesCacheKey);
+        debugPrint('Cache invalidated after adding value');
 
         return newValue;
       }
@@ -83,6 +116,7 @@ class ValuesRepository implements IValuesRepository {
         final cachedValues = await _getCachedValues();
         cachedValues.add(tempValue);
         await _cacheValues(cachedValues);
+        debugPrint('Value stored locally due to offline state');
 
         return tempValue;
       }
@@ -107,13 +141,9 @@ class ValuesRepository implements IValuesRepository {
       if (response != null) {
         final updatedValue = ValueModel.fromJson(response);
 
-        // Update cache
-        final cachedValues = await _getCachedValues();
-        final index = cachedValues.indexWhere((v) => v.id == value.id);
-        if (index != -1) {
-          cachedValues[index] = updatedValue;
-          await _cacheValues(cachedValues);
-        }
+        // Invalidate cache
+        await _cacheService.remove(_valuesCacheKey);
+        debugPrint('Cache invalidated after updating value');
 
         return updatedValue;
       }
@@ -126,6 +156,7 @@ class ValuesRepository implements IValuesRepository {
       if (index != -1) {
         cachedValues[index] = value;
         await _cacheValues(cachedValues);
+        debugPrint('Value updated locally due to offline state');
       }
     }
 
@@ -143,10 +174,9 @@ class ValuesRepository implements IValuesRepository {
 
       await _apiService.delete(url);
 
-      // Remove from cache
-      final cachedValues = await _getCachedValues();
-      cachedValues.removeWhere((value) => value.id == id);
-      await _cacheValues(cachedValues);
+      // Invalidate cache
+      await _cacheService.remove(_valuesCacheKey);
+      debugPrint('Cache invalidated after deleting value');
     } catch (e) {
       debugPrint('Error deleting value from API: $e');
 
@@ -156,11 +186,12 @@ class ValuesRepository implements IValuesRepository {
       if (index != -1) {
         cachedValues[index] = cachedValues[index].copyWith(active: false);
         await _cacheValues(cachedValues);
+        debugPrint('Value marked inactive locally due to offline state');
       }
     }
   }
 
-  // Helper methods for local caching
+  // Helper methods for local caching using SharedPreferences
   Future<List<ValueModel>> _getCachedValues() async {
     try {
       await _ensurePrefsInitialized();
@@ -172,7 +203,7 @@ class ValuesRepository implements IValuesRepository {
             .toList();
       }
     } catch (e) {
-      debugPrint('Error getting cached values: $e');
+      debugPrint('Error getting cached values from SharedPreferences: $e');
     }
     return [];
   }
@@ -183,7 +214,7 @@ class ValuesRepository implements IValuesRepository {
       final valuesJson = values.map((value) => value.toJson()).toList();
       await _prefs.setString('values', jsonEncode(valuesJson));
     } catch (e) {
-      debugPrint('Error caching values: $e');
+      debugPrint('Error caching values to SharedPreferences: $e');
     }
   }
 

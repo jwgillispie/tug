@@ -21,6 +21,8 @@ import 'package:tug/screens/main_layout.dart';
 import 'package:tug/screens/profile/profile_screen.dart';
 import 'package:tug/screens/progress/progress_screen.dart';
 import 'package:tug/screens/splash_screen.dart';
+import 'package:tug/services/api_service.dart';
+import 'package:tug/services/cache_service.dart';
 import 'package:tug/utils/local_storage.dart';
 import 'repositories/auth_repository.dart';
 import 'blocs/auth/auth_bloc.dart';
@@ -34,13 +36,17 @@ import 'screens/values/values_input_screen.dart';
 import 'screens/about/about_screen.dart';
 import 'screens/profile/edit_profile_screen.dart';
 import 'screens/profile/change_password_screen.dart';
-
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
     // IMPORTANT: Initialize environment config first to avoid the error
     await EnvConfig.load();
+    
+    // Initialize cache service before repositories
+    final cacheService = CacheService();
+    await cacheService.initialize();
+    debugPrint('Cache service initialized');
     
     // Initialize local storage next
     if (!kIsWeb) {
@@ -52,9 +58,10 @@ Future<void> main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
+    final apiService = ApiService();
     final authRepository = AuthRepository();
-    final valuesRepository = ValuesRepository();
-    final activityRepository = ActivityRepository();
+    final valuesRepository = ValuesRepository(apiService: apiService, cacheService: cacheService);
+    final activityRepository = ActivityRepository(apiService: apiService, cacheService: cacheService);
 
     runApp(TugApp(
       authRepository: authRepository,

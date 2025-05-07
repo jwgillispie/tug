@@ -20,13 +20,14 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
+class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin, AutomaticKeepAliveClientMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+  bool _isFirstLoad = true;
   
 final List<Map<String, String>> _quotes = [
     {
-      'quote': 'Imperfection is beauty, madness is genius, and it’s better to be absolutely ridiculous than absolutely boring.',
+      'quote': 'Imperfection is beauty, madness is genius, and it\'s better to be absolutely ridiculous than absolutely boring.',
       'author': 'Marilyn Monroe'
     },
     {
@@ -42,25 +43,23 @@ final List<Map<String, String>> _quotes = [
       'author': 'Louisa May Alcott',
     },
     {
-      'quote': 'You miss 100% of the shots you don’t take.',
+      'quote': 'You miss 100% of the shots you don\'t take.',
       'author': 'Wayne Gretzky',
     },
     {
       'quote': 'The future is uncertain, but the end is always near.',
       'author': 'Jim Morrison',
     },
-
     {
-      'quote': 'If you tell the truth, you don’t have to remember anything.',
+      'quote': 'If you tell the truth, you don\'t have to remember anything.',
       'author': 'Mark Twain',
     },
-
     {
-      'quote': 'You gotta pay taxes. That’s just life. Unless you famous, then you gotta pay *more* taxes. That’s just facts.',
+      'quote': 'You gotta pay taxes. That\'s just life. Unless you famous, then you gotta pay *more* taxes. That\'s just facts.',
       'author': 'Lil Baby',
     },
     {
-      'quote': 'When you hear Nicki Minaj in the traffic, you know you gon’ be late to work.',
+      'quote': 'When you hear Nicki Minaj in the traffic, you know you gon\' be late to work.',
       'author': 'Nicki Minaj',
     },
   ];
@@ -68,8 +67,9 @@ final List<Map<String, String>> _quotes = [
   @override
   void initState() {
     super.initState();
-    // Load values when screen is initialized
-    context.read<ValuesBloc>().add(LoadValues());
+    // Load values when screen is initialized, but don't force refresh
+    // if we already have cached values
+    context.read<ValuesBloc>().add(const LoadValues(forceRefresh: false));
     
     // Setup animation
     _animationController = AnimationController(
@@ -91,15 +91,34 @@ final List<Map<String, String>> _quotes = [
     _animationController.dispose();
     super.dispose();
   }
+  
+  // For AutomaticKeepAliveClientMixin - prevents the state from being disposed
+  // when the tab is not visible, which helps maintain our cache
+  @override
+  bool get wantKeepAlive => true;
 
   // Navigate to values edit with return flag
   void _navigateToValuesEdit() {
     // Pass a parameter to indicate we should show a back button
     context.push('/values-input?fromHome=true');
   }
+  
+  void _refreshValues() {
+    // Force a fresh load from the server
+    context.read<ValuesBloc>().add(const LoadValues(forceRefresh: true));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Refreshing...'),
+        duration: Duration(seconds: 1),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    // Call super for AutomaticKeepAliveClientMixin
+    super.build(context);
+    
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     
     return Scaffold(
@@ -108,9 +127,7 @@ final List<Map<String, String>> _quotes = [
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
-            onPressed: () {
-              context.read<ValuesBloc>().add(LoadValues());
-            },
+            onPressed: _refreshValues,
           ),
           IconButton(
             icon: const Icon(Icons.logout),
@@ -140,7 +157,9 @@ final List<Map<String, String>> _quotes = [
           opacity: _fadeAnimation,
           child: BlocBuilder<ValuesBloc, ValuesState>(
             builder: (context, state) {
-              if (state is ValuesLoading) {
+              if (state is ValuesLoading && _isFirstLoad) {
+                // Only show loading indicator on first load
+                _isFirstLoad = false;
                 return const Center(
                   child: CircularProgressIndicator(),
                 );
@@ -148,9 +167,22 @@ final List<Map<String, String>> _quotes = [
               
               if (state is ValuesError) {
                 return Center(
-                  child: Text('Error: ${state.message}'),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('Error: ${state.message}'),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: _refreshValues,
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
                 );
               }
+              
+              // We're no longer on first load
+              _isFirstLoad = false;
               
               if (state is ValuesLoaded) {
                 final values = state.values.where((v) => v.active).toList();
@@ -482,7 +514,7 @@ final List<Map<String, String>> _quotes = [
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      'See how you\'re doing',
+                                      'see how you\'re doing',
                                       style: TextStyle(
                                         color: isDarkMode 
                                             ? TugColors.darkTextSecondary 
@@ -516,7 +548,7 @@ final List<Map<String, String>> _quotes = [
               }
               
               return const Center(
-                child: Text('You need a value first'),
+                child: Text('Loading values...'),
               );
             },
           ),

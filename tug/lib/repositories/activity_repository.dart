@@ -3,9 +3,10 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/activity_model.dart';
 import '../services/api_service.dart';
+import '../services/cache_service.dart';
 
 abstract class IActivityRepository {
-  Future<List<ActivityModel>> getActivities({String? valueId, DateTime? startDate, DateTime? endDate});
+  Future<List<ActivityModel>> getActivities({String? valueId, DateTime? startDate, DateTime? endDate, bool forceRefresh = false});
   Future<ActivityModel> addActivity(ActivityModel activity);
   Future<ActivityModel> updateActivity(ActivityModel activity);
   Future<void> deleteActivity(String id);
@@ -13,12 +14,20 @@ abstract class IActivityRepository {
 
 class ActivityRepository implements IActivityRepository {
   final ApiService _apiService;
+  final CacheService _cacheService;
   late final SharedPreferences _prefs;
+
+  // Cache keys
+  static const String _activitiesCacheKeyPrefix = 'activities';
+  static const Duration _cacheValidity = Duration(minutes: 15);
 
   ActivityRepository({
     ApiService? apiService,
+    CacheService? cacheService,
     SharedPreferences? prefs,
-  }) : _apiService = apiService ?? ApiService() {
+  }) : 
+    _apiService = apiService ?? ApiService(),
+    _cacheService = cacheService ?? CacheService() {
     // Initialize SharedPreferences
     _initializePrefs(prefs);
   }
@@ -27,12 +36,56 @@ class ActivityRepository implements IActivityRepository {
     _prefs = prefs ?? await SharedPreferences.getInstance();
   }
 
+  // Generate a cache key based on filter parameters
+  String _generateCacheKey({String? valueId, DateTime? startDate, DateTime? endDate}) {
+    final parts = [_activitiesCacheKeyPrefix];
+    
+    if (valueId != null) {
+      parts.add('value_$valueId');
+    }
+    
+    if (startDate != null) {
+      parts.add('start_${startDate.toIso8601String().split('T')[0]}');
+    }
+    
+    if (endDate != null) {
+      parts.add('end_${endDate.toIso8601String().split('T')[0]}');
+    }
+    
+    return parts.join('_');
+  }
+
   @override
   Future<List<ActivityModel>> getActivities({
     String? valueId,
     DateTime? startDate,
     DateTime? endDate,
+    bool forceRefresh = false,
   }) async {
+    final cacheKey = _generateCacheKey(
+      valueId: valueId,
+      startDate: startDate,
+      endDate: endDate
+    );
+    
+    // If not force refresh, try to get from cache
+    if (!forceRefresh) {
+      try {
+        final cachedActivities = await _cacheService.get<List<dynamic>>(cacheKey);
+        
+        if (cachedActivities != null) {
+          debugPrint('Activities retrieved from cache with key: $cacheKey');
+          return cachedActivities
+              .map((activityData) => ActivityModel.fromJson(Map<String, dynamic>.from(activityData)))
+              .toList();
+        }
+      } catch (e) {
+        debugPrint('Error fetching activities from cache: $e');
+      }
+    } else {
+      debugPrint('Force refresh requested, skipping cache');
+    }
+
     try {
       // Build query parameters
       final Map<String, dynamic> queryParams = {};
@@ -61,8 +114,14 @@ class ActivityRepository implements IActivityRepository {
             .map((activityData) => ActivityModel.fromJson(activityData))
             .toList();
 
-        // Cache the activities locally
-        await _cacheActivities(activities);
+        // Cache the activities
+        await _cacheService.set(
+          cacheKey, 
+          activitiesData,
+          memoryCacheDuration: _cacheValidity,
+          diskCacheDuration: Duration(hours: 3),
+        );
+        debugPrint('Activities fetched from API and cached with key: $cacheKey');
 
         return activities;
       }
@@ -70,7 +129,7 @@ class ActivityRepository implements IActivityRepository {
       debugPrint('Error fetching activities from API: $e');
     }
 
-    // If API call fails or no data, return cached activities
+    // If API call fails or no data, return cached activities from SharedPreferences
     return await _getCachedActivities(
       valueId: valueId,
       startDate: startDate,
@@ -89,7 +148,11 @@ class ActivityRepository implements IActivityRepository {
       if (response != null) {
         final newActivity = ActivityModel.fromJson(response);
 
-        // Update cache
+        // Invalidate all activities caches
+        await _cacheService.clearByPrefix(_activitiesCacheKeyPrefix);
+        debugPrint('Activities cache invalidated after adding new activity');
+
+        // Add to shared preferences cache as well
         final cachedActivities = await _getCachedActivities();
         cachedActivities.add(newActivity);
         await _cacheActivities(cachedActivities);
@@ -112,6 +175,7 @@ class ActivityRepository implements IActivityRepository {
         final cachedActivities = await _getCachedActivities();
         cachedActivities.add(tempActivity);
         await _cacheActivities(cachedActivities);
+        debugPrint('Activity stored locally due to offline state');
 
         return tempActivity;
       }
@@ -136,7 +200,11 @@ class ActivityRepository implements IActivityRepository {
       if (response != null) {
         final updatedActivity = ActivityModel.fromJson(response);
 
-        // Update cache
+        // Invalidate all activities caches
+        await _cacheService.clearByPrefix(_activitiesCacheKeyPrefix);
+        debugPrint('Activities cache invalidated after updating activity');
+
+        // Update shared preferences cache as well
         final cachedActivities = await _getCachedActivities();
         final index = cachedActivities.indexWhere((a) => a.id == activity.id);
         if (index != -1) {
@@ -155,6 +223,7 @@ class ActivityRepository implements IActivityRepository {
       if (index != -1) {
         cachedActivities[index] = activity;
         await _cacheActivities(cachedActivities);
+        debugPrint('Activity updated locally due to offline state');
       }
     }
 
@@ -167,7 +236,11 @@ class ActivityRepository implements IActivityRepository {
     try {
       await _apiService.delete('/api/v1/activities/$id');
 
-      // Remove from cache
+      // Invalidate all activities caches
+      await _cacheService.clearByPrefix(_activitiesCacheKeyPrefix);
+      debugPrint('Activities cache invalidated after deleting activity');
+
+      // Remove from shared preferences cache
       final cachedActivities = await _getCachedActivities();
       cachedActivities.removeWhere((activity) => activity.id == id);
       await _cacheActivities(cachedActivities);
@@ -178,10 +251,11 @@ class ActivityRepository implements IActivityRepository {
       final cachedActivities = await _getCachedActivities();
       cachedActivities.removeWhere((activity) => activity.id == id);
       await _cacheActivities(cachedActivities);
+      debugPrint('Activity removed locally due to offline state');
     }
   }
 
-  // Helper methods for local caching
+  // Helper methods for local caching using SharedPreferences
   Future<List<ActivityModel>> _getCachedActivities({
     String? valueId,
     DateTime? startDate,
@@ -217,7 +291,7 @@ class ActivityRepository implements IActivityRepository {
         return activities;
       }
     } catch (e) {
-      debugPrint('Error getting cached activities: $e');
+      debugPrint('Error getting cached activities from SharedPreferences: $e');
     }
     return [];
   }
@@ -228,7 +302,7 @@ class ActivityRepository implements IActivityRepository {
       final activitiesJson = activities.map((activity) => activity.toJson()).toList();
       await _prefs.setString('activities', jsonEncode(activitiesJson));
     } catch (e) {
-      debugPrint('Error caching activities: $e');
+      debugPrint('Error caching activities to SharedPreferences: $e');
     }
   }
 

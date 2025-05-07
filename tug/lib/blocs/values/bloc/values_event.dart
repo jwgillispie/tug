@@ -9,7 +9,14 @@ abstract class ValuesEvent extends Equatable {
   List<Object?> get props => [];
 }
 
-class LoadValues extends ValuesEvent {}
+class LoadValues extends ValuesEvent {
+  final bool forceRefresh;
+
+  const LoadValues({this.forceRefresh = false});
+
+  @override
+  List<Object?> get props => [forceRefresh];
+}
 
 class AddValue extends ValuesEvent {
   final ValueModel value;
