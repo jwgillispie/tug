@@ -14,7 +14,10 @@ import '../../utils/theme/buttons.dart';
 import '../../widgets/common/tug_text_field.dart';
 
 class ValuesInputScreen extends StatefulWidget {
-  const ValuesInputScreen({super.key});
+  // Add parameter to detect if coming from home screen
+  final bool fromHome;
+  
+  const ValuesInputScreen({super.key, this.fromHome = false});
 
   @override
   State<ValuesInputScreen> createState() => _ValuesInputScreenState();
@@ -74,8 +77,12 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
   }
 
   void _handleContinue() {
-    // Navigate to home screen or next onboarding step
-    context.go('/home');
+    // Navigate to home screen or back, depending on where we came from
+    if (widget.fromHome) {
+      context.pop(); // Go back to home if we came from there
+    } else {
+      context.go('/home'); // Otherwise go to home
+    }
   }
 
   // Method to hide the celebration overlay
@@ -141,6 +148,13 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
           Scaffold(
             appBar: AppBar(
               title: const Text('Values'),
+              // Add back button if we came from home screen
+              leading: widget.fromHome 
+                  ? IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: () => context.pop(),
+                    )
+                  : null,
             ),
             body: SingleChildScrollView(
               padding: const EdgeInsets.all(24),
@@ -148,7 +162,9 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'What do you care about more than anything else?',
+                    widget.fromHome
+                        ? 'Edit your values'
+                        : 'What do you care about more than anything else?',
                     style: Theme.of(context).textTheme.displayLarge,
                   ),
                   const SizedBox(height: 8),
@@ -308,7 +324,7 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
                                           color: Colors.white,
                                         ),
                                       )
-                                    : const Text('GO!'),
+                                    : Text(widget.fromHome ? 'Done' : 'GO!'),
                               ),
                             ),
                           ],

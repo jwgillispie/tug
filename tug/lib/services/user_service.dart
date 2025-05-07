@@ -15,10 +15,41 @@ class UserService {
   Future<Map<String, dynamic>> getUserProfile() async {
     try {
       final response = await _apiService.get('/api/v1/users/me');
+      
+      // Check if the response has a values field to determine if user has values
+      if (response is Map && !response.containsKey('has_values')) {
+        // Determine has_values based on values count from API
+        if (response.containsKey('values_count')) {
+          response['has_values'] = (response['values_count'] ?? 0) > 0;
+        } else {
+          // Try to fetch values specifically to determine if user has any
+          try {
+            final valuesResponse = await _apiService.get('/api/v1/values');
+            // Check if values exist
+            response['has_values'] = valuesResponse is List && valuesResponse.isNotEmpty;
+          } catch (e) {
+            debugPrint('Error checking values: $e');
+            response['has_values'] = false;
+          }
+        }
+      }
+      
       return response;
     } catch (e) {
       debugPrint('Error fetching user profile: $e');
-      rethrow;
+      // Default profile with has_values set to false
+      return {'has_values': false};
+    }
+  }
+
+  // Set user values completion status - call this after adding first value
+  Future<bool> setHasValues() async {
+    try {
+      await _apiService.patch('/api/v1/users/me', data: {'has_values': true});
+      return true;
+    } catch (e) {
+      debugPrint('Error updating has_values status: $e');
+      return false;
     }
   }
 

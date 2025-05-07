@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:go_router/go_router.dart';
-import 'package:dio/dio.dart';
 import 'package:tug/blocs/activities/activities_bloc.dart';
 import 'package:tug/blocs/theme/theme_bloc.dart';
 import 'package:tug/blocs/values/bloc/values_bloc.dart';
@@ -21,8 +20,8 @@ import 'package:tug/screens/legal/terms_screen.dart';
 import 'package:tug/screens/main_layout.dart';
 import 'package:tug/screens/profile/profile_screen.dart';
 import 'package:tug/screens/progress/progress_screen.dart';
+import 'package:tug/screens/splash_screen.dart';
 import 'package:tug/utils/local_storage.dart';
-import 'package:tug/utils/render_utils.dart';
 import 'repositories/auth_repository.dart';
 import 'blocs/auth/auth_bloc.dart';
 import 'firebase_options.dart';
@@ -40,28 +39,18 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
+    // IMPORTANT: Initialize environment config first to avoid the error
     await EnvConfig.load();
-
-    // Only initialize storage for non-web platforms
+    
+    // Initialize local storage next
     if (!kIsWeb) {
       await LocalStorage.initialize();
     }
-
-    // Initialize Firebase with the correct options
+    
+    // Initialize Firebase last
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-
-    // Ping the backend to wake it up if it's in cold start
-    // This helps reduce latency for the first API call
-    final dio = Dio(BaseOptions(baseUrl: EnvConfig.apiUrl));
-    try {
-      debugPrint('Pinging backend at ${EnvConfig.apiUrl}');
-      await RenderUtils.pingBackend(dio);
-    } catch (e) {
-      // Don't fail app startup if backend ping fails
-      debugPrint('Backend ping failed: $e');
-    }
 
     final authRepository = AuthRepository();
     final valuesRepository = ValuesRepository();
@@ -156,9 +145,13 @@ class _TugAppState extends State<TugApp> {
     _themeBloc.add(ThemeLoaded());
 
     _router = GoRouter(
-      initialLocation: '/login',
+      initialLocation: '/splash',  // Start at splash screen
       refreshListenable: GoRouterRefreshStream(_authBloc.stream),
       routes: [
+        GoRoute(
+          path: '/splash',
+          builder: (context, state) => const SplashScreen(),
+        ),
         GoRoute(
           path: '/terms',
           builder: (context, state) => const TermsScreen(),
@@ -188,10 +181,6 @@ class _TugAppState extends State<TugApp> {
           builder: (context, state) => const ChangePasswordScreen(),
         ),
         GoRoute(
-          path: '/',
-          builder: (context, state) => const LoginScreen(),
-        ),
-        GoRoute(
           path: '/login',
           builder: (context, state) => const LoginScreen(),
         ),
@@ -205,7 +194,11 @@ class _TugAppState extends State<TugApp> {
         ),
         GoRoute(
           path: '/values-input',
-          builder: (context, state) => const ValuesInputScreen(),
+          builder: (context, state) {
+            // Check if coming from home screen for edit mode
+            final fromHome = state.uri.queryParameters['fromHome'] == 'true';
+            return ValuesInputScreen(fromHome: fromHome);
+          },
         ),
         GoRoute(
           path: '/home',
@@ -250,6 +243,7 @@ class _TugAppState extends State<TugApp> {
       redirect: (context, state) {
         final currentState = _authBloc.state;
         final isLoggedIn = currentState is Authenticated;
+        final isSplashScreen = state.fullPath == '/splash';
         final isLoginScreen = state.fullPath == '/login';
         final isSignupScreen = state.fullPath == '/signup';
         final isDiagnosticScreen = state.fullPath == '/diagnostics';
@@ -258,25 +252,36 @@ class _TugAppState extends State<TugApp> {
         final isTermsScreen = state.fullPath == '/terms';
         final isPrivacyScreen = state.fullPath == '/privacy';
 
+        // Always allow access to diagnostic screen
         if (isDiagnosticScreen) {
           return null;
         }
 
-        if (isLoggedIn) {
-          final hasCompletedOnboarding = true;
-
-          if (!hasCompletedOnboarding) {
-            return isValuesInputScreen ? null : '/values-input';
-          } else {
-            return isLoginScreen || isSignupScreen || isForgotPasswordScreen
-                ? '/home'
-                : null;
-          }
+        // Always allow access to splash screen
+        if (isSplashScreen) {
+          return null;
         }
 
-        if (!isLoggedIn &&
+        // If user is logged in
+        if (isLoggedIn) {
+          // If coming from home to values input, allow it
+          if (isValuesInputScreen && state.uri.queryParameters['fromHome'] == 'true') {
+            return null;
+          }
+
+          // Redirect from auth screens to home if already logged in
+          if (isLoginScreen || isSignupScreen || isForgotPasswordScreen) {
+            return '/home';
+          }
+
+          // Allow all other screens
+          return null;
+        }
+
+        // If not logged in
+        if (!isLoggedIn && 
             !(isLoginScreen || isSignupScreen || isForgotPasswordScreen || 
-              isTermsScreen || isPrivacyScreen)) {
+              isTermsScreen || isPrivacyScreen || isSplashScreen)) {
           return '/login';
         }
 
