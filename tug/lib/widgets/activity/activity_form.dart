@@ -2,11 +2,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:tug/blocs/values/bloc/values_bloc.dart';
+import 'package:tug/blocs/values/bloc/values_event.dart';
 import 'package:tug/blocs/values/bloc/values_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tug/models/value_model.dart';
 import 'package:tug/utils/theme/buttons.dart';
 import 'package:tug/utils/theme/colors.dart';
+import 'package:tug/widgets/values/streak_celebration.dart';
 
 class ActivityFormWidget extends StatefulWidget {
   final Function(String name, String valueId, int duration, DateTime date,
@@ -33,6 +35,9 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
   String? _selectedValueId;
   DateTime _selectedDate = DateTime.now();
   bool _showDurationPresets = true;
+  bool _showStreakCelebration = false;
+  String _streakValueName = '';
+  int _streakCount = 0;
 
   @override
   void dispose() {
@@ -59,8 +64,45 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
       final notes =
           _notesController.text.isEmpty ? null : _notesController.text;
 
+      // Load streak stats for the selected value to see if we need to show a celebration
+      context.read<ValuesBloc>().add(LoadStreakStats(valueId: _selectedValueId));
+      
+      // After creating the activity, wait for it to be processed, then check streak milestones
+      Future.delayed(const Duration(milliseconds: 1000), () {
+        final valuesState = context.read<ValuesBloc>().state;
+        if (valuesState is ValuesLoaded) {
+          final selectedValue = valuesState.values.firstWhere(
+            (v) => v.id == _selectedValueId,
+            orElse: () => const ValueModel(
+              name: '', 
+              importance: 1, 
+              color: '#7C3AED'
+            ),
+          );
+          
+          // Check if we should celebrate a streak milestone
+          if (selectedValue.currentStreak > 0 && 
+              (selectedValue.currentStreak == 7 || 
+               selectedValue.currentStreak == 30 || 
+               selectedValue.currentStreak == 100 ||
+               selectedValue.currentStreak == 365)) {
+            setState(() {
+              _streakValueName = selectedValue.name;
+              _streakCount = selectedValue.currentStreak;
+              _showStreakCelebration = true;
+            });
+          }
+        }
+      });
+
       widget.onSave(name, _selectedValueId!, duration, _selectedDate, notes);
     }
+  }
+  
+  void _dismissStreakCelebration() {
+    setState(() {
+      _showStreakCelebration = false;
+    });
   }
 
   void _selectDuration(int minutes) {
@@ -71,22 +113,24 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<ValuesBloc, ValuesState>(
-      builder: (context, state) {
-        final values = state is ValuesLoaded
-            ? state.values.where((v) => v.active).toList()
-            : <ValueModel>[];
+    return Stack(
+      children: [
+        BlocBuilder<ValuesBloc, ValuesState>(
+          builder: (context, state) {
+            final values = state is ValuesLoaded
+                ? state.values.where((v) => v.active).toList()
+                : <ValueModel>[];
 
-        // Set default selected value ID if values are available and no value is selected yet
-        if (values.isNotEmpty && _selectedValueId == null) {
-          _selectedValueId = values.first.id;
-        }
+            // Set default selected value ID if values are available and no value is selected yet
+            if (values.isNotEmpty && _selectedValueId == null) {
+              _selectedValueId = values.first.id;
+            }
 
-        return Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+            return Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
               // Activity Name
               TextFormField(
                 controller: _nameController,
@@ -332,7 +376,17 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
             ],
           ),
         );
-      },
+          },
+        ),
+        
+        // Show streak celebration overlay if needed
+        if (_showStreakCelebration)
+          StreakCelebration(
+            valueName: _streakValueName,
+            streakCount: _streakCount,
+            onDismiss: _dismissStreakCelebration,
+          ),
+      ],
     );
   }
 }

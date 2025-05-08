@@ -30,3 +30,12 @@ class ValuesError extends ValuesState {
   @override
   List<Object?> get props => [message];
 }
+
+class StreakStatsLoaded extends ValuesState {
+  final Map<String, dynamic> streakStats;
+  
+  const StreakStatsLoaded(this.streakStats);
+  
+  @override
+  List<Object?> get props => [streakStats];
+}

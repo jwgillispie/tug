@@ -16,6 +16,7 @@ class ValuesBloc extends Bloc<ValuesEvent, ValuesState> {
     on<AddValue>(_onAddValue);
     on<UpdateValue>(_onUpdateValue);
     on<DeleteValue>(_onDeleteValue);
+    on<LoadStreakStats>(_onLoadStreakStats);
   }
 
   Future<void> _onLoadValues(
@@ -139,6 +140,34 @@ class ValuesBloc extends Bloc<ValuesEvent, ValuesState> {
       if (currentState is ValuesLoaded) {
         emit(currentState);
       }
+    }
+  }
+  
+  Future<void> _onLoadStreakStats(
+    LoadStreakStats event,
+    Emitter<ValuesState> emit,
+  ) async {
+    try {
+      // Keep track of previous state to restore after loading streak stats
+      final currentState = state;
+      
+      emit(ValuesLoading());
+      
+      final streakStats = await valuesRepository.getStreakStats(
+        valueId: event.valueId
+      );
+      
+      emit(StreakStatsLoaded(streakStats));
+      
+      // Restore previous state if it was ValuesLoaded
+      if (currentState is ValuesLoaded) {
+        emit(currentState);
+      }
+      
+      debugPrint('Streak stats loaded: ${streakStats.length} stats');
+    } catch (e) {
+      emit(ValuesError(e.toString()));
+      debugPrint('Error loading streak stats: $e');
     }
   }
 }

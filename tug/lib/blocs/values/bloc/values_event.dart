@@ -44,3 +44,12 @@ class DeleteValue extends ValuesEvent {
   @override
   List<Object?> get props => [valueId];
 }
+
+class LoadStreakStats extends ValuesEvent {
+  final String? valueId;
+  
+  const LoadStreakStats({this.valueId});
+  
+  @override
+  List<Object?> get props => [valueId];
+}

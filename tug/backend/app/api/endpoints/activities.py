@@ -15,6 +15,7 @@ from ...schemas.activity import (
     ActivityStatistics
 )
 from ...services.activity_service import ActivityService
+from ...services.value_service import ValueService
 from ...core.auth import get_current_user
 from ...utils.json_utils import MongoJSONEncoder
 
@@ -30,6 +31,15 @@ async def create_activity(
     try:
         logger.info(f"Creating activity for user: {current_user.id}")
         new_activity = await ActivityService.create_activity(current_user, activity)
+        
+        # Update the streak for the associated value
+        if new_activity and new_activity.value_id:
+            try:
+                await ValueService.update_streak(new_activity.value_id, new_activity.date)
+                logger.info(f"Streak updated for value {new_activity.value_id}")
+            except Exception as streak_error:
+                logger.error(f"Error updating streak: {streak_error}", exc_info=True)
+                # Continue even if streak update fails
         
         # Convert to dictionary and encode MongoDB types
         activity_dict = new_activity.dict()

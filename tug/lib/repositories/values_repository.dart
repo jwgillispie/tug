@@ -10,6 +10,7 @@ abstract class IValuesRepository {
   Future<ValueModel> addValue(ValueModel value);
   Future<ValueModel> updateValue(ValueModel value);
   Future<void> deleteValue(String id);
+  Future<Map<String, dynamic>> getStreakStats({String? valueId});
 }
 
 class ValuesRepository implements IValuesRepository {
@@ -222,5 +223,27 @@ class ValuesRepository implements IValuesRepository {
     if (_prefs == null) {
       await _initializePrefs(null);
     }
+  }
+  
+  @override
+  Future<Map<String, dynamic>> getStreakStats({String? valueId}) async {
+    try {
+      String url = '/api/v1/values/stats/streaks';
+      
+      if (valueId != null) {
+        url = '$url?value_id=$valueId';
+      }
+      
+      final response = await _apiService.get(url);
+      
+      if (response != null) {
+        return Map<String, dynamic>.from(response);
+      }
+    } catch (e) {
+      debugPrint('Error getting streak stats: $e');
+    }
+    
+    // Return empty map if API fails
+    return {};
   }
 }

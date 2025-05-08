@@ -382,58 +382,119 @@ class ValueCard extends StatelessWidget {
           color: TugColors.lightBorder,
         ),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 24,
-            height: 24,
-            decoration: BoxDecoration(
-              color: valueColor,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  value.name,
-                  style: Theme.of(context).textTheme.titleMedium,
+          Row(
+            children: [
+              Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: valueColor,
+                  shape: BoxShape.circle,
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  'Importance: ${value.importance}',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: TugColors.lightTextSecondary,
-                  ),
-                ),
-                if (value.description.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    value.description,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: TugColors.lightTextSecondary,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      value.name,
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+                    const SizedBox(height: 4),
+                    Text(
+                      'Importance: ${value.importance}',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: TugColors.lightTextSecondary,
+                      ),
+                    ),
+                    if (value.description.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        value.description,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: TugColors.lightTextSecondary,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              IconButton(
+                onPressed: onEdit,
+                icon: const Icon(Icons.edit_outlined),
+                color: TugColors.primaryPurple,
+              ),
+              IconButton(
+                onPressed: onDelete,
+                icon: const Icon(Icons.delete_outline),
+                color: TugColors.error,
+              ),
+            ],
+          ),
+          if (value.currentStreak > 0 || value.longestStreak > 0) ...[
+            const SizedBox(height: 12),
+            Divider(color: TugColors.lightBorder),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                _buildStreakIndicator(
+                  context: context,
+                  icon: Icons.local_fire_department,
+                  color: Color(0xFFF57C00), // Orange
+                  label: 'Current Streak',
+                  value: '${value.currentStreak} day${value.currentStreak != 1 ? 's' : ''}',
+                ),
+                _buildStreakIndicator(
+                  context: context,
+                  icon: Icons.emoji_events,
+                  color: Color(0xFFFFD700), // Gold
+                  label: 'Best Streak',
+                  value: '${value.longestStreak} day${value.longestStreak != 1 ? 's' : ''}',
+                ),
               ],
             ),
-          ),
-          IconButton(
-            onPressed: onEdit,
-            icon: const Icon(Icons.edit_outlined),
-            color: TugColors.primaryPurple,
-          ),
-          IconButton(
-            onPressed: onDelete,
-            icon: const Icon(Icons.delete_outline),
-            color: TugColors.error,
-          ),
+          ],
         ],
       ),
+    );
+  }
+  
+  Widget _buildStreakIndicator({
+    required BuildContext context,
+    required IconData icon,
+    required Color color,
+    required String label,
+    required String value,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, color: color, size: 16),
+        const SizedBox(width: 4),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: TugColors.lightTextSecondary,
+              ),
+            ),
+            Text(
+              value,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

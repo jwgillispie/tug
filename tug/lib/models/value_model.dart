@@ -10,6 +10,10 @@ class ValueModel extends Equatable {
   final bool active;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final int currentStreak;
+  final int longestStreak;
+  final DateTime? lastActivityDate;
+  final List<DateTime> streakDates;
 
   const ValueModel({
     this.id,
@@ -20,6 +24,10 @@ class ValueModel extends Equatable {
     this.active = true,
     this.createdAt,
     this.updatedAt,
+    this.currentStreak = 0,
+    this.longestStreak = 0,
+    this.lastActivityDate,
+    this.streakDates = const [],
   });
 
   ValueModel copyWith({
@@ -31,6 +39,10 @@ class ValueModel extends Equatable {
     bool? active,
     DateTime? createdAt,
     DateTime? updatedAt,
+    int? currentStreak,
+    int? longestStreak,
+    DateTime? lastActivityDate,
+    List<DateTime>? streakDates,
   }) {
     return ValueModel(
       id: id ?? this.id,
@@ -41,6 +53,10 @@ class ValueModel extends Equatable {
       active: active ?? this.active,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      currentStreak: currentStreak ?? this.currentStreak,
+      longestStreak: longestStreak ?? this.longestStreak,
+      lastActivityDate: lastActivityDate ?? this.lastActivityDate,
+      streakDates: streakDates ?? this.streakDates,
     );
   }
 
@@ -68,6 +84,14 @@ class ValueModel extends Equatable {
       updatedAt: json['updated_at'] != null 
           ? DateTime.parse(json['updated_at']) 
           : null,
+      currentStreak: json['current_streak'] ?? 0,
+      longestStreak: json['longest_streak'] ?? 0,
+      lastActivityDate: json['last_activity_date'] != null
+          ? DateTime.parse(json['last_activity_date'])
+          : null,
+      streakDates: json['streak_dates'] != null
+          ? (json['streak_dates'] as List).map((date) => DateTime.parse(date)).toList()
+          : const [],
     );
   }
 
@@ -80,6 +104,10 @@ class ValueModel extends Equatable {
     color, 
     active, 
     createdAt, 
-    updatedAt
+    updatedAt,
+    currentStreak,
+    longestStreak,
+    lastActivityDate,
+    streakDates
   ];
 }

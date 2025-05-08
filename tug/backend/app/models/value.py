@@ -1,7 +1,7 @@
 # app/models/value.py
 from beanie import Document, Indexed, Link
-from typing import Optional, Any, Dict
-from datetime import datetime
+from typing import Optional, Any, Dict, List
+from datetime import datetime, date
 from pydantic import Field
 
 class Value(Document):
@@ -15,6 +15,10 @@ class Value(Document):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
     active: bool = True
     version: int = 1
+    current_streak: int = 0
+    longest_streak: int = 0
+    last_activity_date: Optional[date] = None
+    streak_dates: List[date] = []
 
     class Settings:
         name = "values"
