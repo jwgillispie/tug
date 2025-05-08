@@ -71,6 +71,27 @@ async def get_values(
             detail=f"Error retrieving values: {str(e)}"
         )
 
+@router.get("/stats/streaks")
+async def get_streaks(
+    current_user: User = Depends(get_current_user),
+    value_id: Optional[str] = None
+):
+    """Get streak information for values"""
+    try:
+        logger.info(f"Getting streak information for user: {current_user.id}")
+        
+        # Check and reset streaks if needed
+        await ValueService.check_and_reset_streaks(current_user)
+        
+        streak_stats = await ValueService.get_streak_stats(current_user, value_id)
+        return streak_stats
+    except Exception as e:
+        logger.error(f"Error getting streak information: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error retrieving streak information: {str(e)}"
+        )
+
 @router.get("/{value_id}")
 async def get_value(
     value_id: str,
@@ -127,27 +148,6 @@ async def update_value(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error updating value: {str(e)}"
-        )
-
-@router.get("/stats/streaks")
-async def get_streaks(
-    current_user: User = Depends(get_current_user),
-    value_id: Optional[str] = None
-):
-    """Get streak information for values"""
-    try:
-        logger.info(f"Getting streak information for user: {current_user.id}")
-        
-        # Check and reset streaks if needed
-        await ValueService.check_and_reset_streaks(current_user)
-        
-        streak_stats = await ValueService.get_streak_stats(current_user, value_id)
-        return streak_stats
-    except Exception as e:
-        logger.error(f"Error getting streak information: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error retrieving streak information: {str(e)}"
         )
 
 @router.delete("/{value_id}", status_code=status.HTTP_204_NO_CONTENT)
