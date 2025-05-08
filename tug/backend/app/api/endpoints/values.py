@@ -1,6 +1,6 @@
 # app/api/endpoints/values.py
 from fastapi import APIRouter, Depends, HTTPException, status
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from datetime import datetime
 import logging
 from bson import ObjectId
