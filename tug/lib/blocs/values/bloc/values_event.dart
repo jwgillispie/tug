@@ -47,9 +47,10 @@ class DeleteValue extends ValuesEvent {
 
 class LoadStreakStats extends ValuesEvent {
   final String? valueId;
-  
-  const LoadStreakStats({this.valueId});
-  
+  final bool? forceRefresh;
+
+  const LoadStreakStats({this.valueId, this.forceRefresh = false});
+
   @override
-  List<Object?> get props => [valueId];
+  List<Object?> get props => [valueId, forceRefresh];
 }

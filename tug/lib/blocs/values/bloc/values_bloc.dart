@@ -150,21 +150,22 @@ class ValuesBloc extends Bloc<ValuesEvent, ValuesState> {
     try {
       // Keep track of previous state to restore after loading streak stats
       final currentState = state;
-      
+
       emit(ValuesLoading());
-      
+
       final streakStats = await valuesRepository.getStreakStats(
-        valueId: event.valueId
+        valueId: event.valueId,
+        forceRefresh: event.forceRefresh ?? false
       );
-      
+
       emit(StreakStatsLoaded(streakStats));
-      
+
       // Restore previous state if it was ValuesLoaded
       if (currentState is ValuesLoaded) {
         emit(currentState);
       }
-      
-      debugPrint('Streak stats loaded: ${streakStats.length} stats');
+
+      debugPrint('Streak stats loaded: ${streakStats.length} stats (forced: ${event.forceRefresh ?? false})');
     } catch (e) {
       emit(ValuesError(e.toString()));
       debugPrint('Error loading streak stats: $e');

@@ -10,7 +10,7 @@ abstract class IValuesRepository {
   Future<ValueModel> addValue(ValueModel value);
   Future<ValueModel> updateValue(ValueModel value);
   Future<void> deleteValue(String id);
-  Future<Map<String, dynamic>> getStreakStats({String? valueId});
+  Future<Map<String, dynamic>> getStreakStats({String? valueId, bool forceRefresh = false});
 }
 
 class ValuesRepository implements IValuesRepository {
@@ -226,24 +226,53 @@ class ValuesRepository implements IValuesRepository {
   }
   
   @override
-  Future<Map<String, dynamic>> getStreakStats({String? valueId}) async {
+  Future<Map<String, dynamic>> getStreakStats({String? valueId, bool forceRefresh = false}) async {
+    // Generate a cache key based on value ID
+    final cacheKey = 'streak_stats_${valueId ?? "all"}';
+
+    // Try to get from cache first if not forcing refresh
+    if (!forceRefresh) {
+      try {
+        final cachedStats = await _cacheService.get<Map<String, dynamic>>(cacheKey);
+        if (cachedStats != null) {
+          debugPrint('Streak stats retrieved from cache for ${valueId ?? "all values"}');
+          return cachedStats;
+        }
+      } catch (e) {
+        debugPrint('Error retrieving streak stats from cache: $e');
+      }
+    } else {
+      debugPrint('Force refresh requested for streak stats, skipping cache');
+    }
+
     try {
       String url = '/api/v1/values/stats/streaks';
-      
+
       if (valueId != null) {
         url = '$url?value_id=$valueId';
       }
-      
+
       final response = await _apiService.get(url);
-      
+
       if (response != null) {
-        return Map<String, dynamic>.from(response);
+        final stats = Map<String, dynamic>.from(response);
+
+        // Cache the streak stats
+        await _cacheService.set(
+          cacheKey,
+          stats,
+          memoryCacheDuration: _cacheValidity,
+          diskCacheDuration: Duration(hours: 2),
+        );
+        debugPrint('Streak stats cached for ${valueId ?? "all values"}');
+
+        return stats;
       }
     } catch (e) {
-      debugPrint('Error getting streak stats: $e');
+      debugPrint('Error getting streak stats from API: $e');
     }
-    
-    // Return empty map if API fails
+
+    // Return empty map if API fails and no cache is available
     return {};
   }
 }

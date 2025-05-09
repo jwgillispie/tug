@@ -7,10 +7,10 @@ import 'package:tug/blocs/values/bloc/values_state.dart';
 import 'package:tug/services/activity_service.dart';
 import 'package:tug/utils/theme/colors.dart';
 import 'package:tug/widgets/tug_of_war/tug_of_war_widget.dart';
-import 'package:tug/widgets/values/streak_overview_widget.dart';
+import 'package:tug/widgets/values/simple_streak_widget.dart';
 
 class ProgressScreen extends StatefulWidget {
-  const ProgressScreen({Key? key}) : super(key: key);
+  const ProgressScreen({super.key});
 
   @override
   State<ProgressScreen> createState() => _ProgressScreenState();
@@ -33,8 +33,8 @@ class _ProgressScreenState extends State<ProgressScreen>
     super.initState();
     // Load values without forcing refresh if we have cached data
     context.read<ValuesBloc>().add(LoadValues(forceRefresh: false));
-    // Load streak stats
-    context.read<ValuesBloc>().add(LoadStreakStats());
+    // Load streak stats without forcing refresh
+    context.read<ValuesBloc>().add(LoadStreakStats(forceRefresh: false));
     // Also load activity data
     _fetchActivityData(forceRefresh: false);
   }
@@ -139,7 +139,7 @@ class _ProgressScreenState extends State<ProgressScreen>
   void _refreshData() {
     _fetchActivityData(forceRefresh: true);
     context.read<ValuesBloc>().add(LoadValues(forceRefresh: true));
-    context.read<ValuesBloc>().add(LoadStreakStats());
+    context.read<ValuesBloc>().add(LoadStreakStats(forceRefresh: true));
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -458,8 +458,15 @@ class _ProgressScreenState extends State<ProgressScreen>
                               ),
                             ),
                             
-                            // Streak overview section
-                            StreakOverviewWidget(values: values),
+                            // Simple streak section with refresh capability
+                            SimpleStreakWidget(
+                              values: values,
+                              onRefresh: () {
+                                // Force reload values and streak data
+                                context.read<ValuesBloc>().add(LoadValues(forceRefresh: true));
+                                context.read<ValuesBloc>().add(LoadStreakStats(forceRefresh: true));
+                              },
+                            ),
 
                             // Title for tug of war visualizations
                             Padding(
