@@ -6,8 +6,8 @@ import 'package:tug/blocs/values/bloc/values_event.dart';
 import 'package:tug/blocs/values/bloc/values_state.dart';
 import 'package:tug/services/activity_service.dart';
 import 'package:tug/utils/theme/colors.dart';
-import 'package:tug/widgets/tug_of_war/tug_of_war_widget.dart';
-import 'package:tug/widgets/values/simple_streak_widget.dart';
+import 'package:tug/widgets/tug_of_war/enhanced_tug_of_war_widget.dart';
+import 'package:tug/widgets/values/streak_overview_widget.dart';
 
 class ProgressScreen extends StatefulWidget {
   const ProgressScreen({super.key});
@@ -342,7 +342,7 @@ class _ProgressScreenState extends State<ProgressScreen>
                               }
                             },
                             selectedColor:
-                                TugColors.primaryPurple.withOpacity(0.8),
+                                TugColors.primaryPurple.withAlpha(204), // 0.8 opacity (204/255)
                             labelStyle: TextStyle(
                               color: isSelected
                                   ? Colors.white
@@ -470,9 +470,9 @@ class _ProgressScreenState extends State<ProgressScreen>
                                 ),
                               ),
                             ),
-                            
-                            // Simple streak section with refresh capability
-                            SimpleStreakWidget(
+
+                            // Enhanced streak overview widget
+                            StreakOverviewWidget(
                               values: values,
                               onRefresh: () {
                                 // Force reload values and streak data
@@ -484,7 +484,7 @@ class _ProgressScreenState extends State<ProgressScreen>
                             // Title for tug of war visualizations
                             Padding(
                               padding:
-                                  const EdgeInsets.only(bottom: 8, left: 4),
+                                  const EdgeInsets.only(bottom: 8, left: 4, top: 8),
                               child: Text(
                                 'Value Alignment',
                                 style: Theme.of(context).textTheme.titleMedium,
@@ -501,8 +501,8 @@ class _ProgressScreenState extends State<ProgressScreen>
                                   };
 
                               return Padding(
-                                  padding: const EdgeInsets.only(bottom: 16),
-                                  child: TugOfWarWidget(
+                                  padding: const EdgeInsets.only(bottom: 24),
+                                  child: EnhancedTugOfWarWidget(
                                     valueName: value.name,
                                     statedImportance: value.importance,
                                     actualBehavior:
@@ -512,7 +512,7 @@ class _ProgressScreenState extends State<ProgressScreen>
                                     valueColor:
                                         value.color, // Pass the value's color
                                   ));
-                            }).toList(),
+                            }),
 
                             const SizedBox(height: 16),
 
