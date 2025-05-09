@@ -1,6 +1,7 @@
 // lib/services/activity_service.dart
 import 'package:flutter/foundation.dart';
 import 'package:tug/models/activity_model.dart';
+import 'package:tug/models/value_model.dart';
 import 'package:tug/services/cache_service.dart';
 import 'api_service.dart';
 
@@ -352,5 +353,40 @@ class ActivityService {
   // Helper method to format dates consistently for API
   String _formatDateForApi(DateTime date) {
     return date.toUtc().toIso8601String();
+  }
+
+  // Get values associated with activities
+  Future<List<ValueModel>> getValuesByActivities(List<ActivityModel> activities) async {
+    try {
+      // Extract unique value IDs from activities
+      final valueIds = activities
+          .map((activity) => activity.valueId)
+          .where((id) => id.isNotEmpty)
+          .toSet()
+          .toList();
+
+      if (valueIds.isEmpty) {
+        return [];
+      }
+
+      // Fetch values by IDs (you'd normally do a single API call, but here we're mocking it)
+      final List<ValueModel> values = [];
+
+      for (final valueId in valueIds) {
+        try {
+          final response = await _apiService.get('/api/v1/values/$valueId');
+          if (response != null) {
+            values.add(ValueModel.fromJson(response));
+          }
+        } catch (e) {
+          debugPrint('Error fetching value $valueId: $e');
+        }
+      }
+
+      return values;
+    } catch (e) {
+      debugPrint('Error getting values by activities: $e');
+      return [];
+    }
   }
 }
