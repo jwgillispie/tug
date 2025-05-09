@@ -119,7 +119,7 @@ class _EmailSignupWidgetState extends State<EmailSignupWidget> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  style: TugButtons.primaryButtonStyle,
+                  style: TugButtons.primaryButtonStyle(isDark: Theme.of(context).brightness == Brightness.dark),
                   onPressed: _isLoading ? null : _handleSubmit,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 12),

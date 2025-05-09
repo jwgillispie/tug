@@ -296,7 +296,7 @@ class _DiagnosticScreenState extends State<DiagnosticScreen> {
                       children: [
                         Expanded(
                           child: ElevatedButton(
-                            style: TugButtons.primaryButtonStyle,
+                            style: TugButtons.primaryButtonStyle(isDark: Theme.of(context).brightness == Brightness.dark),
                             onPressed: _isLoading ? null : _testSignIn,
                             child: const Text('Test Sign In'),
                           ),
@@ -304,7 +304,7 @@ class _DiagnosticScreenState extends State<DiagnosticScreen> {
                         const SizedBox(width: 16),
                         Expanded(
                           child: OutlinedButton(
-                            style: TugButtons.secondaryButtonStyle,
+                            style: TugButtons.secondaryButtonStyle(isDark: Theme.of(context).brightness == Brightness.dark),
                             onPressed: _isLoading ? null : _signOut,
                             child: const Text('Sign Out'),
                           ),
@@ -322,7 +322,7 @@ class _DiagnosticScreenState extends State<DiagnosticScreen> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                style: TugButtons.primaryButtonStyle,
+                style: TugButtons.primaryButtonStyle(isDark: Theme.of(context).brightness == Brightness.dark),
                 onPressed: _isLoading ? null : _checkFirebaseStatus,
                 icon: const Icon(Icons.refresh),
                 label: const Text('Refresh Status'),

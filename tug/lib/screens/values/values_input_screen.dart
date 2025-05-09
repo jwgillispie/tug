@@ -245,7 +245,7 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
                             return SizedBox(
                               width: double.infinity,
                               child: ElevatedButton(
-                                style: TugButtons.secondaryButtonStyle,
+                                style: TugButtons.secondaryButtonStyle(isDark: Theme.of(context).brightness == Brightness.dark),
                                 onPressed: (_isLoading || maxValuesReached) 
                                     ? null 
                                     : _addValue,
@@ -309,7 +309,7 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
                             SizedBox(
                               width: double.infinity,
                               child: ElevatedButton(
-                                style: TugButtons.primaryButtonStyle,
+                                style: TugButtons.primaryButtonStyle(isDark: Theme.of(context).brightness == Brightness.dark),
                                 onPressed: _isLoading 
                                     ? null 
                                     : (activeValues.isNotEmpty 

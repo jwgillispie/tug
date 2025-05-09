@@ -247,7 +247,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  style: TugButtons.primaryButtonStyle,
+                  style: TugButtons.primaryButtonStyle(isDark: Theme.of(context).brightness == Brightness.dark),
                   onPressed: _isLoading ? null : _handleSave,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4),

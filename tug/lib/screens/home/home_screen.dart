@@ -216,7 +216,7 @@ final List<Map<String, String>> _quotes = [
                         ),
                         const SizedBox(height: 32),
                         ElevatedButton(
-                          style: TugButtons.primaryButtonStyle,
+                          style: TugButtons.primaryButtonStyle(isDark: Theme.of(context).brightness == Brightness.dark),
                           onPressed: _navigateToValuesEdit,
                           child: const Padding(
                             padding: EdgeInsets.symmetric(horizontal: 16),

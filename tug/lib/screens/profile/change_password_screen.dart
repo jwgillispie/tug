@@ -243,7 +243,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  style: TugButtons.primaryButtonStyle,
+                  style: TugButtons.primaryButtonStyle(isDark: Theme.of(context).brightness == Brightness.dark),
                   onPressed: _isLoading ? null : _handleChangePassword,
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 4),

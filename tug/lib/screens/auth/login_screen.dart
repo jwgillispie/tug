@@ -161,7 +161,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Align(
                     alignment: Alignment.centerRight,
                     child: TextButton(
-                      style: TugButtons.textButtonStyle,
+                      style: TugButtons.tertiaryButtonStyle(isDark: Theme.of(context).brightness == Brightness.dark),
                       onPressed: () {
                         context.go('/forgot-password');
                       },
@@ -172,7 +172,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
-                      style: TugButtons.primaryButtonStyle,
+                      style: TugButtons.primaryButtonStyle(isDark: Theme.of(context).brightness == Brightness.dark),
                       onPressed: _isLoading ? null : _handleLogin,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4),
@@ -198,7 +198,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       TextButton(
-                        style: TugButtons.textButtonStyle,
+                        style: TugButtons.tertiaryButtonStyle(isDark: Theme.of(context).brightness == Brightness.dark),
                         onPressed: () => context.go('/signup'),
                         child: const Text('Sign Up'),
                       ),
@@ -214,7 +214,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   //         onPressed: () => context.go('/diagnostics'),
                   //         icon: const Icon(Icons.settings),
                   //         label: const Text('Diagnostics'),
-                  //         style: TugButtons.textButtonStyle,
+                  //         style: TugButtons.tertiaryButtonStyle(isDark: Theme.of(context).brightness == Brightness.dark),
                   //       ),
                   //     ),
                   //   ),

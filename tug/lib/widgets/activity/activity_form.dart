@@ -122,260 +122,374 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
                 : <ValueModel>[];
 
             // Set default selected value ID if values are available and no value is selected yet
+            // Important: Don't use setState during build phase
             if (values.isNotEmpty && _selectedValueId == null) {
+              // Direct assignment is safe here as we're just initializing the value
               _selectedValueId = values.first.id;
+
+              // Schedule setState for after the build is complete
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  setState(() {
+                    // This will trigger a rebuild in the next frame
+                  });
+                }
+              });
             }
 
             return Form(
               key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-              // Activity Name
-              TextFormField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Activity Name',
-                  hintText: 'What did you do?',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please enter an activity name';
-                  }
-                  if (value.length < 2) {
-                    return 'Activity name must be at least 2 characters';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                  // Activity Name
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Activity Name',
+                      hintText: 'What did you do?',
+                      border: OutlineInputBorder(),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter an activity name';
+                      }
+                      if (value.length < 2) {
+                        return 'Activity name must be at least 2 characters';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
 
-              // Value Selector
-              DropdownButtonFormField<String>(
-                decoration: const InputDecoration(
-                  labelText: 'Related Value',
-                  hintText: 'Which value does this support?',
-                  border: OutlineInputBorder(),
-                ),
-                value: _selectedValueId,
-                items: values.map((value) {
-                  final valueColor = Color(
-                    int.parse(value.color.substring(1), radix: 16) + 0xFF000000,
-                  );
+                  // Value Selector - Improved to clearly show the selected value
+                  DropdownButtonFormField<String>(
+                    decoration: const InputDecoration(
+                      labelText: 'Related Value',
+                      hintText: 'Which value does this support?',
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                    ),
+                    isExpanded: true, // Important for preventing overflow
+                    icon: const Icon(Icons.arrow_drop_down_circle),
+                    menuMaxHeight: 300, // Set max height for dropdown menu
+                    dropdownColor: Theme.of(context).colorScheme.surface,
+                    borderRadius: BorderRadius.circular(8),
+                    value: _selectedValueId,
+                    selectedItemBuilder: (context) {
+                      // This builds what shows when an item is selected in the dropdown
+                      return values.map((value) {
+                        final valueColor = Color(
+                          int.parse(value.color.substring(1), radix: 16) + 0xFF000000,
+                        );
 
-                  return DropdownMenuItem(
-                    value: value.id,
-                    child: Row(
+                        // Make the selected item clearly visible with color and name
+                        return Row(
+                          children: [
+                            Container(
+                              width: 16,
+                              height: 16,
+                              decoration: BoxDecoration(
+                                color: valueColor,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: Colors.grey.withOpacity(0.5),
+                                  width: 1,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                value.name,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: Theme.of(context).brightness == Brightness.light
+                                      ? Colors.black87
+                                      : Colors.white,
+                                ),
+                              ),
+                            ),
+                          ],
+                        );
+                      }).toList();
+                    },
+                    items: values.map((value) {
+                      final valueColor = Color(
+                        int.parse(value.color.substring(1), radix: 16) + 0xFF000000,
+                      );
+
+                      return DropdownMenuItem<String>(
+                        value: value.id,
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 4.0),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Container(
+                                  width: 16,
+                                  height: 16,
+                                  decoration: BoxDecoration(
+                                    color: valueColor,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    value.name,
+                                    overflow: TextOverflow.ellipsis,
+                                    maxLines: 2, // Allow up to 2 lines for longer or all-caps text
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      height: 1.2, // Tighter line height for better fit
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (String? id) {
+                      setState(() {
+                        _selectedValueId = id;
+                      });
+                    },
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please select a value';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Duration Input
+                  if (_showDurationPresets) ...[
+                    const Text(
+                      'Duration (minutes):',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+
+                    // Duration presets - contained in a SizedBox with specified width for better layout control
+                    SizedBox(
+                      width: double.infinity,
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        alignment: WrapAlignment.start,
+                        children: [15, 30, 45, 60, 90, 120].map((minutes) {
+                          return ActionChip(
+                            label: Text(
+                              '$minutes min',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: _durationController.text == minutes.toString()
+                                    ? Colors.white
+                                    : null,
+                              ),
+                            ),
+                            visualDensity: VisualDensity.compact,
+                            onPressed: () => _selectDuration(minutes),
+                            backgroundColor:
+                                _durationController.text == minutes.toString()
+                                    ? TugColors.primaryPurple
+                                    : null,
+                          );
+                        }).toList(),
+                      ),
+                    ),
+
+                    Row(
                       children: [
-                        Container(
-                          width: 16,
-                          height: 16,
-                          decoration: BoxDecoration(
-                            color: valueColor,
-                            shape: BoxShape.circle,
+                        Expanded(
+                          child: TextFormField(
+                            controller: _durationController,
+                            decoration: const InputDecoration(
+                              labelText: 'Custom Duration',
+                              hintText: 'Minutes',
+                              border: OutlineInputBorder(),
+                            ),
+                            keyboardType: TextInputType.number,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter duration';
+                              }
+                              final minutes = int.tryParse(value);
+                              if (minutes == null || minutes <= 0) {
+                                return 'Enter a valid number of minutes';
+                              }
+                              if (minutes > 1440) {
+                                return 'Maximum 24 hours (1440 minutes)';
+                              }
+                              return null;
+                            },
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Text(value.name),
+                        TextButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              _showDurationPresets = false;
+                            });
+                          },
+                          icon: const Icon(Icons.more_horiz, size: 16),
+                          label: const Text('More Options'),
+                          style: TugButtons.tertiaryButtonStyle(
+                            isDark: Theme.of(context).brightness == Brightness.dark
+                          ).copyWith(
+                            padding: MaterialStateProperty.all(
+                              const EdgeInsets.symmetric(horizontal: 12, vertical: 4)
+                            ),
+                            minimumSize: MaterialStateProperty.all(const Size(40, 36)),
+                          ),
+                        ),
                       ],
                     ),
-                  );
-                }).toList(),
-                onChanged: (String? id) {
-                  setState(() {
-                    _selectedValueId = id;
-                    debugPrint(
-                        'Selected value for activity: $_selectedValueId');
-                  });
-                },
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Please select a value';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Duration Input
-              if (_showDurationPresets) ...[
-                const Text(
-                  'Duration (minutes):',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-
-                // Duration presets
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [15, 30, 45, 60, 90, 120].map((minutes) {
-                    return ActionChip(
-                      label: Text('$minutes min'),
-                      onPressed: () => _selectDuration(minutes),
-                      backgroundColor:
-                          _durationController.text == minutes.toString()
-                              ? TugColors.primaryPurple
-                              : null,
-                      labelStyle: TextStyle(
-                        color: _durationController.text == minutes.toString()
-                            ? Colors.white
-                            : null,
-                      ),
-                    );
-                  }).toList(),
-                ),
-
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _durationController,
-                        decoration: const InputDecoration(
-                          labelText: 'Custom Duration',
-                          hintText: 'Minutes',
-                          border: OutlineInputBorder(),
-                        ),
-                        keyboardType: TextInputType.number,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter duration';
-                          }
-                          final minutes = int.tryParse(value);
-                          if (minutes == null || minutes <= 0) {
-                            return 'Enter a valid number of minutes';
-                          }
-                          if (minutes > 1440) {
-                            return 'Maximum 24 hours (1440 minutes)';
-                          }
-                          return null;
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    TextButton(
-                      onPressed: () {
-                        setState(() {
-                          _showDurationPresets = false;
-                        });
-                      },
-                      child: const Text('More Options'),
-                    ),
                   ],
-                ),
-              ],
 
-              if (!_showDurationPresets) ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextFormField(
-                        controller: _durationController,
-                        decoration: const InputDecoration(
-                          labelText: 'Duration (minutes)',
-                          border: OutlineInputBorder(),
-                        ),
-                        keyboardType: TextInputType.number,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Please enter duration';
-                          }
-                          final minutes = int.tryParse(value);
-                          if (minutes == null || minutes <= 0) {
-                            return 'Enter a valid number of minutes';
-                          }
-                          if (minutes > 1440) {
-                            return 'Maximum 24 hours (1440 minutes)';
-                          }
-                          return null;
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: InkWell(
-                        onTap: () async {
-                          final picked = await showDatePicker(
-                            context: context,
-                            initialDate: _selectedDate,
-                            firstDate: DateTime.now().subtract(
-                              const Duration(days: 30),
+                  if (!_showDurationPresets) ...[
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            controller: _durationController,
+                            decoration: const InputDecoration(
+                              labelText: 'Duration (minutes)',
+                              border: OutlineInputBorder(),
+                              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
                             ),
-                            lastDate: DateTime.now(),
-                          );
-                          if (picked != null) {
-                            setState(() {
-                              _selectedDate = picked;
-                            });
-                          }
-                        },
-                        child: InputDecorator(
-                          decoration: const InputDecoration(
-                            labelText: 'Date',
-                            border: OutlineInputBorder(),
+                            keyboardType: TextInputType.number,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter duration';
+                              }
+                              final minutes = int.tryParse(value);
+                              if (minutes == null || minutes <= 0) {
+                                return 'Enter a valid number of minutes';
+                              }
+                              if (minutes > 1440) {
+                                return 'Maximum 24 hours (1440 minutes)';
+                              }
+                              return null;
+                            },
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                DateFormat('MMM d, yyyy').format(_selectedDate),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () async {
+                              final picked = await showDatePicker(
+                                context: context,
+                                initialDate: _selectedDate,
+                                firstDate: DateTime.now().subtract(
+                                  const Duration(days: 30),
+                                ),
+                                lastDate: DateTime.now(),
+                              );
+                              if (picked != null) {
+                                setState(() {
+                                  _selectedDate = picked;
+                                });
+                              }
+                            },
+                            child: InputDecorator(
+                              decoration: const InputDecoration(
+                                labelText: 'Date',
+                                border: OutlineInputBorder(),
+                                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
                               ),
-                              const Icon(Icons.calendar_today, size: 16),
-                            ],
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      DateFormat('MMM d, yyyy').format(_selectedDate),
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(fontSize: 14),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  const Icon(Icons.calendar_today, size: 16),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      width: double.infinity,
+                      alignment: Alignment.center,
+                      child: TextButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            _showDurationPresets = true;
+                          });
+                        },
+                        icon: const Icon(Icons.chevron_left, size: 18),
+                        label: const Text('Back to Simple View'),
+                        style: TugButtons.tertiaryButtonStyle(
+                          isDark: Theme.of(context).brightness == Brightness.dark
+                        ).copyWith(
+                          padding: MaterialStateProperty.all(
+                            const EdgeInsets.symmetric(horizontal: 16, vertical: 8)
                           ),
                         ),
                       ),
                     ),
                   ],
-                ),
-                const SizedBox(height: 8),
-                TextButton(
-                  onPressed: () {
-                    setState(() {
-                      _showDurationPresets = true;
-                    });
-                  },
-                  child: const Text('Simple View'),
-                ),
-              ],
 
-              const SizedBox(height: 16),
+                  const SizedBox(height: 16),
 
-              // Notes
-              TextFormField(
-                controller: _notesController,
-                decoration: const InputDecoration(
-                  labelText: 'Notes (Optional)',
-                  hintText: 'Add any additional details',
-                  border: OutlineInputBorder(),
-                ),
-                maxLines: 3,
-              ),
+                  // Notes
+                  TextFormField(
+                    controller: _notesController,
+                    decoration: const InputDecoration(
+                      labelText: 'Notes (Optional)',
+                      hintText: 'Add any additional details',
+                      border: OutlineInputBorder(),
+                    ),
+                    maxLines: 3,
+                  ),
 
-              const SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-              // Submit Button
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: TugButtons.primaryButtonStyle,
-                  onPressed: widget.isLoading ? null : _handleSave,
-                  child: widget.isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Text('Save Activity'),
+                  // Submit Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: TugButtons.primaryButtonStyle(
+                        isDark: Theme.of(context).brightness == Brightness.dark
+                      ),
+                      onPressed: widget.isLoading ? null : _handleSave,
+                      child: widget.isLoading
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text('Save Activity'),
+                    ),
+                  ),
+                ],
                 ),
               ),
-            ],
-          ),
-        );
+            );
           },
         ),
         

@@ -131,19 +131,23 @@ class SimpleStreakWidget extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildSummaryItem(
-                      context,
-                      'Active Streaks',
-                      '$totalActiveStreaks',
-                      Icons.local_fire_department,
-                      Colors.orange,
+                    Expanded(
+                      child: _buildSummaryItem(
+                        context,
+                        'Active Streaks',
+                        '$totalActiveStreaks',
+                        Icons.local_fire_department,
+                        Colors.orange,
+                      ),
                     ),
-                    _buildSummaryItem(
-                      context,
-                      'Top Streak',
-                      '${topStreakValue.currentStreak} days',
-                      Icons.emoji_events,
-                      Colors.amber,
+                    Expanded(
+                      child: _buildSummaryItem(
+                        context,
+                        'Top Streak',
+                        '${topStreakValue.currentStreak} days',
+                        Icons.emoji_events,
+                        Colors.amber,
+                      ),
                     ),
                   ],
                 ),
@@ -179,6 +183,7 @@ class SimpleStreakWidget extends StatelessWidget {
     Color color,
   ) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Icon(
           icon,
@@ -192,6 +197,8 @@ class SimpleStreakWidget extends StatelessWidget {
             fontSize: 16,
             fontWeight: FontWeight.bold,
           ),
+          textAlign: TextAlign.center,
+          overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: 4),
         Text(
@@ -200,6 +207,8 @@ class SimpleStreakWidget extends StatelessWidget {
             fontSize: 12,
             color: Colors.grey.shade600,
           ),
+          textAlign: TextAlign.center,
+          overflow: TextOverflow.ellipsis,
         ),
       ],
     );
@@ -239,6 +248,8 @@ class SimpleStreakWidget extends StatelessWidget {
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                 ),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
               ),
               const SizedBox(height: 4),
               Row(
@@ -258,11 +269,14 @@ class SimpleStreakWidget extends StatelessWidget {
                   ),
                   if (value.longestStreak > value.currentStreak) ...[
                     const SizedBox(width: 8),
-                    Text(
-                      '(Best: ${value.longestStreak})',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade500,
+                    Flexible(
+                      child: Text(
+                        '(Best: ${value.longestStreak})',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey.shade500,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],

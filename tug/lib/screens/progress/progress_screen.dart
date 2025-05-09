@@ -260,6 +260,7 @@ class _ProgressScreenState extends State<ProgressScreen>
   Widget _buildSummaryItem(
       BuildContext context, String title, String value, IconData icon) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Icon(
           icon,
@@ -273,6 +274,8 @@ class _ProgressScreenState extends State<ProgressScreen>
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
+          textAlign: TextAlign.center,
+          overflow: TextOverflow.ellipsis,
         ),
         const SizedBox(height: 4),
         Text(
@@ -281,6 +284,8 @@ class _ProgressScreenState extends State<ProgressScreen>
             fontSize: 14,
             color: Colors.grey.shade600,
           ),
+          textAlign: TextAlign.center,
+          overflow: TextOverflow.ellipsis,
         ),
       ],
     );
@@ -427,31 +432,39 @@ class _ProgressScreenState extends State<ProgressScreen>
                                           .titleLarge,
                                     ),
                                     const SizedBox(height: 16),
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceAround,
-                                      children: [
-                                        _buildSummaryItem(
-                                          context,
-                                          'Total Time',
-                                          _statistics != null
-                                              ? '${_statistics!['total_duration_minutes'] ?? 0} mins'
-                                              : '${_calculateTotalTime(values)} mins',
-                                          Icons.access_time,
-                                        ),
-                                        _buildSummaryItem(
-                                          context,
-                                          'Values',
-                                          values.length.toString(),
-                                          Icons.star,
-                                        ),
-                                        _buildSummaryItem(
-                                          context,
-                                          'Alignment',
-                                          _calculateAlignment(values),
-                                          Icons.balance,
-                                        ),
-                                      ],
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                        children: [
+                                          Expanded(
+                                            child: _buildSummaryItem(
+                                              context,
+                                              'Total Time',
+                                              _statistics != null
+                                                  ? '${_statistics!['total_duration_minutes'] ?? 0} mins'
+                                                  : '${_calculateTotalTime(values)} mins',
+                                              Icons.access_time,
+                                            ),
+                                          ),
+                                          Expanded(
+                                            child: _buildSummaryItem(
+                                              context,
+                                              'Values',
+                                              values.length.toString(),
+                                              Icons.star,
+                                            ),
+                                          ),
+                                          Expanded(
+                                            child: _buildSummaryItem(
+                                              context,
+                                              'Alignment',
+                                              _calculateAlignment(values),
+                                              Icons.balance,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ],
                                 ),

@@ -422,7 +422,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                           ),
                           const SizedBox(height: 24),
                           ElevatedButton.icon(
-                            style: TugButtons.primaryButtonStyle,
+                            style: TugButtons.primaryButtonStyle(isDark: Theme.of(context).brightness == Brightness.dark),
                             onPressed: _showAddActivitySheet,
                             icon: const Icon(Icons.add),
                             label: const Text('Log Activity'),

@@ -66,7 +66,7 @@ class _SyncTestScreenState extends State<SyncTestScreen> {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              style: TugButtons.primaryButtonStyle,
+              style: TugButtons.primaryButtonStyle(isDark: Theme.of(context).brightness == Brightness.dark),
               onPressed: _isLoading ? null : _runSyncTest,
               child: _isLoading
                   ? const SizedBox(

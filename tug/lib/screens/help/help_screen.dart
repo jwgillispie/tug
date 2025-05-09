@@ -130,7 +130,7 @@ class HelpSupportScreen extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      style: TugButtons.primaryButtonStyle,
+                      style: TugButtons.primaryButtonStyle(isDark: Theme.of(context).brightness == Brightness.dark),
                       onPressed: () {
                         _launchUrl('mailto:jordangillispie@outlook.com?subject=Tug%20App%20Support%20Request');
                       },

@@ -111,7 +111,7 @@ class _EditValueDialogState extends State<EditValueDialog> {
           child: const Text('Cancel'),
         ),
         ElevatedButton(
-          style: TugButtons.primaryButtonStyle,
+          style: TugButtons.primaryButtonStyle(isDark: Theme.of(context).brightness == Brightness.dark),
           onPressed: () {
             if (_nameController.text.trim().isNotEmpty) {
               final updatedValue = widget.value.copyWith(
@@ -120,10 +120,10 @@ class _EditValueDialogState extends State<EditValueDialog> {
                 description: _descriptionController.text.trim(),
                 color: _color,
               );
-              
+
               // Call the onSave callback with the updated value
               widget.onSave(updatedValue);
-              
+
               // Close the dialog
               Navigator.of(context).pop();
             }

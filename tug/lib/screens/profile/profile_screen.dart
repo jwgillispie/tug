@@ -210,7 +210,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 16),
               OutlinedButton(
-                style: TugButtons.secondaryButtonStyle,
+                style: TugButtons.secondaryButtonStyle(isDark: Theme.of(context).brightness == Brightness.dark),
                 onPressed: () {
                   context.push('/edit-profile');
                 },
