@@ -80,6 +80,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
 
             _buildSettingsSection(
+              title: 'PROGRESS',
+              items: [
+                _buildSettingsItem(
+                  icon: Icons.emoji_events_outlined,
+                  title: 'Achievements',
+                  onTap: () {
+                    context.push('/achievements');
+                  },
+                ),
+              ],
+            ),
+
+            _buildSettingsSection(
               title: 'ABOUT',
               items: [
                 _buildSettingsItem(

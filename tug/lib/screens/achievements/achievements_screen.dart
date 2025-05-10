@@ -1,6 +1,7 @@
 // lib/screens/achievements/achievements_screen.dart
 import 'package:flutter/material.dart';
 import 'package:tug/models/achievement_model.dart';
+import 'package:tug/services/achievement_notification_service.dart';
 import 'package:tug/services/achievement_service.dart';
 import 'package:tug/utils/theme/colors.dart';
 import 'package:tug/widgets/achievements/achievement_card.dart';
@@ -16,7 +17,9 @@ class _AchievementsScreenState extends State<AchievementsScreen> with SingleTick
   late TabController _tabController;
   List<AchievementModel> _achievements = [];
   bool _isLoading = true;
+  bool _isCheckingNew = false;
   final AchievementService _achievementService = AchievementService();
+  final AchievementNotificationService _notificationService = AchievementNotificationService();
 
   @override
   void initState() {
@@ -94,6 +97,45 @@ class _AchievementsScreenState extends State<AchievementsScreen> with SingleTick
     }
   }
 
+  Future<void> _checkForNewAchievements() async {
+    if (_isCheckingNew) return;
+
+    setState(() {
+      _isCheckingNew = true;
+    });
+
+    try {
+      await _notificationService.checkForAchievements(context);
+
+      // After checking for new achievements, refresh the list
+      final achievements = await _achievementService.getAchievements(
+        forceRefresh: true,
+      );
+
+      if (mounted) {
+        setState(() {
+          _achievements = achievements;
+          _isCheckingNew = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error checking for new achievements: $e');
+
+      if (mounted) {
+        setState(() {
+          _isCheckingNew = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error checking for new achievements: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   void dispose() {
     _tabController.dispose();
@@ -115,6 +157,19 @@ class _AchievementsScreenState extends State<AchievementsScreen> with SingleTick
       appBar: AppBar(
         title: const Text('Achievements'),
         actions: [
+          // Check for new achievements button
+          IconButton(
+            icon: _isCheckingNew
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.emoji_events),
+            onPressed: _isCheckingNew ? null : _checkForNewAchievements,
+            tooltip: 'Check for new achievements',
+          ),
+          // Refresh current achievements
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _refreshAchievements,
@@ -230,7 +285,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> with SingleTick
             ),
     );
   }
-  
+
   Widget _buildAchievementList(List<AchievementModel> achievements) {
     // Sort with unlocked first, then by progress
     final sortedAchievements = [...achievements]
@@ -239,19 +294,19 @@ class _AchievementsScreenState extends State<AchievementsScreen> with SingleTick
         if (!a.isUnlocked && b.isUnlocked) return 1;
         return b.progress.compareTo(a.progress);
       });
-    
+
     if (sortedAchievements.isEmpty) {
       return const Center(
         child: Text('No achievements in this category'),
       );
     }
-    
+
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: sortedAchievements.length,
       itemBuilder: (context, index) {
         final achievement = sortedAchievements[index];
-        
+
         return AchievementCard(
           achievement: achievement,
           onTap: () => _showAchievementDetails(achievement),
@@ -259,10 +314,10 @@ class _AchievementsScreenState extends State<AchievementsScreen> with SingleTick
       },
     );
   }
-  
+
   void _showAchievementDetails(AchievementModel achievement) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -361,10 +416,10 @@ class _AchievementsScreenState extends State<AchievementsScreen> with SingleTick
       ),
     );
   }
-  
+
   String _getEncouragementMessage(AchievementModel achievement) {
     final progress = achievement.progress;
-    
+
     if (progress > 0.9) {
       return 'You\'re so close to unlocking this!';
     } else if (progress > 0.7) {
@@ -377,7 +432,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> with SingleTick
       return 'Every small step counts!';
     }
   }
-  
+
   String _formatDate(DateTime date) {
     return '${date.day}/${date.month}/${date.year}';
   }

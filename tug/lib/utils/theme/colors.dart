@@ -17,6 +17,13 @@ class TugColors {
   static const accentPink = Color(0xFFFF5BB0); // soft pink
   static const accentOrange = Color(0xFFFF9052); // warm orange
 
+  // Achievement type colors
+  static const streakOrange = Color(0xFFFF9052); // warm orange for streaks
+  static const balanceBlue = Color(0xFF3D7AFF); // vibrant blue for balance
+  static const frequencyGreen = Color(0xFF26C77E); // bright green for frequency
+  static const milestoneRed = Color(0xFFFF5BB0); // soft pink for milestones
+  static const specialPurple = Color(0xFF7B2EE1); // primary purple for special achievements
+
   // Supporting Colors - refined and clear
   static const success = Color(0xFF26C77E); // brighter, more positive green
   static const warning = Color(0xFFFFC02C); // warmer, more visible yellow

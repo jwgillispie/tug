@@ -56,7 +56,7 @@ class MainLayout extends StatelessWidget {
                 icon: Icons.person_outline,
                 selectedIcon: Icons.person,
                 label: 'Profile',
-                index: 3,
+                index: 4,
                 path: '/profile',
               ),
             ],

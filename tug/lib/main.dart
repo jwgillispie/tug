@@ -36,6 +36,7 @@ import 'screens/values/values_input_screen.dart';
 import 'screens/about/about_screen.dart';
 import 'screens/profile/edit_profile_screen.dart';
 import 'screens/profile/change_password_screen.dart';
+import 'screens/achievements/achievements_screen.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -187,6 +188,11 @@ class _TugAppState extends State<TugApp> {
           path: '/change-password',
           builder: (context, state) => const ChangePasswordScreen(),
         ),
+        // Achievements Screen
+        GoRoute(
+          path: '/achievements',
+          builder: (context, state) => const AchievementsScreen(),
+        ),
         GoRoute(
           path: '/login',
           builder: (context, state) => const LoginScreen(),
@@ -239,6 +245,13 @@ class _TugAppState extends State<TugApp> {
           path: '/profile',
           builder: (context, state) => const MainLayout(
             child: ProfileScreen(),
+            currentIndex: 4,
+          ),
+        ),
+        GoRoute(
+          path: '/achievements-tab',
+          builder: (context, state) => const MainLayout(
+            child: AchievementsScreen(),
             currentIndex: 3,
           ),
         ),
