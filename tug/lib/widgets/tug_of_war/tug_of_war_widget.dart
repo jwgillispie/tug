@@ -1,6 +1,8 @@
-// lib/widgets/tug_of_war/tug_of_war_widget.dart
+// Enhanced tug_of_war_widget.dart with improved spacing and interactive animations
 import 'package:flutter/material.dart';
 import 'package:tug/utils/theme/colors.dart';
+import 'package:tug/utils/theme/text_styles.dart';
+import 'package:tug/utils/animations.dart';
 
 class TugOfWarWidget extends StatefulWidget {
   final String valueName;
@@ -11,14 +13,14 @@ class TugOfWarWidget extends StatefulWidget {
   final VoidCallback? onTap;
 
   const TugOfWarWidget({
-    Key? key,
+    super.key,
     required this.valueName,
     required this.statedImportance,
     required this.actualBehavior,
     required this.communityAverage,
-    this.valueColor = '#7C3AED', // Default to purple if not provided
+    this.valueColor = '#8A4FFF', // Updated default to our new primary color
     this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   State<TugOfWarWidget> createState() => _TugOfWarWidgetState();
@@ -29,6 +31,7 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
   late Animation<double> _positionAnimation;
   double _position = 0.0; // -1.0 to 1.0 where 0 is center
   late Color _valueColor;
+  bool _isHovered = false;
 
   @override
   void initState() {
@@ -44,7 +47,7 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
 
     // Convert the hex color string to a Color object
     _valueColor = _parseColor(widget.valueColor);
-    
+
     _calculatePosition();
   }
 
@@ -55,16 +58,16 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
         oldWidget.actualBehavior != widget.actualBehavior ||
         oldWidget.communityAverage != widget.communityAverage ||
         oldWidget.valueColor != widget.valueColor) {
-      
+
       // Update the color if it changed
       if (oldWidget.valueColor != widget.valueColor) {
         _valueColor = _parseColor(widget.valueColor);
       }
-      
+
       _calculatePosition();
     }
   }
-  
+
   // Helper method to parse hex color string to Color
   Color _parseColor(String hexColor) {
     try {
@@ -78,14 +81,14 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
   void _calculatePosition() {
     // Convert stated importance to percentage (1-5 → 20-100%)
     final statedImportancePercent = (widget.statedImportance / 5.0) * 100.0;
-    
+
     // Calculate actual behavior as percentage of community average
     final actualBehaviorPercent = (widget.actualBehavior / widget.communityAverage) * 100.0;
-    
+
     // Calculate the difference and normalize to -1.0 to 1.0 range
     final difference = actualBehaviorPercent - statedImportancePercent;
     final normalizedDifference = difference / 100.0;
-    
+
     // Clamp to ensure it stays in range
     final clampedDifference = normalizedDifference.clamp(-1.0, 1.0);
 
@@ -117,6 +120,17 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
     }
   }
 
+  // Get message icon based on position
+  IconData _getMessageIcon() {
+    if (_position < -0.4) {
+      return Icons.warning_amber_rounded;
+    } else if (_position > 0.4) {
+      return Icons.info_outline;
+    } else {
+      return Icons.check_circle;
+    }
+  }
+
   // Calculate opacity for the handles
   // Only the winning side gets full opacity
   double _getHandleOpacity(String side) {
@@ -124,7 +138,7 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
     if (_position.abs() < 0.1) {
       return 0.7;
     }
-    
+
     if (side == 'stated' && _position < 0) {
       // Stated side is winning (negative position)
       return 1.0;
@@ -140,354 +154,399 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
-    return GestureDetector(
-      onTap: widget.onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: isDarkMode ? TugColors.darkSurface : Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: _valueColor.withOpacity(isDarkMode ? 0.2 : 0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+
+    return TugAnimations.springInteractive(
+      onTap: widget.onTap ?? () {},
+      pressedScale: 0.98,
+      useSprings: true,
+      child: MouseRegion(
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutQuad,
+          decoration: BoxDecoration(
+            color: isDarkMode ? TugColors.darkSurface : Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: [
+              BoxShadow(
+                color: _valueColor.withOpacity(isDarkMode ? 0.25 : 0.12),
+                blurRadius: _isHovered ? 12 : 8,
+                spreadRadius: _isHovered ? 1 : 0,
+                offset: Offset(0, _isHovered ? 4 : 2),
+              ),
+            ],
+            border: Border.all(
+              color: _valueColor.withOpacity(_isHovered ? 0.15 : 0.08),
+              width: _isHovered ? 1.0 : 0.5,
             ),
-          ],
-          border: Border.all(
-            color: _valueColor.withOpacity(0.1),
-            width: 0.5,
           ),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Value Name and Stats with enhanced typography
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.valueName,
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: -0.5,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 22.0, vertical: 20.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Value Name and Stats with enhanced typography
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Value name with elegant typography
+                          Text(
+                            widget.valueName,
+                            style: TugTextStyles.titleSmall.copyWith(
+                              color: _valueColor,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: -0.5,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 6),
+                          // Importance badge
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: _valueColor.withOpacity(isDarkMode ? 0.15 : 0.08),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: _valueColor.withOpacity(0.2),
+                                width: 1
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.star,
+                                  size: 14,
+                                  color: _valueColor,
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  'Importance: ${widget.statedImportance}/5',
+                                  style: TugTextStyles.label.copyWith(
+                                    color: _valueColor,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Time spent badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: _valueColor.withOpacity(isDarkMode ? 0.15 : 0.08),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: _valueColor.withOpacity(isDarkMode ? 0.25 : 0.15),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.timer_outlined,
+                            size: 14,
                             color: _valueColor,
                           ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: _valueColor.withOpacity(isDarkMode ? 0.2 : 0.1),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: _valueColor.withOpacity(0.2),
-                                  width: 1
-                                ),
-                              ),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.star,
-                                    size: 14,
-                                    color: _valueColor,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    'Importance: ${widget.statedImportance}/5',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                      color: _valueColor,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: _valueColor.withOpacity(isDarkMode ? 0.2 : 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: _valueColor.withOpacity(isDarkMode ? 0.3 : 0.2),
-                        width: 1,
-                      ),
-                    ),
-                    child: Text(
-                      '${widget.actualBehavior} mins/day',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: _valueColor,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              
-              const SizedBox(height: 24),
-              
-              // Tug of War Visualization with enhanced design
-              SizedBox(
-                height: 65,
-                child: AnimatedBuilder(
-                  animation: _positionAnimation,
-                  builder: (context, child) {
-                    final position = _positionAnimation.value;
-                    
-                    return Stack(
-                      children: [
-                        // Center line with value color
-                        Align(
-                          alignment: Alignment.center,
-                          child: Container(
-                            width: 2,
-                            height: 50,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  _valueColor.withOpacity(0.3),
-                                  _valueColor.withOpacity(0.5),
-                                ],
-                              ),
+                          const SizedBox(width: 5),
+                          Text(
+                            '${widget.actualBehavior} mins/day',
+                            style: TugTextStyles.label.copyWith(
+                              color: _valueColor,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                        ),
-                        
-                        // Rope with gradient matching the value color
-                        Align(
-                          alignment: Alignment.center,
-                          child: Container(
-                            height: 4,
-                            margin: const EdgeInsets.symmetric(horizontal: 16),
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  _valueColor.withOpacity(0.6),
-                                  _valueColor.withOpacity(0.8),
-                                ],
-                              ),
-                              borderRadius: BorderRadius.circular(2),
-                            ),
-                          ),
-                        ),
-                        
-                        // Left handle (Stated Values) with shadow
-                        Positioned(
-                          left: 16,
-                          top: 0,
-                          bottom: 0,
-                          child: Center(
-                            child: Container(
-                              width: 36,
-                              height: 36,
-                              decoration: BoxDecoration(
-                                color: _valueColor.withOpacity(_getHandleOpacity('stated')),
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: _valueColor.withOpacity(_position < 0 ? 0.4 : 0.1),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Icon(
-                                Icons.arrow_back,
-                                color: Colors.white.withOpacity(_position < 0 ? 1.0 : 0.7),
-                                size: 18,
-                              ),
-                            ),
-                          ),
-                        ),
-                        
-                        // Right handle (Actual Behavior) with shadow
-                        Positioned(
-                          right: 16,
-                          top: 0,
-                          bottom: 0,
-                          child: Center(
-                            child: Container(
-                              width: 36,
-                              height: 36,
-                              decoration: BoxDecoration(
-                                color: _valueColor.withOpacity(_getHandleOpacity('actual')),
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: _valueColor.withOpacity(_position > 0 ? 0.4 : 0.1),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                              child: Icon(
-                                Icons.arrow_forward,
-                                color: Colors.white.withOpacity(_position > 0 ? 1.0 : 0.7),
-                                size: 18,
-                              ),
-                            ),
-                          ),
-                        ),
-                        
-                        // Center knot with shadow and animated position
-                        Positioned(
-                          left: MediaQuery.of(context).size.width / 2 - 16 + (position * MediaQuery.of(context).size.width / 4),
-                          top: 0,
-                          bottom: 0,
-                          child: Center(
-                            child: Container(
-                              width: 26,
-                              height: 26,
-                              decoration: BoxDecoration(
-                                color: _valueColor,
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: _valueColor.withOpacity(isDarkMode ? 0.6 : 0.4),
-                                    blurRadius: 10,
-                                    spreadRadius: 1,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ),
-              
-              const SizedBox(height: 12),
-              
-              // Labels with enhanced design
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: _valueColor,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Stated Values',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: _valueColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: [
-                      Text(
-                        'Actual Behavior',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: _valueColor,
-                        ),
-                      ),
-                      const SizedBox(width: 6),
-                      Container(
-                        width: 8,
-                        height: 8,
-                        decoration: BoxDecoration(
-                          color: _valueColor,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              
-              const SizedBox(height: 16),
-              
-              // Message based on position with enhanced design
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
-                decoration: BoxDecoration(
-                  color: _valueColor.withOpacity(isDarkMode ? 0.15 : 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: _valueColor.withOpacity(isDarkMode ? 0.3 : 0.2),
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      _position < -0.4 
-                          ? Icons.warning_amber_rounded 
-                          : (_position > 0.4 ? Icons.info_outline : Icons.check_circle),
-                      color: _valueColor,
-                      size: 18,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        _getMessage(),
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: _valueColor,
-                          fontWeight: FontWeight.w500,
-                        ),
+                        ],
                       ),
                     ),
                   ],
                 ),
-              ),
-              
-              // Community comparison with enhanced design
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.people_outline,
-                    size: 14,
-                    color: _valueColor.withOpacity(0.6),
+
+                const SizedBox(height: 26),
+
+                // Tug of War Visualization with enhanced design
+                SizedBox(
+                  height: 70,
+                  child: AnimatedBuilder(
+                    animation: _positionAnimation,
+                    builder: (context, child) {
+                      final position = _positionAnimation.value;
+
+                      return Stack(
+                        children: [
+                          // Center line with value color
+                          Align(
+                            alignment: Alignment.center,
+                            child: Container(
+                              width: 2,
+                              height: 54,
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    _valueColor.withOpacity(0.2),
+                                    _valueColor.withOpacity(0.4),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          // Rope with gradient matching the value color
+                          Align(
+                            alignment: Alignment.center,
+                            child: Container(
+                              height: 4,
+                              margin: const EdgeInsets.symmetric(horizontal: 16),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    _valueColor.withOpacity(0.6),
+                                    _valueColor.withOpacity(0.8),
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.circular(2),
+                              ),
+                            ),
+                          ),
+
+                          // Left handle (Stated Values) with shadow
+                          Positioned(
+                            left: 16,
+                            top: 0,
+                            bottom: 0,
+                            child: Center(
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 150),
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: _valueColor.withOpacity(_getHandleOpacity('stated')),
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: _valueColor.withOpacity(_position < 0 ? 0.5 : 0.15),
+                                      blurRadius: 10,
+                                      spreadRadius: _position < 0 ? 1 : 0,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Icon(
+                                  Icons.arrow_back_rounded,
+                                  color: Colors.white.withOpacity(_position < 0 ? 1.0 : 0.7),
+                                  size: 20,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          // Right handle (Actual Behavior) with shadow
+                          Positioned(
+                            right: 16,
+                            top: 0,
+                            bottom: 0,
+                            child: Center(
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 150),
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: _valueColor.withOpacity(_getHandleOpacity('actual')),
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: _valueColor.withOpacity(_position > 0 ? 0.5 : 0.15),
+                                      blurRadius: 10,
+                                      spreadRadius: _position > 0 ? 1 : 0,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Icon(
+                                  Icons.arrow_forward_rounded,
+                                  color: Colors.white.withOpacity(_position > 0 ? 1.0 : 0.7),
+                                  size: 20,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          // Center knot with shadow and animated position
+                          AnimatedBuilder(
+                            animation: _positionAnimation,
+                            builder: (context, child) {
+                              return Positioned(
+                                left: MediaQuery.of(context).size.width / 2 - 15 + (position * MediaQuery.of(context).size.width / 4),
+                                top: 0,
+                                bottom: 0,
+                                child: Center(
+                                  child: TugAnimations.pulsate(
+                                    duration: const Duration(milliseconds: 3000),
+                                    minScale: 0.95,
+                                    maxScale: 1.05,
+                                    child: Container(
+                                      width: 28,
+                                      height: 28,
+                                      decoration: BoxDecoration(
+                                        color: _valueColor,
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: _valueColor.withOpacity(isDarkMode ? 0.6 : 0.4),
+                                            blurRadius: 10,
+                                            spreadRadius: 1,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }
+                          ),
+                        ],
+                      );
+                    },
                   ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Community average: ${widget.communityAverage} mins/day',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: _valueColor.withOpacity(0.8),
-                      fontWeight: FontWeight.w500,
+                ),
+
+                const SizedBox(height: 14),
+
+                // Labels with enhanced design
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: _valueColor,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Stated Values',
+                            style: TugTextStyles.label.copyWith(
+                              color: _valueColor,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Text(
+                            'Actual Behavior',
+                            style: TugTextStyles.label.copyWith(
+                              color: _valueColor,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Container(
+                            width: 8,
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: _valueColor,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 18),
+
+                // Message based on position with enhanced design
+                TugAnimations.fadeSlideIn(
+                  duration: const Duration(milliseconds: 400),
+                  beginOffset: const Offset(0, 10),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: _valueColor.withOpacity(isDarkMode ? 0.12 : 0.06),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: _valueColor.withOpacity(isDarkMode ? 0.25 : 0.15),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 1.0),
+                          child: Icon(
+                            _getMessageIcon(),
+                            color: _valueColor,
+                            size: 18,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            _getMessage(),
+                            style: TugTextStyles.bodySmall.copyWith(
+                              color: _valueColor,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              ),
-            ],
+                ),
+
+                // Community comparison with enhanced design
+                const SizedBox(height: 14),
+                Center(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: _valueColor.withOpacity(isDarkMode ? 0.08 : 0.04),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.people_outline,
+                          size: 14,
+                          color: _valueColor.withOpacity(0.7),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Community average: ${widget.communityAverage} mins/day',
+                          style: TugTextStyles.caption.copyWith(
+                            color: _valueColor.withOpacity(0.9),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

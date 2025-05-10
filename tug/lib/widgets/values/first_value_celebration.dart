@@ -1,18 +1,16 @@
 // lib/widgets/values/first_value_celebration.dart
 import 'package:flutter/material.dart';
-import 'dart:math';
 import '../../utils/theme/colors.dart';
-import '../../utils/theme/buttons.dart';
 
 class FirstValueCelebration extends StatefulWidget {
   final String valueName;
   final VoidCallback onDismiss;
 
   const FirstValueCelebration({
-    Key? key,
+    super.key,
     required this.valueName,
     required this.onDismiss,
-  }) : super(key: key);
+  });
 
   @override
   State<FirstValueCelebration> createState() => _FirstValueCelebrationState();

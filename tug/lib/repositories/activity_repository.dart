@@ -307,8 +307,6 @@ class ActivityRepository implements IActivityRepository {
   }
 
   Future<void> _ensurePrefsInitialized() async {
-    if (_prefs == null) {
-      await _initializePrefs(null);
-    }
+    
   }
 }

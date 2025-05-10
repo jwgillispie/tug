@@ -28,7 +28,7 @@ class ApiService {
 
     // Ensure leading slash
     if (!path.startsWith('/')) {
-      path = '/' + path;
+      path = '/$path';
     }
 
     return path;
@@ -219,7 +219,7 @@ class ApiService {
       debugPrint('PATCH data: $data');
 
       // Make the request
-      final response = await _dio.patch('$path', data: data);
+      final response = await _dio.patch(path, data: data);
       debugPrint('PATCH response status: ${response.statusCode}');
       debugPrint('PATCH response data: ${response.data}');
 

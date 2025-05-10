@@ -4,7 +4,7 @@ import 'package:tug/utils/theme/colors.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class AboutScreen extends StatelessWidget {
-  const AboutScreen({Key? key}) : super(key: key);
+  const AboutScreen({super.key});
 
   Future<void> _launchUrl(String urlString) async {
     final Uri url = Uri.parse(urlString);

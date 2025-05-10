@@ -14,10 +14,10 @@ class EditActivityDialog extends StatefulWidget {
   final Function(ActivityModel updatedActivity) onSave;
 
   const EditActivityDialog({
-    Key? key,
+    super.key,
     required this.activity,
     required this.onSave,
-  }) : super(key: key);
+  });
 
   @override
   State<EditActivityDialog> createState() => _EditActivityDialogState();

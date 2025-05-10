@@ -1,7 +1,6 @@
 // lib/widgets/achievements/achievement_notification.dart
 import 'package:flutter/material.dart';
 import 'package:tug/models/achievement_model.dart';
-import 'package:tug/utils/theme/colors.dart';
 
 class AchievementNotification extends StatefulWidget {
   final AchievementModel achievement;
@@ -9,11 +8,11 @@ class AchievementNotification extends StatefulWidget {
   final VoidCallback? onTap;
 
   const AchievementNotification({
-    Key? key,
+    super.key,
     required this.achievement,
     this.onDismiss,
     this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   State<AchievementNotification> createState() => _AchievementNotificationState();

@@ -9,7 +9,7 @@ import 'package:tug/services/user_service.dart';
 import 'package:tug/widgets/common/tug_text_field.dart';
 
 class EditProfileScreen extends StatefulWidget {
-  const EditProfileScreen({Key? key}) : super(key: key);
+  const EditProfileScreen({super.key});
 
   @override
   State<EditProfileScreen> createState() => _EditProfileScreenState();

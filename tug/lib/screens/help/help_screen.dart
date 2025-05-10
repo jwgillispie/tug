@@ -5,7 +5,7 @@ import 'package:tug/utils/theme/buttons.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class HelpSupportScreen extends StatelessWidget {
-  const HelpSupportScreen({Key? key}) : super(key: key);
+  const HelpSupportScreen({super.key});
 
   Future<void> _launchUrl(String urlString) async {
     final Uri url = Uri.parse(urlString);

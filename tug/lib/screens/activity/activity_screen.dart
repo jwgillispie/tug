@@ -17,9 +17,9 @@ class ActivityScreen extends StatefulWidget {
   final bool showAddForm;
 
   const ActivityScreen({
-    Key? key,
+    super.key,
     this.showAddForm = false,
-  }) : super(key: key);
+  });
 
   @override
   State<ActivityScreen> createState() => _ActivityScreenState();
@@ -181,37 +181,96 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
-          title: Text(activity.name),
+          title: Text(
+            activity.name,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: isDarkMode ? TugColors.darkTextPrimary : TugColors.lightTextPrimary,
+            ),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(isDarkMode ? 0.12 : 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 16,
+                      height: 16,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isDarkMode ? Colors.white24 : Colors.black12,
+                          width: 1,
+                        ),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(child: Text('Value: $valueName')),
-                ],
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Value: $valueName',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w500,
+                          color: isDarkMode ? TugColors.darkTextPrimary : TugColors.lightTextPrimary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 8),
-              Text('Duration: ${activity.duration} minutes'),
-              const SizedBox(height: 8),
-              Text('Date: ${DateFormat('MMM d, yyyy').format(activity.date)}'),
+              const SizedBox(height: 16),
+              _buildDetailRow(
+                isDarkMode: isDarkMode,
+                icon: Icons.timer_outlined,
+                iconColor: color,
+                label: 'Duration:',
+                value: '${activity.duration} minutes',
+              ),
+              const SizedBox(height: 12),
+              _buildDetailRow(
+                isDarkMode: isDarkMode,
+                icon: Icons.calendar_today_outlined,
+                iconColor: color,
+                label: 'Date:',
+                value: DateFormat('MMM d, yyyy').format(activity.date),
+              ),
               if (activity.notes != null) ...[
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'Notes:',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: isDarkMode ? TugColors.darkTextPrimary : TugColors.lightTextPrimary,
+                  ),
                 ),
-                const SizedBox(height: 4),
-                Text(activity.notes!),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: isDarkMode
+                        ? TugColors.darkSurfaceVariant.withOpacity(0.5)
+                        : TugColors.lightSurfaceVariant.withOpacity(0.5),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: isDarkMode ? Colors.white12 : Colors.black12,
+                      width: 1,
+                    ),
+                  ),
+                  child: Text(
+                    activity.notes!,
+                    style: TextStyle(
+                      color: isDarkMode ? TugColors.darkTextPrimary : TugColors.lightTextPrimary,
+                    ),
+                  ),
+                ),
               ],
             ],
           ),
@@ -543,9 +602,10 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                   children: [
                     Text(
                       activity.name,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
+                        color: isDarkMode ? TugColors.darkTextPrimary : TugColors.lightTextPrimary,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -697,9 +757,10 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
         const SizedBox(height: 8),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
+            color: isDarkMode ? TugColors.darkTextPrimary : TugColors.lightTextPrimary,
           ),
         ),
         const SizedBox(height: 4),
@@ -714,9 +775,64 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
     );
   }
 
+  // Helper function to build detail rows with consistent styling
+  Widget _buildDetailRow({
+    required bool isDarkMode,
+    required IconData icon,
+    required Color iconColor,
+    required String label,
+    required String value,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: iconColor.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            icon,
+            size: 16,
+            color: iconColor,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: isDarkMode
+                    ? TugColors.darkTextSecondary
+                    : TugColors.lightTextSecondary,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  color: isDarkMode
+                    ? TugColors.darkTextPrimary
+                    : TugColors.lightTextPrimary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildFilters() {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       color: isDarkMode ? TugColors.darkBackground : Theme.of(context).colorScheme.surface,
@@ -812,7 +928,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                         ],
                       ),
                     );
-                  }).toList(),
+                  }),
                 ],
                 onChanged: (String? valueId) {
                   setState(() {

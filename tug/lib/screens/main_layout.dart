@@ -8,10 +8,10 @@ class MainLayout extends StatelessWidget {
   final int currentIndex;
 
   const MainLayout({
-    Key? key,
+    super.key,
     required this.child,
     required this.currentIndex,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +56,7 @@ class MainLayout extends StatelessWidget {
                 icon: Icons.person_outline,
                 selectedIcon: Icons.person,
                 label: 'Profile',
-                index: 4,
+                index: 3,
                 path: '/profile',
               ),
             ],

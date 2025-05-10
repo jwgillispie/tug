@@ -5,7 +5,7 @@ import 'package:tug/utils/theme/buttons.dart';
 import 'package:tug/utils/theme/colors.dart';
 
 class EmailSignupWidget extends StatefulWidget {
-  const EmailSignupWidget({Key? key}) : super(key: key);
+  const EmailSignupWidget({super.key});
 
   @override
   State<EmailSignupWidget> createState() => _EmailSignupWidgetState();

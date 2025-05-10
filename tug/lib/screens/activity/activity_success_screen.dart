@@ -9,9 +9,9 @@ class ActivitySuccessScreen extends StatefulWidget {
   final ActivityModel? activity;
 
   const ActivitySuccessScreen({
-    Key? key,
+    super.key,
     this.activity,
-  }) : super(key: key);
+  });
 
   @override
   State<ActivitySuccessScreen> createState() => _ActivitySuccessScreenState();

@@ -16,10 +16,10 @@ class ActivityFormWidget extends StatefulWidget {
   final bool isLoading;
 
   const ActivityFormWidget({
-    Key? key,
+    super.key,
     required this.onSave,
     this.isLoading = false,
-  }) : super(key: key);
+  });
 
   @override
   State<ActivityFormWidget> createState() => _ActivityFormWidgetState();
@@ -294,7 +294,9 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
                                 fontSize: 13,
                                 color: _durationController.text == minutes.toString()
                                     ? Colors.white
-                                    : null,
+                                    : Theme.of(context).brightness == Brightness.light
+                                        ? TugColors.lightTextPrimary
+                                        : TugColors.darkTextPrimary,
                               ),
                             ),
                             visualDensity: VisualDensity.compact,
@@ -302,7 +304,9 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
                             backgroundColor:
                                 _durationController.text == minutes.toString()
                                     ? TugColors.primaryPurple
-                                    : null,
+                                    : Theme.of(context).brightness == Brightness.light
+                                        ? TugColors.lightSurfaceVariant
+                                        : TugColors.darkSurfaceVariant,
                           );
                         }).toList(),
                       ),
@@ -346,10 +350,10 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
                           style: TugButtons.tertiaryButtonStyle(
                             isDark: Theme.of(context).brightness == Brightness.dark
                           ).copyWith(
-                            padding: MaterialStateProperty.all(
+                            padding: WidgetStateProperty.all(
                               const EdgeInsets.symmetric(horizontal: 12, vertical: 4)
                             ),
-                            minimumSize: MaterialStateProperty.all(const Size(40, 36)),
+                            minimumSize: WidgetStateProperty.all(const Size(40, 36)),
                           ),
                         ),
                       ],
@@ -403,10 +407,14 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
                               }
                             },
                             child: InputDecorator(
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
                                 labelText: 'Date',
-                                border: OutlineInputBorder(),
-                                contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                                border: const OutlineInputBorder(),
+                                fillColor: Theme.of(context).brightness == Brightness.light
+                                    ? TugColors.lightSurfaceVariant
+                                    : TugColors.darkSurfaceVariant,
+                                filled: true,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -416,11 +424,23 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
                                     child: Text(
                                       DateFormat('MMM d, yyyy').format(_selectedDate),
                                       overflow: TextOverflow.ellipsis,
-                                      style: const TextStyle(fontSize: 14),
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Theme.of(context).brightness == Brightness.light
+                                            ? TugColors.lightTextPrimary
+                                            : TugColors.darkTextPrimary,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
                                   ),
                                   const SizedBox(width: 4),
-                                  const Icon(Icons.calendar_today, size: 16),
+                                  Icon(
+                                    Icons.calendar_today,
+                                    size: 16,
+                                    color: Theme.of(context).brightness == Brightness.light
+                                        ? TugColors.primaryPurple
+                                        : TugColors.primaryPurpleLight,
+                                  ),
                                 ],
                               ),
                             ),
@@ -443,7 +463,7 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
                         style: TugButtons.tertiaryButtonStyle(
                           isDark: Theme.of(context).brightness == Brightness.dark
                         ).copyWith(
-                          padding: MaterialStateProperty.all(
+                          padding: WidgetStateProperty.all(
                             const EdgeInsets.symmetric(horizontal: 16, vertical: 8)
                           ),
                         ),

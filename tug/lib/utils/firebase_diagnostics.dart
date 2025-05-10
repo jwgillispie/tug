@@ -36,6 +36,7 @@ class FirebaseDiagnostics {
       
       // Check auth
       final auth = FirebaseAuth.instance;
+      // ignore: unnecessary_null_comparison
       status['auth_initialized'] = auth != null;
       status['current_user'] = auth.currentUser?.uid;
       

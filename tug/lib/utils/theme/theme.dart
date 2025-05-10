@@ -25,12 +25,8 @@ class TugTheme {
       // Surface colors
       surface: TugColors.lightSurface,
       onSurface: TugColors.lightTextPrimary,
-      surfaceVariant: TugColors.lightSurfaceVariant,
+      surfaceContainerHighest: TugColors.lightSurfaceVariant,
       onSurfaceVariant: TugColors.lightTextSecondary,
-
-      // Background colors
-      background: TugColors.lightBackground,
-      onBackground: TugColors.lightTextPrimary,
 
       // Other colors
       error: TugColors.error,
@@ -246,12 +242,8 @@ class TugTheme {
       // Surface colors
       surface: TugColors.darkSurface,
       onSurface: TugColors.darkTextPrimary,
-      surfaceVariant: TugColors.darkSurfaceVariant,
+      surfaceContainerHighest: TugColors.darkSurfaceVariant,
       onSurfaceVariant: TugColors.darkTextSecondary,
-
-      // Background colors
-      background: TugColors.darkBackground,
-      onBackground: TugColors.darkTextPrimary,
 
       // Other colors
       error: TugColors.error,
@@ -376,19 +368,19 @@ class TugTheme {
 
     // Switch theme
     switchTheme: SwitchThemeData(
-      thumbColor: MaterialStateProperty.resolveWith((states) {
-        if (states.contains(MaterialState.selected)) {
+      thumbColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
           return TugColors.primaryPurpleLight;
         }
         return Colors.grey.shade300;
       }),
-      trackColor: MaterialStateProperty.resolveWith((states) {
-        if (states.contains(MaterialState.selected)) {
+      trackColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) {
           return TugColors.primaryPurple.withOpacity(0.5);
         }
         return Colors.grey.withOpacity(0.2);
       }),
-      trackOutlineColor: MaterialStateProperty.all(Colors.transparent),
+      trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
     ),
 
     // Elevated button styling

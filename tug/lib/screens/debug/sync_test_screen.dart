@@ -3,10 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../utils/auth_sync_tester.dart';
 import '../../utils/theme/buttons.dart';
-import '../../utils/theme/colors.dart';
 
 class SyncTestScreen extends StatefulWidget {
-  const SyncTestScreen({Key? key}) : super(key: key);
+  const SyncTestScreen({super.key});
 
   @override
   State<SyncTestScreen> createState() => _SyncTestScreenState();

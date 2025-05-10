@@ -220,9 +220,7 @@ class ValuesRepository implements IValuesRepository {
   }
 
   Future<void> _ensurePrefsInitialized() async {
-    if (_prefs == null) {
-      await _initializePrefs(null);
-    }
+    
   }
   
   @override

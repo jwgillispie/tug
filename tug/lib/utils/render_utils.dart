@@ -13,7 +13,7 @@ class RenderUtils {
     
     while (retryCount < maxRetries && !success) {
       try {
-        debugPrint('Attempting to ping backend (attempt ${retryCount + 1}/${maxRetries})');
+        debugPrint('Attempting to ping backend (attempt ${retryCount + 1}/$maxRetries)');
         
         // Simple health check endpoint
         final response = await dio.get('/health');

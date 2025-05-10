@@ -13,10 +13,10 @@ class EditValueDialog extends StatefulWidget {
   final Function(ValueModel updatedValue) onSave;
 
   const EditValueDialog({
-    Key? key,
+    super.key,
     required this.value,
     required this.onSave,
-  }) : super(key: key);
+  });
 
   @override
   State<EditValueDialog> createState() => _EditValueDialogState();

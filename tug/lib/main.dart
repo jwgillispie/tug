@@ -78,7 +78,7 @@ Future<void> main() async {
 class ErrorApp extends StatelessWidget {
   final String error;
 
-  const ErrorApp({required this.error, Key? key}) : super(key: key);
+  const ErrorApp({required this.error, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -216,43 +216,36 @@ class _TugAppState extends State<TugApp> {
         GoRoute(
           path: '/home',
           builder: (context, state) => const MainLayout(
-            child: HomeScreen(),
             currentIndex: 0,
+            child: HomeScreen(),
           ),
         ),
         GoRoute(
           path: '/progress',
           builder: (context, state) => const MainLayout(
-            child: ProgressScreen(),
             currentIndex: 1,
+            child: ProgressScreen(),
           ),
         ),
         GoRoute(
           path: '/activities',
           builder: (context, state) => const MainLayout(
-            child: ActivityScreen(),
             currentIndex: 2,
+            child: ActivityScreen(),
           ),
         ),
         GoRoute(
           path: '/activities/new',
           builder: (context, state) => const MainLayout(
-            child: ActivityScreen(showAddForm: true),
             currentIndex: 2,
+            child: ActivityScreen(showAddForm: true),
           ),
         ),
         GoRoute(
           path: '/profile',
           builder: (context, state) => const MainLayout(
-            child: ProfileScreen(),
-            currentIndex: 4,
-          ),
-        ),
-        GoRoute(
-          path: '/achievements-tab',
-          builder: (context, state) => const MainLayout(
-            child: AchievementsScreen(),
             currentIndex: 3,
+            child: ProfileScreen(),
           ),
         ),
         GoRoute(

@@ -4,13 +4,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tug/blocs/auth/auth_bloc.dart';
 import 'package:tug/blocs/theme/theme_bloc.dart';
+import 'package:tug/models/achievement_model.dart';
+import 'package:tug/services/achievement_service.dart';
 import 'package:tug/utils/theme/colors.dart';
 import 'package:tug/utils/theme/buttons.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:tug/services/user_service.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({Key? key}) : super(key: key);
+  const ProfileScreen({super.key});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -19,6 +21,9 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _darkModeEnabled = false;
   bool _isDeleting = false;
+  bool _loadingAchievements = false;
+  int _unlockedAchievements = 0;
+  final AchievementService _achievementService = AchievementService();
 
   @override
   void initState() {
@@ -26,6 +31,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
     // Load the current theme state
     final themeState = context.read<ThemeBloc>().state;
     _darkModeEnabled = themeState.isDarkMode;
+
+    // Load achievements count
+    _loadAchievementsCount();
+  }
+
+  Future<void> _loadAchievementsCount() async {
+    if (_loadingAchievements) return;
+
+    setState(() {
+      _loadingAchievements = true;
+    });
+
+    try {
+      final achievements = await _achievementService.getAchievements();
+
+      if (mounted) {
+        setState(() {
+          _unlockedAchievements = achievements.where((a) => a.isUnlocked).length;
+          _loadingAchievements = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading achievements count: $e');
+      if (mounted) {
+        setState(() {
+          _loadingAchievements = false;
+        });
+      }
+    }
   }
 
   @override
@@ -82,12 +116,95 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _buildSettingsSection(
               title: 'PROGRESS',
               items: [
-                _buildSettingsItem(
-                  icon: Icons.emoji_events_outlined,
-                  title: 'Achievements',
+                // Special achievements item with badge
+                InkWell(
                   onTap: () {
                     context.push('/achievements');
                   },
+                  borderRadius: BorderRadius.circular(12),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 16,
+                      horizontal: 16,
+                    ),
+                    child: Row(
+                      children: [
+                        // Achievement icon
+                        Stack(
+                          children: [
+                            const Icon(
+                              Icons.emoji_events_outlined,
+                              color: TugColors.primaryPurple,
+                            ),
+                            if (_unlockedAchievements > 0)
+                              Positioned(
+                                right: -4,
+                                top: -4,
+                                child: Container(
+                                  padding: const EdgeInsets.all(4),
+                                  decoration: const BoxDecoration(
+                                    color: TugColors.success,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  constraints: const BoxConstraints(
+                                    minWidth: 16,
+                                    minHeight: 16,
+                                  ),
+                                  child: Text(
+                                    '$_unlockedAchievements',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(width: 16),
+
+                        // Achievement details
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Achievements',
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              _loadingAchievements
+                                ? const Text(
+                                    'Loading...',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey,
+                                    ),
+                                  )
+                                : Text(
+                                    _unlockedAchievements > 0
+                                        ? 'You\'ve unlocked $_unlockedAchievements ${_unlockedAchievements == 1 ? 'achievement' : 'achievements'}'
+                                        : 'View your progress and unlocked rewards',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey.shade600,
+                                    ),
+                                  ),
+                            ],
+                          ),
+                        ),
+                        const Icon(
+                          Icons.chevron_right,
+                          color: Colors.grey,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),

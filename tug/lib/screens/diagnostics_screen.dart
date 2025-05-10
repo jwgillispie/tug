@@ -2,7 +2,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../utils/firebase_diagnostics.dart';
-import '../utils/theme/colors.dart';
 import '../utils/theme/buttons.dart';
 import '../widgets/common/tug_text_field.dart';
 

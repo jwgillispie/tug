@@ -25,7 +25,7 @@ class ThemeInitial extends ThemeState {
 }
 
 class ThemeLoadSuccess extends ThemeState {
-  ThemeLoadSuccess(bool isDarkMode) : super(isDarkMode);
+  ThemeLoadSuccess(super.isDarkMode);
 }
 
 // BLoC

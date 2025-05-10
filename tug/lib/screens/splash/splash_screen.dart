@@ -5,7 +5,6 @@ import 'package:go_router/go_router.dart';
 import 'package:tug/blocs/auth/auth_bloc.dart';
 import 'package:tug/utils/theme/colors.dart';
 import 'dart:async';
-import 'dart:math';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});

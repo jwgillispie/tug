@@ -1,55 +1,64 @@
-// Enhanced colors.dart
+// Enhanced colors.dart with modern palette
 import 'package:flutter/material.dart';
 
 class TugColors {
-  // Primary Colors - enhanced vibrant palette
-  static const primaryPurple = Color(0xFF7B2EE1); // richer purple
-  static const primaryPurpleDark = Color(0xFF652CD0); // darker shade for depth
-  static const primaryPurpleLight = Color(0xFFA975FF); // lighter shade for accents
+  // Primary Colors - luxurious purple palette
+  static const primaryPurple = Color(0xFF8A4FFF); // vibrant violet purple
+  static const primaryPurpleDark = Color(0xFF6B38E5); // deeper purple for contrast
+  static const primaryPurpleLight = Color(0xFFB285FF); // soft lavender for accents
 
-  // Secondary colors
-  static const secondaryTeal = Color(0xFF0BCBC8); // brighter teal that pops
-  static const secondaryTealDark = Color(0xFF06ADAC); // darker teal for depth
-  static const tertiaryGold = Color(0xFFE8BE42); // warmer gold tone
+  // Secondary colors - refreshed palette
+  static const secondaryTeal = Color(0xFF0DE0DD); // bright electric teal
+  static const secondaryTealDark = Color(0xFF00B3B0); // deeper teal for contrast
+  static const tertiaryGold = Color(0xFFFFC737); // vivid golden yellow
 
-  // Accent Colors for variety
-  static const accentBlue = Color(0xFF3D7AFF); // vibrant blue
-  static const accentPink = Color(0xFFFF5BB0); // soft pink
-  static const accentOrange = Color(0xFFFF9052); // warm orange
+  // Accent Colors for variety - expanded palette
+  static const accentBlue = Color(0xFF4285FF); // vibrant royal blue
+  static const accentPink = Color(0xFFFF469C); // bold magenta pink
+  static const accentOrange = Color(0xFFFF7A45); // energetic orange
+  static const accentGreen = Color(0xFF3FDD91); // fresh mint green
+  static const accentPurple = Color(0xFFD860FF); // bright orchid purple
 
-  // Achievement type colors
-  static const streakOrange = Color(0xFFFF9052); // warm orange for streaks
-  static const balanceBlue = Color(0xFF3D7AFF); // vibrant blue for balance
-  static const frequencyGreen = Color(0xFF26C77E); // bright green for frequency
-  static const milestoneRed = Color(0xFFFF5BB0); // soft pink for milestones
-  static const specialPurple = Color(0xFF7B2EE1); // primary purple for special achievements
+  // Achievement type colors - enhanced for clarity
+  static const streakOrange = Color(0xFFFF7A45); // energetic orange for streaks
+  static const balanceBlue = Color(0xFF4285FF); // vibrant blue for balance
+  static const frequencyGreen = Color(0xFF3FDD91); // fresh mint for frequency
+  static const milestoneRed = Color(0xFFFF469C); // bold pink for milestones
+  static const specialPurple = Color(0xFFD860FF); // bright purple for special achievements
 
-  // Supporting Colors - refined and clear
-  static const success = Color(0xFF26C77E); // brighter, more positive green
-  static const warning = Color(0xFFFFC02C); // warmer, more visible yellow
-  static const error = Color(0xFFFF4D4F); // more vibrant red
+  // Status Colors - clear and accessible
+  static const success = Color(0xFF3FDD91); // fresh success green
+  static const warning = Color(0xFFFFBB38); // clear warning amber
+  static const error = Color(0xFFFF5252); // bright error red
+  static const info = Color(0xFF4285FF); // informational blue
 
-  // Light Theme Neutrals - cleaner, more elegant grays
-  static const lightBackground = Color(0xFFF9FAFD); // slightly cooler white
-  static const lightSurface = Color(0xFFF2F4F9); // subtle blue-tinted gray
-  static const lightSurfaceVariant = Color(0xFFE7ECFF); // subtle purple tint
-  static const lightTextPrimary = Color(0xFF1E1E2F); // darker, richer text color
-  static const lightTextSecondary = Color(0xFF5D5E78); // more elegant secondary text
-  static const lightBorder = Color(0xFFDCE1F0); // subtle blue-tinted border
+  // Light Theme Neutrals - refined for better contrast
+  static const lightBackground = Color(0xFFF8F9FE); // crisp cool white
+  static const lightSurface = Color(0xFFFEFEFF); // pure white surface
+  static const lightSurfaceVariant = Color(0xFFEEF1FF); // subtle purple tint
+  static const lightTextPrimary = Color(0xFF191A2E); // near-black with blue undertone
+  static const lightTextSecondary = Color(0xFF4E5080); // rich muted purple-gray
+  static const lightBorder = Color(0xFFE0E3F5); // subtle lavender border
 
-  // Dark Theme Neutrals - more sophisticated darks
-  static const darkBackground = Color(0xFF121320); // deeper blue-black
-  static const darkSurface = Color(0xFF1D1E30); // deeper blue-purple tint
-  static const darkSurfaceVariant = Color(0xFF262942); // subtle purple dark surface
-  static const darkTextPrimary = Color(0xFFF0F2FF); // slightly blue-tinted white
-  static const darkTextSecondary = Color(0xFFBBC0D9); // elegant light purple-gray
-  static const darkBorder = Color(0xFF32344A); // subtle purple border
+  // Dark Theme Neutrals - rich and comfortable darks
+  static const darkBackground = Color(0xFF0F1021); // deep space background
+  static const darkSurface = Color(0xFF1A1B31); // rich navy surface
+  static const darkSurfaceVariant = Color(0xFF282A4A); // elevated purple dark surface
+  static const darkTextPrimary = Color(0xFFF8F9FF); // crisp white text
+  static const darkTextSecondary = Color(0xFFC2C8E8); // soft lavender-gray text
+  static const darkBorder = Color(0xFF3A3D60); // subtle indigo border
 
-  // Gradient colors for effects
-  static const gradientStart = Color(0xFF6C38D4);
-  static const gradientEnd = Color(0xFF9C64FF);
+  // Gradient colors for effects - enhanced for visual impact
+  static const gradientPurpleStart = Color(0xFF7F42E2);
+  static const gradientPurpleEnd = Color(0xFFB285FF);
 
-  // Shades for card gradients
+  static const gradientTealStart = Color(0xFF00B3B0);
+  static const gradientTealEnd = Color(0xFF0DE0DD);
+
+  static const gradientGoldStart = Color(0xFFE8A617);
+  static const gradientGoldEnd = Color(0xFFFFC737);
+
+  // Card gradients - subtle depth
   static final lightGradient = [
     const Color(0xFFFFFFFF),
     const Color(0xFFF6F7FE),
@@ -57,26 +66,40 @@ class TugColors {
 
   static final darkGradient = [
     const Color(0xFF232537),
-    const Color(0xFF1B1C2E),
+    const Color(0xFF1A1B31),
   ];
 
-  // Card shadow
+  // Card shadows - revised for clarity
   static List<BoxShadow> getShadow(bool isDark) => [
     BoxShadow(
       color: isDark
-          ? Colors.black.withOpacity(0.3)
-          : const Color(0xFF9CADF3).withOpacity(0.15),
+          ? Colors.black.withOpacity(0.35)
+          : const Color(0xFF9CADF3).withOpacity(0.18),
       offset: const Offset(0, 4),
       blurRadius: 20,
       spreadRadius: 0,
     ),
     BoxShadow(
       color: isDark
-          ? primaryPurple.withOpacity(0.03)
-          : primaryPurple.withOpacity(0.02),
+          ? primaryPurple.withOpacity(0.05)
+          : primaryPurple.withOpacity(0.03),
       offset: const Offset(0, 2),
       blurRadius: 10,
       spreadRadius: 0,
     ),
   ];
+
+  // Glass effect - for frosted glass components
+  static Color glassEffect(bool isDark) => isDark
+      ? const Color(0xFF1A1B31).withOpacity(0.7)
+      : Colors.white.withOpacity(0.7);
+
+  // Shimmer effect colors
+  static Color shimmerBase(bool isDark) => isDark
+      ? const Color(0xFF232537)
+      : const Color(0xFFEEF1FF);
+
+  static Color shimmerHighlight(bool isDark) => isDark
+      ? const Color(0xFF3A3D60)
+      : Colors.white;
 }

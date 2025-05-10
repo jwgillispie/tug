@@ -5,13 +5,10 @@ import 'package:go_router/go_router.dart';
 import 'package:tug/blocs/values/bloc/values_bloc.dart';
 import 'package:tug/blocs/values/bloc/values_event.dart';
 import 'package:tug/blocs/values/bloc/values_state.dart';
-import 'package:tug/blocs/theme/theme_bloc.dart';
 import 'package:tug/widgets/home/swipeable_quotes.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../utils/theme/colors.dart';
 import '../../utils/theme/buttons.dart';
-import '../../utils/theme/decorations.dart';
-import 'dart:math';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -351,7 +348,7 @@ final List<Map<String, String>> _quotes = [
                           onTap: _navigateToValuesEdit,
                         ),
                       );
-                    }).toList(),
+                    }),
                     
                     const SizedBox(height: 24),
                     

@@ -6,9 +6,9 @@ class SwipeableQuotes extends StatefulWidget {
   final List<Map<String, String>> quotes;
   
   const SwipeableQuotes({
-    Key? key, 
+    super.key, 
     required this.quotes,
-  }) : super(key: key);
+  });
 
   @override
   State<SwipeableQuotes> createState() => _SwipeableQuotesState();

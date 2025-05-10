@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../utils/theme/colors.dart';
 
 class TermsScreen extends StatelessWidget {
-  const TermsScreen({Key? key}) : super(key: key);
+  const TermsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {

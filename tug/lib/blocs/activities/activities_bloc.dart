@@ -150,8 +150,7 @@ class ActivitiesBloc extends Bloc<ActivitiesEvent, ActivitiesState> {
       // Mark that we've done the initial load
       _initialLoadComplete = true;
       
-      debugPrint('Activities loaded: ${activities.length} activities ' +
-                '(forced: ${event.forceRefresh}, valueId: ${event.valueId})');
+      debugPrint('Activities loaded: ${activities.length} activities ' '(forced: ${event.forceRefresh}, valueId: ${event.valueId})');
     } catch (e) {
       emit(ActivitiesError(e.toString()));
       debugPrint('Error loading activities: $e');
