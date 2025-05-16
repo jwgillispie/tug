@@ -19,6 +19,7 @@ async def get_top_users(
     current_user: User = Depends(get_current_user),
     days: int = Query(30, ge=1, le=365, description="Number of days to consider for the ranking"),
     limit: int = Query(20, ge=1, le=100, description="Maximum number of users to return"),
+    rank_by: str = Query("activities", description="Field to rank users by (activities or streak)"),
 ):
     """Get a ranking of users with the most activities"""
     try:
@@ -26,7 +27,8 @@ async def get_top_users(
         
         rankings = await RankingsService.get_user_rankings(
             days=days,
-            limit=limit
+            limit=limit,
+            rank_by=rank_by
         )
         
         # Add info if current user is in the rankings

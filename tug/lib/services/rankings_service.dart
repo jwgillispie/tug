@@ -14,13 +14,18 @@ class RankingsService {
       : _apiService = apiService ?? ApiService();
 
   // Get top users rankings
-  Future<RankingsListModel> getTopUsers({int days = 30, int limit = 20}) async {
+  Future<RankingsListModel> getTopUsers({
+    int days = 30, 
+    int limit = 20,
+    String rankBy = 'activities'
+  }) async {
     try {
       final response = await _apiService.get(
         '/api/v1/rankings',
         queryParameters: {
           'days': days,
           'limit': limit,
+          'rank_by': rankBy,
         },
       );
 

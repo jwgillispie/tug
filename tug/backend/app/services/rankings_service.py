@@ -13,13 +13,14 @@ class RankingsService:
     """Service for handling user rankings and leaderboards"""
 
     @staticmethod
-    async def get_user_rankings(days: int = 30, limit: int = 20) -> List[Dict[str, Any]]:
+    async def get_user_rankings(days: int = 30, limit: int = 20, rank_by: str = "activities") -> List[Dict[str, Any]]:
         """
         Get a ranking of users with the most activities over a specified period.
         
         Args:
             days: Number of days to look back for activities
             limit: Maximum number of users to return
+            rank_by: Field to rank users by ('activities' or 'streak')
             
         Returns:
             List of user rankings with activity stats
@@ -68,6 +69,38 @@ class RankingsService:
         # Execute the aggregation pipeline
         user_stats = await Activity.aggregate(pipeline).to_list()
         
+        # If ranking by streak, change the sorting
+        if rank_by == "streak":
+            pipeline[-2] = {
+                # Sort by streak descending, then by total_activities
+                "$sort": {
+                    "streak": -1,
+                    "total_activities": -1
+                }
+            }
+            
+            # Get all users with their streaks
+            all_users = await User.find().to_list()
+            user_streaks = {str(u.id): getattr(u, "streak", 0) or 0 for u in all_users}
+            
+            # Create a map of user activities
+            user_activities = {stats["_id"]: stats for stats in user_stats}
+            
+            # Combine users with their activity stats
+            combined_stats = []
+            for user_id, streak in user_streaks.items():
+                if streak > 0:  # Only include users with a streak
+                    stats = user_activities.get(user_id, {"total_activities": 0, "total_duration": 0, "unique_activity_days": 0})
+                    stats["_id"] = user_id
+                    stats["streak"] = streak
+                    combined_stats.append(stats)
+            
+            # Sort by streak
+            combined_stats.sort(key=lambda x: (x.get("streak", 0), x.get("total_activities", 0)), reverse=True)
+            
+            # Limit to requested number
+            user_stats = combined_stats[:limit]
+        
         # Fetch user details for each result
         results = []
         rank = 1
@@ -79,14 +112,20 @@ class RankingsService:
             user = await User.find_one(User.id == ObjectId(user_id))
             
             if user:
+                avg_duration = 0
+                if stats.get("total_activities", 0) > 0:
+                    avg_duration = round(stats.get("total_duration", 0) / stats["total_activities"], 2)
+                
                 results.append({
                     "rank": rank,
                     "user_id": user_id,
                     "display_name": user.display_name,
-                    "total_activities": stats["total_activities"],
-                    "total_duration": stats["total_duration"],
-                    "unique_activity_days": stats["unique_activity_days"],
-                    "avg_duration_per_activity": round(stats["total_duration"] / stats["total_activities"], 2),
+                    "total_activities": stats.get("total_activities", 0),
+                    "total_duration": stats.get("total_duration", 0),
+                    "unique_activity_days": stats.get("unique_activity_days", 0),
+                    "avg_duration_per_activity": avg_duration,
+                    "streak": getattr(user, "streak", 0) or 0,
+                    "ranking_type": rank_by
                 })
                 rank += 1
         
@@ -149,6 +188,7 @@ class RankingsService:
                 "total_duration": 0,
                 "unique_activity_days": 0,
                 "avg_duration_per_activity": 0,
+                "streak": getattr(user, "streak", 0) or 0,
             }
         
         user_stats = user_stats_result[0]
@@ -203,4 +243,5 @@ class RankingsService:
             "total_duration": user_stats["total_duration"],
             "unique_activity_days": user_stats["unique_activity_days"],
             "avg_duration_per_activity": round(user_stats["total_duration"] / user_stats["total_activities"], 2),
+            "streak": getattr(user, "streak", 0) or 0,
         }

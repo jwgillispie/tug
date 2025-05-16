@@ -9,6 +9,8 @@ class UserRankingModel extends Equatable {
   final int totalDuration;
   final int uniqueActivityDays;
   final double avgDurationPerActivity;
+  final int streak;
+  final String rankingType;
   final bool isCurrentUser;
 
   const UserRankingModel({
@@ -19,6 +21,8 @@ class UserRankingModel extends Equatable {
     required this.totalDuration,
     required this.uniqueActivityDays,
     required this.avgDurationPerActivity,
+    this.streak = 0,
+    this.rankingType = 'activities',
     this.isCurrentUser = false,
   });
 
@@ -30,6 +34,8 @@ class UserRankingModel extends Equatable {
     int? totalDuration,
     int? uniqueActivityDays,
     double? avgDurationPerActivity,
+    int? streak,
+    String? rankingType,
     bool? isCurrentUser,
   }) {
     return UserRankingModel(
@@ -40,6 +46,8 @@ class UserRankingModel extends Equatable {
       totalDuration: totalDuration ?? this.totalDuration,
       uniqueActivityDays: uniqueActivityDays ?? this.uniqueActivityDays,
       avgDurationPerActivity: avgDurationPerActivity ?? this.avgDurationPerActivity,
+      streak: streak ?? this.streak,
+      rankingType: rankingType ?? this.rankingType,
       isCurrentUser: isCurrentUser ?? this.isCurrentUser,
     );
   }
@@ -53,6 +61,8 @@ class UserRankingModel extends Equatable {
       totalDuration: json['total_duration'] ?? 0,
       uniqueActivityDays: json['unique_activity_days'] ?? 0,
       avgDurationPerActivity: json['avg_duration_per_activity']?.toDouble() ?? 0.0,
+      streak: json['streak'] ?? 0,
+      rankingType: json['ranking_type'] ?? 'activities',
       isCurrentUser: json['user_id'] == currentUserId,
     );
   }
@@ -66,6 +76,8 @@ class UserRankingModel extends Equatable {
       'total_duration': totalDuration,
       'unique_activity_days': uniqueActivityDays,
       'avg_duration_per_activity': avgDurationPerActivity,
+      'streak': streak,
+      'ranking_type': rankingType,
     };
   }
 
@@ -78,6 +90,8 @@ class UserRankingModel extends Equatable {
         totalDuration,
         uniqueActivityDays,
         avgDurationPerActivity,
+        streak,
+        rankingType,
         isCurrentUser,
       ];
 }

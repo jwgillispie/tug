@@ -545,7 +545,7 @@ final List<Map<String, String>> _quotes = [
                     // Leaderboard Card
                     GestureDetector(
                       onTap: () {
-                        context.go('/rankings');
+                        context.push('/rankings');
                       },
                       child: Container(
                         decoration: BoxDecoration(

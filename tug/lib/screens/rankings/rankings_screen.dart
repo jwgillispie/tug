@@ -12,20 +12,34 @@ class RankingsScreen extends StatefulWidget {
   State<RankingsScreen> createState() => _RankingsScreenState();
 }
 
-class _RankingsScreenState extends State<RankingsScreen> {
+class _RankingsScreenState extends State<RankingsScreen> with SingleTickerProviderStateMixin {
   final RankingsService _rankingsService = RankingsService();
   
   bool _isLoading = true;
   String? _errorMessage;
-  RankingsListModel? _rankings;
+  RankingsListModel? _activityRankings;
+  RankingsListModel? _streakRankings;
   int _selectedPeriod = 30; // Default to 30 days
   
+  late TabController _tabController;
   final List<int> _periodOptions = [7, 30, 90, 365]; // Days options
   
   @override
   void initState() {
     super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        _loadRankings();
+      }
+    });
     _loadRankings();
+  }
+  
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
   }
   
   Future<void> _loadRankings() async {
@@ -37,14 +51,22 @@ class _RankingsScreenState extends State<RankingsScreen> {
     });
     
     try {
+      final currentTab = _tabController.index;
+      final rankBy = currentTab == 0 ? 'activities' : 'streak';
+      
       final rankings = await _rankingsService.getTopUsers(
         days: _selectedPeriod,
         limit: 50, // Get up to 50 users
+        rankBy: rankBy,
       );
       
       if (mounted) {
         setState(() {
-          _rankings = rankings;
+          if (currentTab == 0) {
+            _activityRankings = rankings;
+          } else {
+            _streakRankings = rankings;
+          }
           _isLoading = false;
         });
       }
@@ -74,12 +96,29 @@ class _RankingsScreenState extends State<RankingsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Leaderboard'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadRankings,
           ),
         ],
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: const [
+            Tab(
+              icon: Icon(Icons.local_fire_department),
+              text: 'Activities',
+            ),
+            Tab(
+              icon: Icon(Icons.timeline),
+              text: 'Streaks',
+            ),
+          ],
+        ),
       ),
       body: Container(
         decoration: BoxDecoration(
@@ -161,9 +200,18 @@ class _RankingsScreenState extends State<RankingsScreen> {
               ),
             ),
             
-            // Rankings content
+            // Rankings content in tab view
             Expanded(
-              child: _buildRankingsContent(isDarkMode),
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  // Activities tab
+                  _buildRankingsContent(isDarkMode, isActivitiesTab: true),
+                  
+                  // Streaks tab
+                  _buildRankingsContent(isDarkMode, isActivitiesTab: false),
+                ],
+              ),
             ),
           ],
         ),
@@ -171,7 +219,7 @@ class _RankingsScreenState extends State<RankingsScreen> {
     );
   }
   
-  Widget _buildRankingsContent(bool isDarkMode) {
+  Widget _buildRankingsContent(bool isDarkMode, {bool isActivitiesTab = true}) {
     if (_isLoading) {
       return const Center(
         child: CircularProgressIndicator(),
@@ -209,7 +257,10 @@ class _RankingsScreenState extends State<RankingsScreen> {
       );
     }
     
-    if (_rankings == null || _rankings!.rankings.isEmpty) {
+    // Determine which rankings to use based on the tab
+    final rankings = isActivitiesTab ? _activityRankings : _streakRankings;
+    
+    if (rankings == null || rankings.rankings.isEmpty) {
       return Center(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -217,7 +268,7 @@ class _RankingsScreenState extends State<RankingsScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
-                Icons.people_outline,
+                isActivitiesTab ? Icons.local_fire_department_outlined : Icons.timeline_outlined,
                 size: 64,
                 color: TugColors.primaryPurple.withOpacity(0.5),
               ),
@@ -232,7 +283,9 @@ class _RankingsScreenState extends State<RankingsScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Be the first to log some activities and get on the leaderboard!',
+                isActivitiesTab
+                    ? 'Be the first to log some activities and get on the leaderboard!'
+                    : 'Build your streak by logging activities daily to appear here!',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
@@ -244,40 +297,53 @@ class _RankingsScreenState extends State<RankingsScreen> {
       );
     }
     
-    // Filter users with zero activities
-    final List<UserRankingModel> activeUsers = _rankings!.rankings
-        .where((user) => user.totalActivities > 0)
-        .toList();
+    // Filter users appropriately based on tab
+    final List<UserRankingModel> activeUsers = isActivitiesTab
+        ? rankings.rankings.where((user) => user.totalActivities > 0).toList()
+        : rankings.rankings.where((user) => user.streak > 0).toList();
     
     return Column(
       children: [
         // Current user ranking card (if available)
-        if (_rankings!.currentUserRank != null)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: TugAnimations.fadeSlideIn(
-              child: _buildUserRankCard(
-                UserRankingModel(
-                  rank: _rankings!.currentUserRank,
-                  userId: '', // We don't need this for display
-                  displayName: 'Your Ranking',
-                  totalActivities: 0, // This will be filled from the actual user data
-                  totalDuration: 0,
-                  uniqueActivityDays: 0,
-                  avgDurationPerActivity: 0,
-                  isCurrentUser: true,
+        if (rankings.currentUserRank != null)
+          Builder(
+            builder: (context) {
+              // Find the current user in the rankings
+              final currentUser = rankings.rankings
+                  .firstWhere((user) => user.isCurrentUser, 
+                    orElse: () => UserRankingModel(
+                      rank: rankings.currentUserRank,
+                      userId: '',
+                      displayName: 'Your Ranking',
+                      totalActivities: 0,
+                      totalDuration: 0,
+                      uniqueActivityDays: 0,
+                      avgDurationPerActivity: 0,
+                      streak: 0,
+                      rankingType: isActivitiesTab ? 'activities' : 'streak',
+                      isCurrentUser: true,
+                    ),
+                  );
+              
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                child: TugAnimations.fadeSlideIn(
+                  child: _buildUserRankCard(
+                    currentUser,
+                    isDarkMode,
+                    isCurrentUserCard: true,
+                    isActivitiesTab: isActivitiesTab,
+                  ),
                 ),
-                isDarkMode,
-                isCurrentUserCard: true,
-              ),
-            ),
+              );
+            }
           ),
           
-        // Top 3 users avatars and podium
-        if (activeUsers.length > 1)
+        // Top user winner podium
+        if (activeUsers.isNotEmpty)
           Padding(
             padding: const EdgeInsets.only(bottom: 24),
-            child: _buildTopThreePodium(activeUsers, isDarkMode),
+            child: _buildWinnerPodium(activeUsers, isDarkMode, isActivitiesTab: isActivitiesTab),
           ),
           
         // Full ranking list
@@ -290,7 +356,7 @@ class _RankingsScreenState extends State<RankingsScreen> {
               return TugAnimations.staggeredListItem(
                 index: index,
                 type: StaggeredAnimationType.fadeSlideUp,
-                child: _buildUserRankCard(user, isDarkMode),
+                child: _buildUserRankCard(user, isDarkMode, isActivitiesTab: isActivitiesTab),
               );
             },
           ),
@@ -299,128 +365,59 @@ class _RankingsScreenState extends State<RankingsScreen> {
     );
   }
   
-  Widget _buildTopThreePodium(List<UserRankingModel> users, bool isDarkMode) {
-    // Get top 3 users or as many as available
-    final topUsers = users.length > 3 ? users.sublist(0, 3) : users;
-    
-    // Ensure we have exactly 3 positions by filling with null
-    final List<UserRankingModel?> podiumUsers = List.filled(3, null);
-    for (int i = 0; i < topUsers.length; i++) {
-      podiumUsers[i] = topUsers[i];
+  Widget _buildWinnerPodium(List<UserRankingModel> users, bool isDarkMode, {bool isActivitiesTab = true}) {
+    // Only show the #1 user
+    if (users.isEmpty) {
+      return const SizedBox.shrink();
     }
     
-    // Height configurations for each podium position
-    const double firstPlaceHeight = 130.0;
-    const double secondPlaceHeight = 110.0;
-    const double thirdPlaceHeight = 90.0;
+    final topUser = users[0];
     
-    // Colors for medals
+    // Color for medal
     final Color goldColor = Colors.amber.shade600;
-    final Color silverColor = Colors.grey.shade400;
-    final Color bronzeColor = Colors.brown.shade400;
     
     return SizedBox(
-      height: 220, // Fixed height for the podium section
+      height: 180, // Fixed height for the podium section
       child: Stack(
         alignment: Alignment.bottomCenter,
         children: [
-          // Podium platforms
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              // Second place (left)
-              if (podiumUsers[1] != null)
-                TugAnimations.fadeSlideIn(
-                  delay: const Duration(milliseconds: 200),
-                  child: _buildPodiumPlatform(
-                    secondPlaceHeight, 
-                    silverColor, 
-                    isDarkMode,
-                    label: '2',
-                  ),
-                ),
-                
-              // First place (center)
-              if (podiumUsers[0] != null)
-                TugAnimations.fadeSlideIn(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: _buildPodiumPlatform(
-                      firstPlaceHeight, 
-                      goldColor, 
-                      isDarkMode,
-                      label: '1',
-                    ),
-                  ),
-                ),
-                
-              // Third place (right)
-              if (podiumUsers[2] != null)
-                TugAnimations.fadeSlideIn(
-                  delay: const Duration(milliseconds: 400),
-                  child: _buildPodiumPlatform(
-                    thirdPlaceHeight, 
-                    bronzeColor, 
-                    isDarkMode,
-                    label: '3',
-                  ),
-                ),
-            ],
+          // Podium platform
+          TugAnimations.fadeSlideIn(
+            child: _buildPodiumPlatform(
+              130.0, // Height for winner platform
+              goldColor, 
+              isDarkMode,
+              label: '1',
+            ),
           ),
           
-          // User avatars and names
+          // Winner avatar and name
           Positioned(
-            bottom: 40, // Bottom padding for names
-            left: 0,
-            right: 0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                // Second place avatar and name
-                if (podiumUsers[1] != null)
-                  TugAnimations.fadeSlideIn(
-                    delay: const Duration(milliseconds: 300),
-                    beginOffset: const Offset(0, 30),
-                    child: _buildPodiumUser(
-                      podiumUsers[1]!,
-                      silverColor,
-                      secondPlaceHeight,
-                      isDarkMode,
-                    ),
+            bottom: 40, // Bottom padding for name
+            child: TugAnimations.fadeSlideIn(
+              delay: const Duration(milliseconds: 100),
+              beginOffset: const Offset(0, 40),
+              child: Column(
+                children: [
+                  // Crown icon above the avatar
+                  const Icon(
+                    Icons.workspace_premium,
+                    color: Colors.amber,
+                    size: 32,
                   ),
+                  const SizedBox(height: 6),
                   
-                // First place avatar and name
-                if (podiumUsers[0] != null)
-                  TugAnimations.fadeSlideIn(
-                    delay: const Duration(milliseconds: 100),
-                    beginOffset: const Offset(0, 40),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: _buildPodiumUser(
-                        podiumUsers[0]!,
-                        goldColor,
-                        firstPlaceHeight,
-                        isDarkMode,
-                        isFirst: true,
-                      ),
-                    ),
+                  // User avatar
+                  _buildPodiumUser(
+                    topUser,
+                    goldColor,
+                    130.0,
+                    isDarkMode,
+                    isFirst: true,
+                    isActivitiesTab: isActivitiesTab,
                   ),
-                  
-                // Third place avatar and name
-                if (podiumUsers[2] != null)
-                  TugAnimations.fadeSlideIn(
-                    delay: const Duration(milliseconds: 500),
-                    beginOffset: const Offset(0, 20),
-                    child: _buildPodiumUser(
-                      podiumUsers[2]!,
-                      bronzeColor,
-                      thirdPlaceHeight,
-                      isDarkMode,
-                    ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
@@ -463,7 +460,7 @@ class _RankingsScreenState extends State<RankingsScreen> {
     );
   }
   
-  Widget _buildPodiumUser(UserRankingModel user, Color color, double platformHeight, bool isDarkMode, {bool isFirst = false}) {
+  Widget _buildPodiumUser(UserRankingModel user, Color color, double platformHeight, bool isDarkMode, {bool isFirst = false, bool isActivitiesTab = true}) {
     return Column(
       children: [
         // User avatar
@@ -518,19 +515,71 @@ class _RankingsScreenState extends State<RankingsScreen> {
             ),
           ),
         ),
-        // Activities count
-        Text(
-          '${user.totalActivities} activities',
-          style: TextStyle(
-            fontSize: 10,
-            color: isDarkMode ? Colors.white70 : Colors.black54,
+        
+        // Primary statistic based on tab
+        if (isActivitiesTab)
+          Text(
+            '${user.totalActivities} activities',
+            style: TextStyle(
+              fontSize: 10,
+              color: isDarkMode ? Colors.white70 : Colors.black54,
+            ),
+          )
+        else
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.local_fire_department,
+                size: 10,
+                color: Colors.redAccent.shade400,
+              ),
+              const SizedBox(width: 2),
+              Text(
+                '${user.streak} day streak',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.redAccent.shade400,
+                ),
+              ),
+            ],
           ),
-        ),
+        
+        // Secondary statistic based on tab
+        if (isActivitiesTab && user.streak > 0)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.local_fire_department,
+                size: 10,
+                color: Colors.redAccent.shade400,
+              ),
+              const SizedBox(width: 2),
+              Text(
+                '${user.streak} day streak',
+                style: TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.redAccent.shade400,
+                ),
+              ),
+            ],
+          )
+        else if (!isActivitiesTab && user.totalActivities > 0)
+          Text(
+            '${user.totalActivities} activities',
+            style: TextStyle(
+              fontSize: 10,
+              color: isDarkMode ? Colors.white70 : Colors.black54,
+            ),
+          ),
       ],
     );
   }
   
-  Widget _buildUserRankCard(UserRankingModel user, bool isDarkMode, {bool isCurrentUserCard = false}) {
+  Widget _buildUserRankCard(UserRankingModel user, bool isDarkMode, {bool isCurrentUserCard = false, bool isActivitiesTab = true}) {
     // Background color based on rank
     Color cardColor;
     Color rankTextColor;
@@ -629,23 +678,80 @@ class _RankingsScreenState extends State<RankingsScreen> {
                   ),
                   const SizedBox(height: 4),
                   
-                  // Only show stats in the list, not in the current user card at top
-                  if (!isCurrentUserCard)
-                    Row(
-                      children: [
-                        _buildStatIcon(Icons.local_fire_department, '${user.totalActivities}'),
-                        const SizedBox(width: 12),
+                  // Stats display
+                  Row(
+                    children: [
+                      // Primary stat based on tab
+                      if (isActivitiesTab)
                         _buildStatIcon(
-                          Icons.hourglass_bottom, 
-                          '${(user.totalDuration / 60).toStringAsFixed(1)}h'
-                        ),
-                        const SizedBox(width: 12),
+                          Icons.local_fire_department, 
+                          '${user.totalActivities}',
+                          iconColor: TugColors.primaryPurple.withOpacity(0.8),
+                          textColor: TugColors.primaryPurple.withOpacity(0.8),
+                        )
+                      else
                         _buildStatIcon(
-                          Icons.calendar_today, 
-                          '${user.uniqueActivityDays} days'
+                          Icons.local_fire_department,
+                          '${user.streak} streak',
+                          iconColor: Colors.redAccent.shade400,
+                          textColor: Colors.redAccent.shade400,
                         ),
+                        
+                      const SizedBox(width: 12),
+                      
+                      // If it's the current user card, just show the primary and secondary stats
+                      if (isCurrentUserCard) ...[
+                        if (isActivitiesTab && user.streak > 0)
+                          _buildStatIcon(
+                            Icons.local_fire_department,
+                            '${user.streak} streak',
+                            iconColor: Colors.redAccent.shade400,
+                            textColor: Colors.redAccent.shade400,
+                          )
+                        else if (!isActivitiesTab && user.totalActivities > 0)
+                          _buildStatIcon(
+                            Icons.local_fire_department, 
+                            '${user.totalActivities}',
+                          ),
+                      ] else ...[
+                        // Full stats for regular cards
+                        // Secondary stats
+                        if (isActivitiesTab) ...[
+                          _buildStatIcon(
+                            Icons.hourglass_bottom, 
+                            '${(user.totalDuration / 60).toStringAsFixed(1)}h'
+                          ),
+                          const SizedBox(width: 12),
+                          _buildStatIcon(
+                            Icons.calendar_today, 
+                            '${user.uniqueActivityDays} days'
+                          ),
+                          
+                          // Show streak if available and in activities tab
+                          if (user.streak > 0) ...[
+                            const SizedBox(width: 12),
+                            _buildStatIcon(
+                              Icons.local_fire_department,
+                              '${user.streak} streak',
+                              iconColor: Colors.redAccent.shade400,
+                              textColor: Colors.redAccent.shade400,
+                            ),
+                          ],
+                        ] else ...[
+                          // Show activity count if in streak tab
+                          _buildStatIcon(
+                            Icons.local_fire_department, 
+                            '${user.totalActivities}'
+                          ),
+                          const SizedBox(width: 12),
+                          _buildStatIcon(
+                            Icons.calendar_today, 
+                            '${user.uniqueActivityDays} days'
+                          ),
+                        ],
                       ],
-                    ),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -663,21 +769,28 @@ class _RankingsScreenState extends State<RankingsScreen> {
     );
   }
   
-  Widget _buildStatIcon(IconData icon, String text) {
+  Widget _buildStatIcon(
+    IconData icon, 
+    String text, 
+    {Color? iconColor, Color? textColor}
+  ) {
+    final effectiveIconColor = iconColor ?? TugColors.primaryPurple.withOpacity(0.8);
+    final effectiveTextColor = textColor ?? TugColors.primaryPurple.withOpacity(0.8);
+    
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(
           icon,
           size: 14,
-          color: TugColors.primaryPurple.withOpacity(0.8),
+          color: effectiveIconColor,
         ),
         const SizedBox(width: 4),
         Text(
           text,
           style: TextStyle(
             fontSize: 12,
-            color: TugColors.primaryPurple.withOpacity(0.8),
+            color: effectiveTextColor,
           ),
         ),
       ],
