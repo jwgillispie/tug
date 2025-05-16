@@ -188,14 +188,12 @@ class AchievementCard extends StatelessWidget {
         ),
       ),
       child: Center(
-        child: Text(
+        child: Icon(
           achievement.icon,
-          style: TextStyle(
-            fontSize: 28,
-            color: achievement.isUnlocked
-                ? achievement.color
-                : Colors.grey,
-          ),
+          size: 28,
+          color: achievement.isUnlocked
+              ? achievement.color
+              : Colors.grey,
         ),
       ),
     );

@@ -124,9 +124,10 @@ class _AchievementNotificationState extends State<AchievementNotification> with 
                         ),
                       ),
                       child: Center(
-                        child: Text(
+                        child: Icon(
                           widget.achievement.icon,
-                          style: const TextStyle(fontSize: 24),
+                          size: 24,
+                          color: widget.achievement.color,
                         ),
                       ),
                     ),

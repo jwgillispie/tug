@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tug/blocs/activities/activities_bloc.dart';
+import 'package:tug/blocs/subscription/subscription_bloc.dart';
 import 'package:tug/blocs/theme/theme_bloc.dart';
 import 'package:tug/blocs/values/bloc/values_bloc.dart';
 import 'package:tug/config/env_confg.dart';
@@ -21,8 +22,11 @@ import 'package:tug/screens/main_layout.dart';
 import 'package:tug/screens/profile/profile_screen.dart';
 import 'package:tug/screens/progress/progress_screen.dart';
 import 'package:tug/screens/splash_screen.dart';
+import 'package:tug/screens/subscription/subscription_screen.dart';
+import 'package:tug/screens/subscription/user_subscription_screen.dart';
 import 'package:tug/services/api_service.dart';
 import 'package:tug/services/cache_service.dart';
+import 'package:tug/services/subscription_service.dart';
 import 'package:tug/utils/local_storage.dart';
 import 'repositories/auth_repository.dart';
 import 'blocs/auth/auth_bloc.dart';
@@ -37,6 +41,7 @@ import 'screens/about/about_screen.dart';
 import 'screens/profile/edit_profile_screen.dart';
 import 'screens/profile/change_password_screen.dart';
 import 'screens/achievements/achievements_screen.dart';
+import 'screens/rankings/rankings_screen.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -54,10 +59,15 @@ Future<void> main() async {
       await LocalStorage.initialize();
     }
     
-    // Initialize Firebase last
+    // Initialize Firebase
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+    
+    // Initialize RevenueCat for subscriptions
+    final subscriptionService = SubscriptionService();
+    await subscriptionService.initialize();
+    debugPrint('Subscription service initialized');
 
     final apiService = ApiService();
     final authRepository = AuthRepository();
@@ -68,6 +78,7 @@ Future<void> main() async {
       authRepository: authRepository,
       valuesRepository: valuesRepository,
       activityRepository: activityRepository,
+      subscriptionService: subscriptionService,
     ));
   } catch (e) {
     debugPrint('App initialization failed: $e');
@@ -121,11 +132,13 @@ class TugApp extends StatefulWidget {
   final AuthRepository authRepository;
   final ValuesRepository valuesRepository;
   final ActivityRepository activityRepository;
+  final SubscriptionService subscriptionService;
 
   const TugApp({
     required this.authRepository,
     required this.valuesRepository,
     required this.activityRepository,
+    required this.subscriptionService,
     super.key,
   });
 
@@ -139,6 +152,7 @@ class _TugAppState extends State<TugApp> {
   late final ValuesBloc _valuesBloc;
   late final ActivitiesBloc _activitiesBloc;
   late final ThemeBloc _themeBloc;
+  late final SubscriptionBloc _subscriptionBloc;
 
   @override
   void initState() {
@@ -148,9 +162,15 @@ class _TugAppState extends State<TugApp> {
     _activitiesBloc =
         ActivitiesBloc(activityRepository: widget.activityRepository);
     _themeBloc = ThemeBloc();
+    _subscriptionBloc = SubscriptionBloc(
+      subscriptionService: widget.subscriptionService,
+    );
 
     // Load theme preference
     _themeBloc.add(ThemeLoaded());
+    
+    // Load subscription state
+    _subscriptionBloc.add(LoadSubscriptions());
 
     _router = GoRouter(
       initialLocation: '/splash',  // Start at splash screen
@@ -192,6 +212,21 @@ class _TugAppState extends State<TugApp> {
         GoRoute(
           path: '/achievements',
           builder: (context, state) => const AchievementsScreen(),
+        ),
+        // Rankings Screen
+        GoRoute(
+          path: '/rankings',
+          builder: (context, state) => const RankingsScreen(),
+        ),
+        // Subscription Screen
+        GoRoute(
+          path: '/subscription',
+          builder: (context, state) => const SubscriptionScreen(),
+        ),
+        // User Subscription Management Screen
+        GoRoute(
+          path: '/account',
+          builder: (context, state) => const UserSubscriptionScreen(),
         ),
         GoRoute(
           path: '/login',
@@ -311,6 +346,7 @@ class _TugAppState extends State<TugApp> {
         BlocProvider<ValuesBloc>.value(value: _valuesBloc),
         BlocProvider<ActivitiesBloc>.value(value: _activitiesBloc),
         BlocProvider<ThemeBloc>.value(value: _themeBloc),
+        BlocProvider<SubscriptionBloc>.value(value: _subscriptionBloc),
       ],
       child: BlocBuilder<ThemeBloc, ThemeState>(
         builder: (context, themeState) {
@@ -333,6 +369,8 @@ class _TugAppState extends State<TugApp> {
     _valuesBloc.close();
     _activitiesBloc.close();
     _themeBloc.close();
+    _subscriptionBloc.close();
+    widget.subscriptionService.dispose();
     super.dispose();
   }
 }

@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tug/blocs/auth/auth_bloc.dart';
 import 'package:tug/blocs/theme/theme_bloc.dart';
-import 'package:tug/models/achievement_model.dart';
 import 'package:tug/services/achievement_service.dart';
 import 'package:tug/utils/theme/colors.dart';
 import 'package:tug/utils/theme/buttons.dart';
@@ -209,6 +208,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
 
+            _buildSettingsSection(
+              title: 'SUBSCRIPTION',
+              items: [
+                _buildSettingsItem(
+                  icon: Icons.workspace_premium,
+                  title: 'Premium Subscription',
+                  subtitle: 'Manage your subscription',
+                  onTap: () {
+                    context.push('/subscription');
+                  },
+                ),
+                _buildSettingsItem(
+                  icon: Icons.account_circle_outlined,
+                  title: 'Account & Purchases',
+                  subtitle: 'Manage your account and restore purchases',
+                  onTap: () {
+                    context.push('/account');
+                  },
+                ),
+              ],
+            ),
+            
             _buildSettingsSection(
               title: 'ABOUT',
               items: [

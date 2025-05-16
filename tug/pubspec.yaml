@@ -25,6 +25,7 @@ dependencies:
   firebase_storage: ^12.3.6
   cloud_firestore: ^5.5.0
   flutter_launcher_icons: ^0.14.3
+  purchases_flutter: ^8.8.0
   
   
   # Local Storage

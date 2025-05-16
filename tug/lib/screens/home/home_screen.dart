@@ -458,6 +458,7 @@ final List<Map<String, String>> _quotes = [
                         context.go('/progress');
                       },
                       child: Container(
+                        margin: const EdgeInsets.only(bottom: 16),
                         decoration: BoxDecoration(
                           color: isDarkMode ? TugColors.darkSurface : Colors.white,
                           borderRadius: BorderRadius.circular(12),
@@ -532,6 +533,95 @@ final List<Map<String, String>> _quotes = [
                                   child: Icon(
                                     Icons.chevron_right,
                                     color: TugColors.secondaryTeal,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    
+                    // Leaderboard Card
+                    GestureDetector(
+                      onTap: () {
+                        context.go('/rankings');
+                      },
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: isDarkMode ? TugColors.darkSurface : Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: isDarkMode 
+                                  ? Colors.black.withOpacity(0.2) 
+                                  : Colors.black.withOpacity(0.05),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                          border: Border.all(
+                            color: isDarkMode 
+                                ? Colors.white.withOpacity(0.05) 
+                                : Colors.black.withOpacity(0.03),
+                            width: 0.5,
+                          ),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: TugColors.primaryPurple.withOpacity(isDarkMode ? 0.2 : 0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: TugColors.primaryPurple.withOpacity(isDarkMode ? 0.3 : 0.2),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.leaderboard,
+                                  color: TugColors.primaryPurple,
+                                  size: 28,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Leaderboard',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'see who\'s most active',
+                                      style: TextStyle(
+                                        color: isDarkMode 
+                                            ? TugColors.darkTextSecondary 
+                                            : TugColors.lightTextSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  color: TugColors.primaryPurple.withOpacity(isDarkMode ? 0.1 : 0.05),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.chevron_right,
+                                    color: TugColors.primaryPurple,
                                   ),
                                 ),
                               ),

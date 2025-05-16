@@ -327,9 +327,10 @@ class _AchievementsScreenState extends State<AchievementsScreen> with SingleTick
         ),
         title: Row(
           children: [
-            Text(
+            Icon(
               achievement.icon,
-              style: const TextStyle(fontSize: 24),
+              size: 24,
+              color: achievement.color,
             ),
             const SizedBox(width: 8),
             Expanded(
