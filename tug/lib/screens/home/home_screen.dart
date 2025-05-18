@@ -1,11 +1,15 @@
 // lib/screens/home/home_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tug/blocs/values/bloc/values_bloc.dart';
 import 'package:tug/blocs/values/bloc/values_event.dart';
 import 'package:tug/blocs/values/bloc/values_state.dart';
+import 'package:tug/utils/animations.dart';
+import 'package:tug/utils/cosmic_particles.dart';
 import 'package:tug/widgets/home/swipeable_quotes.dart';
+import 'package:tug/widgets/home/value_insights.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../utils/theme/colors.dart';
 import '../../utils/theme/buttons.dart';
@@ -21,6 +25,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   bool _isFirstLoad = true;
+  ParticleEffect _particleEffect = ParticleEffect.nebula;
   
 final List<Map<String, String>> _quotes = [
     {
@@ -225,412 +230,422 @@ final List<Map<String, String>> _quotes = [
                   );
                 }
                 
-                return ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
-                    // Swipeable Quotes
-                    SwipeableQuotes(quotes: _quotes),
-                    
-                    // Values List
-                    const SizedBox(height: 24),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                // Use SingleChildScrollView to make the entire screen scrollable
+                return SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(), 
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Swipeable Quotes
+                        SwipeableQuotes(quotes: _quotes),
+                        
+                        // Values List
+                        const SizedBox(height: 24),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text(
+                              'Your Values',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            OutlinedButton(
+                              onPressed: _navigateToValuesEdit,
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: TugColors.primaryPurple,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 8,
+                                ),
+                              ),
+                              child: const Text('Edit Values'),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        ...values.map((value) {
+                          final Color valueColor = Color(
+                            int.parse(value.color.substring(1), radix: 16) + 0xFF000000,
+                          );
+                          
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            decoration: BoxDecoration(
+                              color: isDarkMode ? TugColors.darkSurface : Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: isDarkMode 
+                                      ? Colors.black.withOpacity(0.2) 
+                                      : Colors.black.withOpacity(0.05),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                              border: Border.all(
+                                color: isDarkMode 
+                                    ? Colors.white.withOpacity(0.05) 
+                                    : Colors.black.withOpacity(0.03),
+                                width: 0.5,
+                              ),
+                            ),
+                            child: ListTile(
+                              leading: Container(
+                                width: 40,
+                                height: 40,
+                                decoration: BoxDecoration(
+                                  color: valueColor.withOpacity(isDarkMode ? 0.15 : 0.1),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: valueColor.withOpacity(isDarkMode ? 0.3 : 0.2),
+                                    width: 1,
+                                  ),
+                                ),
+                                child: Center(
+                                  child: Container(
+                                    width: 16,
+                                    height: 16,
+                                    decoration: BoxDecoration(
+                                      color: valueColor,
+                                      shape: BoxShape.circle,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              title: Text(
+                                value.name,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              subtitle: Text(
+                                'Importance: ${value.importance}',
+                                style: TextStyle(
+                                  color: isDarkMode 
+                                      ? TugColors.darkTextSecondary 
+                                      : TugColors.lightTextSecondary,
+                                  fontSize: 13,
+                                ),
+                              ),
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  // Star Icons based on importance
+                                  ...List.generate(
+                                    value.importance,
+                                    (index) => Icon(
+                                      Icons.star,
+                                      size: 16,
+                                      color: valueColor,
+                                    ),
+                                  ),
+                                  ...List.generate(
+                                    5 - value.importance,
+                                    (index) => Icon(
+                                      Icons.star_border,
+                                      size: 16,
+                                      color: valueColor.withOpacity(0.3),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Icon(Icons.chevron_right),
+                                ],
+                              ),
+                              onTap: _navigateToValuesEdit,
+                            ),
+                          );
+                        }),
+                        
+                        const SizedBox(height: 24),
+                        
+                        // Feature Cards Section
                         const Text(
-                          'Your Values',
+                          'Features',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
-                        OutlinedButton(
-                          onPressed: _navigateToValuesEdit,
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: TugColors.primaryPurple,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
+                        const SizedBox(height: 16),
+                        
+                        // Activity Tracking Card
+                        GestureDetector(
+                          onTap: () {
+                            context.go('/activities');
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            decoration: BoxDecoration(
+                              color: isDarkMode ? TugColors.darkSurface : Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: isDarkMode 
+                                      ? Colors.black.withOpacity(0.2) 
+                                      : Colors.black.withOpacity(0.05),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                              border: Border.all(
+                                color: isDarkMode 
+                                    ? Colors.white.withOpacity(0.05) 
+                                    : Colors.black.withOpacity(0.03),
+                                width: 0.5,
+                              ),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: TugColors.primaryPurple.withOpacity(isDarkMode ? 0.2 : 0.1),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: TugColors.primaryPurple.withOpacity(isDarkMode ? 0.3 : 0.2),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: const Icon(
+                                      Icons.history,
+                                      color: TugColors.primaryPurple,
+                                      size: 28,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Activity Tracking',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Log time spent on your values, and don\'t be lying',
+                                          style: TextStyle(
+                                            color: isDarkMode 
+                                                ? TugColors.darkTextSecondary 
+                                                : TugColors.lightTextSecondary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Container(
+                                    width: 32,
+                                    height: 32,
+                                    decoration: BoxDecoration(
+                                      color: TugColors.primaryPurple.withOpacity(isDarkMode ? 0.1 : 0.05),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Center(
+                                      child: Icon(
+                                        Icons.chevron_right,
+                                        color: TugColors.primaryPurple,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                          child: const Text('Edit Values'),
+                        ),
+                        
+                        // Progress Tracking Card
+                        GestureDetector(
+                          onTap: () {
+                            context.go('/progress');
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            decoration: BoxDecoration(
+                              color: isDarkMode ? TugColors.darkSurface : Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: isDarkMode 
+                                      ? Colors.black.withOpacity(0.2) 
+                                      : Colors.black.withOpacity(0.05),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                              border: Border.all(
+                                color: isDarkMode 
+                                    ? Colors.white.withOpacity(0.05) 
+                                    : Colors.black.withOpacity(0.03),
+                                width: 0.5,
+                              ),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: TugColors.secondaryTeal.withOpacity(isDarkMode ? 0.2 : 0.1),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: TugColors.secondaryTeal.withOpacity(isDarkMode ? 0.3 : 0.2),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: const Icon(
+                                      Icons.insights,
+                                      color: TugColors.secondaryTeal,
+                                      size: 28,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Progress',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'see how you\'re doing',
+                                          style: TextStyle(
+                                            color: isDarkMode 
+                                                ? TugColors.darkTextSecondary 
+                                                : TugColors.lightTextSecondary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Container(
+                                    width: 32,
+                                    height: 32,
+                                    decoration: BoxDecoration(
+                                      color: TugColors.secondaryTeal.withOpacity(isDarkMode ? 0.1 : 0.05),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Center(
+                                      child: Icon(
+                                        Icons.chevron_right,
+                                        color: TugColors.secondaryTeal,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        
+                        // Leaderboard Card
+                        GestureDetector(
+                          onTap: () {
+                            context.push('/rankings');
+                          },
+                          child: Container(
+                            key: const Key('leaderboardCard'),
+                            // Add large bottom margin to ensure visibility
+                            margin: const EdgeInsets.only(bottom: 80),
+                            decoration: BoxDecoration(
+                              color: isDarkMode ? TugColors.darkSurface : Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: isDarkMode 
+                                      ? Colors.black.withOpacity(0.2) 
+                                      : Colors.black.withOpacity(0.05),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                              border: Border.all(
+                                color: isDarkMode 
+                                    ? Colors.white.withOpacity(0.05) 
+                                    : Colors.black.withOpacity(0.03),
+                                width: 0.5,
+                              ),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: TugColors.primaryPurple.withOpacity(isDarkMode ? 0.2 : 0.1),
+                                      borderRadius: BorderRadius.circular(12),
+                                      border: Border.all(
+                                        color: TugColors.primaryPurple.withOpacity(isDarkMode ? 0.3 : 0.2),
+                                        width: 1,
+                                      ),
+                                    ),
+                                    child: const Icon(
+                                      Icons.leaderboard,
+                                      color: TugColors.primaryPurple,
+                                      size: 28,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          'Leaderboard',
+                                          style: TextStyle(
+                                            fontSize: 18,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'see who\'s most active',
+                                          style: TextStyle(
+                                            color: isDarkMode 
+                                                ? TugColors.darkTextSecondary 
+                                                : TugColors.lightTextSecondary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Container(
+                                    width: 32,
+                                    height: 32,
+                                    decoration: BoxDecoration(
+                                      color: TugColors.primaryPurple.withOpacity(isDarkMode ? 0.1 : 0.05),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Center(
+                                      child: Icon(
+                                        Icons.chevron_right,
+                                        color: TugColors.primaryPurple,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    ...values.map((value) {
-                      final Color valueColor = Color(
-                        int.parse(value.color.substring(1), radix: 16) + 0xFF000000,
-                      );
-                      
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        decoration: BoxDecoration(
-                          color: isDarkMode ? TugColors.darkSurface : Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: isDarkMode 
-                                  ? Colors.black.withOpacity(0.2) 
-                                  : Colors.black.withOpacity(0.05),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                          border: Border.all(
-                            color: isDarkMode 
-                                ? Colors.white.withOpacity(0.05) 
-                                : Colors.black.withOpacity(0.03),
-                            width: 0.5,
-                          ),
-                        ),
-                        child: ListTile(
-                          leading: Container(
-                            width: 40,
-                            height: 40,
-                            decoration: BoxDecoration(
-                              color: valueColor.withOpacity(isDarkMode ? 0.15 : 0.1),
-                              borderRadius: BorderRadius.circular(8),
-                              border: Border.all(
-                                color: valueColor.withOpacity(isDarkMode ? 0.3 : 0.2),
-                                width: 1,
-                              ),
-                            ),
-                            child: Center(
-                              child: Container(
-                                width: 16,
-                                height: 16,
-                                decoration: BoxDecoration(
-                                  color: valueColor,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                            ),
-                          ),
-                          title: Text(
-                            value.name,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          subtitle: Text(
-                            'Importance: ${value.importance}',
-                            style: TextStyle(
-                              color: isDarkMode 
-                                  ? TugColors.darkTextSecondary 
-                                  : TugColors.lightTextSecondary,
-                              fontSize: 13,
-                            ),
-                          ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              // Star Icons based on importance
-                              ...List.generate(
-                                value.importance,
-                                (index) => Icon(
-                                  Icons.star,
-                                  size: 16,
-                                  color: valueColor,
-                                ),
-                              ),
-                              ...List.generate(
-                                5 - value.importance,
-                                (index) => Icon(
-                                  Icons.star_border,
-                                  size: 16,
-                                  color: valueColor.withOpacity(0.3),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              const Icon(Icons.chevron_right),
-                            ],
-                          ),
-                          onTap: _navigateToValuesEdit,
-                        ),
-                      );
-                    }),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Feature Cards Section
-                    const Text(
-                      'Features',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    
-                    // Activity Tracking Card
-                    GestureDetector(
-                      onTap: () {
-                        context.go('/activities');
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 16),
-                        decoration: BoxDecoration(
-                          color: isDarkMode ? TugColors.darkSurface : Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: isDarkMode 
-                                  ? Colors.black.withOpacity(0.2) 
-                                  : Colors.black.withOpacity(0.05),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                          border: Border.all(
-                            color: isDarkMode 
-                                ? Colors.white.withOpacity(0.05) 
-                                : Colors.black.withOpacity(0.03),
-                            width: 0.5,
-                          ),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: TugColors.primaryPurple.withOpacity(isDarkMode ? 0.2 : 0.1),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: TugColors.primaryPurple.withOpacity(isDarkMode ? 0.3 : 0.2),
-                                    width: 1,
-                                  ),
-                                ),
-                                child: const Icon(
-                                  Icons.history,
-                                  color: TugColors.primaryPurple,
-                                  size: 28,
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Activity Tracking',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Log time spent on your values, and don\'t be lying',
-                                      style: TextStyle(
-                                        color: isDarkMode 
-                                            ? TugColors.darkTextSecondary 
-                                            : TugColors.lightTextSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Container(
-                                width: 32,
-                                height: 32,
-                                decoration: BoxDecoration(
-                                  color: TugColors.primaryPurple.withOpacity(isDarkMode ? 0.1 : 0.05),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Center(
-                                  child: Icon(
-                                    Icons.chevron_right,
-                                    color: TugColors.primaryPurple,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    
-                    // Progress Tracking Card
-                    GestureDetector(
-                      onTap: () {
-                        context.go('/progress');
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 16),
-                        decoration: BoxDecoration(
-                          color: isDarkMode ? TugColors.darkSurface : Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: isDarkMode 
-                                  ? Colors.black.withOpacity(0.2) 
-                                  : Colors.black.withOpacity(0.05),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                          border: Border.all(
-                            color: isDarkMode 
-                                ? Colors.white.withOpacity(0.05) 
-                                : Colors.black.withOpacity(0.03),
-                            width: 0.5,
-                          ),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: TugColors.secondaryTeal.withOpacity(isDarkMode ? 0.2 : 0.1),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: TugColors.secondaryTeal.withOpacity(isDarkMode ? 0.3 : 0.2),
-                                    width: 1,
-                                  ),
-                                ),
-                                child: const Icon(
-                                  Icons.insights,
-                                  color: TugColors.secondaryTeal,
-                                  size: 28,
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Progress',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'see how you\'re doing',
-                                      style: TextStyle(
-                                        color: isDarkMode 
-                                            ? TugColors.darkTextSecondary 
-                                            : TugColors.lightTextSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Container(
-                                width: 32,
-                                height: 32,
-                                decoration: BoxDecoration(
-                                  color: TugColors.secondaryTeal.withOpacity(isDarkMode ? 0.1 : 0.05),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Center(
-                                  child: Icon(
-                                    Icons.chevron_right,
-                                    color: TugColors.secondaryTeal,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    
-                    // Leaderboard Card
-                    GestureDetector(
-                      onTap: () {
-                        context.push('/rankings');
-                      },
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: isDarkMode ? TugColors.darkSurface : Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: isDarkMode 
-                                  ? Colors.black.withOpacity(0.2) 
-                                  : Colors.black.withOpacity(0.05),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                          border: Border.all(
-                            color: isDarkMode 
-                                ? Colors.white.withOpacity(0.05) 
-                                : Colors.black.withOpacity(0.03),
-                            width: 0.5,
-                          ),
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: TugColors.primaryPurple.withOpacity(isDarkMode ? 0.2 : 0.1),
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
-                                    color: TugColors.primaryPurple.withOpacity(isDarkMode ? 0.3 : 0.2),
-                                    width: 1,
-                                  ),
-                                ),
-                                child: const Icon(
-                                  Icons.leaderboard,
-                                  color: TugColors.primaryPurple,
-                                  size: 28,
-                                ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      'Leaderboard',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'see who\'s most active',
-                                      style: TextStyle(
-                                        color: isDarkMode 
-                                            ? TugColors.darkTextSecondary 
-                                            : TugColors.lightTextSecondary,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Container(
-                                width: 32,
-                                height: 32,
-                                decoration: BoxDecoration(
-                                  color: TugColors.primaryPurple.withOpacity(isDarkMode ? 0.1 : 0.05),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: const Center(
-                                  child: Icon(
-                                    Icons.chevron_right,
-                                    color: TugColors.primaryPurple,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 );
               }
               

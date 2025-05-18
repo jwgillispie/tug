@@ -39,6 +39,10 @@ dependencies:
   google_fonts: ^6.1.0
   flutter_svg: ^2.0.9
   
+  # Third-party integrations
+  strava_client: ^2.1.3 # Strava API integration
+  uni_links: ^0.5.1 # For handling deep links
+  
   # Utilities
   intl: ^0.20.2
   logger: ^2.0.2+1
@@ -48,7 +52,7 @@ dependencies:
   font_awesome_flutter: ^10.6.0 
   shared_preferences: ^2.5.3
   confetti: ^0.8.0
-  url_launcher: ^6.3.1
+  url_launcher: ^6.3.1 # For URL handling and deep links
 
 dev_dependencies:
   flutter_test:

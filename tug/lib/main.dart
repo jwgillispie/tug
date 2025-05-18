@@ -40,30 +40,33 @@ import 'screens/values/values_input_screen.dart';
 import 'screens/about/about_screen.dart';
 import 'screens/profile/edit_profile_screen.dart';
 import 'screens/profile/change_password_screen.dart';
+import 'screens/profile/accounts_screen.dart';
+import 'screens/profile/import_activities_screen.dart';
 import 'screens/achievements/achievements_screen.dart';
 import 'screens/rankings/rankings_screen.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
     // IMPORTANT: Initialize environment config first to avoid the error
     await EnvConfig.load();
-    
+
     // Initialize cache service before repositories
     final cacheService = CacheService();
     await cacheService.initialize();
     debugPrint('Cache service initialized');
-    
+
     // Initialize local storage next
     if (!kIsWeb) {
       await LocalStorage.initialize();
     }
-    
+
     // Initialize Firebase
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    
+
     // Initialize RevenueCat for subscriptions
     final subscriptionService = SubscriptionService();
     await subscriptionService.initialize();
@@ -71,8 +74,10 @@ Future<void> main() async {
 
     final apiService = ApiService();
     final authRepository = AuthRepository();
-    final valuesRepository = ValuesRepository(apiService: apiService, cacheService: cacheService);
-    final activityRepository = ActivityRepository(apiService: apiService, cacheService: cacheService);
+    final valuesRepository =
+        ValuesRepository(apiService: apiService, cacheService: cacheService);
+    final activityRepository =
+        ActivityRepository(apiService: apiService, cacheService: cacheService);
 
     runApp(TugApp(
       authRepository: authRepository,
@@ -168,12 +173,12 @@ class _TugAppState extends State<TugApp> {
 
     // Load theme preference
     _themeBloc.add(ThemeLoaded());
-    
+
     // Load subscription state
     _subscriptionBloc.add(LoadSubscriptions());
 
     _router = GoRouter(
-      initialLocation: '/splash',  // Start at splash screen
+      initialLocation: '/splash', // Start at splash screen
       refreshListenable: GoRouterRefreshStream(_authBloc.stream),
       routes: [
         GoRoute(
@@ -207,6 +212,16 @@ class _TugAppState extends State<TugApp> {
         GoRoute(
           path: '/change-password',
           builder: (context, state) => const ChangePasswordScreen(),
+        ),
+        // Accounts Screen (for managing connected services)
+        GoRoute(
+          path: '/accounts',
+          builder: (context, state) => const AccountsScreen(),
+        ),
+        // Import Activities Screen
+        GoRoute(
+          path: '/import-activities',
+          builder: (context, state) => const ImportActivitiesScreen(),
         ),
         // Achievements Screen
         GoRoute(
@@ -313,7 +328,8 @@ class _TugAppState extends State<TugApp> {
         // If user is logged in
         if (isLoggedIn) {
           // If coming from home to values input, allow it
-          if (isValuesInputScreen && state.uri.queryParameters['fromHome'] == 'true') {
+          if (isValuesInputScreen &&
+              state.uri.queryParameters['fromHome'] == 'true') {
             return null;
           }
 
@@ -327,9 +343,13 @@ class _TugAppState extends State<TugApp> {
         }
 
         // If not logged in
-        if (!isLoggedIn && 
-            !(isLoginScreen || isSignupScreen || isForgotPasswordScreen || 
-              isTermsScreen || isPrivacyScreen || isSplashScreen)) {
+        if (!isLoggedIn &&
+            !(isLoginScreen ||
+                isSignupScreen ||
+                isForgotPasswordScreen ||
+                isTermsScreen ||
+                isPrivacyScreen ||
+                isSplashScreen)) {
           return '/login';
         }
 

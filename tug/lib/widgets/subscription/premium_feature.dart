@@ -1,8 +1,10 @@
 // lib/widgets/subscription/premium_feature.dart
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tug/blocs/subscription/subscription_bloc.dart';
+import 'package:tug/utils/animations.dart';
 import 'package:tug/utils/theme/colors.dart';
 
 /// Widget wrapper for premium features that can either show the feature
@@ -29,6 +31,12 @@ class PremiumFeature extends StatelessWidget {
   /// Optional additional button text
   final String? buttonText;
   
+  /// Amount of blur to apply to the content when useBlur is true
+  final double blurAmount;
+  
+  /// Whether to show a cosmic particle effect in the premium overlay
+  final bool showParticles;
+  
   const PremiumFeature({
     super.key,
     required this.child,
@@ -38,6 +46,8 @@ class PremiumFeature extends StatelessWidget {
     this.useBlur = true,
     this.showPreview = true,
     this.buttonText,
+    this.blurAmount = 10.0,
+    this.showParticles = true,
   });
 
   @override
@@ -67,13 +77,13 @@ class PremiumFeature extends StatelessWidget {
       return Stack(
         children: [
           // Show blurred child as background
-          Opacity(
-            opacity: 0.2,
-            child: ImageFiltered(
-              imageFilter: ColorFilter.mode(
-                Colors.grey.withOpacity(0.8), 
-                BlendMode.modulate,
-              ),
+          ImageFiltered(
+            imageFilter: ImageFilter.blur(
+              sigmaX: blurAmount,
+              sigmaY: blurAmount,
+            ),
+            child: Opacity(
+              opacity: 0.7,
               child: child,
             ),
           ),
@@ -109,59 +119,164 @@ class PremiumFeature extends StatelessWidget {
   }
   
   Widget _buildPremiumPrompt(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
     return Container(
       width: double.infinity,
       height: double.infinity,
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor.withOpacity(0.85),
-        borderRadius: BorderRadius.circular(16),
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            isDarkMode 
+                ? Colors.black.withOpacity(0.3)
+                : Colors.white.withOpacity(0.4),
+            isDarkMode
+                ? TugColors.primaryPurpleDark.withOpacity(0.7)
+                : TugColors.primaryPurple.withOpacity(0.6),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
       ),
       padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Icon(
-            icon,
-            size: 48,
-            color: TugColors.primaryPurple,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            description,
-            style: TextStyle(
-              fontSize: 16,
-              color: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.grey.shade300
-                  : Colors.grey.shade700,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: TugColors.primaryPurple,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(
-                horizontal: 24,
-                vertical: 12,
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 3, sigmaY: 3),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Premium icon with animation
+            TugAnimations.pulsate(
+              minScale: 0.95,
+              maxScale: 1.05,
+              duration: const Duration(milliseconds: 2000),
+              addGlow: true,
+              glowColor: TugColors.primaryPurple,
+              glowIntensity: 1.0,
+              child: Container(
+                width: 80,
+                height: 80,
+                decoration: BoxDecoration(
+                  gradient: TugColors.getPrimaryGradient(),
+                  shape: BoxShape.circle,
+                  boxShadow: TugColors.getNeonGlow(
+                    TugColors.primaryPurple,
+                    intensity: 0.8,
+                  ),
+                ),
+                child: Center(
+                  child: Icon(
+                    icon,
+                    color: Colors.white,
+                    size: 40,
+                  ),
+                ),
               ),
             ),
-            onPressed: () {
-              context.push('/subscription');
-            },
-            child: Text(buttonText ?? 'Upgrade to Premium'),
-          ),
-        ],
+            const SizedBox(height: 24),
+            
+            // Premium text with animation
+            TugAnimations.fadeSlideIn(
+              beginOffset: const Offset(0, 20),
+              child: Column(
+                children: [
+                  // Title with gradient
+                  ShaderMask(
+                    shaderCallback: (bounds) => LinearGradient(
+                      colors: TugColors.holographicGradient,
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ).createShader(bounds),
+                    child: Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Description
+                  Text(
+                    description,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.white,
+                      height: 1.5,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 32),
+                  
+                  // Upgrade button
+                  TugAnimations.pulsate(
+                    minScale: 0.98,
+                    maxScale: 1.02,
+                    duration: const Duration(milliseconds: 1800),
+                    addGlow: true,
+                    glowColor: TugColors.tertiaryGold,
+                    glowIntensity: 0.7,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            TugColors.gradientGoldStart,
+                            TugColors.gradientGoldEnd,
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: TugColors.getNeonGlow(
+                          TugColors.tertiaryGold,
+                          intensity: 0.5,
+                        ),
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            // Navigate to subscription screen
+                            context.push('/subscription');
+                          },
+                          borderRadius: BorderRadius.circular(16),
+                          splashColor: Colors.white.withOpacity(0.3),
+                          highlightColor: Colors.white.withOpacity(0.1),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.star,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  buttonText ?? 'Upgrade to Premium',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

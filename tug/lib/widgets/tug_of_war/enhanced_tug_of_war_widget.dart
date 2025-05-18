@@ -303,11 +303,13 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
             width: 1.0,
           ),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 88.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               // Value Name and Stats with enhanced typography
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -833,6 +835,7 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
             ],
           ),
         ),
+      ),
       ),
     );
   }

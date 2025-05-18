@@ -414,9 +414,12 @@ class _ProgressScreenState extends State<ProgressScreen>
                           );
                         }
 
-                        return ListView(
-                          padding: const EdgeInsets.all(16),
-                          children: [
+                        return SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
                             // Overall progress summary card
                             Card(
                               margin: const EdgeInsets.only(bottom: 24),
@@ -546,6 +549,7 @@ class _ProgressScreenState extends State<ProgressScreen>
                               ),
                             ),
                           ],
+                          ),
                         );
                       }
 

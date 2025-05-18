@@ -480,44 +480,60 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                             ),
                           ),
                           const SizedBox(height: 24),
-                          ElevatedButton.icon(
-                            style: TugButtons.primaryButtonStyle(isDark: Theme.of(context).brightness == Brightness.dark),
-                            onPressed: _showAddActivitySheet,
-                            icon: const Icon(Icons.add),
-                            label: const Text('Log Activity'),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              ElevatedButton.icon(
+                                style: TugButtons.primaryButtonStyle(isDark: Theme.of(context).brightness == Brightness.dark),
+                                onPressed: _showAddActivitySheet,
+                                icon: const Icon(Icons.add),
+                                label: const Text('Log Activity'),
+                              ),
+                              const SizedBox(width: 12),
+                              OutlinedButton.icon(
+                                onPressed: () {
+                                  Navigator.of(context).pushNamed('/import-activities');
+                                },
+                                icon: const Icon(Icons.cloud_download),
+                                label: const Text('Import from Strava'),
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(color: TugColors.primaryPurple),
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
                     );
                   }
     
-                  return ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: activities.length,
-                    itemBuilder: (context, index) {
-                      final activity = activities[index];
-    
-                      // Find value name and color using BLoC
-                      String valueName = 'Unknown Value';
-                      String valueColor = '#7C3AED'; // Default purple
-    
-                      // Get value name from BLoC state
-                      final valuesState = context.watch<ValuesBloc>().state;
-                      if (valuesState is ValuesLoaded) {
-                        final value = valuesState.values.firstWhere(
-                          (v) => v.id == activity.valueId,
-                          orElse: () => const ValueModel(
-                            name: 'Unknown Value',
-                            importance: 1,
-                            color: '#7C3AED',
-                          ),
-                        );
-                        valueName = value.name;
-                        valueColor = value.color;
-                      }
-    
-                      return _buildActivityCard(activity, valueName, valueColor);
-                    },
+                  return SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 88),
+                    child: Column(
+                      children: activities.map((activity) {
+                        // Find value name and color using BLoC
+                        String valueName = 'Unknown Value';
+                        String valueColor = '#7C3AED'; // Default purple
+      
+                        // Get value name from BLoC state
+                        final valuesState = context.watch<ValuesBloc>().state;
+                        if (valuesState is ValuesLoaded) {
+                          final value = valuesState.values.firstWhere(
+                            (v) => v.id == activity.valueId,
+                            orElse: () => const ValueModel(
+                              name: 'Unknown Value',
+                              importance: 1,
+                              color: '#7C3AED',
+                            ),
+                          );
+                          valueName = value.name;
+                          valueColor = value.color;
+                        }
+      
+                        return _buildActivityCard(activity, valueName, valueColor);
+                      }).toList(),
+                    ),
                   );
                 },
               ),
@@ -722,6 +738,18 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                   title: 'Total Time',
                   value: '${totalTime}m',
                   icon: Icons.access_time,
+                ),
+                
+                // Import button
+                IconButton(
+                  onPressed: () {
+                    Navigator.of(context).pushNamed('/import-activities');
+                  },
+                  tooltip: 'Import Activities',
+                  icon: const Icon(
+                    Icons.cloud_download_outlined,
+                    color: TugColors.primaryPurple,
+                  ),
                 ),
               ],
             );

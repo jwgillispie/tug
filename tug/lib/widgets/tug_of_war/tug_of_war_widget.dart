@@ -181,9 +181,11 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
               width: _isHovered ? 1.0 : 0.5,
             ),
           ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 22.0, vertical: 20.0),
-            child: Column(
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(22.0, 20.0, 22.0, 88.0),
+              child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Value Name and Stats with enhanced typography
@@ -547,6 +549,7 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
                 ),
               ],
             ),
+          ),
           ),
         ),
       ),

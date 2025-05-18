@@ -7,6 +7,7 @@ import 'package:tug/blocs/theme/theme_bloc.dart';
 import 'package:tug/services/achievement_service.dart';
 import 'package:tug/utils/theme/colors.dart';
 import 'package:tug/utils/theme/buttons.dart';
+import 'package:tug/widgets/profile/strava_import_widget.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:tug/services/user_service.dart';
 
@@ -47,7 +48,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       if (mounted) {
         setState(() {
-          _unlockedAchievements = achievements.where((a) => a.isUnlocked).length;
+          _unlockedAchievements =
+              achievements.where((a) => a.isUnlocked).length;
           _loadingAchievements = false;
         });
       }
@@ -178,22 +180,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               ),
                               const SizedBox(height: 4),
                               _loadingAchievements
-                                ? const Text(
-                                    'Loading...',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.grey,
+                                  ? const Text(
+                                      'Loading...',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey,
+                                      ),
+                                    )
+                                  : Text(
+                                      _unlockedAchievements > 0
+                                          ? 'You\'ve unlocked $_unlockedAchievements ${_unlockedAchievements == 1 ? 'achievement' : 'achievements'}'
+                                          : 'View your progress and unlocked rewards',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey.shade600,
+                                      ),
                                     ),
-                                  )
-                                : Text(
-                                    _unlockedAchievements > 0
-                                        ? 'You\'ve unlocked $_unlockedAchievements ${_unlockedAchievements == 1 ? 'achievement' : 'achievements'}'
-                                        : 'View your progress and unlocked rewards',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      color: Colors.grey.shade600,
-                                    ),
-                                  ),
                             ],
                           ),
                         ),
@@ -229,7 +231,58 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ],
             ),
-            
+
+            // Connected accounts section
+            _buildSettingsSection(
+              title: 'CONNECTED ACCOUNTS',
+              items: [
+                _buildSettingsItem(
+                  icon: Icons.link_rounded,
+                  title: 'Manage Connected Accounts',
+                  subtitle: 'Connect to Strava and other services',
+                  onTap: () {
+                    context.push('/accounts');
+                  },
+                ),
+                // Add Strava import widget for easy connection
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  child: StravaImportWidget(
+                    onConnectionStatusChanged: (isConnected) {
+                      // If connected, show a snackbar
+                      if (isConnected) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Connected to Strava successfully!'),
+                            backgroundColor: TugColors.success,
+                          ),
+                        );
+                      }
+                    },
+                  ),
+                ),
+                // Import activities button
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: ElevatedButton.icon(
+                    icon: const Icon(Icons.cloud_download),
+                    label: const Text('Import Strava Activities'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: TugColors.primaryPurple,
+                      foregroundColor: Colors.white,
+                      minimumSize: const Size(double.infinity, 48),
+                    ),
+                    onPressed: () {
+                      context.push('/import-activities');
+                    },
+                  ),
+                ),
+              ],
+            ),
+
             _buildSettingsSection(
               title: 'ABOUT',
               items: [
@@ -296,6 +349,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ),
+
+            // Add extra space at bottom to ensure logout button is visible
+            SizedBox(height: 60),
           ],
         ),
       ),
@@ -361,7 +417,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
               const SizedBox(height: 16),
               OutlinedButton(
-                style: TugButtons.secondaryButtonStyle(isDark: Theme.of(context).brightness == Brightness.dark),
+                style: TugButtons.secondaryButtonStyle(
+                    isDark: Theme.of(context).brightness == Brightness.dark),
                 onPressed: () {
                   context.push('/edit-profile');
                 },

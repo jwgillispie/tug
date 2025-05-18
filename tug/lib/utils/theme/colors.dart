@@ -1,134 +1,246 @@
-// Futuristic colors.dart with modern sci-fi palette
+// Ultra-modern colors with immersive cosmic palette for spectacular visual impact
 import 'package:flutter/material.dart';
+import 'dart:ui';
 
 class TugColors {
-  // Primary Colors - luxurious neon purple palette
-  static const primaryPurple = Color(0xFF8A4FFF); // vibrant violet purple
-  static const primaryPurpleDark = Color(0xFF6E3AE0); // deeper rich purple for contrast
-  static const primaryPurpleLight = Color(0xFFB285FF); // ethereal lavender for accents
+  // Primary Colors - vibrant cosmic spectrum
+  static const primaryPurple = Color(0xFF9D34FF); // electric vibrant purple
+  static const primaryPurpleDark = Color(0xFF7000E0); // deep cosmic purple for contrast
+  static const primaryPurpleLight = Color(0xFFBE7DFF); // radiant lavender for highlights
 
-  // Secondary colors - holographic palette
-  static const secondaryTeal = Color(0xFF00ECEF); // electric neon blue-teal
-  static const secondaryTealDark = Color(0xFF00B3B5); // deeper teal for contrast
-  static const tertiaryGold = Color(0xFFFFC837); // energetic golden yellow
+  // Secondary colors - spectral energy palette
+  static const secondaryTeal = Color(0xFF00F7FF); // brilliant cyan that pops
+  static const secondaryTealDark = Color(0xFF00C2FF); // deep electric blue for depth
+  static const tertiaryGold = Color(0xFFFFD000); // brilliant gold with higher saturation
 
-  // Accent Colors for variety - expanded cyber palette
-  static const accentBlue = Color(0xFF3E7EFF); // electric royal blue
-  static const accentPink = Color(0xFFFF3E9A); // neon magenta pink
-  static const accentOrange = Color(0xFFFF7A45); // energetic orange
-  static const accentGreen = Color(0xFF27F2AA); // cyberpunk mint green
-  static const accentPurple = Color(0xFFD860FF); // bright holographic purple
+  // Accent Colors - expanded celestial palette
+  static const accentBlue = Color(0xFF2D6CFF); // vibrant ultramarine blue
+  static const accentPink = Color(0xFFFF2D8E); // electric hot pink for emotion
+  static const accentOrange = Color(0xFFFF6B1F); // vivid tangerine orange
+  static const accentGreen = Color(0xFF0DFFC2); // energetic aqua green
+  static const accentPurple = Color(0xFFE545FF); // brilliant magenta purple
 
-  // Achievement type colors - enhanced for visual impact
-  static const streakOrange = Color(0xFFFF7A45); // energetic orange for streaks
-  static const balanceBlue = Color(0xFF3E7EFF); // vibrant blue for balance
-  static const frequencyGreen = Color(0xFF27F2AA); // fresh mint for frequency
-  static const milestoneRed = Color(0xFFFF3E9A); // neon pink for milestones
-  static const specialPurple = Color(0xFFD860FF); // bright purple for special achievements
+  // Achievement type colors - heightened spectral impact
+  static const streakOrange = Color(0xFFFF5F00); // intense fiery orange for streaks
+  static const balanceBlue = Color(0xFF0091FF); // dynamic azure blue for balance
+  static const frequencyGreen = Color(0xFF00FFB8); // high-energy turquoise for frequency
+  static const milestoneRed = Color(0xFFFF2D6C); // vibrant ruby red for milestones
+  static const specialPurple = Color(0xFFE545FF); // electric magenta for special achievements
 
-  // Status Colors - futuristic and accessible
-  static const success = Color(0xFF27F2AA); // neon success green
-  static const warning = Color(0xFFFFBB38); // clear warning amber
-  static const error = Color(0xFFFF4A6E); // bright error red
-  static const info = Color(0xFF3E7EFF); // informational blue
+  // Status Colors - highly visible with enhanced accessibility
+  static const success = Color(0xFF00E676); // vibrant emerald success green
+  static const warning = Color(0xFFFFCC00); // intense amber for warnings
+  static const error = Color(0xFFFF2D55); // brilliant crimson for errors
+  static const info = Color(0xFF2D95FF); // clear sapphire blue for information
 
-  // Light Theme Neutrals - clean with subtle iridescence
-  static const lightBackground = Color(0xFFF8F9FE); // crisp cool white with slight blue tint
-  static const lightSurface = Color(0xFFFEFEFF); // pure white surface
-  static const lightSurfaceVariant = Color(0xFFEEF1FF); // subtle purple tint
-  static const lightTextPrimary = Color(0xFF191A2E); // near-black with blue undertone
-  static const lightTextSecondary = Color(0xFF4E5080); // rich muted purple-gray
-  static const lightBorder = Color(0xFFE0E3F5); // subtle lavender border
+  // Light Theme Neutrals - crystalline with aurora iridescence
+  static const lightBackground = Color(0xFFF9FAFF); // pristine ice-white with subtle blue aura
+  static const lightSurface = Color(0xFFFFFFFF); // pure absolute white for surfaces
+  static const lightSurfaceVariant = Color(0xFFF2F5FF); // delicate blue-tinted white for depth
+  static const lightTextPrimary = Color(0xFF14153A); // deep indigo-black for contrast
+  static const lightTextSecondary = Color(0xFF4D4DB8); // vibrant cosmic indigo for secondary text
+  static const lightBorder = Color(0xFFE0E8FF); // celestial blue-white border
 
-  // Dark Theme Neutrals - cyberpunk night shades
-  static const darkBackground = Color(0xFF0A0B1E); // deep space background
-  static const darkSurface = Color(0xFF151629); // rich navy surface
-  static const darkSurfaceVariant = Color(0xFF232542); // elevated purple dark surface
-  static const darkTextPrimary = Color(0xFFF8F9FF); // crisp white text
-  static const darkTextSecondary = Color(0xFFC2C8E8); // soft lavender-gray text
-  static const darkBorder = Color(0xFF3A3D60); // subtle indigo border
+  // Dark Theme Neutrals - deep space with nebula undertones
+  static const darkBackground = Color(0xFF070825); // abyssal deep space background
+  static const darkSurface = Color(0xFF121336); // rich cosmic indigo surface
+  static const darkSurfaceVariant = Color(0xFF1B1F4E); // elevated nebula surface
+  static const darkTextPrimary = Color(0xFFFAFCFF); // brilliant starlight white text
+  static const darkTextSecondary = Color(0xFFCED3FF); // cosmic blue-white for secondary text
+  static const darkBorder = Color(0xFF363D8C); // glowing nebula border
 
-  // Gradient colors for futuristic effects
-  static const gradientPurpleStart = Color(0xFF8224FF);
-  static const gradientPurpleEnd = Color(0xFFB285FF);
+  // Gradient colors for spectacular visual effects
+  static const gradientPurpleStart = Color(0xFF7000E0);
+  static const gradientPurpleEnd = Color(0xFFBE7DFF);
 
-  static const gradientTealStart = Color(0xFF00B3B5);
-  static const gradientTealEnd = Color(0xFF00F5F8);
+  static const gradientTealStart = Color(0xFF00C2FF);
+  static const gradientTealEnd = Color(0xFF00F7FF);
 
-  static const gradientGoldStart = Color(0xFFE8A617);
-  static const gradientGoldEnd = Color(0xFFFFC837);
+  static const gradientGoldStart = Color(0xFFFF9D00);
+  static const gradientGoldEnd = Color(0xFFFFD000);
+  
+  // New additional gradients for variety
+  static const gradientPinkStart = Color(0xFFFF2D6C);
+  static const gradientPinkEnd = Color(0xFFFF90BD);
+  
+  static const gradientBlueStart = Color(0xFF2D6CFF);
+  static const gradientBlueEnd = Color(0xFF90C8FF);
 
-  // Holographic gradient with vibrant colors
+  // Spectacular holographic gradient with enhanced vibrancy
   static final holographicGradient = [
-    const Color(0xFF3E7EFF), // blue
-    const Color(0xFF8A4FFF), // purple
-    const Color(0xFFD860FF), // pink-purple
-    const Color(0xFFFF3E9A), // pink
+    const Color(0xFF2D95FF), // electric blue
+    const Color(0xFF9D34FF), // vibrant purple
+    const Color(0xFFE545FF), // brilliant magenta
+    const Color(0xFFFF2D8E), // hot pink
   ];
 
-  // Futuristic UI gradients - for backgrounds and cards
-  static final cyberpunkGradient = [
-    const Color(0xFF00ECEF), // cyber teal
-    const Color(0xFF3E7EFF), // electric blue
-    const Color(0xFF8A4FFF), // neon purple
+  // Aurora borealis inspired UI gradients
+  static final auroraGradient = [
+    const Color(0xFF00F7FF), // brilliant cyan
+    const Color(0xFF2D6CFF), // deep blue
+    const Color(0xFF9D34FF), // vibrant purple
+    const Color(0xFFE545FF), // magenta
+  ];
+  
+  // Cosmic nebula inspired gradient
+  static final nebulaGradient = [
+    const Color(0xFF0DFFC2), // aqua green
+    const Color(0xFF00C2FF), // bright blue
+    const Color(0xFF9D34FF), // vibrant purple
+    const Color(0xFFE545FF), // magenta
   ];
 
-  // Subtle tech gradients for cards
+  // Subtle crystalline gradients for cards and surfaces
   static final lightGradient = [
     const Color(0xFFFFFFFF),
-    const Color(0xFFF6F7FE),
+    const Color(0xFFF2F5FF),
   ];
 
   static final darkGradient = [
-    const Color(0xFF1E2038),
-    const Color(0xFF151629),
+    const Color(0xFF121336),
+    const Color(0xFF070825),
+  ];
+  
+  // Dynamic ambient gradients for backgrounds
+  static final lightAmbientGradient = [
+    const Color(0xFFFFFFFF),
+    const Color(0xFFF2F5FF),
+    const Color(0xFFEFEFFF),
+    const Color(0xFFE6EBFF),
+  ];
+  
+  static final darkAmbientGradient = [
+    const Color(0xFF070825),
+    const Color(0xFF0A0D35),
+    const Color(0xFF121336),
+    const Color(0xFF1B1F4E),
   ];
 
-  // Modern card shadows - revised for depth
+  // Enhanced depth shadows with atmospheric light diffusion
   static List<BoxShadow> getShadow(bool isDark) => [
         BoxShadow(
           color: isDark
-              ? Colors.black.withOpacity(0.35)
-              : const Color(0xFF9CADF3).withOpacity(0.18),
-          offset: const Offset(0, 4),
-          blurRadius: 20,
+              ? Colors.black.withOpacity(0.45)
+              : const Color(0xFF7D98FF).withOpacity(0.22),
+          offset: const Offset(0, 6),
+          blurRadius: 24,
           spreadRadius: 0,
         ),
         BoxShadow(
           color: isDark
-              ? primaryPurple.withOpacity(0.05)
-              : primaryPurple.withOpacity(0.03),
+              ? primaryPurple.withOpacity(0.08)
+              : primaryPurple.withOpacity(0.05),
           offset: const Offset(0, 2),
-          blurRadius: 10,
+          blurRadius: 12,
           spreadRadius: 0,
         ),
       ];
 
-  // Neon glow effect for highlights
+  // Spectacular neon glow effect with enhanced luminosity
   static List<BoxShadow> getNeonGlow(Color color, {double intensity = 1.0}) => [
         BoxShadow(
-          color: color.withOpacity(0.6 * intensity),
-          blurRadius: 8,
-          spreadRadius: 0,
+          color: color.withOpacity(0.7 * intensity),
+          blurRadius: 10,
+          spreadRadius: 1,
         ),
         BoxShadow(
-          color: color.withOpacity(0.3 * intensity),
-          blurRadius: 24,
+          color: color.withOpacity(0.4 * intensity),
+          blurRadius: 32,
           spreadRadius: 2 * intensity,
         ),
       ];
+      
+  // Ultra glow for special elements with extreme brightness
+  static List<BoxShadow> getUltraGlow(Color color, {double intensity = 1.0}) => [
+        BoxShadow(
+          color: color.withOpacity(0.8 * intensity),
+          blurRadius: 12,
+          spreadRadius: 2,
+        ),
+        BoxShadow(
+          color: color.withOpacity(0.5 * intensity),
+          blurRadius: 24,
+          spreadRadius: 3 * intensity,
+        ),
+        BoxShadow(
+          color: color.withOpacity(0.3 * intensity),
+          blurRadius: 40,
+          spreadRadius: 4 * intensity,
+        ),
+      ];
 
-  // Glass effect - for frosted glass components
+  // Enhanced glass effect with improved translucency
   static Color glassEffect(bool isDark) => isDark
-      ? const Color(0xFF191B31).withOpacity(0.7)
-      : Colors.white.withOpacity(0.7);
+      ? const Color(0xFF151A44).withOpacity(0.75)
+      : Colors.white.withOpacity(0.75);
+      
+  // Better blur parameters for backdrop filters (use with glassEffect)
+  static double glassBlurRadius(bool isDark) => isDark ? 15.0 : 10.0;
+      
+  // Advanced glass border colors
+  static Color glassBorder(bool isDark) => isDark
+      ? Colors.white.withOpacity(0.15)
+      : Colors.white.withOpacity(0.5);
 
-  // Shimmer effect colors
+  // Enhanced shimmer effect colors with better contrast
   static Color shimmerBase(bool isDark) => isDark
-      ? const Color(0xFF232537)
-      : const Color(0xFFEEF1FF);
+      ? const Color(0xFF1B1F4E) // deeper nebula base
+      : const Color(0xFFE6EBFF); // crystalline blue base
 
   static Color shimmerHighlight(bool isDark) => isDark
-      ? const Color(0xFF3A3D60)
-      : Colors.white;
+      ? const Color(0xFF363D8C) // bright cosmic highlight
+      : Colors.white; // pure white highlight
+  
+  // New cosmic particle effects for special UI elements
+  static Color cosmicDustColor(bool isDark) => isDark
+      ? const Color(0xFFE545FF).withOpacity(0.7) // bright nebula dust
+      : const Color(0xFF9D34FF).withOpacity(0.4); // cosmic purple particles
+      
+  // Additional gradient constructors for common use cases
+  static LinearGradient getPrimaryGradient({bool vertical = false, bool reversed = false}) {
+    final List<Color> colors = reversed 
+        ? [gradientPurpleEnd, gradientPurpleStart]
+        : [gradientPurpleStart, gradientPurpleEnd];
+        
+    return LinearGradient(
+      colors: colors,
+      begin: vertical ? Alignment.topCenter : Alignment.centerLeft,
+      end: vertical ? Alignment.bottomCenter : Alignment.centerRight,
+    );
+  }
+  
+  static LinearGradient getSecondaryGradient({bool vertical = false, bool reversed = false}) {
+    final List<Color> colors = reversed 
+        ? [gradientTealEnd, gradientTealStart]
+        : [gradientTealStart, gradientTealEnd];
+        
+    return LinearGradient(
+      colors: colors,
+      begin: vertical ? Alignment.topCenter : Alignment.centerLeft,
+      end: vertical ? Alignment.bottomCenter : Alignment.centerRight,
+    );
+  }
+  
+  // Radial gradient for cosmic effects
+  static RadialGradient getCosmicGlow(Color centerColor, Color outerColor, {double radius = 1.0}) {
+    return RadialGradient(
+      colors: [
+        centerColor,
+        Color.lerp(centerColor, outerColor, 0.5) ?? outerColor,
+        outerColor,
+      ],
+      stops: const [0.0, 0.5, 1.0],
+      radius: radius,
+    );
+  }
+  
+  // Sweeping cosmic gradient for circular progress indicators and radial elements
+  static SweepGradient getCosmicSweepGradient(List<Color> colors) {
+    return SweepGradient(
+      colors: colors,
+      stops: List.generate(colors.length, (index) => index / (colors.length - 1)),
+      startAngle: 0,
+      endAngle: 2 * 3.14159,
+    );
+  }
 }
