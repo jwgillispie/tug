@@ -45,26 +45,49 @@ class ActivityModel extends Equatable {
   }
 
   Map<String, dynamic> toJson() {
+    // Create a UTC version of the date to ensure consistent timezone handling
+    final dateUtc = DateTime.utc(
+      date.year,
+      date.month,
+      date.day,
+      date.hour,
+      date.minute,
+      date.second,
+    );
+    
     return {
       'name': name,
       'value_id': valueId,
       'duration': duration,
-      'date': date.toIso8601String(),
+      'date': dateUtc.toIso8601String(), // Use UTC ISO format for API compatibility
       'notes': notes,
       'import_source': importSource,
     };
   }
 
   factory ActivityModel.fromJson(Map<String, dynamic> json) {
+    // Parse dates and ensure they're in UTC format
+    DateTime parseToUtc(String dateStr) {
+      final parsed = DateTime.parse(dateStr);
+      return DateTime.utc(
+        parsed.year,
+        parsed.month,
+        parsed.day,
+        parsed.hour,
+        parsed.minute,
+        parsed.second,
+      );
+    }
+    
     return ActivityModel(
       id: json['id'],
       name: json['name'],
       valueId: json['value_id'],
       duration: json['duration'],
-      date: DateTime.parse(json['date']),
+      date: parseToUtc(json['date']),
       notes: json['notes'],
       createdAt: json['created_at'] != null 
-          ? DateTime.parse(json['created_at']) 
+          ? parseToUtc(json['created_at']) 
           : null,
       importSource: json['import_source'],
     );

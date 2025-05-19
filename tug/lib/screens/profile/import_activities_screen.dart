@@ -1,5 +1,6 @@
 // lib/screens/profile/import_activities_screen.dart
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:tug/models/activity_model.dart';
 import 'package:tug/models/value_model.dart';
 import 'package:tug/services/activity_service.dart';
@@ -137,7 +138,7 @@ class _ImportActivitiesScreenState extends State<ImportActivitiesScreen> {
         );
 
         // Return to previous screen
-        Navigator.of(context).pop();
+        context.pop();
       }
     } catch (e) {
       debugPrint('Error importing activities: $e');

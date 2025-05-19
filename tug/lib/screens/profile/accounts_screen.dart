@@ -1,6 +1,7 @@
 // lib/screens/profile/accounts_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:tug/services/strava_service.dart';
 import 'package:tug/services/values_service.dart';
 import 'package:tug/utils/theme/colors.dart';
@@ -78,8 +79,136 @@ class _AccountsScreenState extends State<AccountsScreen> {
       _isConnecting = true;
     });
 
+    // First try the automatic OAuth flow
     final result = await _stravaService.connect();
 
+    // If it failed, offer the manual code entry option
+    if (!result.success) {
+      setState(() {
+        _isConnecting = false;
+      });
+      
+      bool tryManualEntry = false;
+      
+      // Check if this is a redirect error (common on Safari/iOS)
+      // If so, we can go directly to manual entry for a better user experience
+      if (result.redirectError) {
+        // Show a simplified dialog explaining the issue
+        await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Browser Redirect Issue'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'The browser could not complete the redirect to "localhost". This is a common issue on mobile devices.',
+                  style: TextStyle(fontSize: 14),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'You will now be redirected to a screen where you can manually enter the authorization code.',
+                  style: TextStyle(fontSize: 14),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  '1. Go back to the Strava authorization page in your browser',
+                  style: TextStyle(fontSize: 14),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  '2. Complete the authorization (if you have not already)',
+                  style: TextStyle(fontSize: 14),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  '3. Copy the code from the URL (it will be after "code=" in the URL)',
+                  style: TextStyle(fontSize: 14),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Need help? Tap "How to Find the Code" on the next screen.',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+              ],
+            ),
+            actions: [
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: TugColors.primaryPurple,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Continue to Manual Entry'),
+              ),
+            ],
+          ),
+        );
+        
+        // Automatically proceed to manual entry
+        tryManualEntry = true;
+      } else {
+        // Show standard dialog asking if they want to try manual code entry
+        tryManualEntry = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Connection Failed'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Error: ${result.errorMessage ?? 'Unknown error'}'),
+                const SizedBox(height: 16),
+                const Text(
+                  'Would you like to enter the authorization code manually?',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'This option is useful if the automatic redirect is not working.',
+                  style: TextStyle(fontSize: 14),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: TugColors.primaryPurple,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Enter Code Manually'),
+              ),
+            ],
+          ),
+        ) ?? false;
+      }
+      
+      if (tryManualEntry && mounted) {
+        // Navigate to the manual code input screen
+        final success = await context.push<bool>('/strava-code-input') ?? false;
+        
+        if (success && mounted) {
+          // Refresh the state if manually connected
+          await _checkStravaConnection();
+          return;
+        }
+      }
+      
+      // Show error dialog if manual entry wasn't chosen or failed
+      if (mounted && !_isStravaConnected) {
+        _showErrorDialog('Failed to connect to Strava',
+            result.errorMessage ?? 'Unknown error');
+      }
+      return;
+    }
+
+    // If automatic OAuth worked, update the state
     setState(() {
       _isStravaConnected = result.success;
       if (result.success) {
@@ -87,11 +216,6 @@ class _AccountsScreenState extends State<AccountsScreen> {
       }
       _isConnecting = false;
     });
-
-    if (!result.success) {
-      _showErrorDialog('Failed to connect to Strava',
-          result.errorMessage ?? 'Unknown error');
-    }
   }
 
   Future<void> _disconnectFromStrava() async {
@@ -208,6 +332,24 @@ class _AccountsScreenState extends State<AccountsScreen> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Connected Accounts'),
+        actions: [
+          // Help button for Strava setup
+          IconButton(
+            icon: const Icon(Icons.help_outline),
+            tooltip: 'Strava Setup Guide',
+            onPressed: () {
+              context.push('/strava-setup-guide');
+            },
+          ),
+          // Debug button for Strava
+          IconButton(
+            icon: const Icon(Icons.bug_report),
+            tooltip: 'Strava Debug',
+            onPressed: () {
+              context.push('/strava-debug');
+            },
+          ),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())

@@ -151,6 +151,38 @@ class ApiService {
       await _setAuthHeader();
       final fullUrl = '${_dio.options.baseUrl}$path/';
       debugPrint('POST request to: $fullUrl');
+      
+      // Log request data to debug datetime issues
+      debugPrint('Request data before processing: $data');
+      
+      // Special handling for activity data to solve datetime issues
+      // Convert ISO8601 timestamps with timezone to simple YYYY-MM-DD format
+      if (path.contains('/activities') && data is Map) {
+        Map<String, dynamic> processedData = Map<String, dynamic>.from(data);
+        
+        // Process date fields to strip timezone information
+        if (processedData.containsKey('date')) {
+          try {
+            final dateStr = processedData['date'];
+            if (dateStr is String && dateStr.contains('T')) {
+              // Parse the ISO8601 string
+              final parsedDate = DateTime.parse(dateStr);
+              // Format as YYYY-MM-DD
+              final dateOnly = "${parsedDate.year.toString().padLeft(4, '0')}-"
+                  "${parsedDate.month.toString().padLeft(2, '0')}-"
+                  "${parsedDate.day.toString().padLeft(2, '0')}";
+              processedData['date'] = dateOnly;
+              debugPrint('Converted date from $dateStr to $dateOnly');
+            }
+          } catch (e) {
+            debugPrint('Error processing date field: $e');
+          }
+        }
+        
+        // Apply the processed data
+        data = processedData;
+        debugPrint('Request data after processing: $data');
+      }
 
       final response = await _dio.post('$path/', data: data);
 
@@ -216,7 +248,36 @@ class ApiService {
       // Log the exact URL and headers
       debugPrint('PATCH request to: ${_dio.options.baseUrl}$path');
       debugPrint('PATCH headers: ${_dio.options.headers}');
-      debugPrint('PATCH data: $data');
+      debugPrint('PATCH data before processing: $data');
+
+      // Special handling for activity data to solve datetime issues
+      // Convert ISO8601 timestamps with timezone to simple YYYY-MM-DD format
+      if (path.contains('/activities') && data is Map) {
+        Map<String, dynamic> processedData = Map<String, dynamic>.from(data);
+        
+        // Process date fields to strip timezone information
+        if (processedData.containsKey('date')) {
+          try {
+            final dateStr = processedData['date'];
+            if (dateStr is String && dateStr.contains('T')) {
+              // Parse the ISO8601 string
+              final parsedDate = DateTime.parse(dateStr);
+              // Format as YYYY-MM-DD
+              final dateOnly = "${parsedDate.year.toString().padLeft(4, '0')}-"
+                  "${parsedDate.month.toString().padLeft(2, '0')}-"
+                  "${parsedDate.day.toString().padLeft(2, '0')}";
+              processedData['date'] = dateOnly;
+              debugPrint('Converted date from $dateStr to $dateOnly');
+            }
+          } catch (e) {
+            debugPrint('Error processing date field: $e');
+          }
+        }
+        
+        // Apply the processed data
+        data = processedData;
+        debugPrint('PATCH data after processing: $data');
+      }
 
       // Make the request
       final response = await _dio.patch(path, data: data);

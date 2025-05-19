@@ -42,6 +42,9 @@ import 'screens/profile/edit_profile_screen.dart';
 import 'screens/profile/change_password_screen.dart';
 import 'screens/profile/accounts_screen.dart';
 import 'screens/profile/import_activities_screen.dart';
+import 'screens/profile/strava_setup_guide_screen.dart';
+import 'screens/profile/strava_debug_screen.dart';
+import 'screens/profile/strava_code_input_screen.dart';
 import 'screens/achievements/achievements_screen.dart';
 import 'screens/rankings/rankings_screen.dart';
 
@@ -222,6 +225,21 @@ class _TugAppState extends State<TugApp> {
         GoRoute(
           path: '/import-activities',
           builder: (context, state) => const ImportActivitiesScreen(),
+        ),
+        // Strava Setup Guide Screen
+        GoRoute(
+          path: '/strava-setup-guide',
+          builder: (context, state) => const StravaSetupGuideScreen(),
+        ),
+        // Strava Debug Screen
+        GoRoute(
+          path: '/strava-debug',
+          builder: (context, state) => const StravaDebugScreen(),
+        ),
+        // Strava Code Input Screen
+        GoRoute(
+          path: '/strava-code-input',
+          builder: (context, state) => const StravaCodeInputScreen(),
         ),
         // Achievements Screen
         GoRoute(
