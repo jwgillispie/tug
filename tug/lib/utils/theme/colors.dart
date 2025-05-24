@@ -1,6 +1,5 @@
 // Ultra-modern colors with immersive cosmic palette for spectacular visual impact
 import 'package:flutter/material.dart';
-import 'dart:ui';
 
 class TugColors {
   // Primary Colors - vibrant cosmic spectrum

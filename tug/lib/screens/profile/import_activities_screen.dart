@@ -303,7 +303,7 @@ class _ImportActivitiesScreenState extends State<ImportActivitiesScreen> {
           ),
         ),
         const SizedBox(height: 16),
-        ..._stravaActivities.map(_buildActivityItem).toList(),
+        ..._stravaActivities.map(_buildActivityItem),
         // Extra space at bottom for the import button
         const SizedBox(height: 70),
       ],

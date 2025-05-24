@@ -112,11 +112,11 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
 
   String _getMessage() {
     if (_position < -0.4) {
-      return "Your actions aren't matching your stated importance.";
+      return "your actions aren't matching your stated importance.";
     } else if (_position > 0.4) {
-      return "You're investing more time than your stated importance suggests.";
+      return "you're investing more time than your stated importance suggests.";
     } else {
-      return "Good alignment between your stated values and actions!";
+      return "good alignment between your stated values and actions!";
     }
   }
 
@@ -537,7 +537,7 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          'Community average: ${widget.communityAverage} mins/day',
+                          'community average: ${widget.communityAverage} mins/day',
                           style: TugTextStyles.caption.copyWith(
                             color: _valueColor.withOpacity(0.9),
                             fontWeight: FontWeight.w500,

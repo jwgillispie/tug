@@ -67,7 +67,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Profile'),
+        title: Text(
+          'profile',
+          style: TextStyle(
+            color: Theme.of(context).brightness == Brightness.dark 
+                ? TugColors.darkTextPrimary 
+                : TugColors.lightTextPrimary,
+          ),
+        ),
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -77,18 +84,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             // Settings sections
             _buildSettingsSection(
-              title: 'ACCOUNT',
+              title: 'account',
               items: [
                 _buildSettingsItem(
                   icon: Icons.person_outline,
-                  title: 'Edit Profile',
+                  title: 'edit profile',
                   onTap: () {
                     context.push('/edit-profile');
                   },
                 ),
                 _buildSettingsItem(
                   icon: Icons.lock_outline,
-                  title: 'Change Password',
+                  title: 'change password',
                   onTap: () {
                     context.push('/change-password');
                   },
@@ -97,11 +104,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
 
             _buildSettingsSection(
-              title: 'PREFERENCES',
+              title: 'preferences',
               items: [
                 _buildSwitchSettingsItem(
                   icon: Icons.dark_mode_outlined,
-                  title: 'Dark Mode',
+                  title: 'dark mode',
                   value: _darkModeEnabled,
                   onChanged: (value) {
                     setState(() {
@@ -115,7 +122,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
 
             _buildSettingsSection(
-              title: 'PROGRESS',
+              title: 'progress',
               items: [
                 // Special achievements item with badge
                 InkWell(
@@ -172,7 +179,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Achievements',
+                                'achievements',
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w500,
@@ -189,8 +196,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     )
                                   : Text(
                                       _unlockedAchievements > 0
-                                          ? 'You\'ve unlocked $_unlockedAchievements ${_unlockedAchievements == 1 ? 'achievement' : 'achievements'}'
-                                          : 'View your progress and unlocked rewards',
+                                          ? 'you\'ve unlocked $_unlockedAchievements ${_unlockedAchievements == 1 ? 'achievement' : 'achievements'}'
+                                          : 'view your progress and unlocked rewards',
                                       style: TextStyle(
                                         fontSize: 14,
                                         color: Colors.grey.shade600,
@@ -211,20 +218,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
 
             _buildSettingsSection(
-              title: 'SUBSCRIPTION',
+              title: 'subscription',
               items: [
                 _buildSettingsItem(
                   icon: Icons.workspace_premium,
-                  title: 'Premium Subscription',
-                  subtitle: 'Manage your subscription',
+                  title: 'premium subscription',
+                  subtitle: 'manage your subscription',
                   onTap: () {
                     context.push('/subscription');
                   },
                 ),
                 _buildSettingsItem(
                   icon: Icons.account_circle_outlined,
-                  title: 'Account & Purchases',
-                  subtitle: 'Manage your account and restore purchases',
+                  title: 'account & purchases',
+                  subtitle: 'manage your account and restore purchases',
                   onTap: () {
                     context.push('/account');
                   },
@@ -234,12 +241,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             // Connected accounts section
             _buildSettingsSection(
-              title: 'CONNECTED ACCOUNTS',
+              title: 'connected accounts',
               items: [
                 _buildSettingsItem(
                   icon: Icons.link_rounded,
-                  title: 'Manage Connected Accounts',
-                  subtitle: 'Connect to Strava and other services',
+                  title: 'manage connected accounts',
+                  subtitle: 'connect to strava and other services',
                   onTap: () {
                     context.push('/accounts');
                   },
@@ -256,7 +263,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       if (isConnected) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                            content: Text('Connected to Strava successfully!'),
+                            content: Text('connected to strava successfully!'),
                             backgroundColor: TugColors.success,
                           ),
                         );
@@ -269,7 +276,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   child: ElevatedButton.icon(
                     icon: const Icon(Icons.cloud_download),
-                    label: const Text('Import Strava Activities'),
+                    label: const Text('import strava activities'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: TugColors.primaryPurple,
                       foregroundColor: Colors.white,
@@ -284,32 +291,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
 
             _buildSettingsSection(
-              title: 'ABOUT',
+              title: 'about',
               items: [
                 _buildSettingsItem(
                   icon: Icons.info_outline,
-                  title: 'About Tug',
+                  title: 'about tug',
                   onTap: () {
                     context.push('/about');
                   },
                 ),
                 _buildSettingsItem(
                   icon: Icons.help_outline,
-                  title: 'Help & Support',
+                  title: 'help & support',
                   onTap: () {
                     context.push('/help');
                   },
                 ),
                 _buildSettingsItem(
                   icon: Icons.description_outlined,
-                  title: 'Terms of Service',
+                  title: 'terms of service',
                   onTap: () {
                     context.push('/terms');
                   },
                 ),
                 _buildSettingsItem(
                   icon: Icons.privacy_tip_outlined,
-                  title: 'Privacy Policy',
+                  title: 'privacy policy',
                   onTap: () {
                     context.push('/privacy');
                   },
@@ -333,7 +340,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   onPressed: _isDeleting ? null : _showLogoutConfirmationDialog,
                   icon: const Icon(Icons.logout),
-                  label: const Text('Log Out'),
+                  label: const Text('log out'),
                 ),
               ),
             ),
@@ -422,7 +429,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onPressed: () {
                   context.push('/edit-profile');
                 },
-                child: const Text('Edit Profile'),
+                child: const Text('edit profile'),
               ),
             ],
           ),
@@ -597,7 +604,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             bottom: 8,
           ),
           child: Text(
-            'DANGER ZONE',
+            'danger zone',
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.bold,
@@ -638,7 +645,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'Delete Account',
+                          'delete account',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
@@ -647,7 +654,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Permanently delete your account and all data',
+                          'permanently delete your account and all data',
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.grey.shade600,
@@ -673,25 +680,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Account'),
+        title: const Text('delete account'),
         content: const Text(
-          'Are you sure you want to delete your account? This will permanently delete ALL your data including:\n\n'
-          '• Your profile information\n'
-          '• All your values\n'
-          '• All your activities\n'
-          '• All your settings\n\n'
-          'This action cannot be undone.',
+          'are you sure you want to delete your account? this will permanently delete ALL your data including:\n\n'
+          '• your profile information\n'
+          '• all your values\n'
+          '• all your activities\n'
+          '• all your settings\n\n'
+          'this action cannot be undone.',
           style: TextStyle(height: 1.5),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text('cancel'),
           ),
           TextButton(
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             onPressed: _deleteAccount,
-            child: const Text('Delete Everything'),
+            child: const Text('delete everything'),
           ),
         ],
       ),
@@ -727,12 +734,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             return true;
           },
           child: AlertDialog(
-            title: const Text('Confirm Your Password'),
+            title: const Text('confirm your password'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
-                  'For security reasons, please enter your password to confirm account deletion',
+                  'for security reasons, please enter your password to confirm account deletion',
                   style: TextStyle(height: 1.5),
                 ),
                 const SizedBox(height: 16),
@@ -740,7 +747,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   controller: passwordController,
                   obscureText: true,
                   decoration: const InputDecoration(
-                    labelText: 'Password',
+                    labelText: 'password',
                     border: OutlineInputBorder(),
                   ),
                   onSubmitted: (value) {
@@ -761,7 +768,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             actions: [
               TextButton(
                 onPressed: safePop,
-                child: const Text('Cancel'),
+                child: const Text('cancel'),
               ),
               TextButton(
                 style: TextButton.styleFrom(foregroundColor: Colors.red),
@@ -777,7 +784,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   }
                   safePop();
                 },
-                child: const Text('Confirm'),
+                child: const Text('confirm'),
               ),
             ],
           ),
@@ -887,12 +894,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           showDialog(
             context: context,
             builder: (context) => AlertDialog(
-              title: const Text('Authentication Failed'),
+              title: const Text('authentication failed'),
               content: Text(errorMessage),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('OK'),
+                  child: const Text('ok'),
                 ),
               ],
             ),
@@ -936,7 +943,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Your account has been deleted'),
+                content: Text('your account has been deleted'),
                 backgroundColor: Colors.red,
               ),
             );
@@ -960,12 +967,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           showDialog(
             context: context,
             builder: (context) => AlertDialog(
-              title: const Text('Error'),
-              content: Text('Error deleting account: ${e.toString()}'),
+              title: const Text('error'),
+              content: Text('error deleting account: ${e.toString()}'),
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('OK'),
+                  child: const Text('ok'),
                 ),
               ],
             ),
@@ -979,12 +986,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Log Out'),
-        content: const Text('Are you sure you want to log out?'),
+        title: const Text('log out'),
+        content: const Text('are you sure you want to log out?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text('cancel'),
           ),
           TextButton(
             style: TextButton.styleFrom(foregroundColor: Colors.red),
@@ -992,7 +999,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Navigator.pop(context);
               context.read<AuthBloc>().add(LogoutEvent());
             },
-            child: const Text('Log Out'),
+            child: const Text('log out'),
           ),
         ],
       ),

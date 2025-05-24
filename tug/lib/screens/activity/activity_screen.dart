@@ -1,6 +1,8 @@
 // lib/screens/activity/activity_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:tug/blocs/activities/activities_bloc.dart';
 import 'package:tug/blocs/values/bloc/values_bloc.dart';
@@ -33,6 +35,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   bool _isFirstLoad = true;
+  bool _showSwipeHint = true;
 
   @override
   void initState() {
@@ -54,12 +57,25 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
     
     _animationController.forward();
 
+    // Check if swipe hint has been shown before
+    _checkSwipeHintStatus();
+
     // Show add activity form if flagged
     if (widget.showAddForm) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _showAddActivitySheet();
       });
     }
+  }
+  
+  void _checkSwipeHintStatus() async {
+    // This could be expanded to use SharedPreferences to persist the setting
+    // For now, we'll just use the in-memory state
+    // If we wanted to persist:
+    // final prefs = await SharedPreferences.getInstance();
+    // setState(() {
+    //   _showSwipeHint = prefs.getBool('show_swipe_hint') ?? true;
+    // });
   }
   
   @override
@@ -115,12 +131,18 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Log Activity',
+                    'log activity',
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   IconButton(
                     icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.pop(context),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      // Navigate back to the activities route when manually closed
+                      if (widget.showAddForm) {
+                        GoRouter.of(context).go('/activities');
+                      }
+                    },
                   ),
                 ],
               ),
@@ -129,6 +151,10 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                 listener: (context, state) {
                   if (state is ActivityOperationSuccess) {
                     Navigator.pop(context);
+                    // Navigate back to the activities route to reset the form state
+                    if (widget.showAddForm) {
+                      GoRouter.of(context).go('/activities');
+                    }
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(state.message),
@@ -215,7 +241,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Value: $valueName',
+                        'value: $valueName',
                         style: TextStyle(
                           fontWeight: FontWeight.w500,
                           color: isDarkMode ? TugColors.darkTextPrimary : TugColors.lightTextPrimary,
@@ -230,7 +256,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                 isDarkMode: isDarkMode,
                 icon: Icons.timer_outlined,
                 iconColor: color,
-                label: 'Duration:',
+                label: 'duration:',
                 value: '${activity.duration} minutes',
               ),
               const SizedBox(height: 12),
@@ -238,13 +264,13 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                 isDarkMode: isDarkMode,
                 icon: Icons.calendar_today_outlined,
                 iconColor: color,
-                label: 'Date:',
+                label: 'date:',
                 value: DateFormat('MMM d, yyyy').format(activity.date),
               ),
               if (activity.notes != null) ...[
                 const SizedBox(height: 16),
                 Text(
-                  'Notes:',
+                  'notes:',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: isDarkMode ? TugColors.darkTextPrimary : TugColors.lightTextPrimary,
@@ -279,14 +305,14 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: const Text('Close'),
+              child: const Text('close'),
             ),
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
                 _showEditActivitySheet(activity);
               },
-              child: const Text('Edit'),
+              child: const Text('edit'),
             ),
             TextButton(
               onPressed: () {
@@ -296,7 +322,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
               style: TextButton.styleFrom(
                 foregroundColor: TugColors.error,
               ),
-              child: const Text('Delete'),
+              child: const Text('delete'),
             ),
           ],
         );
@@ -326,14 +352,14 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
       builder: (context) {
         return AlertDialog(
           backgroundColor: isDarkMode ? TugColors.darkSurface : Colors.white,
-          title: const Text('Delete Activity'),
-          content: Text('You deadass want to delete "${activity.name}"?'),
+          title: const Text('delete activity'),
+          content: Text('you deadass want to delete "${activity.name}"?'),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: const Text('Nah'),
+              child: const Text('nah'),
             ),
             TextButton(
               onPressed: () {
@@ -347,7 +373,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
               style: TextButton.styleFrom(
                 foregroundColor: TugColors.error,
               ),
-              child: const Text('Yes bro'),
+              child: const Text('yes bro'),
             ),
           ],
         );
@@ -381,7 +407,14 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Activities'),
+        title: Text(
+          'activities',
+          style: TextStyle(
+            color: Theme.of(context).brightness == Brightness.dark 
+                ? TugColors.darkTextPrimary 
+                : TugColors.lightTextPrimary,
+          ),
+        ),
         actions: [
           IconButton(
             icon:
@@ -487,7 +520,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                                 style: TugButtons.primaryButtonStyle(isDark: Theme.of(context).brightness == Brightness.dark),
                                 onPressed: _showAddActivitySheet,
                                 icon: const Icon(Icons.add),
-                                label: const Text('Log Activity'),
+                                label: const Text('log activity'),
                               ),
                               const SizedBox(width: 12),
                               OutlinedButton.icon(
@@ -495,7 +528,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                                   Navigator.of(context).pushNamed('/import-activities');
                                 },
                                 icon: const Icon(Icons.cloud_download),
-                                label: const Text('Import from Strava'),
+                                label: const Text('import from strava'),
                                 style: OutlinedButton.styleFrom(
                                   side: const BorderSide(color: TugColors.primaryPurple),
                                 ),
@@ -511,28 +544,86 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 88),
                     child: Column(
-                      children: activities.map((activity) {
-                        // Find value name and color using BLoC
-                        String valueName = 'Unknown Value';
-                        String valueColor = '#7C3AED'; // Default purple
-      
-                        // Get value name from BLoC state
-                        final valuesState = context.watch<ValuesBloc>().state;
-                        if (valuesState is ValuesLoaded) {
-                          final value = valuesState.values.firstWhere(
-                            (v) => v.id == activity.valueId,
-                            orElse: () => const ValueModel(
-                              name: 'Unknown Value',
-                              importance: 1,
-                              color: '#7C3AED',
+                      children: [
+                        // Swipe hint
+                        if (activities.isNotEmpty && _showSwipeHint)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 16),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                              decoration: BoxDecoration(
+                                color: isDarkMode 
+                                    ? TugColors.primaryPurple.withOpacity(0.15) 
+                                    : TugColors.primaryPurple.withOpacity(0.08),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: TugColors.primaryPurple.withOpacity(0.3),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.swipe_left,
+                                        color: TugColors.primaryPurple,
+                                        size: 20,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'Swipe left on activities to edit or delete',
+                                        style: TextStyle(
+                                          color: TugColors.primaryPurple,
+                                          fontWeight: FontWeight.w500,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  IconButton(
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                    icon: Icon(
+                                      Icons.close,
+                                      color: TugColors.primaryPurple,
+                                      size: 16,
+                                    ),
+                                    onPressed: () {
+                                      setState(() {
+                                        _showSwipeHint = false;
+                                      });
+                                    },
+                                  ),
+                                ],
+                              ),
                             ),
-                          );
-                          valueName = value.name;
-                          valueColor = value.color;
-                        }
-      
-                        return _buildActivityCard(activity, valueName, valueColor);
-                      }).toList(),
+                          ),
+                        // Activities list
+                        ...activities.map((activity) {
+                          // Find value name and color using BLoC
+                          String valueName = 'unknown value';
+                          String valueColor = '#7C3AED'; // Default purple
+        
+                          // Get value name from BLoC state
+                          final valuesState = context.watch<ValuesBloc>().state;
+                          if (valuesState is ValuesLoaded) {
+                            final value = valuesState.values.firstWhere(
+                              (v) => v.id == activity.valueId,
+                              orElse: () => const ValueModel(
+                                name: 'unknown value',
+                                importance: 1,
+                                color: '#7C3AED',
+                              ),
+                            );
+                            valueName = value.name;
+                            valueColor = value.color;
+                          }
+        
+                          return _buildActivityCard(activity, valueName, valueColor);
+                        }),
+                      ],
                     ),
                   );
                 },
@@ -569,96 +660,139 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
           width: 0.5,
         ),
       ),
-      child: InkWell(
-        onTap: () {
-          _showActivityDetails(activity, valueName, valueColor);
-        },
+      child: ClipRRect(
         borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
+        child: Slidable(
+          key: ValueKey(activity.id ?? activity.name),
+          endActionPane: ActionPane(
+            motion: const DrawerMotion(),
+            dragDismissible: false,
             children: [
-              Container(
-                width: 54,
-                height: 54,
-                decoration: BoxDecoration(
-                  color: color.withOpacity(isDarkMode ? 0.15 : 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(
-                    color: color.withOpacity(isDarkMode ? 0.3 : 0.2),
-                    width: 1,
-                  ),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      '${activity.duration}',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: color,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'min',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: color.withOpacity(0.7),
-                      ),
-                    ),
-                  ],
-                ),
+              SlidableAction(
+                onPressed: (_) {
+                  // Hide the swipe hint after user has used the functionality
+                  if (_showSwipeHint) {
+                    setState(() {
+                      _showSwipeHint = false;
+                    });
+                  }
+                  _showEditActivitySheet(activity);
+                },
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+                icon: Icons.edit,
+                label: 'Edit',
+                padding: const EdgeInsets.all(0),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      activity.name,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: isDarkMode ? TugColors.darkTextPrimary : TugColors.lightTextPrimary,
+              SlidableAction(
+                onPressed: (_) {
+                  // Hide the swipe hint after user has used the functionality
+                  if (_showSwipeHint) {
+                    setState(() {
+                      _showSwipeHint = false;
+                    });
+                  }
+                  _showDeleteConfirmation(activity);
+                },
+                backgroundColor: TugColors.error,
+                foregroundColor: Colors.white,
+                icon: Icons.delete,
+                label: 'Delete',
+                padding: const EdgeInsets.all(0),
+              ),
+            ],
+          ),
+          child: InkWell(
+            onTap: () {
+              _showActivityDetails(activity, valueName, valueColor);
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Container(
+                    width: 54,
+                    height: 54,
+                    decoration: BoxDecoration(
+                      color: color.withOpacity(isDarkMode ? 0.15 : 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: color.withOpacity(isDarkMode ? 0.3 : 0.2),
+                        width: 1,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Row(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Container(
-                          width: 8,
-                          height: 8,
-                          decoration: BoxDecoration(
+                        Text(
+                          '${activity.duration}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
                             color: color,
-                            shape: BoxShape.circle,
                           ),
                         ),
-                        const SizedBox(width: 6),
+                        const SizedBox(height: 2),
                         Text(
-                          valueName,
+                          'min',
                           style: TextStyle(
-                            color: color.withOpacity(0.8),
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const Spacer(),
-                        Text(
-                          _getRelativeTime(activity.date),
-                          style: TextStyle(
-                            color: isDarkMode 
-                                ? Colors.grey.shade400 
-                                : Colors.grey.shade600,
                             fontSize: 12,
+                            color: color.withOpacity(0.7),
                           ),
                         ),
                       ],
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          activity.name,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: isDarkMode ? TugColors.darkTextPrimary : TugColors.lightTextPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Container(
+                              width: 8,
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: color,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              valueName,
+                              style: TextStyle(
+                                color: color.withOpacity(0.8),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const Spacer(),
+                            Text(
+                              _getRelativeTime(activity.date),
+                              style: TextStyle(
+                                color: isDarkMode 
+                                    ? Colors.grey.shade400 
+                                    : Colors.grey.shade600,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
@@ -725,17 +859,17 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 _buildSummaryItem(
-                  title: 'Activities',
+                  title: 'activities',
                   value: activities.length.toString(),
                   icon: Icons.history,
                 ),
                 _buildSummaryItem(
-                  title: 'Values',
+                  title: 'values',
                   value: valuesMap.length.toString(),
                   icon: Icons.star,
                 ),
                 _buildSummaryItem(
-                  title: 'Total Time',
+                  title: 'total time',
                   value: '${totalTime}m',
                   icon: Icons.access_time,
                 ),
@@ -745,7 +879,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                   onPressed: () {
                     Navigator.of(context).pushNamed('/import-activities');
                   },
-                  tooltip: 'Import Activities',
+                  tooltip: 'import activities',
                   icon: const Icon(
                     Icons.cloud_download_outlined,
                     color: TugColors.primaryPurple,
@@ -871,7 +1005,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'Filter Activities',
+                'filter activities',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
@@ -904,7 +1038,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
 
               return DropdownButtonFormField<String?>(
                 decoration: InputDecoration(
-                  labelText: 'Filter by Value',
+                  labelText: 'filter by value',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
@@ -918,7 +1052,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                   DropdownMenuItem<String?>(
                     value: null,
                     child: Text(
-                      'All Values',
+                      'all values',
                       style: TextStyle(
                         color: isDarkMode 
                             ? TugColors.darkTextPrimary 
@@ -1026,7 +1160,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                   },
                   child: InputDecorator(
                     decoration: InputDecoration(
-                      labelText: 'Start Date',
+                      labelText: 'start date',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
@@ -1095,7 +1229,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                   },
                   child: InputDecorator(
                     decoration: InputDecoration(
-                      labelText: 'End Date',
+                      labelText: 'end date',
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),

@@ -144,11 +144,11 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
 
   String _getMessage() {
     if (_position < -0.4) {
-      return "Your actions aren't matching your stated importance.";
+      return "your actions aren't matching your stated importance.";
     } else if (_position > 0.4) {
-      return "You're investing more time than your stated importance suggests.";
+      return "you're investing more time than your stated importance suggests.";
     } else {
-      return "Good alignment between your stated values and actions!";
+      return "good alignment between your stated values and actions!";
     }
   }
 
@@ -684,7 +684,7 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
                                   mainAxisSize: MainAxisSize.min,
                                   children: const [
                                     Text(
-                                      'Drag to test balance!',
+                                      'Drag that thang!',
                                       style: TextStyle(
                                         color: Colors.white,
                                         fontWeight: FontWeight.bold,
@@ -810,7 +810,7 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    'Community average: ${widget.communityAverage} mins/day',
+                    'community average: ${widget.communityAverage} mins/day',
                     style: TextStyle(
                       fontSize: 12,
                       color: _valueColor.withOpacity(0.8),

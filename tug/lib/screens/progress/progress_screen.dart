@@ -18,8 +18,8 @@ class ProgressScreen extends StatefulWidget {
 
 class _ProgressScreenState extends State<ProgressScreen>
     with AutomaticKeepAliveClientMixin {
-  String _selectedTimeframe = 'Daily';
-  final List<String> _timeframes = ['Daily', 'Weekly', 'Monthly'];
+  String _selectedTimeframe = 'daily';
+  final List<String> _timeframes = ['daily', 'weekly', 'monthly'];
 
   bool _isLoading = false;
   bool _isFirstLoad = true;
@@ -127,7 +127,7 @@ class _ProgressScreenState extends State<ProgressScreen>
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content:
-                Text('Could not load activity data. Please try again later.'),
+                Text('could not load activity data. please try again later.'),
             backgroundColor: Colors.orange,
           ),
         );
@@ -143,7 +143,7 @@ class _ProgressScreenState extends State<ProgressScreen>
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Refreshing data...'),
+        content: Text('refreshing data...'),
         duration: Duration(seconds: 1),
       ),
     );
@@ -152,11 +152,11 @@ class _ProgressScreenState extends State<ProgressScreen>
   DateTime getStartDate(String timeframe) {
     final now = DateTime.now();
     switch (timeframe) {
-      case 'Daily':
+      case 'daily':
         return DateTime(now.year, now.month, now.day); // Start of today
-      case 'Weekly':
+      case 'weekly':
         return now.subtract(const Duration(days: 7));
-      case 'Monthly':
+      case 'monthly':
         return now.subtract(const Duration(days: 30));
       default:
         return now.subtract(const Duration(days: 7));
@@ -237,7 +237,7 @@ class _ProgressScreenState extends State<ProgressScreen>
     }
 
     if (values.isEmpty) {
-      return 'Add some values and we\'ll give you some super helpful advice.';
+      return 'add some values and we\'ll give you some super helpful advice.';
     }
 
     if (mostAligned != null && leastAligned != null) {
@@ -247,14 +247,14 @@ class _ProgressScreenState extends State<ProgressScreen>
         final communityAvg = activityData['community_avg'] as int;
 
         if (minutes < communityAvg) {
-          return 'Your "${mostAligned.name}" value is looking GOOD! Put some more time towards "${leastAligned.name}" if you\'re fr about it.';
+          return 'your "${mostAligned.name}" value is looking good! put some more time towards "${leastAligned.name}" if you\'re fr about it.';
         } else {
-          return 'Your "${mostAligned.name}" value has a real nice tug! You\'re spending hella time on "${leastAligned.name}", just making sure you\'re all good with that';
+          return 'your "${mostAligned.name}" value has a real nice tug! you\'re spending hella time on "${leastAligned.name}", just making sure you\'re all good with that';
         }
       }
     }
 
-    return 'Tug some activities and we\'ll get you some fantastic insights.';
+    return 'tug some activities and we\'ll get you some fantastic insights.';
   }
 
   Widget _buildSummaryItem(
@@ -298,7 +298,14 @@ class _ProgressScreenState extends State<ProgressScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Progress'),
+        title: Text(
+          'progress',
+          style: TextStyle(
+            color: Theme.of(context).brightness == Brightness.dark 
+                ? TugColors.darkTextPrimary 
+                : TugColors.lightTextPrimary,
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -316,7 +323,7 @@ class _ProgressScreenState extends State<ProgressScreen>
             child: Row(
               children: [
                 const Text(
-                  'Timeframe:',
+                  'timeframe:',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                   ),
@@ -387,7 +394,7 @@ class _ProgressScreenState extends State<ProgressScreen>
                               ),
                               const SizedBox(height: 16),
                               Text(
-                                'Error loading values: ${state.message}',
+                                'error loading values: ${state.message}',
                                 textAlign: TextAlign.center,
                               ),
                               const SizedBox(height: 16),
@@ -397,7 +404,7 @@ class _ProgressScreenState extends State<ProgressScreen>
                                       .read<ValuesBloc>()
                                       .add(LoadValues(forceRefresh: true));
                                 },
-                                child: const Text('Retry'),
+                                child: const Text('retry'),
                               ),
                             ],
                           ),
@@ -410,7 +417,7 @@ class _ProgressScreenState extends State<ProgressScreen>
 
                         if (values.isEmpty) {
                           return const Center(
-                            child: Text('Hello? Values? Add some!'),
+                            child: Text('hello? values? add some!'),
                           );
                         }
 
@@ -429,7 +436,7 @@ class _ProgressScreenState extends State<ProgressScreen>
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      '$_selectedTimeframe Summary',
+                                      '${_selectedTimeframe.toLowerCase()} summary',
                                       style: Theme.of(context)
                                           .textTheme
                                           .titleLarge,
@@ -443,7 +450,7 @@ class _ProgressScreenState extends State<ProgressScreen>
                                           Expanded(
                                             child: _buildSummaryItem(
                                               context,
-                                              'Total Time',
+                                              'total time',
                                               _statistics != null
                                                   ? '${_statistics!['total_duration_minutes'] ?? 0} mins'
                                                   : '${_calculateTotalTime(values)} mins',
@@ -453,7 +460,7 @@ class _ProgressScreenState extends State<ProgressScreen>
                                           Expanded(
                                             child: _buildSummaryItem(
                                               context,
-                                              'Values',
+                                              'values',
                                               values.length.toString(),
                                               Icons.star,
                                             ),
@@ -461,7 +468,7 @@ class _ProgressScreenState extends State<ProgressScreen>
                                           Expanded(
                                             child: _buildSummaryItem(
                                               context,
-                                              'Alignment',
+                                              'alignment',
                                               _calculateAlignment(values),
                                               Icons.balance,
                                             ),
@@ -489,7 +496,7 @@ class _ProgressScreenState extends State<ProgressScreen>
                               padding:
                                   const EdgeInsets.only(bottom: 8, left: 4, top: 8),
                               child: Text(
-                                'Value Alignment',
+                                'value alignment',
                                 style: Theme.of(context).textTheme.titleMedium,
                               ),
                             ),
@@ -535,7 +542,7 @@ class _ProgressScreenState extends State<ProgressScreen>
                                         ),
                                         const SizedBox(width: 8),
                                         Text(
-                                          'Insight',
+                                          'insight',
                                           style: Theme.of(context)
                                               .textTheme
                                               .titleMedium,
@@ -554,7 +561,7 @@ class _ProgressScreenState extends State<ProgressScreen>
                       }
 
                       return const Center(
-                        child: Text('No data available'),
+                        child: Text('no data available'),
                       );
                     },
                   ),

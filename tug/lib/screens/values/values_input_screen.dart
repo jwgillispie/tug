@@ -163,13 +163,13 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
                 children: [
                   Text(
                     widget.fromHome
-                        ? 'Edit your values'
-                        : 'What do you care about more than anything else?',
+                        ? 'edit your values'
+                        : 'what do you care about more than anything else?',
                     style: Theme.of(context).textTheme.displayLarge,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'You can pick up to 5 things',
+                    'you can pick up to 5 things',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                       color: TugColors.lightTextSecondary,
                     ),
@@ -181,25 +181,25 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         TugTextField(
-                          label: 'Value',
-                          hint: 'Think Health, Family, Creativity, Learning ',
+                          label: 'value',
+                          hint: 'ex health, family, creativity, learning ',
                           controller: _valueController,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Please enter a value';
+                              return 'please enter a value';
                             }
                             if (value.length < 2) {
-                              return 'Value gotta be longer than that';
+                              return 'value gotta be longer than that';
                             }
                             if (value.length > 30) {
-                              return 'Okay that\'s awesome but can you make it a little shorter?';
+                              return 'okay that\'s awesome but can you make it a little shorter?';
                             }
                             return null;
                           },
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'How important is this value? (meh - everything)',
+                          'how important is this value? (meh - everything)',
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                         Slider(
@@ -217,13 +217,13 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
                         ),
                         const SizedBox(height: 16),
                         TugTextField(
-                          label: 'Description (Optional)',
-                          hint: 'Why?',
+                          label: 'description (only if you want)',
+                          hint: 'why?',
                           controller: _descriptionController,
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          'Choose a color',
+                          'pick a color',
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                         const SizedBox(height: 8),
@@ -261,8 +261,8 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
                                           ),
                                         )
                                       : Text(maxValuesReached 
-                                          ? 'Okay! 5 values! AWESOME' 
-                                          : 'Add'),
+                                          ? 'okay! 5 values! AWESOME' 
+                                          : 'add'),
                                 ),
                               ),
                             );
@@ -279,7 +279,7 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
                         
                         if (activeValues.isEmpty) {
                           return const Center(
-                            child: Text('Gotta have at least one value :)'),
+                            child: Text('gotta have at least one value :)'),
                           );
                         }
                         
@@ -287,7 +287,7 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Your Values',
+                              'your values',
                               style: Theme.of(context).textTheme.titleLarge,
                             ),
                             const SizedBox(height: 16),
@@ -324,7 +324,7 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
                                           color: Colors.white,
                                         ),
                                       )
-                                    : Text(widget.fromHome ? 'Done' : 'GO!'),
+                                    : Text(widget.fromHome ? 'done' : 'GO!'),
                               ),
                             ),
                           ],
@@ -406,7 +406,7 @@ class ValueCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      'Importance: ${value.importance}',
+                      'importance: ${value.importance}',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: TugColors.lightTextSecondary,
                       ),
@@ -448,14 +448,14 @@ class ValueCard extends StatelessWidget {
                   context: context,
                   icon: Icons.local_fire_department,
                   color: Color(0xFFF57C00), // Orange
-                  label: 'Current Streak',
+                  label: 'current streak',
                   value: '${value.currentStreak} day${value.currentStreak != 1 ? 's' : ''}',
                 ),
                 _buildStreakIndicator(
                   context: context,
                   icon: Icons.emoji_events,
                   color: Color(0xFFFFD700), // Gold
-                  label: 'Best Streak',
+                  label: 'top streak',
                   value: '${value.longestStreak} day${value.longestStreak != 1 ? 's' : ''}',
                 ),
               ],

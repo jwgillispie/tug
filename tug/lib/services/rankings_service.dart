@@ -1,5 +1,4 @@
 // lib/services/rankings_service.dart
-import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:tug/services/api_service.dart';
@@ -30,7 +29,7 @@ class RankingsService {
     String rankBy = 'activities',
     bool forceRefresh = false,
   }) async {
-    final String cacheKey = '${_rankingsCacheKeyPrefix}${rankBy}_${days}_$limit';
+    final String cacheKey = '$_rankingsCacheKeyPrefix${rankBy}_${days}_$limit';
     
     // Try to get from cache if not forcing refresh
     if (!forceRefresh) {
@@ -81,7 +80,7 @@ class RankingsService {
     int days = 30,
     bool forceRefresh = false,
   }) async {
-    final String cacheKey = '${_userRankCacheKeyPrefix}${days}';
+    final String cacheKey = '$_userRankCacheKeyPrefix$days';
     final currentUserId = _auth.currentUser?.uid;
     
     if (currentUserId == null) {

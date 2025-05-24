@@ -19,7 +19,7 @@ class AboutScreen extends StatelessWidget {
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('About Tug'),
+        title: const Text('about tug'),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -53,7 +53,7 @@ class AboutScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Version 1.0.0',
+                    'version 1.2.0',
                     style: TextStyle(
                       color: isDarkMode 
                           ? TugColors.darkTextSecondary 
@@ -69,7 +69,7 @@ class AboutScreen extends StatelessWidget {
             // App Description
             _buildSection(
               context,
-              'What is Tug?',
+              'what is tug?',
               'Tug helps you visualize the pull between what you say matters and how you actually spend your time. '
               'By tracking time spent on activities aligned with your values, Tug creates awareness of the gap between stated values and actual behavior.'
             ),
@@ -77,35 +77,46 @@ class AboutScreen extends StatelessWidget {
             // How it works
             _buildSection(
               context,
-              'How It Works',
+              'how it works',
               '1. Define your personal values (up to 5)\n'
               '2. Track time spent on value-aligned activities\n'
-              '3. Visualize the tug-of-war between stated importance and actual behavior\n'
-              '4. Identify areas for better alignment in your life'
+              '3. Build streaks by engaging with your values daily\n'
+              '4. Visualize your progress with activity charts and rankings\n'
+              '5. Identify areas for better alignment in your life'
             ),
             
             // Developer Info
             _buildSection(
               context,
-              'Developer',
+              'developer',
               'Created by Jordan Gillispie'
             ),
             
             // Contact
             _buildSection(
               context,
-              'Contact',
+              'contact',
               'Questions or feedback? Reach out at: jordangillispie@outlook.com'
+            ),
+            
+            // Recent Features
+            _buildSection(
+              context,
+              'new features',
+              '• activity chart - Track your progress with a visual representation of your activity minutes\n'
+              '• streak tracking - Build and maintain daily streaks for each value\n'
+              '• strava integration - Import your activities directly from Strava\n'
+              '• activity rankings - See how you compare with others in the community'
             ),
             
             // App version details
             _buildSection(
               context,
-              'Technical Details',
+              'technical details',
               'Built with Flutter\n'
               'Firebase Authentication\n'
               'MongoDB Backend\n'
-              'Version 1.0.0 (April 2025)'
+              'Version 1.2.0 (May 2025)'
             ),
             
             const SizedBox(height: 24),
@@ -115,7 +126,7 @@ class AboutScreen extends StatelessWidget {
                   _launchUrl('mailto:jordangillispie@outlook.com?subject=Tug%20App%20Feedback');
                 },
                 icon: const Icon(Icons.email_outlined),
-                label: const Text('Send Feedback'),
+                label: const Text('send feedback'),
               ),
             ),
             

@@ -1,5 +1,4 @@
 // Breathtaking cosmic particle system for spectacular visual effects
-import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:tug/utils/theme/colors.dart';

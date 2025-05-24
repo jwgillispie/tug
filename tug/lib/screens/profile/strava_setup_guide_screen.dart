@@ -6,7 +6,7 @@ import 'package:tug/utils/theme/colors.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class StravaSetupGuideScreen extends StatelessWidget {
-  const StravaSetupGuideScreen({Key? key}) : super(key: key);
+  const StravaSetupGuideScreen({super.key});
   
   String _getCallbackDomain() {
     final redirectUri = dotenv.env['STRAVA_REDIRECT_URI'] ?? 'http://localhost';

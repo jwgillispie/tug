@@ -731,7 +731,7 @@ class StravaService {
 
           // Save to the database
           final result = await _activityService.createActivity(newActivity);
-          if (result != null && result.id != null) {
+          if (result.id != null) {
             importedIds.add(result.id!);
             debugPrint('Successfully imported activity: ${result.id}');
           } else {

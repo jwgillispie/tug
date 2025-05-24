@@ -57,7 +57,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> with SingleTick
         // Show error message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error loading achievements: ${e.toString()}'),
+            content: Text('error loading achievements: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -78,7 +78,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> with SingleTick
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Achievements updated'),
+            content: Text('achievements updated'),
             duration: Duration(seconds: 1),
           ),
         );
@@ -89,7 +89,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> with SingleTick
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error refreshing achievements: ${e.toString()}'),
+            content: Text('error refreshing achievements: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -128,7 +128,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> with SingleTick
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error checking for new achievements: ${e.toString()}'),
+            content: Text('error checking for new achievements: ${e.toString()}'),
             backgroundColor: Colors.red,
           ),
         );
@@ -155,7 +155,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> with SingleTick
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Achievements'),
+        title: const Text('achievements'),
         actions: [
           // Check for new achievements button
           IconButton(
@@ -167,13 +167,13 @@ class _AchievementsScreenState extends State<AchievementsScreen> with SingleTick
                   )
                 : const Icon(Icons.emoji_events),
             onPressed: _isCheckingNew ? null : _checkForNewAchievements,
-            tooltip: 'Check for new achievements',
+            tooltip: 'check for new achievements',
           ),
           // Refresh current achievements
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _refreshAchievements,
-            tooltip: 'Refresh achievements',
+            tooltip: 'refresh achievements',
           ),
         ],
         bottom: TabBar(
@@ -181,11 +181,11 @@ class _AchievementsScreenState extends State<AchievementsScreen> with SingleTick
           isScrollable: true,
           indicatorColor: TugColors.primaryPurple,
           tabs: const [
-            Tab(text: 'All'),
-            Tab(text: 'Streaks'),
-            Tab(text: 'Balance'),
-            Tab(text: 'Milestones'),
-            Tab(text: 'Special'),
+            Tab(text: 'all'),
+            Tab(text: 'streaks'),
+            Tab(text: 'balance'),
+            Tab(text: 'milestones'),
+            Tab(text: 'special'),
           ],
         ),
       ),
@@ -240,7 +240,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> with SingleTick
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'You\'ve completed ${completionPercentage.toStringAsFixed(0)}% of all achievements',
+                        'you\'ve completed ${completionPercentage.toStringAsFixed(0)}% of all achievements',
                         style: TextStyle(
                           color: isDarkMode
                               ? Colors.grey.shade400
@@ -297,7 +297,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> with SingleTick
 
     if (sortedAchievements.isEmpty) {
       return const Center(
-        child: Text('No achievements in this category'),
+        child: Text('no achievements in this category'),
       );
     }
 
@@ -351,7 +351,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> with SingleTick
             const SizedBox(height: 16),
             if (achievement.isUnlocked) ...[
               const Text(
-                'Achievement unlocked!',
+                'achievement unlocked!',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: Colors.green,
@@ -360,7 +360,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> with SingleTick
               if (achievement.unlockedAt != null) ...[
                 const SizedBox(height: 8),
                 Text(
-                  'Unlocked on: ${_formatDate(achievement.unlockedAt!)}',
+                  'unlocked on: ${_formatDate(achievement.unlockedAt!)}',
                   style: TextStyle(
                     color: isDarkMode
                         ? Colors.grey.shade400
@@ -371,7 +371,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> with SingleTick
               ],
             ] else ...[
               const Text(
-                'Progress:',
+                'progress:',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                 ),
@@ -397,7 +397,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> with SingleTick
               ),
               const SizedBox(height: 16),
               Text(
-                'Keep going! ${_getEncouragementMessage(achievement)}',
+                'keep going! ${_getEncouragementMessage(achievement)}',
                 style: TextStyle(
                   color: isDarkMode
                       ? Colors.grey.shade300
@@ -411,7 +411,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> with SingleTick
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
+            child: const Text('close'),
           ),
         ],
       ),
@@ -422,15 +422,15 @@ class _AchievementsScreenState extends State<AchievementsScreen> with SingleTick
     final progress = achievement.progress;
 
     if (progress > 0.9) {
-      return 'You\'re so close to unlocking this!';
+      return 'you\'re so close to unlocking this!';
     } else if (progress > 0.7) {
-      return 'Just a bit more effort needed!';
+      return 'just a bit more effort needed!';
     } else if (progress > 0.5) {
-      return 'You\'re over halfway there!';
+      return 'you\'re over halfway there!';
     } else if (progress > 0.2) {
-      return 'Making good progress!';
+      return 'making good progress!';
     } else {
-      return 'Every small step counts!';
+      return 'every small step counts!';
     }
   }
 

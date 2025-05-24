@@ -8,7 +8,7 @@ import 'package:tug/utils/theme/colors.dart';
 import 'package:tug/models/value_model.dart';
 
 class AccountsScreen extends StatefulWidget {
-  const AccountsScreen({Key? key}) : super(key: key);
+  const AccountsScreen({super.key});
 
   @override
   State<AccountsScreen> createState() => _AccountsScreenState();
@@ -617,7 +617,7 @@ class _AccountsScreenState extends State<AccountsScreen> {
                         decoration: BoxDecoration(
                           color: value.color != null
                               ? Color(int.parse(
-                                  value.color!.replaceAll('#', '0xFF')))
+                                  value.color.replaceAll('#', '0xFF')))
                               : TugColors.primaryPurple,
                           shape: BoxShape.circle,
                         ),

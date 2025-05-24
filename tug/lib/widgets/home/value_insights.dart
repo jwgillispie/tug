@@ -448,7 +448,7 @@ class ValueInsight {
     if (difference <= 20) {
       return ValueInsight(
         title: "Good Balance: $valueName",
-        message: "Your actions align well with how important $valueName is to you.",
+        message: "your actions align well with how important $valueName is to you.",
         color: valueColor,
         category: InsightCategory.balance,
       );

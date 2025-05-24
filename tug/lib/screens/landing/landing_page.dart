@@ -185,7 +185,7 @@ class _TugLandingPageState extends State<TugLandingPage>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Align your actions with your values',
+                'align your actions with your values',
                 style: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
@@ -397,7 +397,7 @@ class _TugLandingPageState extends State<TugLandingPage>
                   bottom: 0,
                   child: Center(
                     child: Text(
-                      'Stated Values',
+                      'stated values',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
@@ -412,7 +412,7 @@ class _TugLandingPageState extends State<TugLandingPage>
                   bottom: 0,
                   child: Center(
                     child: Text(
-                      'Actual Behavior',
+                      'actual behavior',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
@@ -425,9 +425,9 @@ class _TugLandingPageState extends State<TugLandingPage>
             ),
           ),
           const SizedBox(height: 24),
-          _buildActivityCard('Family', 120, const Color.fromARGB(255, 30, 17, 213)),
+          _buildActivityCard('family', 120, const Color.fromARGB(255, 30, 17, 213)),
           const SizedBox(height: 16),
-          _buildActivityCard('Health', 45, const Color(0xFFEF4444)),
+          _buildActivityCard('health', 45, const Color(0xFFEF4444)),
           const SizedBox(height: 24),
           const Text(
             'Coming soon to the App Store',

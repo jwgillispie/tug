@@ -8,7 +8,7 @@ import 'package:tug/utils/theme/colors.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class StravaDebugScreen extends StatefulWidget {
-  const StravaDebugScreen({Key? key}) : super(key: key);
+  const StravaDebugScreen({super.key});
 
   @override
   State<StravaDebugScreen> createState() => _StravaDebugScreenState();

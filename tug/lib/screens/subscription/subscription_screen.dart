@@ -223,6 +223,20 @@ class _SubscriptionContent extends StatelessWidget {
             
             const SizedBox(height: 24),
             
+            // Restore purchases button
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16.0),
+              child: OutlinedButton(
+                onPressed: () {
+                  context.read<SubscriptionBloc>().add(RestorePurchases());
+                },
+                style: OutlinedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+                ),
+                child: const Text('Restore Previous Purchases'),
+              ),
+            ),
+            
             // Terms and privacy note
             Text(
               'Payment will be charged to your Apple ID or Google Play account at confirmation of purchase. '

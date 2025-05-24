@@ -71,7 +71,7 @@ class StreakOverviewWidget extends StatelessWidget {
                 child: Padding(
                   padding: EdgeInsets.symmetric(vertical: 8),
                   child: Text(
-                    'Log activities daily to build streaks!',
+                    'build your streaks!',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.grey,

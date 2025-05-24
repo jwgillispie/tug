@@ -85,12 +85,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   const SizedBox(height: 32),
                   Text(
-                    'Welcome back',
+                    'welcome back',
                     style: Theme.of(context).textTheme.displayLarge,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Sign in to continue',
+                    'sign in to continue',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           color: TugColors.lightTextSecondary,
                         ),
@@ -127,32 +127,32 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   const SizedBox(height: 32),
                   TugTextField(
-                    label: 'Email',
-                    hint: 'Enter your email',
+                    label: 'email',
+                    hint: 'enter your email',
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter your email';
+                        return 'please enter your email';
                       }
                       if (!value.contains('@')) {
-                        return 'Please enter a valid email';
+                        return 'please enter a valid email';
                       }
                       return null;
                     },
                   ),
                   const SizedBox(height: 24),
                   TugTextField(
-                    label: 'Password',
-                    hint: 'Enter your password',
+                    label: 'password',
+                    hint: 'enter your password',
                     controller: _passwordController,
                     isPassword: true,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter your password';
+                        return 'please enter your password';
                       }
                       if (value.length < 6) {
-                        return 'Password gotta be longer than that';
+                        return 'password gotta be longer than that';
                       }
                       return null;
                     },
@@ -165,7 +165,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: () {
                         context.go('/forgot-password');
                       },
-                      child: const Text('Forgot Password?'),
+                      child: const Text('forgot password?'),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -185,7 +185,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   color: Colors.white,
                                 ),
                               )
-                            : const Text('Sign In'),
+                            : const Text('sign in'),
                       ),
                     ),
                   ),
@@ -194,13 +194,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Don\'t have an account?',
+                        'don\'t have an account?',
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       TextButton(
                         style: TugButtons.tertiaryButtonStyle(isDark: Theme.of(context).brightness == Brightness.dark),
                         onPressed: () => context.go('/signup'),
-                        child: const Text('Sign Up'),
+                        child: const Text('sign up'),
                       ),
                     ],
                   ),

@@ -1,15 +1,13 @@
 // lib/screens/home/home_screen.dart
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:tug/blocs/activities/activities_bloc.dart';
 import 'package:tug/blocs/values/bloc/values_bloc.dart';
 import 'package:tug/blocs/values/bloc/values_event.dart';
 import 'package:tug/blocs/values/bloc/values_state.dart';
-import 'package:tug/utils/animations.dart';
 import 'package:tug/utils/cosmic_particles.dart';
-import 'package:tug/widgets/home/swipeable_quotes.dart';
-import 'package:tug/widgets/home/value_insights.dart';
+import 'package:tug/widgets/home/activity_chart.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../utils/theme/colors.dart';
 import '../../utils/theme/buttons.dart';
@@ -25,46 +23,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   bool _isFirstLoad = true;
-  ParticleEffect _particleEffect = ParticleEffect.nebula;
-  
-final List<Map<String, String>> _quotes = [
-    {
-      'quote': 'Imperfection is beauty, madness is genius, and it\'s better to be absolutely ridiculous than absolutely boring.',
-      'author': 'Marilyn Monroe'
-    },
-    {
-      'quote': 'The difference between ordinary and extraordinary is that little extra.',
-      'author': 'Jimmy Johnson'
-    },
-    {
-      'quote': 'The only way to get rid of temptation is to yield to it.',
-      'author': 'Oscar Wilde',
-    },
-    {
-      'quote': 'I am not afraid of storms, for I am learning how to sail my ship.',
-      'author': 'Louisa May Alcott',
-    },
-    {
-      'quote': 'You miss 100% of the shots you don\'t take.',
-      'author': 'Wayne Gretzky',
-    },
-    {
-      'quote': 'The future is uncertain, but the end is always near.',
-      'author': 'Jim Morrison',
-    },
-    {
-      'quote': 'If you tell the truth, you don\'t have to remember anything.',
-      'author': 'Mark Twain',
-    },
-    {
-      'quote': 'You gotta pay taxes. That\'s just life. Unless you famous, then you gotta pay *more* taxes. That\'s just facts.',
-      'author': 'Lil Baby',
-    },
-    {
-      'quote': 'When you hear Nicki Minaj in the traffic, you know you gon\' be late to work.',
-      'author': 'Nicki Minaj',
-    },
-  ];
+  final ParticleEffect _particleEffect = ParticleEffect.nebula;
   
   @override
   void initState() {
@@ -72,6 +31,9 @@ final List<Map<String, String>> _quotes = [
     // Load values when screen is initialized, but don't force refresh
     // if we already have cached values
     context.read<ValuesBloc>().add(const LoadValues(forceRefresh: false));
+    
+    // Load activities for the chart
+    context.read<ActivitiesBloc>().add(const LoadActivities(forceRefresh: false));
     
     // Setup animation
     _animationController = AnimationController(
@@ -110,7 +72,7 @@ final List<Map<String, String>> _quotes = [
     context.read<ValuesBloc>().add(const LoadValues(forceRefresh: true));
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Refreshing...'),
+        content: Text('refreshing...'),
         duration: Duration(seconds: 1),
       ),
     );
@@ -123,9 +85,30 @@ final List<Map<String, String>> _quotes = [
     
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     
+    // Get current user from AuthBloc
+    final authState = context.watch<AuthBloc>().state;
+    String greeting = 'welcome';
+    
+    if (authState is Authenticated) {
+      final displayName = authState.user.displayName;
+      final email = authState.user.email;
+      
+      if (displayName != null && displayName.isNotEmpty) {
+        greeting = 'hello, ${displayName.split(' ')[0]}';
+      } else if (email != null && email.isNotEmpty) {
+        // Use the part before @ in the email if no display name
+        greeting = 'hello, ${email.split('@')[0]}';
+      }
+    }
+    
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tug'),
+        title: Text(
+          greeting,
+          style: TextStyle(
+            color: isDarkMode ? TugColors.darkTextPrimary : TugColors.lightTextPrimary,
+          ),
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -176,7 +159,7 @@ final List<Map<String, String>> _quotes = [
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _refreshValues,
-                        child: const Text('Retry'),
+                        child: const Text('retry'),
                       ),
                     ],
                   ),
@@ -201,7 +184,7 @@ final List<Map<String, String>> _quotes = [
                         ),
                         const SizedBox(height: 16),
                         const Text(
-                          'No values defined yet',
+                          'no values defined yet',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w500,
@@ -209,7 +192,7 @@ final List<Map<String, String>> _quotes = [
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'You gotta add some values first cuzzo',
+                          'you gotta add some values first cuzzo',
                           style: TextStyle(
                             color: isDarkMode 
                                 ? TugColors.darkTextSecondary 
@@ -222,7 +205,7 @@ final List<Map<String, String>> _quotes = [
                           onPressed: _navigateToValuesEdit,
                           child: const Padding(
                             padding: EdgeInsets.symmetric(horizontal: 16),
-                            child: Text('Add Values'),
+                            child: Text('add values'),
                           ),
                         ),
                       ],
@@ -238,8 +221,23 @@ final List<Map<String, String>> _quotes = [
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Swipeable Quotes
-                        SwipeableQuotes(quotes: _quotes),
+                        // Activity Chart
+                        BlocBuilder<ActivitiesBloc, ActivitiesState>(
+                          builder: (context, activityState) {
+                            if (activityState is ActivitiesLoaded) {
+                              return ActivityChart(
+                                activities: activityState.activities,
+                                values: values, // Pass the current values
+                              );
+                            } else if (activityState is ActivitiesLoading) {
+                              return _buildLoadingChart(context);
+                            } else if (activityState is ActivitiesError) {
+                              return _buildErrorChart(context, activityState.message);
+                            } else {
+                              return _buildEmptyChart(context);
+                            }
+                          },
+                        ),
                         
                         // Values List
                         const SizedBox(height: 24),
@@ -247,7 +245,7 @@ final List<Map<String, String>> _quotes = [
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             const Text(
-                              'Your Values',
+                              'your values',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -262,7 +260,7 @@ final List<Map<String, String>> _quotes = [
                                   vertical: 8,
                                 ),
                               ),
-                              child: const Text('Edit Values'),
+                              child: const Text('edit values'),
                             ),
                           ],
                         ),
@@ -351,8 +349,6 @@ final List<Map<String, String>> _quotes = [
                                       color: valueColor.withOpacity(0.3),
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
-                                  const Icon(Icons.chevron_right),
                                 ],
                               ),
                               onTap: _navigateToValuesEdit,
@@ -364,7 +360,7 @@ final List<Map<String, String>> _quotes = [
                         
                         // Feature Cards Section
                         const Text(
-                          'Features',
+                          'features',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -424,7 +420,7 @@ final List<Map<String, String>> _quotes = [
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         const Text(
-                                          'Activity Tracking',
+                                          'activity tracking',
                                           style: TextStyle(
                                             fontSize: 18,
                                             fontWeight: FontWeight.w600,
@@ -432,7 +428,7 @@ final List<Map<String, String>> _quotes = [
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
-                                          'Log time spent on your values, and don\'t be lying',
+                                          'time spent on your values, don\'t be lying',
                                           style: TextStyle(
                                             color: isDarkMode 
                                                 ? TugColors.darkTextSecondary 
@@ -514,7 +510,7 @@ final List<Map<String, String>> _quotes = [
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         const Text(
-                                          'Progress',
+                                          'progress',
                                           style: TextStyle(
                                             fontSize: 18,
                                             fontWeight: FontWeight.w600,
@@ -606,7 +602,7 @@ final List<Map<String, String>> _quotes = [
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         const Text(
-                                          'Leaderboard',
+                                          'leaderboard',
                                           style: TextStyle(
                                             fontSize: 18,
                                             fontWeight: FontWeight.w600,
@@ -663,12 +659,12 @@ final List<Map<String, String>> _quotes = [
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Deadass?'),
+        title: const Text('logout'),
+        content: const Text('deadass?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text('cancel'),
           ),
           TextButton(
             style: TextButton.styleFrom(foregroundColor: TugColors.error),
@@ -676,9 +672,196 @@ final List<Map<String, String>> _quotes = [
               Navigator.pop(context);
               context.read<AuthBloc>().add(LogoutEvent());
             },
-            child: const Text('Log Out'),
+            child: const Text('log out'),
           ),
         ],
+      ),
+    );
+  }
+  
+  // Helper methods for the activity chart states
+  Widget _buildLoadingChart(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
+    return Container(
+      height: 220,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            TugColors.primaryPurple.withOpacity(isDarkMode ? 0.9 : 0.8),
+            TugColors.primaryPurple,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: TugColors.primaryPurple.withOpacity(isDarkMode ? 0.4 : 0.3),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+            spreadRadius: -4,
+          ),
+        ],
+      ),
+      child: const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(
+              color: Colors.white,
+              strokeWidth: 3,
+            ),
+            SizedBox(height: 16),
+            Text(
+              'loading your activity data...',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildErrorChart(BuildContext context, String message) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
+    return Container(
+      height: 220,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            TugColors.primaryPurple.withOpacity(isDarkMode ? 0.9 : 0.8),
+            TugColors.primaryPurple,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: TugColors.primaryPurple.withOpacity(isDarkMode ? 0.4 : 0.3),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+            spreadRadius: -4,
+          ),
+        ],
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.error_outline,
+              color: Colors.white,
+              size: 36,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'error loading activities',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              message,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.8),
+                fontSize: 14,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              onPressed: () {
+                context.read<ActivitiesBloc>().add(const LoadActivities(forceRefresh: true));
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: TugColors.primaryPurple,
+              ),
+              child: const Text('retry'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  Widget _buildEmptyChart(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    // We don't need to create an empty values list as the chart is handled by the container
+    
+    return Container(
+      height: 220,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            TugColors.primaryPurple.withOpacity(isDarkMode ? 0.9 : 0.8),
+            TugColors.primaryPurple,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: TugColors.primaryPurple.withOpacity(isDarkMode ? 0.4 : 0.3),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+            spreadRadius: -4,
+          ),
+        ],
+      ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.history,
+              color: Colors.white,
+              size: 36,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'no activities yet',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'log your first activity to see your progress chart',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.8),
+                fontSize: 14,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () {
+                context.go('/activities/new');
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: TugColors.primaryPurple,
+              ),
+              child: const Text('log activity'),
+            ),
+          ],
+        ),
       ),
     );
   }

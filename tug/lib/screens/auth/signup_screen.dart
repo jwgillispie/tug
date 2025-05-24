@@ -105,12 +105,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 children: [
                   const SizedBox(height: 32),
                   Text(
-                    'Create Account',
+                    'create account',
                     style: Theme.of(context).textTheme.displayLarge,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Start tugging them values',
+                    'start tugging them values',
                     style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                           color: TugColors.lightTextSecondary,
                         ),
@@ -147,63 +147,63 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                   const SizedBox(height: 32),
                   TugTextField(
-                    label: 'Full Name',
-                    hint: 'Enter your full name',
+                    label: 'full name',
+                    hint: 'enter your full name',
                     controller: _nameController,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter your name';
+                        return 'please enter your name';
                       }
                       if (value.length < 2) {
-                        return 'Your name is 1 letter fr?';
+                        return 'your name is 1 letter fr?';
                       }
                       return null;
                     },
                   ),
                   const SizedBox(height: 24),
                   TugTextField(
-                    label: 'Email',
-                    hint: 'Enter your email',
+                    label: 'email',
+                    hint: 'enter your email',
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter your email';
+                        return 'please enter your email';
                       }
                       if (!value.contains('@') || !value.contains('.')) {
-                        return 'Try again, that email fake';
+                        return 'try again, that email fake';
                       }
                       return null;
                     },
                   ),
                   const SizedBox(height: 24),
                   TugTextField(
-                    label: 'Password',
-                    hint: 'Create a password',
+                    label: 'password',
+                    hint: 'create a password',
                     controller: _passwordController,
                     isPassword: true,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter a password';
+                        return 'please enter a password';
                       }
                       if (value.length < 6) {
-                        return 'Password must be longer than that';
+                        return 'password must be longer than that';
                       }
                       return null;
                     },
                   ),
                   const SizedBox(height: 24),
                   TugTextField(
-                    label: 'Can you do that one more time please :)',
-                    hint: 'Confirm your password',
+                    label: 'can you do that one more time please :)',
+                    hint: 'confirm your password',
                     controller: _confirmPasswordController,
                     isPassword: true,
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'One more time PLEASE!';
+                        return 'one more time please!';
                       }
                       if (value != _passwordController.text) {
-                        return 'Passwords aren\'t twinning';
+                        return 'passwords aren\'t twinning';
                       }
                       return null;
                     },
@@ -232,11 +232,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       Expanded(
                         child: Text.rich(
                           TextSpan(
-                            text: 'I agree to the ',
+                            text: 'i agree to the ',
                             style: Theme.of(context).textTheme.bodyMedium,
                             children: [
                               TextSpan(
-                                text: 'Terms of Service',
+                                text: 'terms of service',
                                 style: TextStyle(
                                   color: TugColors.primaryPurple,
                                   decoration: TextDecoration.underline,
@@ -249,7 +249,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                               ),
                               const TextSpan(text: ' and '),
                               TextSpan(
-                                text: 'Privacy Policy',
+                                text: 'privacy policy',
                                 style: TextStyle(
                                   color: TugColors.primaryPurple,
                                   decoration: TextDecoration.underline,
@@ -283,7 +283,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   color: Colors.white,
                                 ),
                               )
-                            : const Text('Create Account'),
+                            : const Text('create account'),
                       ),
                     ),
                   ),
@@ -292,13 +292,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'Already have an account?',
+                        'already have an account?',
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       TextButton(
                         style: TugButtons.tertiaryButtonStyle(isDark: Theme.of(context).brightness == Brightness.dark),
                         onPressed: () => context.go('/login'),
-                        child: const Text('Sign In'),
+                        child: const Text('sign in'),
                       ),
                     ],
                   ),

@@ -123,6 +123,9 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     emit(SubscriptionLoading());
 
     try {
+      // Check if user has legacy purchases that might need migration
+      await _subscriptionService.checkForLegacyPurchases();
+      
       final offering = await _subscriptionService.getDefaultOffering();
       
       if (offering == null) {

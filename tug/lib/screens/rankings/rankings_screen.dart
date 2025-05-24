@@ -109,7 +109,7 @@ class _RankingsScreenState extends State<RankingsScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(
-          'Leaderboard',
+          'leaderboard',
           style: TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 24,
@@ -175,7 +175,7 @@ class _RankingsScreenState extends State<RankingsScreen> {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        'Time Period',
+                        'time period',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 15,
@@ -222,34 +222,34 @@ class _RankingsScreenState extends State<RankingsScreen> {
                         }
                       },
                       style: ButtonStyle(
-                        backgroundColor: MaterialStateProperty.resolveWith<Color?>(
-                          (Set<MaterialState> states) {
-                            if (states.contains(MaterialState.selected)) {
+                        backgroundColor: WidgetStateProperty.resolveWith<Color?>(
+                          (Set<WidgetState> states) {
+                            if (states.contains(WidgetState.selected)) {
                               return TugColors.primaryPurple;
                             }
                             return null;
                           },
                         ),
-                        foregroundColor: MaterialStateProperty.resolveWith<Color?>(
-                          (Set<MaterialState> states) {
-                            if (states.contains(MaterialState.selected)) {
+                        foregroundColor: WidgetStateProperty.resolveWith<Color?>(
+                          (Set<WidgetState> states) {
+                            if (states.contains(WidgetState.selected)) {
                               return Colors.white;
                             }
                             return isDarkMode ? Colors.white70 : Colors.black87;
                           },
                         ),
-                        overlayColor: MaterialStateProperty.resolveWith<Color?>(
-                          (Set<MaterialState> states) {
+                        overlayColor: WidgetStateProperty.resolveWith<Color?>(
+                          (Set<WidgetState> states) {
                             return TugColors.primaryPurple.withOpacity(0.1);
                           },
                         ),
-                        side: MaterialStateProperty.resolveWith<BorderSide?>(
-                          (Set<MaterialState> states) {
+                        side: WidgetStateProperty.resolveWith<BorderSide?>(
+                          (Set<WidgetState> states) {
                             return BorderSide.none;
                           },
                         ),
-                        shape: MaterialStateProperty.resolveWith<OutlinedBorder?>(
-                          (Set<MaterialState> states) {
+                        shape: WidgetStateProperty.resolveWith<OutlinedBorder?>(
+                          (Set<WidgetState> states) {
                             return RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             );
@@ -343,7 +343,7 @@ class _RankingsScreenState extends State<RankingsScreen> {
                                         ],
                                       ),
                                       child: const Text(
-                                        'YOUR RANK',
+                                        'your rank',
                                         style: TextStyle(
                                           color: Colors.white,
                                           fontWeight: FontWeight.bold,
@@ -362,7 +362,7 @@ class _RankingsScreenState extends State<RankingsScreen> {
                         // Other rankings behind premium gate
                         Expanded(
                           child: PremiumFeature(
-                            title: 'Premium Leaderboard',
+                            title: 'premium leaderboard',
                             description: 'See how you stack up against others and compete for the top position!',
                             buttonText: 'Unlock Full Rankings',
                             icon: Icons.emoji_events,
@@ -543,7 +543,7 @@ class _RankingsScreenState extends State<RankingsScreen> {
                             ),
                             const SizedBox(height: 24),
                             Text(
-                              'Connection Error',
+                              'connection error',
                               style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
@@ -604,7 +604,7 @@ class _RankingsScreenState extends State<RankingsScreen> {
                                             ),
                                             SizedBox(width: 8),
                                             Text(
-                                              'Retry',
+                                              'retry',
                                               style: TextStyle(
                                                 fontSize: 16,
                                                 fontWeight: FontWeight.bold,
@@ -739,7 +739,7 @@ class _RankingsScreenState extends State<RankingsScreen> {
                             ),
                             const SizedBox(height: 24),
                             Text(
-                              'No Rankings Yet',
+                              'no rankings yet',
                               style: TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
@@ -900,7 +900,8 @@ class _RankingsScreenState extends State<RankingsScreen> {
     
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-      height: 240, // Increased height for more prominence
+      // Use minimum height instead of fixed height for better responsiveness
+      constraints: const BoxConstraints(minHeight: 260),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -973,7 +974,7 @@ class _RankingsScreenState extends State<RankingsScreen> {
                     ),
                     SizedBox(width: 6),
                     Text(
-                      'CHAMPION',
+                      'champion',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
@@ -993,9 +994,11 @@ class _RankingsScreenState extends State<RankingsScreen> {
             child: TugAnimations.fadeSlideIn(
               delay: const Duration(milliseconds: 150),
               beginOffset: const Offset(0, 30),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min, // Use minimum space needed
+                  children: [
                   // Crown icon above the avatar
                   ShaderMask(
                     shaderCallback: (bounds) => goldGradient.createShader(bounds),
@@ -1007,10 +1010,16 @@ class _RankingsScreenState extends State<RankingsScreen> {
                   ),
                   const SizedBox(height: 8),
                   
-                  // User avatar with shine effect
-                  Container(
-                    width: 90,
-                    height: 90,
+                  // User avatar with shine effect - responsive sizing
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      // Calculate size based on available width (min of 60, max of 90)
+                      final size = constraints.maxWidth > 300 ? 90.0 : 
+                                  (constraints.maxWidth > 200 ? 80.0 : 70.0);
+                      
+                      return Container(
+                        width: size,
+                        height: size,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: LinearGradient(
@@ -1046,16 +1055,24 @@ class _RankingsScreenState extends State<RankingsScreen> {
                         ),
                       ),
                     ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 12),
                   
-                  // User name
-                  Text(
-                    topUser.displayName,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                      color: isDarkMode ? Colors.white : Colors.black87,
+                  // User name with overflow handling
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * 0.5, // Limit width for long names
+                    child: Text(
+                      topUser.displayName,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                        color: isDarkMode ? Colors.white : Colors.black87,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis, // Handle overflow with ellipsis
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -1102,6 +1119,7 @@ class _RankingsScreenState extends State<RankingsScreen> {
                     ],
                   ),
                 ],
+                ),
               ),
             ),
           ),

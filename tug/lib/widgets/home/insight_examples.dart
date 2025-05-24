@@ -12,7 +12,7 @@ class InsightExamples extends StatelessWidget {
     final insights = [
       ValueInsight(
         title: "Great Balance: Family Time",
-        message: "Your actions align closely with how much you value family.",
+        message: "your actions align closely with how much you value family.",
         color: TugColors.primaryPurple,
         category: InsightCategory.balance,
       ),

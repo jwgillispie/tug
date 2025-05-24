@@ -6,7 +6,7 @@ import 'package:tug/services/strava_service.dart';
 import 'package:tug/utils/theme/colors.dart';
 
 class StravaCodeInputScreen extends StatefulWidget {
-  const StravaCodeInputScreen({Key? key}) : super(key: key);
+  const StravaCodeInputScreen({super.key});
 
   @override
   State<StravaCodeInputScreen> createState() => _StravaCodeInputScreenState();

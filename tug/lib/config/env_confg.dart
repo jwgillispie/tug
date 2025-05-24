@@ -40,12 +40,12 @@ class EnvConfig {
   
   static String get revenueCatOfferingId {
     _checkInitialized();
-    return dotenv.env['REVENUECAT_OFFERING_ID'] ?? 'standard';
+    return dotenv.env['REVENUECAT_OFFERING_ID'] ?? 'ofrngc4b82cdba4';
   }
   
   static String get revenueCatPremiumEntitlementId {
     _checkInitialized();
-    return dotenv.env['REVENUECAT_PREMIUM_ENTITLEMENT_ID'] ?? 'premium_access';
+    return dotenv.env['REVENUECAT_PREMIUM_ENTITLEMENT_ID'] ?? 'entl0a93ea6b23';
   }
 
   static Future<void> load() async {
@@ -61,8 +61,8 @@ class EnvConfig {
       final rcApiKey = dotenv.env['REVENUECAT_API_KEY'] ?? '';
       final maskedKey = rcApiKey.isNotEmpty ? '${rcApiKey.substring(0, 4)}...${rcApiKey.substring(rcApiKey.length - 4)}' : 'Not set';
       debugPrint('REVENUECAT_API_KEY: $maskedKey');
-      debugPrint('REVENUECAT_OFFERING_ID: ${dotenv.env['REVENUECAT_OFFERING_ID'] ?? 'standard (default)'}');
-      debugPrint('REVENUECAT_PREMIUM_ENTITLEMENT_ID: ${dotenv.env['REVENUECAT_PREMIUM_ENTITLEMENT_ID'] ?? 'premium_access (default)'}');
+      debugPrint('REVENUECAT_OFFERING_ID: ${dotenv.env['REVENUECAT_OFFERING_ID'] ?? 'ofrngc4b82cdba4 (default)'}');
+      debugPrint('REVENUECAT_PREMIUM_ENTITLEMENT_ID: ${dotenv.env['REVENUECAT_PREMIUM_ENTITLEMENT_ID'] ?? 'entl0a93ea6b23 (default)'}');
     } catch (e) {
       debugPrint(
           'Warning: .env file not found. Using default values. Error: $e');

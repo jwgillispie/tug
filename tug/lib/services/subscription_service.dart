@@ -1,6 +1,5 @@
 // lib/services/subscription_service.dart
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import 'package:flutter/services.dart' show MissingPluginException;
@@ -307,6 +306,31 @@ class SubscriptionService {
     
     final entitlementId = EnvConfig.revenueCatPremiumEntitlementId;
     return _customerInfo!.entitlements.all[entitlementId];
+  }
+  
+  /// Check if user has legacy purchases that need migration
+  /// This is useful when transitioning from IAP to subscription model
+  Future<bool> checkForLegacyPurchases() async {
+    if (!_isInitialized) await initialize();
+    
+    if (kIsWeb) return false;
+    
+    try {
+      // First try to restore purchases to ensure latest state
+      await restorePurchases();
+      
+      // Check for any active subscriptions
+      if (_customerInfo != null && _customerInfo!.activeSubscriptions.isNotEmpty) {
+        debugPrint('User has active subscriptions: ${_customerInfo!.activeSubscriptions}');
+        return true;
+      }
+      
+      // No legacy purchases found that need migration
+      return false;
+    } catch (e) {
+      debugPrint('Error checking for legacy purchases: $e');
+      return false;
+    }
   }
   
   /// Clean up resources

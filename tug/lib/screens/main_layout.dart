@@ -3,8 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tug/utils/theme/colors.dart';
-import 'package:tug/utils/animations.dart';
-import 'dart:ui';
 
 class MainLayout extends StatelessWidget {
   final Widget child;
@@ -27,28 +25,28 @@ class MainLayout extends StatelessWidget {
       {
         'icon': Icons.home_outlined,
         'selectedIcon': Icons.home_rounded,
-        'label': 'Home',
+        'label': 'home',
         'index': 0,
         'path': '/home',
       },
       {
         'icon': Icons.insights_outlined,
         'selectedIcon': Icons.insights_rounded,
-        'label': 'Progress',
+        'label': 'progress',
         'index': 1,
         'path': '/progress',
       },
       {
         'icon': Icons.history_outlined,
         'selectedIcon': Icons.history_rounded,
-        'label': 'Activities',
+        'label': 'activities',
         'index': 2,
         'path': '/activities',
       },
       {
         'icon': Icons.person_outline_rounded,
         'selectedIcon': Icons.person_rounded,
-        'label': 'Profile',
+        'label': 'profile',
         'index': 3,
         'path': '/profile',
       },
@@ -185,7 +183,7 @@ class MainLayout extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Create New',
+                'create new',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 22,
@@ -207,8 +205,8 @@ class MainLayout extends StatelessWidget {
               // Simpler option cards
               _buildActionCard(
                 context: context,
-                title: 'Log Activity',
-                description: 'Record a new activity session',
+                title: 'log activity',
+                description: 'record activity session',
                 icon: Icons.timelapse_rounded,
                 gradient: TugColors.getPrimaryGradient(),
                 path: '/activities/new',
@@ -217,8 +215,8 @@ class MainLayout extends StatelessWidget {
               const SizedBox(height: 16),
               _buildActionCard(
                 context: context,
-                title: 'Add Value',
-                description: 'Define what matters to you',
+                title: 'add value',
+                description: 'define what matters to you',
                 icon: Icons.star_rounded,
                 gradient: TugColors.getSecondaryGradient(),
                 path: '/values-input',
@@ -259,7 +257,12 @@ class MainLayout extends StatelessWidget {
       child: InkWell(
         onTap: () {
           Navigator.pop(context);
-          context.go(path);
+          // Use replace instead of go for the activity form to ensure proper navigation
+          if (path == '/activities/new') {
+            context.replace(path);
+          } else {
+            context.go(path);
+          }
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(
@@ -321,6 +324,7 @@ class MainLayout extends StatelessWidget {
       ),
     );
   }
+
 
   Widget _buildNavItem({
     required BuildContext context,

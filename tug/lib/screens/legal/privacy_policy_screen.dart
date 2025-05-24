@@ -11,7 +11,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Privacy Policy'),
+        title: const Text('privacy policy'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(),
@@ -23,12 +23,12 @@ class PrivacyPolicyScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Privacy Policy',
+              'privacy policy',
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 16),
             Text(
-              'Last Updated: ${DateTime.now().year}-${DateTime.now().month.toString().padLeft(2, '0')}-01',
+              'last updated: ${DateTime.now().year}-${DateTime.now().month.toString().padLeft(2, '0')}-01',
               style: TextStyle(
                 color: isDarkMode
                     ? TugColors.darkTextSecondary
@@ -41,14 +41,14 @@ class PrivacyPolicyScreen extends StatelessWidget {
             // Introduction
             _buildSection(
               context,
-              'Introduction',
+              'introduction',
               'At Tug, we take your privacy seriously. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our mobile application (the "App"). Please read this Privacy Policy carefully. By using the App, you consent to the practices described in this Privacy Policy.',
             ),
 
             // Information We Collect
             _buildSection(
               context,
-              'Information We Collect',
+              'information we collect',
               'We may collect several types of information from and about users of our App, including:\n\n'
                   '• Personal Identifiers: Email address and authentication information when you register for an account.\n'
                   '• User Content: Information you provide in the App, such as your personal values, activities, and related notes.\n'
@@ -59,7 +59,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             // How We Use Your Information
             _buildSection(
               context,
-              'How We Use Your Information',
+              'how we use your information',
               'We use the information we collect to:\n\n'
                   '• Provide, maintain, and improve the App;\n'
                   '• Process and complete transactions;\n'
@@ -73,7 +73,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             // Sharing of Information
             _buildSection(
               context,
-              'Sharing of Information',
+              'sharing of information',
               'We may share information we collect as follows:\n\n'
                   '• With service providers who perform services on our behalf;\n'
                   '• To comply with legal obligations;\n'
@@ -85,28 +85,28 @@ class PrivacyPolicyScreen extends StatelessWidget {
             // Data Security
             _buildSection(
               context,
-              'Data Security',
+              'data security',
               'We implement appropriate technical and organizational measures to protect the security of your personal information. However, please be aware that no method of transmission over the Internet or method of electronic storage is 100% secure.',
             ),
 
             // Data Retention
             _buildSection(
               context,
-              'Data Retention',
+              'data retention',
               'We will retain your personal information only for as long as reasonably necessary to fulfill the purposes for which it was collected, including for the purposes of satisfying any legal, regulatory, tax, accounting, or reporting requirements.',
             ),
 
             // Children's Privacy
             _buildSection(
               context,
-              'Children\'s Privacy',
+              'children\'s privacy',
               'The App is not intended for children under the age of 13, and we do not knowingly collect personal information from children under 13. If we learn we have collected or received personal information from a child under 13, we will delete that information.',
             ),
 
             // Your Rights
             _buildSection(
               context,
-              'Your Rights',
+              'your rights',
               'Depending on your location, you may have certain rights regarding your personal information, including:\n\n'
                   '• Access: You can request access to your personal information.\n'
                   '• Correction: You can request that we correct inaccurate or incomplete information.\n'
@@ -119,14 +119,14 @@ class PrivacyPolicyScreen extends StatelessWidget {
             // Changes to this Privacy Policy
             _buildSection(
               context,
-              'Changes to this Privacy Policy',
+              'changes to this privacy policy',
               'We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "Last Updated" date. You are advised to review this Privacy Policy periodically for any changes.',
             ),
 
             // Contact Information
             _buildSection(
               context,
-              'Contact Information',
+              'contact information',
               'If you have any questions about this Privacy Policy, please contact us at jordangillispie@outlookcom.',
             ),
 
