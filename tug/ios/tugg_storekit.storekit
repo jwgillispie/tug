@@ -14,21 +14,7 @@
 
   ],
   "products" : [
-    {
-      "displayPrice" : "2.99",
-      "familyShareable" : false,
-      "internalID" : "6745809260",
-      "localizations" : [
-        {
-          "description" : "advanced activity insights and 10 values ",
-          "displayName" : "Tug Pro",
-          "locale" : "en_US"
-        }
-      ],
-      "productID" : "TugPro",
-      "referenceName" : "$2.99/ mo - Tug Pro",
-      "type" : "NonConsumable"
-    }
+
   ],
   "settings" : {
     "_applicationInternalID" : "6745123842",
@@ -86,7 +72,40 @@
     ]
   },
   "subscriptionGroups" : [
+    {
+      "id" : "21688879",
+      "localizations" : [
 
+      ],
+      "name" : "Tug Pro",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "2.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "6745809260",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Advanced activity insights and 10 values",
+              "displayName" : "Tug Pro Monthly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "TuggProMonthly",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Tug Pro Monthly",
+          "subscriptionGroupID" : "21688879",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
   ],
   "version" : {
     "major" : 4,

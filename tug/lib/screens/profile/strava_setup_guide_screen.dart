@@ -66,7 +66,7 @@ class StravaSetupGuideScreen extends StatelessWidget {
                   isDark: isDarkMode,
                   code: 'STRAVA_CLIENT_ID=your_client_id_here\n'
                       'STRAVA_CLIENT_SECRET=your_client_secret_here\n'
-                      'STRAVA_REDIRECT_URI=http://localhost',
+                      'STRAVA_REDIRECT_URI=tug://strava-auth',
                 ),
               ],
             ),
@@ -107,7 +107,7 @@ class StravaSetupGuideScreen extends StatelessWidget {
               title: 'Troubleshooting',
               content: [
                 _buildStepText(
-                  'Redirect not working: Ensure callback domain is set to "localhost" in Strava settings',
+                  'Redirect not working: Ensure Authorization Callback Domain is set to "tug" in Strava settings',
                 ),
                 _buildStepText(
                   'Authentication errors: Double-check your credentials',

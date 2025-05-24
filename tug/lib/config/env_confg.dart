@@ -45,7 +45,7 @@ class EnvConfig {
   
   static String get revenueCatPremiumEntitlementId {
     _checkInitialized();
-    return dotenv.env['REVENUECAT_PREMIUM_ENTITLEMENT_ID'] ?? 'entl0a93ea6b23';
+    return dotenv.env['REVENUECAT_PREMIUM_ENTITLEMENT_ID'] ?? 'tug_pro';
   }
 
   static Future<void> load() async {

@@ -199,7 +199,7 @@ class StravaService {
       // Create the OAuth URL
       final clientId = dotenv.env['STRAVA_CLIENT_ID'] ?? '';
       // Get redirect URI from environment with fallback
-      final redirectUri = dotenv.env['STRAVA_REDIRECT_URI'] ?? 'http://localhost';
+      final redirectUri = dotenv.env['STRAVA_REDIRECT_URI'] ?? 'tug://strava-auth';
       // URI-encode the redirect URI to ensure it's properly formatted
       final encodedRedirectUri = Uri.encodeComponent(redirectUri);
       
@@ -234,7 +234,7 @@ class StravaService {
             if (_authCompleter != null && !_authCompleter!.isCompleted) {
               // Create a specific error message for this common Safari issue
               final errorMessage = 'Authentication timed out. This could be due to one of the following issues:\n\n'
-                  '1. The browser could not connect to "localhost" (common on iOS/Safari)\n'
+                  '1. The browser could not redirect back to the app (check that "tug" is set as the Authorization Callback Domain in Strava settings)\n'
                   '2. Your Strava API credentials might be incorrect\n'
                   '3. You might not have approved the authorization in the browser\n\n'
                   'It is recommended to try the manual code entry method instead.';
