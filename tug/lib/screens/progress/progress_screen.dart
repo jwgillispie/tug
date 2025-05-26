@@ -6,6 +6,7 @@ import 'package:tug/blocs/values/bloc/values_event.dart';
 import 'package:tug/blocs/values/bloc/values_state.dart';
 import 'package:tug/services/activity_service.dart';
 import 'package:tug/utils/theme/colors.dart';
+import 'package:tug/utils/quantum_effects.dart';
 import 'package:tug/widgets/tug_of_war/enhanced_tug_of_war_widget.dart';
 import 'package:tug/widgets/values/streak_overview_widget.dart';
 
@@ -136,17 +137,27 @@ class _ProgressScreenState extends State<ProgressScreen>
   }
 
   // Add a refresh method to force reload from server
-  void _refreshData() {
-    _fetchActivityData(forceRefresh: true);
-    context.read<ValuesBloc>().add(LoadValues(forceRefresh: true));
-    context.read<ValuesBloc>().add(LoadStreakStats(forceRefresh: true));
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('refreshing data...'),
-        duration: Duration(seconds: 1),
-      ),
-    );
+  Future<void> _refreshData() async {
+    try {
+      // Load values first - this will ensure we end up in ValuesLoaded state
+      if (mounted) {
+        context.read<ValuesBloc>().add(LoadValues(forceRefresh: true));
+      }
+      
+      // Fetch activity data
+      await _fetchActivityData(forceRefresh: true);
+      
+      // Load streak stats separately but don't wait for it to complete
+      // to avoid ending up in StreakStatsLoaded state
+      if (mounted) {
+        context.read<ValuesBloc>().add(LoadStreakStats(forceRefresh: true));
+      }
+      
+      // Add a small delay to ensure the refresh indicator shows
+      await Future.delayed(const Duration(milliseconds: 300));
+    } catch (e) {
+      debugPrint('Error during refresh: $e');
+    }
   }
 
   DateTime getStartDate(String timeframe) {
@@ -295,23 +306,37 @@ class _ProgressScreenState extends State<ProgressScreen>
   Widget build(BuildContext context) {
     // Must call super.build for AutomaticKeepAliveClientMixin
     super.build(context);
+    
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'progress',
-          style: TextStyle(
-            color: Theme.of(context).brightness == Brightness.dark 
-                ? TugColors.darkTextPrimary 
-                : TugColors.lightTextPrimary,
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: isDarkMode 
+                  ? [TugColors.darkBackground, TugColors.primaryPurpleDark, TugColors.primaryPurple]
+                  : [TugColors.lightBackground, TugColors.primaryPurple.withAlpha(20)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _refreshData,
+        title: QuantumEffects.holographicShimmer(
+          child: QuantumEffects.gradientText(
+            'progress',
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.2,
+            ),
+            colors: isDarkMode 
+                ? [TugColors.primaryPurple, TugColors.primaryPurpleLight, TugColors.primaryPurpleDark] 
+                : [TugColors.primaryPurple, TugColors.primaryPurpleLight],
           ),
-        ],
+        ),
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -335,6 +360,8 @@ class _ProgressScreenState extends State<ProgressScreen>
                     child: Row(
                       children: _timeframes.map((timeframe) {
                         final isSelected = timeframe == _selectedTimeframe;
+                        final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+                        
                         return Padding(
                           padding: const EdgeInsets.only(right: 8),
                           child: ChoiceChip(
@@ -348,12 +375,14 @@ class _ProgressScreenState extends State<ProgressScreen>
                                 _fetchActivityData(forceRefresh: true);
                               }
                             },
-                            selectedColor:
-                                TugColors.primaryPurple.withAlpha(204), // 0.8 opacity (204/255)
+                            selectedColor: isDarkMode ? Colors.grey.shade700 : Colors.grey.shade600,
+                            backgroundColor: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade200,
                             labelStyle: TextStyle(
                               color: isSelected
                                   ? Colors.white
-                                  : TugColors.secondaryTeal,
+                                  : isDarkMode 
+                                      ? Colors.grey.shade300 
+                                      : Colors.grey.shade700,
                               fontWeight: isSelected
                                   ? FontWeight.bold
                                   : FontWeight.normal,
@@ -370,44 +399,56 @@ class _ProgressScreenState extends State<ProgressScreen>
 
           // Main content
           Expanded(
-            child: _isLoading
-                ? const Center(
-                    child: CircularProgressIndicator(),
-                  )
-                : BlocBuilder<ValuesBloc, ValuesState>(
+            child: RefreshIndicator(
+              onRefresh: _refreshData,
+              child: _isLoading
+                  ? ListView(
+                      children: const [
+                        SizedBox(height: 200),
+                        Center(child: CircularProgressIndicator()),
+                      ],
+                    )
+                  : BlocBuilder<ValuesBloc, ValuesState>(
                     builder: (context, state) {
                       if (state is ValuesLoading) {
-                        return const Center(
-                          child: CircularProgressIndicator(),
+                        return ListView(
+                          children: const [
+                            SizedBox(height: 200),
+                            Center(child: CircularProgressIndicator()),
+                          ],
                         );
                       }
 
                       if (state is ValuesError) {
-                        return Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              const Icon(
-                                Icons.error_outline,
-                                color: TugColors.error,
-                                size: 48,
+                        return ListView(
+                          children: [
+                            const SizedBox(height: 200),
+                            Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(
+                                    Icons.error_outline,
+                                    color: TugColors.error,
+                                    size: 48,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'error loading values: ${state.message}',
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  const Text(
+                                    'pull down to refresh',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 16),
-                              Text(
-                                'error loading values: ${state.message}',
-                                textAlign: TextAlign.center,
-                              ),
-                              const SizedBox(height: 16),
-                              ElevatedButton(
-                                onPressed: () {
-                                  context
-                                      .read<ValuesBloc>()
-                                      .add(LoadValues(forceRefresh: true));
-                                },
-                                child: const Text('retry'),
-                              ),
-                            ],
-                          ),
+                            ),
+                          ],
                         );
                       }
 
@@ -416,8 +457,13 @@ class _ProgressScreenState extends State<ProgressScreen>
                             state.values.where((v) => v.active).toList();
 
                         if (values.isEmpty) {
-                          return const Center(
-                            child: Text('hello? values? add some!'),
+                          return ListView(
+                            children: const [
+                              SizedBox(height: 200),
+                              Center(
+                                child: Text('hello? values? add some!'),
+                              ),
+                            ],
                           );
                         }
 
@@ -560,11 +606,36 @@ class _ProgressScreenState extends State<ProgressScreen>
                         );
                       }
 
-                      return const Center(
-                        child: Text('no data available'),
+                      if (state is StreakStatsLoaded) {
+                        // Handle streak stats loaded state - this shouldn't normally be reached
+                        // as streak stats are usually loaded along with values
+                        return ListView(
+                          children: const [
+                            SizedBox(height: 200),
+                            Center(
+                              child: Column(
+                                children: [
+                                  CircularProgressIndicator(),
+                                  SizedBox(height: 16),
+                                  Text('Loading values...'),
+                                ],
+                              ),
+                            ),
+                          ],
+                        );
+                      }
+
+                      return ListView(
+                        children: const [
+                          SizedBox(height: 200),
+                          Center(
+                            child: Text('no data available'),
+                          ),
+                        ],
                       );
                     },
                   ),
+            ),
           ),
         ],
       ),

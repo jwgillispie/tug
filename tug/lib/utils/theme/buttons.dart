@@ -229,11 +229,11 @@ class TugButtons {
   // Action Button with Icon - enhanced with better feedback
   static ButtonStyle actionButtonStyle({bool isDark = false}) => ElevatedButton.styleFrom(
     foregroundColor: Colors.white,
-    backgroundColor: TugColors.secondaryTeal,
+    backgroundColor: TugColors.success,
     textStyle: TugTextStyles.button,
     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
     elevation: 3,
-    shadowColor: TugColors.secondaryTeal.withOpacity(0.4),
+    shadowColor: TugColors.success.withValues(alpha: 0.4),
     minimumSize: const Size(88, 48), // Ensure touch-friendly size
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(14),
@@ -246,12 +246,12 @@ class TugButtons {
             : TugColors.lightSurfaceVariant.withOpacity(0.7);
       }
       if (states.contains(WidgetState.pressed)) {
-        return TugColors.secondaryTealDark;
+        return TugColors.primaryPurpleDark;
       }
       if (states.contains(WidgetState.hovered)) {
-        return Color.lerp(TugColors.secondaryTeal, TugColors.secondaryTealDark, 0.3) ?? TugColors.secondaryTeal;
+        return Color.lerp(TugColors.success, TugColors.primaryPurpleDark, 0.3) ?? TugColors.success;
       }
-      return TugColors.secondaryTeal;
+      return TugColors.success;
     }),
     overlayColor: WidgetStateProperty.resolveWith<Color>((states) {
       return Colors.white.withOpacity(0.1);

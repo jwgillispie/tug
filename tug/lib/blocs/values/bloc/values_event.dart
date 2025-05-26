@@ -54,3 +54,7 @@ class LoadStreakStats extends ValuesEvent {
   @override
   List<Object?> get props => [valueId, forceRefresh];
 }
+
+class ClearValuesData extends ValuesEvent {
+  const ClearValuesData();
+}

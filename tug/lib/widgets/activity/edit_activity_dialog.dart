@@ -52,7 +52,10 @@ class _EditActivityDialogState extends State<EditActivityDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
     return Dialog(
+      backgroundColor: isDarkMode ? TugColors.darkSurface : Colors.white,
       insetPadding: const EdgeInsets.all(16),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
@@ -69,7 +72,9 @@ class _EditActivityDialogState extends State<EditActivityDialog> {
               children: [
                 Text(
                   'Edit Activity',
-                  style: Theme.of(context).textTheme.titleLarge,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: isDarkMode ? TugColors.darkTextPrimary : TugColors.lightTextPrimary,
+                  ),
                 ),
                 IconButton(
                   icon: const Icon(Icons.close),

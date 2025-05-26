@@ -48,8 +48,17 @@ class _EditValueDialogState extends State<EditValueDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
     return AlertDialog(
-      title: const Text('Edit Value'),
+      backgroundColor: isDarkMode ? TugColors.darkSurface : Colors.white,
+      title: Text(
+        'Edit Value',
+        style: TextStyle(
+          color: isDarkMode ? TugColors.darkTextPrimary : TugColors.lightTextPrimary,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -108,7 +117,12 @@ class _EditValueDialogState extends State<EditValueDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: Text(
+            'Cancel',
+            style: TextStyle(
+              color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+            ),
+          ),
         ),
         ElevatedButton(
           style: TugButtons.primaryButtonStyle(isDark: Theme.of(context).brightness == Brightness.dark),

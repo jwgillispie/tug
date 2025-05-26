@@ -184,7 +184,7 @@ class PremiumFeature extends StatelessWidget {
                   // Title with gradient
                   ShaderMask(
                     shaderCallback: (bounds) => LinearGradient(
-                      colors: TugColors.holographicGradient,
+                      colors: [TugColors.primaryPurple, TugColors.primaryPurpleLight, TugColors.primaryPurpleDark],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ).createShader(bounds),
@@ -218,7 +218,7 @@ class PremiumFeature extends StatelessWidget {
                     maxScale: 1.02,
                     duration: const Duration(milliseconds: 1800),
                     addGlow: true,
-                    glowColor: TugColors.tertiaryGold,
+                    glowColor: TugColors.warning,
                     glowIntensity: 0.7,
                     child: Container(
                       decoration: BoxDecoration(
@@ -226,13 +226,13 @@ class PremiumFeature extends StatelessWidget {
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            TugColors.gradientGoldStart,
-                            TugColors.gradientGoldEnd,
+                            TugColors.gradientPurpleStart,
+                            TugColors.gradientPurpleEnd,
                           ],
                         ),
                         borderRadius: BorderRadius.circular(16),
                         boxShadow: TugColors.getNeonGlow(
-                          TugColors.tertiaryGold,
+                          TugColors.warning,
                           intensity: 0.5,
                         ),
                       ),

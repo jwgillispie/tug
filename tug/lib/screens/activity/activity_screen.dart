@@ -10,6 +10,7 @@ import 'package:tug/blocs/values/bloc/values_event.dart';
 import 'package:tug/blocs/values/bloc/values_state.dart';
 import 'package:tug/models/activity_model.dart';
 import 'package:tug/models/value_model.dart';
+import 'package:tug/utils/quantum_effects.dart';
 import 'package:tug/utils/theme/colors.dart';
 import 'package:tug/utils/theme/buttons.dart';
 import 'package:tug/widgets/activity/activity_form.dart';
@@ -89,7 +90,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
   bool get wantKeepAlive => true;
   
   // Add a refresh method
-  void _refreshActivities() {
+  Future<void> _refreshActivities() async {
     context.read<ActivitiesBloc>().add(LoadActivities(
       valueId: _filterValueId,
       startDate: _startDate,
@@ -97,12 +98,8 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
       forceRefresh: true, // Force refresh from server
     ));
     
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Refreshing activities...'),
-        duration: Duration(seconds: 1),
-      ),
-    );
+    // Add a small delay to ensure the refresh indicator shows
+    await Future.delayed(const Duration(milliseconds: 500));
   }
 
   void _showAddActivitySheet() {
@@ -123,10 +120,11 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
             left: 24,
             right: 24,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -189,6 +187,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
               const SizedBox(height: 24),
             ],
           ),
+        ),
         );
       },
     );
@@ -407,27 +406,69 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
     
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'activities',
-          style: TextStyle(
-            color: Theme.of(context).brightness == Brightness.dark 
-                ? TugColors.darkTextPrimary 
-                : TugColors.lightTextPrimary,
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: isDarkMode 
+                  ? [TugColors.darkBackground, TugColors.primaryPurpleDark, TugColors.primaryPurple]
+                  : [TugColors.lightBackground, TugColors.primaryPurple.withAlpha(20)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        title: QuantumEffects.holographicShimmer(
+          child: QuantumEffects.gradientText(
+            'activity tracking',
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.2,
+            ),
+            colors: isDarkMode 
+                ? [TugColors.primaryPurple, TugColors.primaryPurpleLight, TugColors.primaryPurpleDark] 
+                : [TugColors.primaryPurple, TugColors.primaryPurpleLight],
           ),
         ),
         actions: [
-          IconButton(
-            icon:
-                Icon(_showFilters ? Icons.filter_list_off : Icons.filter_list),
-            onPressed: () {
-              setState(() {
-                _showFilters = !_showFilters;
-              });
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _refreshActivities,
+          QuantumEffects.floating(
+            offset: 5,
+            child: QuantumEffects.quantumBorder(
+              glowColor: TugColors.primaryPurpleLight,
+              intensity: 0.8,
+              child: Container(
+                margin: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      TugColors.primaryPurple.withAlpha(100),
+                      TugColors.primaryPurpleDark.withAlpha(80),
+                    ],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: TugColors.primaryPurple.withAlpha(100),
+                      blurRadius: 10,
+                      spreadRadius: 2,
+                    ),
+                  ],
+                ),
+                child: IconButton(
+                  icon: Icon(
+                    _showFilters ? Icons.filter_list_off : Icons.filter_list,
+                    color: Colors.white,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _showFilters = !_showFilters;
+                    });
+                  },
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -443,37 +484,50 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
     
             // Activities List
             Expanded(
-              child: BlocBuilder<ActivitiesBloc, ActivitiesState>(
+              child: RefreshIndicator(
+                onRefresh: _refreshActivities,
+                child: BlocBuilder<ActivitiesBloc, ActivitiesState>(
                 builder: (context, state) {
                   if (state is ActivitiesLoading && _isFirstLoad) {
                     // Only show loading indicator on first load
-                    return const Center(
-                      child: CircularProgressIndicator(),
+                    return ListView(
+                      children: const [
+                        SizedBox(height: 200),
+                        Center(child: CircularProgressIndicator()),
+                      ],
                     );
                   }
     
                   if (state is ActivitiesError) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.error_outline,
-                            color: TugColors.error,
-                            size: 48,
+                    return ListView(
+                      children: [
+                        const SizedBox(height: 200),
+                        Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.error_outline,
+                                color: TugColors.error,
+                                size: 48,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Error: ${state.message}',
+                                textAlign: TextAlign.center,
+                              ),
+                              const SizedBox(height: 16),
+                              const Text(
+                                'pull down to refresh',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Error: ${state.message}',
-                            textAlign: TextAlign.center,
-                          ),
-                          const SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: _refreshActivities,
-                            child: const Text('Retry'),
-                          ),
-                        ],
-                      ),
+                        ),
+                      ],
                     );
                   }
     
@@ -488,55 +542,44 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                   }
     
                   if (activities.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.history,
-                            size: 64,
-                            color: isDarkMode ? Colors.grey.shade600 : Colors.grey,
-                          ),
-                          const SizedBox(height: 16),
-                          const Text(
-                            'Not shit here',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Get tugging on them activities',
-                            style: TextStyle(
-                              color: isDarkMode ? Colors.grey.shade400 : Colors.grey,
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                          Row(
+                    return ListView(
+                      children: [
+                        const SizedBox(height: 100),
+                        Center(
+                          child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
+                              Icon(
+                                Icons.history,
+                                size: 64,
+                                color: isDarkMode ? Colors.grey.shade600 : Colors.grey,
+                              ),
+                              const SizedBox(height: 16),
+                              const Text(
+                                'put stuff here',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'get tugging on them activities',
+                                style: TextStyle(
+                                  color: isDarkMode ? Colors.grey.shade400 : Colors.grey,
+                                ),
+                              ),
+                              const SizedBox(height: 24),
                               ElevatedButton.icon(
                                 style: TugButtons.primaryButtonStyle(isDark: Theme.of(context).brightness == Brightness.dark),
                                 onPressed: _showAddActivitySheet,
                                 icon: const Icon(Icons.add),
                                 label: const Text('log activity'),
                               ),
-                              const SizedBox(width: 12),
-                              OutlinedButton.icon(
-                                onPressed: () {
-                                  Navigator.of(context).pushNamed('/import-activities');
-                                },
-                                icon: const Icon(Icons.cloud_download),
-                                label: const Text('import from strava'),
-                                style: OutlinedButton.styleFrom(
-                                  side: const BorderSide(color: TugColors.primaryPurple),
-                                ),
-                              ),
                             ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     );
                   }
     
@@ -573,7 +616,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                                       ),
                                       const SizedBox(width: 8),
                                       Text(
-                                        'Swipe left on activities to edit or delete',
+                                        'swipe left on activities to edit or delete',
                                         style: TextStyle(
                                           color: TugColors.primaryPurple,
                                           fontWeight: FontWeight.w500,
@@ -629,6 +672,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                 },
               ),
             ),
+          ),
           ],
         ),
       ),
@@ -639,29 +683,48 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
     final color = Color(int.parse(valueColor.substring(1), radix: 16) + 0xFF000000);
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: isDarkMode ? TugColors.darkSurface : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: isDarkMode 
-                ? Colors.black.withOpacity(0.2) 
-                : Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+    return QuantumEffects.quantumBorder(
+      glowColor: color,
+      intensity: 0.3,
+      child: Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isDarkMode 
+                  ? [
+                      TugColors.darkSurface,
+                      Color.lerp(TugColors.darkSurface, color, 0.03) ?? TugColors.darkSurface,
+                    ]
+                  : [
+                      Colors.white,
+                      Color.lerp(Colors.white, color, 0.02) ?? Colors.white,
+                    ],
+            ),
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: color.withAlpha(25),
+                blurRadius: 12,
+                spreadRadius: 0,
+                offset: const Offset(0, 4),
+              ),
+              BoxShadow(
+                color: isDarkMode 
+                    ? Colors.black.withOpacity(0.25) 
+                    : Colors.black.withOpacity(0.08),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ],
+            border: Border.all(
+              color: color.withAlpha(60),
+              width: 1,
+            ),
           ),
-        ],
-        border: Border.all(
-          color: isDarkMode 
-              ? Colors.white.withOpacity(0.05) 
-              : Colors.black.withOpacity(0.03),
-          width: 0.5,
-        ),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
         child: Slidable(
           key: ValueKey(activity.id ?? activity.name),
           endActionPane: ActionPane(
@@ -795,6 +858,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
             ),
           ),
         ),
+        ),
       ),
     );
   }
@@ -831,12 +895,14 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
 
             if (activities.isEmpty) {
               return Center(
-                child: Text(
-                  'It\'s empty and lonley over here',
+                child: QuantumEffects.gradientText(
+                  'quantum void - awaiting first activity',
                   style: TextStyle(
                     fontStyle: FontStyle.italic,
-                    color: isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600,
+                    fontSize: 16,
+                    letterSpacing: 0.8,
                   ),
+                  colors: [TugColors.primaryPurple, TugColors.primaryPurpleLight],
                 ),
               );
             }
@@ -872,18 +938,6 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                   title: 'total time',
                   value: '${totalTime}m',
                   icon: Icons.access_time,
-                ),
-                
-                // Import button
-                IconButton(
-                  onPressed: () {
-                    Navigator.of(context).pushNamed('/import-activities');
-                  },
-                  tooltip: 'import activities',
-                  icon: const Icon(
-                    Icons.cloud_download_outlined,
-                    color: TugColors.primaryPurple,
-                  ),
                 ),
               ],
             );

@@ -1,10 +1,12 @@
 // lib/screens/values/values_input_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 import 'package:tug/blocs/values/bloc/values_bloc.dart';
 import 'package:tug/blocs/values/bloc/values_event.dart';
 import 'package:tug/blocs/values/bloc/values_state.dart';
+import 'package:tug/utils/quantum_effects.dart';
 import 'package:tug/widgets/values/color_picker.dart';
 import 'package:tug/widgets/values/edit_value_dialog.dart';
 import 'package:tug/widgets/values/first_value_celebration.dart';
@@ -36,6 +38,7 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
   // Keep track of previous state to detect transitions
   int _previousValueCount = 0;
   bool _isFirstLoad = true;
+  bool _showSwipeHint = true;
 
   @override
   void initState() {
@@ -147,33 +150,114 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
         children: [
           Scaffold(
             appBar: AppBar(
-              title: const Text('Values'),
+              elevation: 0,
+              backgroundColor: Colors.transparent,
+              flexibleSpace: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: Theme.of(context).brightness == Brightness.dark 
+                        ? [TugColors.primaryPurple, TugColors.primaryPurpleLight, TugColors.primaryPurpleDark]
+                        : [TugColors.lightBackground, TugColors.warning.withAlpha(20)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                ),
+              ),
+              title: QuantumEffects.holographicShimmer(
+                child: QuantumEffects.gradientText(
+                  'cosmic values',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
+                  ),
+                  colors: Theme.of(context).brightness == Brightness.dark 
+                      ? [TugColors.primaryPurple, TugColors.primaryPurpleLight, TugColors.primaryPurpleDark] 
+                      : [TugColors.warning, TugColors.primaryPurple],
+                ),
+              ),
               // Add back button if we came from home screen
               leading: widget.fromHome 
-                  ? IconButton(
-                      icon: const Icon(Icons.arrow_back),
-                      onPressed: () => context.pop(),
+                  ? QuantumEffects.floating(
+                      offset: 3,
+                      child: QuantumEffects.quantumBorder(
+                        glowColor: TugColors.warning,
+                        intensity: 0.6,
+                        child: Container(
+                          margin: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: RadialGradient(
+                              colors: [
+                                TugColors.warning.withAlpha(40),
+                                TugColors.warning.withAlpha(10),
+                              ],
+                            ),
+                          ),
+                          child: IconButton(
+                            icon: Icon(Icons.arrow_back, color: TugColors.warning),
+                            onPressed: () => context.pop(),
+                          ),
+                        ),
+                      ),
                     )
                   : null,
             ),
-            body: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    widget.fromHome
-                        ? 'edit your values'
-                        : 'what do you care about more than anything else?',
-                    style: Theme.of(context).textTheme.displayLarge,
+            body: QuantumEffects.quantumParticleField(
+              isDark: Theme.of(context).brightness == Brightness.dark,
+              particleCount: 20,
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: Theme.of(context).brightness == Brightness.dark 
+                        ? [
+                            TugColors.darkBackground,
+                            Color.lerp(TugColors.darkBackground, TugColors.warning, 0.08) ?? TugColors.darkBackground,
+                          ] 
+                        : [
+                            TugColors.lightBackground,
+                            Color.lerp(TugColors.lightBackground, TugColors.warning, 0.04) ?? TugColors.lightBackground,
+                          ],
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'you can pick up to 5 things',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: TugColors.lightTextSecondary,
-                    ),
-                  ),
+                ),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      QuantumEffects.cosmicBreath(
+                        intensity: 0.05,
+                        child: QuantumEffects.gradientText(
+                          widget.fromHome
+                              ? 'edit your cosmic values'
+                              : 'what energizes your quantum existence?',
+                          style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                          ) ?? TextStyle(
+                            fontSize: 28,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                          ),
+                          colors: [TugColors.primaryPurple, TugColors.primaryPurpleLight, TugColors.primaryPurpleDark],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      QuantumEffects.floating(
+                        offset: 5,
+                        child: Text(
+                          'manifest up to 5 dimensional values',
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                            color: Theme.of(context).brightness == Brightness.dark 
+                                ? TugColors.darkTextSecondary 
+                                : TugColors.lightTextSecondary,
+                            fontSize: 16,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ),
                   const SizedBox(height: 32),
                   Form(
                     key: _formKey,
@@ -290,17 +374,110 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
                               'your values',
                               style: Theme.of(context).textTheme.titleLarge,
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 8),
+                            // Add guidance text for new users
+                            if (activeValues.length == 1 && !widget.fromHome)
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                margin: const EdgeInsets.only(bottom: 16),
+                                decoration: BoxDecoration(
+                                  color: TugColors.primaryPurple.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: TugColors.primaryPurple.withValues(alpha: 0.2),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.lightbulb_outline,
+                                      color: TugColors.primaryPurple,
+                                      size: 20,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: Text(
+                                        'Great! Add 2-4 more values, then hit GO to start tracking activities.',
+                                        style: TextStyle(
+                                          color: TugColors.primaryPurple,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            // Swipe hint
+                            if (activeValues.isNotEmpty && _showSwipeHint)
+                              Container(
+                                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                                margin: const EdgeInsets.only(bottom: 16),
+                                decoration: BoxDecoration(
+                                  color: TugColors.primaryPurple.withValues(alpha: 0.08),
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: Border.all(
+                                    color: TugColors.primaryPurple.withValues(alpha: 0.2),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.swipe_left,
+                                          color: TugColors.primaryPurple,
+                                          size: 18,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          'swipe left on values to edit or delete',
+                                          style: TextStyle(
+                                            color: TugColors.primaryPurple,
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    IconButton(
+                                      padding: EdgeInsets.zero,
+                                      constraints: const BoxConstraints(),
+                                      icon: Icon(
+                                        Icons.close,
+                                        color: TugColors.primaryPurple,
+                                        size: 16,
+                                      ),
+                                      onPressed: () {
+                                        setState(() {
+                                          _showSwipeHint = false;
+                                        });
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ...activeValues.map((value) => Padding(
                               padding: const EdgeInsets.only(bottom: 12),
                               child: ValueCard(
                                 value: value,
                                 onDelete: () {
+                                  if (_showSwipeHint) {
+                                    setState(() {
+                                      _showSwipeHint = false;
+                                    });
+                                  }
                                   context.read<ValuesBloc>().add(
                                     DeleteValue(value.id!),
                                   );
                                 },
                                 onEdit: () {
+                                  if (_showSwipeHint) {
+                                    setState(() {
+                                      _showSwipeHint = false;
+                                    });
+                                  }
                                   _showEditDialog(context, value);
                                 },
                               ),
@@ -344,6 +521,8 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
               ),
             ),
           ),
+            ),
+          ), 
           
           // Show the celebration overlay if we just added the first value
           if (_showCelebration)
@@ -372,95 +551,264 @@ class ValueCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final Color valueColor = Color(int.parse(value.color.substring(1), radix: 16) + 0xFF000000);
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: TugColors.lightBorder,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+    return QuantumEffects.cosmicBreath(
+      intensity: 0.03,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Slidable(
+          key: ValueKey(value.id ?? value.name),
+          endActionPane: ActionPane(
+            motion: const DrawerMotion(),
+            dragDismissible: false,
             children: [
-              Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  color: valueColor,
-                  shape: BoxShape.circle,
-                ),
+              SlidableAction(
+                onPressed: (_) => onEdit(),
+                backgroundColor: TugColors.primaryPurple,
+                foregroundColor: Colors.white,
+                icon: Icons.edit,
+                label: 'Edit',
+                padding: const EdgeInsets.all(0),
               ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      value.name,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'importance: ${value.importance}',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: TugColors.lightTextSecondary,
-                      ),
-                    ),
-                    if (value.description.isNotEmpty) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        value.description,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: TugColors.lightTextSecondary,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              IconButton(
-                onPressed: onEdit,
-                icon: const Icon(Icons.edit_outlined),
-                color: TugColors.primaryPurple,
-              ),
-              IconButton(
-                onPressed: onDelete,
-                icon: const Icon(Icons.delete_outline),
-                color: TugColors.error,
+              SlidableAction(
+                onPressed: (_) => _showDeleteConfirmation(context),
+                backgroundColor: TugColors.error,
+                foregroundColor: Colors.white,
+                icon: Icons.delete,
+                label: 'Delete',
+                padding: const EdgeInsets.all(0),
               ),
             ],
           ),
-          if (value.currentStreak > 0 || value.longestStreak > 0) ...[
-            const SizedBox(height: 12),
-            Divider(color: TugColors.lightBorder),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildStreakIndicator(
-                  context: context,
-                  icon: Icons.local_fire_department,
-                  color: Color(0xFFF57C00), // Orange
-                  label: 'current streak',
-                  value: '${value.currentStreak} day${value.currentStreak != 1 ? 's' : ''}',
+          child: QuantumEffects.glassContainer(
+            isDark: isDarkMode,
+            blur: 15,
+            opacity: 0.1,
+            borderRadius: BorderRadius.circular(16),
+            child: QuantumEffects.quantumBorder(
+              glowColor: valueColor,
+              intensity: 0.4,
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: isDarkMode
+                      ? LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            valueColor.withAlpha(15),
+                            valueColor.withAlpha(5),
+                          ],
+                        )
+                      : LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.white,
+                            valueColor.withAlpha(10),
+                          ],
+                        ),
+                  boxShadow: TugColors.getNeonGlow(
+                    valueColor,
+                    intensity: 0.3,
+                  ),
                 ),
-                _buildStreakIndicator(
-                  context: context,
-                  icon: Icons.emoji_events,
-                  color: Color(0xFFFFD700), // Gold
-                  label: 'top streak',
-                  value: '${value.longestStreak} day${value.longestStreak != 1 ? 's' : ''}',
+                child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  QuantumEffects.cosmicBreath(
+                    intensity: 0.08,
+                    child: Container(
+                      width: 28,
+                      height: 28,
+                      decoration: BoxDecoration(
+                        gradient: RadialGradient(
+                          colors: [
+                            valueColor,
+                            valueColor.withAlpha(180),
+                          ],
+                        ),
+                        shape: BoxShape.circle,
+                        boxShadow: TugColors.getNeonGlow(
+                          valueColor,
+                          intensity: 0.6,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        QuantumEffects.gradientText(
+                          value.name,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ) ?? TextStyle(
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                          colors: [valueColor, valueColor.withAlpha(200)],
+                        ),
+                        const SizedBox(height: 6),
+                        QuantumEffects.floating(
+                          offset: 2,
+                          child: Row(
+                            children: [
+                              Text(
+                                'importance: ',
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              ...List.generate(
+                                value.importance,
+                                (index) => QuantumEffects.cosmicBreath(
+                                  intensity: 0.05,
+                                  child: Container(
+                                    margin: const EdgeInsets.only(right: 2),
+                                    child: Icon(
+                                      Icons.star,
+                                      size: 16,
+                                      color: valueColor,
+                                      shadows: TugColors.getNeonGlow(
+                                        valueColor,
+                                        intensity: 0.3,
+                                      ).map((s) => Shadow(
+                                        color: s.color,
+                                        blurRadius: s.blurRadius,
+                                        offset: Offset(s.offset.dx, s.offset.dy),
+                                      )).toList(),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              ...List.generate(
+                                5 - value.importance,
+                                (index) => Container(
+                                  margin: const EdgeInsets.only(right: 2),
+                                  child: Icon(
+                                    Icons.star_border,
+                                    size: 16,
+                                    color: valueColor.withValues(alpha: 0.3),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (value.description.isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          QuantumEffects.floating(
+                            offset: 1,
+                            child: Text(
+                              value.description,
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+                                fontStyle: FontStyle.italic,
+                                letterSpacing: 0.3,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              if (value.currentStreak > 0 || value.longestStreak > 0) ...[
+                const SizedBox(height: 16),
+                QuantumEffects.glassContainer(
+                  isDark: isDarkMode,
+                  blur: 8,
+                  opacity: 0.05,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        QuantumEffects.floating(
+                          offset: 2,
+                          child: _buildStreakIndicator(
+                            context: context,
+                            icon: Icons.local_fire_department,
+                            color: Color(0xFFF57C00), // Orange
+                            label: 'current streak',
+                            value: '${value.currentStreak} day${value.currentStreak != 1 ? 's' : ''}',
+                          ),
+                        ),
+                        QuantumEffects.floating(
+                          offset: 3,
+                          child: _buildStreakIndicator(
+                            context: context,
+                            icon: Icons.emoji_events,
+                            color: Color(0xFFFFD700), // Gold
+                            label: 'top streak',
+                            value: '${value.longestStreak} day${value.longestStreak != 1 ? 's' : ''}',
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
+            ]),
+              ),
+          ),
+        ),
+      ),
+    ));
+  }
+  
+  void _showDeleteConfirmation(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDarkMode ? TugColors.darkSurface : Colors.white,
+        title: Text(
+          'Delete Value',
+          style: TextStyle(
+            color: isDarkMode ? TugColors.darkTextPrimary : TugColors.lightTextPrimary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to delete "${value.name}"? This action cannot be undone.',
+          style: TextStyle(
+            color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+              ),
             ),
-          ],
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              onDelete();
+            },
+            style: TextButton.styleFrom(
+              foregroundColor: TugColors.error,
+            ),
+            child: const Text('Delete'),
+          ),
         ],
       ),
     );
@@ -473,24 +821,60 @@ class ValueCard extends StatelessWidget {
     required String label,
     required String value,
   }) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
     return Row(
       children: [
-        Icon(icon, color: color, size: 16),
-        const SizedBox(width: 4),
+        QuantumEffects.cosmicBreath(
+          intensity: 0.06,
+          child: Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: RadialGradient(
+                colors: [
+                  color.withAlpha(50),
+                  color.withAlpha(20),
+                ],
+              ),
+            ),
+            child: Icon(
+              icon, 
+              color: color, 
+              size: 16,
+              shadows: TugColors.getNeonGlow(
+                color,
+                intensity: 0.4,
+              ).map((s) => Shadow(
+                color: s.color,
+                blurRadius: s.blurRadius / 2,
+                offset: Offset(s.offset.dx, s.offset.dy),
+              )).toList(),
+            ),
+          ),
+        ),
+        const SizedBox(width: 6),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               label,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: TugColors.lightTextSecondary,
+                color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+                fontWeight: FontWeight.w500,
+                letterSpacing: 0.2,
               ),
             ),
-            Text(
+            QuantumEffects.gradientText(
               value,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.bold,
+                letterSpacing: 0.3,
+              ) ?? TextStyle(
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.3,
               ),
+              colors: [color, color.withAlpha(180)],
             ),
           ],
         ),

@@ -8,6 +8,7 @@ import 'package:tug/blocs/activities/activities_bloc.dart';
 import 'package:tug/blocs/subscription/subscription_bloc.dart';
 import 'package:tug/blocs/theme/theme_bloc.dart';
 import 'package:tug/blocs/values/bloc/values_bloc.dart';
+import 'package:tug/blocs/values/bloc/values_event.dart';
 import 'package:tug/config/env_confg.dart';
 import 'package:tug/repositories/activity_repository.dart';
 import 'package:tug/repositories/values_repository.dart';
@@ -40,11 +41,6 @@ import 'screens/values/values_input_screen.dart';
 import 'screens/about/about_screen.dart';
 import 'screens/profile/edit_profile_screen.dart';
 import 'screens/profile/change_password_screen.dart';
-import 'screens/profile/accounts_screen.dart';
-import 'screens/profile/import_activities_screen.dart';
-import 'screens/profile/strava_setup_guide_screen.dart';
-import 'screens/profile/strava_debug_screen.dart';
-import 'screens/profile/strava_code_input_screen.dart';
 import 'screens/achievements/achievements_screen.dart';
 import 'screens/rankings/rankings_screen.dart';
 
@@ -216,31 +212,6 @@ class _TugAppState extends State<TugApp> {
           path: '/change-password',
           builder: (context, state) => const ChangePasswordScreen(),
         ),
-        // Accounts Screen (for managing connected services)
-        GoRoute(
-          path: '/accounts',
-          builder: (context, state) => const AccountsScreen(),
-        ),
-        // Import Activities Screen
-        GoRoute(
-          path: '/import-activities',
-          builder: (context, state) => const ImportActivitiesScreen(),
-        ),
-        // Strava Setup Guide Screen
-        GoRoute(
-          path: '/strava-setup-guide',
-          builder: (context, state) => const StravaSetupGuideScreen(),
-        ),
-        // Strava Debug Screen
-        GoRoute(
-          path: '/strava-debug',
-          builder: (context, state) => const StravaDebugScreen(),
-        ),
-        // Strava Code Input Screen
-        GoRoute(
-          path: '/strava-code-input',
-          builder: (context, state) => const StravaCodeInputScreen(),
-        ),
         // Achievements Screen
         GoRoute(
           path: '/achievements',
@@ -386,17 +357,28 @@ class _TugAppState extends State<TugApp> {
         BlocProvider<ThemeBloc>.value(value: _themeBloc),
         BlocProvider<SubscriptionBloc>.value(value: _subscriptionBloc),
       ],
-      child: BlocBuilder<ThemeBloc, ThemeState>(
-        builder: (context, themeState) {
-          return MaterialApp.router(
-            title: 'Tug',
-            theme: TugTheme.lightTheme,
-            darkTheme: TugTheme.darkTheme,
-            themeMode: themeState.isDarkMode ? ThemeMode.dark : ThemeMode.light,
-            routerConfig: _router,
-            debugShowCheckedModeBanner: false,
-          );
+      child: BlocListener<AuthBloc, AuthState>(
+        listener: (context, state) {
+          // Clear all BLoC data when user becomes unauthenticated
+          if (state is Unauthenticated) {
+            debugPrint('User unauthenticated - clearing all BLoC data');
+            context.read<ActivitiesBloc>().add(const ClearActivitiesData());
+            context.read<ValuesBloc>().add(const ClearValuesData());
+            context.read<SubscriptionBloc>().add(const LogoutSubscription());
+          }
         },
+        child: BlocBuilder<ThemeBloc, ThemeState>(
+          builder: (context, themeState) {
+            return MaterialApp.router(
+              title: 'Tug',
+              theme: TugTheme.lightTheme,
+              darkTheme: TugTheme.darkTheme,
+              themeMode: themeState.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+              routerConfig: _router,
+              debugShowCheckedModeBanner: false,
+            );
+          },
+        ),
       ),
     );
   }

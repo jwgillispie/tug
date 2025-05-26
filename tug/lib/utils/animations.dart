@@ -456,10 +456,10 @@ class TugAnimations {
     bool isDark = false,
   }) {
     final effectiveColors = colors ?? [
-      TugColors.accentBlue,
+      TugColors.info,
       TugColors.primaryPurple,
-      TugColors.accentPink, 
-      TugColors.secondaryTeal,
+      TugColors.primaryPurpleLight, 
+      TugColors.success,
     ];
     
     return TweenAnimationBuilder<double>(
@@ -548,9 +548,9 @@ class TugAnimations {
                 end: end,
                 colors: [
                   base,
-                  TugColors.accentBlue.withOpacity(0.8),
+                  TugColors.info.withValues(alpha: 0.8),
                   highlight,
-                  TugColors.accentPink.withOpacity(0.8),
+                  TugColors.primaryPurpleLight.withValues(alpha: 0.8),
                   base,
                 ],
                 stops: const [0.0, 0.25, 0.5, 0.75, 1.0],

@@ -1,6 +1,7 @@
 // lib/blocs/subscription/subscription_bloc.dart
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
@@ -27,6 +28,10 @@ class PurchaseSubscription extends SubscriptionEvent {
 }
 
 class RestorePurchases extends SubscriptionEvent {}
+
+class LogoutSubscription extends SubscriptionEvent {
+  const LogoutSubscription();
+}
 
 // States
 abstract class SubscriptionState extends Equatable {
@@ -104,6 +109,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     on<LoadSubscriptions>(_onLoadSubscriptions);
     on<PurchaseSubscription>(_onPurchaseSubscription);
     on<RestorePurchases>(_onRestorePurchases);
+    on<LogoutSubscription>(_onLogoutSubscription);
 
     // Initialize the subscription service
     _subscriptionService.initialize();
@@ -246,7 +252,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     emit(RestoringPurchases());
 
     try {
-      final success = await _subscriptionService.restorePurchases();
+      await _subscriptionService.restorePurchases();
       
       emit(PurchasesRestored(
         hasPremium: _subscriptionService.isPremium,
@@ -257,6 +263,20 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     } catch (e) {
       emit(SubscriptionError('Failed to restore purchases: $e'));
     }
+  }
+
+  Future<void> _onLogoutSubscription(
+    LogoutSubscription event,
+    Emitter<SubscriptionState> emit,
+  ) async {
+    // Reset to initial state to clear any cached subscription data
+    emit(SubscriptionInitial());
+    
+    // Force reload subscriptions to get fresh state for new user
+    // This will check the current user's subscription status
+    add(LoadSubscriptions());
+    
+    debugPrint('Subscription data cleared - reset to initial state');
   }
 
   @override

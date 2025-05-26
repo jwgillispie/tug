@@ -101,21 +101,20 @@ class SubscriptionService {
     final oldPremiumStatus = isPremium;
     _customerInfo = info;
     
+    // Debug logging
+    debugPrint('=== SUBSCRIPTION DEBUG ===');
+    debugPrint('Customer info updated');
+    debugPrint('Active subscriptions: ${info.activeSubscriptions}');
+    debugPrint('All entitlements: ${info.entitlements.all.keys}');
+    debugPrint('Active entitlements: ${info.entitlements.active.keys}');
+    debugPrint('Premium entitlement ID: ${EnvConfig.revenueCatPremiumEntitlementId}');
+    debugPrint('Has premium entitlement: ${info.entitlements.active.containsKey(EnvConfig.revenueCatPremiumEntitlementId)}');
+    debugPrint('isPremium: $isPremium');
+    debugPrint('=========================');
+    
     // Check if premium status changed and notify listeners
     if (oldPremiumStatus != isPremium) {
       _subscriptionStatusController.add(isPremium);
-    }
-    
-    // Log active subscriptions
-    final subscriptions = info.activeSubscriptions;
-    if (subscriptions.isNotEmpty) {
-      debugPrint('Active subscriptions: $subscriptions');
-    }
-    
-    // Log active entitlements
-    final entitlements = info.entitlements.active.keys;
-    if (entitlements.isNotEmpty) {
-      debugPrint('Active entitlements: $entitlements');
     }
   }
   
@@ -255,6 +254,10 @@ class SubscriptionService {
     }
     
     try {
+      // Clear internal state first
+      _customerInfo = null;
+      _lastPurchaseError = null;
+      
       await Purchases.logOut();
       final customerInfo = await Purchases.getCustomerInfo();
       _handleCustomerInfoUpdate(customerInfo);

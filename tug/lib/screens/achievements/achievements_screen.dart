@@ -4,6 +4,7 @@ import 'package:tug/models/achievement_model.dart';
 import 'package:tug/services/achievement_notification_service.dart';
 import 'package:tug/services/achievement_service.dart';
 import 'package:tug/utils/theme/colors.dart';
+import 'package:tug/utils/quantum_effects.dart';
 import 'package:tug/widgets/achievements/achievement_card.dart';
 
 class AchievementsScreen extends StatefulWidget {
@@ -155,31 +156,111 @@ class _AchievementsScreenState extends State<AchievementsScreen> with SingleTick
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('achievements'),
-        actions: [
-          // Check for new achievements button
-          IconButton(
-            icon: _isCheckingNew
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.emoji_events),
-            onPressed: _isCheckingNew ? null : _checkForNewAchievements,
-            tooltip: 'check for new achievements',
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: isDarkMode 
+                  ? [TugColors.darkBackground, TugColors.primaryPurpleDark, TugColors.primaryPurple]
+                  : [TugColors.lightBackground, TugColors.primaryPurple.withAlpha(20)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
           ),
-          // Refresh current achievements
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _refreshAchievements,
-            tooltip: 'refresh achievements',
+        ),
+        title: QuantumEffects.holographicShimmer(
+          child: QuantumEffects.gradientText(
+            'achievements',
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.2,
+            ),
+            colors: isDarkMode 
+                ? [TugColors.primaryPurple, TugColors.primaryPurpleLight, TugColors.primaryPurpleDark] 
+                : [TugColors.primaryPurple, TugColors.primaryPurpleLight],
+          ),
+        ),
+        actions: [
+          QuantumEffects.floating(
+            offset: 3,
+            child: QuantumEffects.quantumBorder(
+              glowColor: TugColors.warning,
+              intensity: 0.6,
+              child: Container(
+                margin: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      TugColors.warning.withAlpha(100),
+                      TugColors.warning.withAlpha(80),
+                    ],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: TugColors.warning.withAlpha(80),
+                      blurRadius: 8,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
+                child: IconButton(
+                  icon: _isCheckingNew
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(Icons.emoji_events, color: Colors.white, size: 20),
+                  onPressed: _isCheckingNew ? null : _checkForNewAchievements,
+                  tooltip: 'check for new achievements',
+                ),
+              ),
+            ),
+          ),
+          QuantumEffects.floating(
+            offset: 5,
+            child: QuantumEffects.quantumBorder(
+              glowColor: TugColors.primaryPurpleLight,
+              intensity: 0.8,
+              child: Container(
+                margin: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      TugColors.primaryPurple.withAlpha(100),
+                      TugColors.primaryPurpleDark.withAlpha(80),
+                    ],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: TugColors.primaryPurple.withAlpha(80),
+                      blurRadius: 8,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
+                child: IconButton(
+                  icon: const Icon(Icons.refresh, color: Colors.white, size: 20),
+                  onPressed: _refreshAchievements,
+                  tooltip: 'refresh achievements',
+                ),
+              ),
+            ),
           ),
         ],
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
-          indicatorColor: TugColors.primaryPurple,
+          indicatorColor: TugColors.primaryPurpleLight,
+          labelColor: isDarkMode ? Colors.white : TugColors.primaryPurple,
+          unselectedLabelColor: isDarkMode ? Colors.white60 : TugColors.primaryPurple.withAlpha(150),
           tabs: const [
             Tab(text: 'all'),
             Tab(text: 'streaks'),

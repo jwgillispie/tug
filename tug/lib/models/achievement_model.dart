@@ -108,7 +108,7 @@ class AchievementModel {
         description: 'Complete activities for the same value 3 days in a row',
         icon: Icons.local_fire_department,
         type: AchievementType.streak,
-        color: TugColors.streakOrange,
+        color: TugColors.primaryPurple,
         requiredValue: 3,
       ),
       AchievementModel(
@@ -117,7 +117,7 @@ class AchievementModel {
         description: 'Complete activities for the same value 7 days in a row',
         icon: Icons.calendar_today,
         type: AchievementType.streak,
-        color: TugColors.streakOrange,
+        color: TugColors.primaryPurple,
         requiredValue: 7,
       ),
       AchievementModel(
@@ -126,7 +126,7 @@ class AchievementModel {
         description: 'Complete activities for the same value 14 days in a row',
         icon: Icons.psychology,
         type: AchievementType.streak,
-        color: TugColors.streakOrange,
+        color: TugColors.primaryPurple,
         requiredValue: 14,
       ),
       AchievementModel(
@@ -135,7 +135,7 @@ class AchievementModel {
         description: 'Complete activities for the same value 30 days in a row',
         icon: Icons.emoji_events,
         type: AchievementType.streak,
-        color: TugColors.streakOrange,
+        color: TugColors.primaryPurple,
         requiredValue: 30,
       ),
       
@@ -146,7 +146,7 @@ class AchievementModel {
         description: 'Maintain a balanced distribution across your values for 3 days',
         icon: Icons.balance,
         type: AchievementType.balance,
-        color: TugColors.balanceBlue,
+        color: TugColors.info,
         requiredValue: 3,
       ),
       AchievementModel(
@@ -155,7 +155,7 @@ class AchievementModel {
         description: 'Maintain a balanced distribution across your values for 7 days',
         icon: Icons.brightness_4,
         type: AchievementType.balance,
-        color: TugColors.balanceBlue,
+        color: TugColors.info,
         requiredValue: 7,
       ),
       AchievementModel(
@@ -164,7 +164,7 @@ class AchievementModel {
         description: 'Maintain a balanced distribution across your values for 30 days',
         icon: Icons.self_improvement,
         type: AchievementType.balance,
-        color: TugColors.balanceBlue,
+        color: TugColors.info,
         requiredValue: 30,
       ),
       
@@ -175,7 +175,7 @@ class AchievementModel {
         description: 'Log 10 activities',
         icon: Icons.flag,
         type: AchievementType.frequency,
-        color: TugColors.frequencyGreen,
+        color: TugColors.success,
         requiredValue: 10,
       ),
       AchievementModel(
@@ -184,7 +184,7 @@ class AchievementModel {
         description: 'Log 50 activities',
         icon: Icons.edit_note,
         type: AchievementType.frequency,
-        color: TugColors.frequencyGreen,
+        color: TugColors.success,
         requiredValue: 50,
       ),
       AchievementModel(
@@ -193,7 +193,7 @@ class AchievementModel {
         description: 'Log 100 activities',
         icon: Icons.brightness_7_rounded,
         type: AchievementType.frequency,
-        color: TugColors.frequencyGreen,
+        color: TugColors.success,
         requiredValue: 100,
       ),
       AchievementModel(
@@ -202,7 +202,7 @@ class AchievementModel {
         description: 'Log 365 activities',
         icon: Icons.bar_chart,
         type: AchievementType.frequency,
-        color: TugColors.frequencyGreen,
+        color: TugColors.success,
         requiredValue: 365,
       ),
       
@@ -213,7 +213,7 @@ class AchievementModel {
         description: 'Spend 5 hours on value-aligned activities',
         icon: Icons.timer,
         type: AchievementType.milestone,
-        color: TugColors.milestoneRed,
+        color: TugColors.error,
         requiredValue: 300, // minutes
       ),
       AchievementModel(
@@ -222,7 +222,7 @@ class AchievementModel {
         description: 'Spend 20 hours on value-aligned activities',
         icon: Icons.hourglass_full,
         type: AchievementType.milestone,
-        color: TugColors.milestoneRed,
+        color: TugColors.error,
         requiredValue: 1200, // minutes
       ),
       AchievementModel(
@@ -231,7 +231,7 @@ class AchievementModel {
         description: 'Spend 50 hours on value-aligned activities',
         icon: Icons.access_time_filled,
         type: AchievementType.milestone,
-        color: TugColors.milestoneRed,
+        color: TugColors.error,
         requiredValue: 3000, // minutes
       ),
       
@@ -242,7 +242,7 @@ class AchievementModel {
         description: 'Log at least one activity for each of your values',
         icon: Icons.color_lens,
         type: AchievementType.special,
-        color: TugColors.specialPurple,
+        color: TugColors.primaryPurpleLight,
         requiredValue: 1,
       ),
       AchievementModel(
@@ -251,7 +251,7 @@ class AchievementModel {
         description: 'Return to logging activities after a 2-week break',
         icon: Icons.refresh,
         type: AchievementType.special,
-        color: TugColors.specialPurple,
+        color: TugColors.primaryPurpleLight,
         requiredValue: 1,
       ),
     ];

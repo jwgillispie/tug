@@ -62,15 +62,8 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             );
 
-            // Navigate based on whether user has display name or not
-            final displayName = state.user.email;
-            print('Display name: $displayName');
-
-            if (displayName == null || displayName.isEmpty) {
-              context.go('/values-input');
-            } else {
-              context.go('/values-input');
-            }
+            // Navigate directly to home page
+            context.go('/home');
           }
         }
       },

@@ -17,6 +17,7 @@ class ValuesBloc extends Bloc<ValuesEvent, ValuesState> {
     on<UpdateValue>(_onUpdateValue);
     on<DeleteValue>(_onDeleteValue);
     on<LoadStreakStats>(_onLoadStreakStats);
+    on<ClearValuesData>(_onClearValuesData);
   }
 
   Future<void> _onLoadValues(
@@ -170,5 +171,16 @@ class ValuesBloc extends Bloc<ValuesEvent, ValuesState> {
       emit(ValuesError(e.toString()));
       debugPrint('Error loading streak stats: $e');
     }
+  }
+
+  void _onClearValuesData(
+    ClearValuesData event,
+    Emitter<ValuesState> emit,
+  ) {
+    // Clear all state data and reset to initial state
+    _initialLoadComplete = false;
+    
+    emit(ValuesInitial());
+    debugPrint('Values data cleared - reset to initial state');
   }
 }

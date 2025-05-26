@@ -7,7 +7,7 @@ import 'package:tug/blocs/theme/theme_bloc.dart';
 import 'package:tug/services/achievement_service.dart';
 import 'package:tug/utils/theme/colors.dart';
 import 'package:tug/utils/theme/buttons.dart';
-import 'package:tug/widgets/profile/strava_import_widget.dart';
+import 'package:tug/utils/quantum_effects.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:tug/services/user_service.dart';
 
@@ -65,14 +65,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'profile',
-          style: TextStyle(
-            color: Theme.of(context).brightness == Brightness.dark 
-                ? TugColors.darkTextPrimary 
-                : TugColors.lightTextPrimary,
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: isDarkMode 
+                  ? [TugColors.darkBackground, TugColors.primaryPurpleDark, TugColors.primaryPurple]
+                  : [TugColors.lightBackground, TugColors.primaryPurple.withAlpha(20)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        title: QuantumEffects.holographicShimmer(
+          child: QuantumEffects.gradientText(
+            'profile',
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.2,
+            ),
+            colors: isDarkMode 
+                ? [TugColors.primaryPurple, TugColors.primaryPurpleLight, TugColors.primaryPurpleDark] 
+                : [TugColors.primaryPurple, TugColors.primaryPurpleLight],
           ),
         ),
       ),
@@ -228,67 +248,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     context.push('/subscription');
                   },
                 ),
-                _buildSettingsItem(
-                  icon: Icons.account_circle_outlined,
-                  title: 'account & purchases',
-                  subtitle: 'manage your account and restore purchases',
-                  onTap: () {
-                    context.push('/account');
-                  },
-                ),
               ],
             ),
 
-            // Connected accounts section
-            _buildSettingsSection(
-              title: 'connected accounts',
-              items: [
-                _buildSettingsItem(
-                  icon: Icons.link_rounded,
-                  title: 'manage connected accounts',
-                  subtitle: 'connect to strava and other services',
-                  onTap: () {
-                    context.push('/accounts');
-                  },
-                ),
-                // Add Strava import widget for easy connection
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  child: StravaImportWidget(
-                    onConnectionStatusChanged: (isConnected) {
-                      // If connected, show a snackbar
-                      if (isConnected) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('connected to strava successfully!'),
-                            backgroundColor: TugColors.success,
-                          ),
-                        );
-                      }
-                    },
-                  ),
-                ),
-                // Import activities button
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  child: ElevatedButton.icon(
-                    icon: const Icon(Icons.cloud_download),
-                    label: const Text('import strava activities'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: TugColors.primaryPurple,
-                      foregroundColor: Colors.white,
-                      minimumSize: const Size(double.infinity, 48),
-                    ),
-                    onPressed: () {
-                      context.push('/import-activities');
-                    },
-                  ),
-                ),
-              ],
-            ),
 
             _buildSettingsSection(
               title: 'about',
@@ -677,23 +639,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _showDeleteAccountConfirmation() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('delete account'),
-        content: const Text(
+        backgroundColor: isDarkMode ? TugColors.darkSurface : Colors.white,
+        title: Text(
+          'delete account',
+          style: TextStyle(
+            color: isDarkMode ? TugColors.darkTextPrimary : TugColors.lightTextPrimary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Text(
           'are you sure you want to delete your account? this will permanently delete ALL your data including:\n\n'
           '• your profile information\n'
           '• all your values\n'
           '• all your activities\n'
           '• all your settings\n\n'
           'this action cannot be undone.',
-          style: TextStyle(height: 1.5),
+          style: TextStyle(
+            height: 1.5,
+            color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('cancel'),
+            child: Text(
+              'cancel',
+              style: TextStyle(
+                color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+              ),
+            ),
           ),
           TextButton(
             style: TextButton.styleFrom(foregroundColor: Colors.red),
@@ -734,13 +713,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
             return true;
           },
           child: AlertDialog(
-            title: const Text('confirm your password'),
+            backgroundColor: Theme.of(context).brightness == Brightness.dark ? TugColors.darkSurface : Colors.white,
+            title: Text(
+              'confirm your password',
+              style: TextStyle(
+                color: Theme.of(context).brightness == Brightness.dark ? TugColors.darkTextPrimary : TugColors.lightTextPrimary,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
+                Text(
                   'for security reasons, please enter your password to confirm account deletion',
-                  style: TextStyle(height: 1.5),
+                  style: TextStyle(
+                    height: 1.5,
+                    color: Theme.of(context).brightness == Brightness.dark ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 TextField(
@@ -768,7 +757,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
             actions: [
               TextButton(
                 onPressed: safePop,
-                child: const Text('cancel'),
+                child: Text(
+                  'cancel',
+                  style: TextStyle(
+                    color: Theme.of(context).brightness == Brightness.dark ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+                  ),
+                ),
               ),
               TextButton(
                 style: TextButton.styleFrom(foregroundColor: Colors.red),
@@ -809,11 +803,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
         onWillPop: () async =>
             false, // Prevent accidental back button dismissal
         child: AlertDialog(
+          backgroundColor: Theme.of(context).brightness == Brightness.dark ? TugColors.darkSurface : Colors.white,
           content: Row(
             children: [
               const CircularProgressIndicator(),
               const SizedBox(width: 20),
-              Expanded(child: Text(message)),
+              Expanded(
+                child: Text(
+                  message,
+                  style: TextStyle(
+                    color: Theme.of(context).brightness == Brightness.dark ? TugColors.darkTextPrimary : TugColors.lightTextPrimary,
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -983,15 +985,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   void _showLogoutConfirmationDialog() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('log out'),
-        content: const Text('are you sure you want to log out?'),
+        backgroundColor: isDarkMode ? TugColors.darkSurface : Colors.white,
+        title: Text(
+          'log out',
+          style: TextStyle(
+            color: isDarkMode ? TugColors.darkTextPrimary : TugColors.lightTextPrimary,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Text(
+          'are you sure you want to log out?',
+          style: TextStyle(
+            color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('cancel'),
+            child: Text(
+              'cancel',
+              style: TextStyle(
+                color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+              ),
+            ),
           ),
           TextButton(
             style: TextButton.styleFrom(foregroundColor: Colors.red),

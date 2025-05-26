@@ -19,19 +19,19 @@ class InsightExamples extends StatelessWidget {
       ValueInsight(
         title: "New Streak: Exercise",
         message: "You've been consistent with exercise for 5 days!",
-        color: TugColors.accentGreen,
+        color: TugColors.success,
         category: InsightCategory.progress,
       ),
       ValueInsight(
         title: "Milestone: Learning",
         message: "You've invested 100+ hours in learning this month!",
-        color: TugColors.accentBlue,
+        color: TugColors.info,
         category: InsightCategory.achievement,
       ),
       ValueInsight(
         title: "Opportunity: Mindfulness",
         message: "Consider more time on mindfulness given its importance.",
-        color: TugColors.tertiaryGold,
+        color: TugColors.warning,
         category: InsightCategory.reflection,
       ),
     ];
@@ -50,14 +50,14 @@ class InsightExamples extends StatelessWidget {
         statedImportance: 4,
         actualMinutes: 480,
         averageMinutes: 300,
-        valueColor: TugColors.accentBlue, 
+        valueColor: TugColors.info, 
       ),
       ValueInsight.fromValue(
         valueName: "Health",
         statedImportance: 5,
         actualMinutes: 60,
         averageMinutes: 90,
-        valueColor: TugColors.accentGreen,
+        valueColor: TugColors.success,
       ),
     ];
     
@@ -65,12 +65,12 @@ class InsightExamples extends StatelessWidget {
       ValueInsight.fromStreak(
         valueName: "Meditation",
         streakDays: 42,
-        valueColor: TugColors.accentPurple,
+        valueColor: TugColors.primaryPurpleLight,
       ),
       ValueInsight.fromStreak(
         valueName: "Reading",
         streakDays: 12,
-        valueColor: TugColors.tertiaryGold,
+        valueColor: TugColors.warning,
       ),
     ];
     

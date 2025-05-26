@@ -108,30 +108,30 @@ class _CosmicParticlesState extends State<CosmicParticles> with SingleTickerProv
         case ParticleEffect.nebula:
           _effectiveColors = [
             TugColors.primaryPurple,
-            TugColors.accentPink,
-            TugColors.accentBlue,
-            TugColors.secondaryTeal,
+            TugColors.primaryPurpleLight,
+            TugColors.info,
+            TugColors.success,
           ];
           break;
         case ParticleEffect.cosmic:
           _effectiveColors = [
             TugColors.primaryPurple,
             TugColors.primaryPurpleLight,
-            TugColors.accentBlue,
+            TugColors.info,
             const Color(0xFF6A35FF),
           ];
           break;
         case ParticleEffect.energy:
           _effectiveColors = [
-            TugColors.secondaryTeal,
-            TugColors.accentGreen,
-            TugColors.accentBlue,
+            TugColors.success,
+            TugColors.success,
+            TugColors.info,
             const Color(0xFF00E5FF),
           ];
           break;
         case ParticleEffect.fire:
           _effectiveColors = [
-            TugColors.accentOrange,
+            TugColors.warning,
             const Color(0xFFFF5722),
             const Color(0xFFFF9800),
             const Color(0xFFFFC107),

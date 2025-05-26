@@ -105,8 +105,8 @@ class AboutScreen extends StatelessWidget {
               'new features',
               '• activity chart - Track your progress with a visual representation of your activity minutes\n'
               '• streak tracking - Build and maintain daily streaks for each value\n'
-              '• strava integration - Import your activities directly from Strava\n'
-              '• activity rankings - See how you compare with others in the community'
+              '• activity rankings - See how you compare with others in the community\n'
+              '• premium subscriptions - Unlock the full leaderboard experience'
             ),
             
             // App version details

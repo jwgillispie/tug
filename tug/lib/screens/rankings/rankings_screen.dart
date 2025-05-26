@@ -281,12 +281,22 @@ class _RankingsScreenState extends State<RankingsScreen> {
                       orElse: () => UserRankingModel(
                         rank: _rankings!.currentUserRank,
                         userId: '',
-                        displayName: 'Your Ranking',
-                        totalActivities: 0,
-                        totalDuration: 0,
-                        uniqueActivityDays: 0,
-                        avgDurationPerActivity: 0,
-                        streak: 0,
+                        displayName: 'your ranking',
+                        totalActivities: _rankings!.rankings.isNotEmpty 
+                            ? _rankings!.rankings.first.totalActivities 
+                            : 0,
+                        totalDuration: _rankings!.rankings.isNotEmpty 
+                            ? _rankings!.rankings.first.totalDuration 
+                            : 0,
+                        uniqueActivityDays: _rankings!.rankings.isNotEmpty 
+                            ? _rankings!.rankings.first.uniqueActivityDays 
+                            : 0,
+                        avgDurationPerActivity: _rankings!.rankings.isNotEmpty 
+                            ? _rankings!.rankings.first.avgDurationPerActivity 
+                            : 0,
+                        streak: _rankings!.rankings.isNotEmpty 
+                            ? _rankings!.rankings.first.streak 
+                            : 0,
                         rankingType: 'activities',
                         isCurrentUser: true,
                       ),
@@ -827,7 +837,7 @@ class _RankingsScreenState extends State<RankingsScreen> {
                     orElse: () => UserRankingModel(
                       rank: _rankings!.currentUserRank,
                       userId: '',
-                      displayName: 'Your Ranking',
+                      displayName: 'your ranking',
                       totalActivities: 0,
                       totalDuration: 0,
                       uniqueActivityDays: 0,
@@ -900,8 +910,8 @@ class _RankingsScreenState extends State<RankingsScreen> {
     
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-      // Use minimum height instead of fixed height for better responsiveness
-      constraints: const BoxConstraints(minHeight: 260),
+      // Reduced size by 35% - from 260 to 169
+      constraints: const BoxConstraints(minHeight: 169),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topCenter,
@@ -964,18 +974,18 @@ class _RankingsScreenState extends State<RankingsScreen> {
                     ),
                   ],
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.workspace_premium,
                       color: Colors.white,
                       size: 20,
                     ),
-                    SizedBox(width: 6),
+                    const SizedBox(width: 6),
                     Text(
-                      'champion',
-                      style: TextStyle(
+                      topUser.isCurrentUser ? '🏆 YOU\'RE #1!' : 'champion',
+                      style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                         color: Colors.white,
@@ -1010,55 +1020,6 @@ class _RankingsScreenState extends State<RankingsScreen> {
                   ),
                   const SizedBox(height: 8),
                   
-                  // User avatar with shine effect - responsive sizing
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      // Calculate size based on available width (min of 60, max of 90)
-                      final size = constraints.maxWidth > 300 ? 90.0 : 
-                                  (constraints.maxWidth > 200 ? 80.0 : 70.0);
-                      
-                      return Container(
-                        width: size,
-                        height: size,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Colors.amber.shade300,
-                          Colors.amber.shade600,
-                        ],
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.amber.withOpacity(0.5),
-                          blurRadius: 15,
-                          spreadRadius: 0,
-                        ),
-                      ],
-                    ),
-                    padding: const EdgeInsets.all(3),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: isDarkMode ? Colors.black54 : Colors.white,
-                      ),
-                      child: Center(
-                        child: Text(
-                          topUser.displayName.characters.first.toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 40,
-                            fontWeight: FontWeight.bold,
-                            color: TugColors.primaryPurple,
-                          ),
-                        ),
-                      ),
-                    ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 12),
                   
                   // User name with overflow handling
                   SizedBox(
@@ -1067,7 +1028,7 @@ class _RankingsScreenState extends State<RankingsScreen> {
                       topUser.displayName,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        fontSize: 18,
+                        fontSize: 16,
                         color: isDarkMode ? Colors.white : Colors.black87,
                       ),
                       textAlign: TextAlign.center,
@@ -1082,7 +1043,7 @@ class _RankingsScreenState extends State<RankingsScreen> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       _buildChampionStat(
-                        Icons.local_fire_department,
+                        Icons.fitness_center,
                         '${topUser.totalActivities}',
                         'Activities',
                         isDarkMode,
@@ -1143,14 +1104,14 @@ class _RankingsScreenState extends State<RankingsScreen> {
           children: [
             Icon(
               icon,
-              size: 16,
+              size: 14,
               color: iconColor ?? (isDarkMode ? Colors.white70 : Colors.black54),
             ),
             const SizedBox(width: 4),
             Text(
               value,
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 14,
                 fontWeight: FontWeight.bold,
                 color: valueColor ?? (isDarkMode ? Colors.white : Colors.black87),
               ),
@@ -1160,7 +1121,7 @@ class _RankingsScreenState extends State<RankingsScreen> {
         Text(
           label,
           style: TextStyle(
-            fontSize: 12,
+            fontSize: 11,
             color: isDarkMode ? Colors.white60 : Colors.black54,
           ),
         ),
@@ -1232,13 +1193,10 @@ class _RankingsScreenState extends State<RankingsScreen> {
                     color: Colors.amber,
                     size: 32,
                   )
-                : Text(
-                    user.displayName.characters.first.toUpperCase(),
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: TugColors.primaryPurple,
-                    ),
+                : Icon(
+                    Icons.person,
+                    size: 28,
+                    color: TugColors.primaryPurple,
                   ),
           ),
         ),
@@ -1483,31 +1441,6 @@ class _RankingsScreenState extends State<RankingsScreen> {
                 
               const SizedBox(width: 12),
               
-              // User avatar
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: TugColors.primaryPurple.withOpacity(0.08),
-                  border: Border.all(
-                    color: TugColors.primaryPurple.withOpacity(0.3),
-                    width: 1.5,
-                  ),
-                ),
-                child: Center(
-                  child: Text(
-                    user.displayName.characters.first.toUpperCase(),
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: TugColors.primaryPurple,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              
               // User name and stats
               Expanded(
                 child: Column(
@@ -1515,13 +1448,42 @@ class _RankingsScreenState extends State<RankingsScreen> {
                   children: [
                     Row(
                       children: [
-                        Text(
-                          isCurrentUserCard ? 'Your Ranking' : user.displayName,
-                          style: TextStyle(
-                            fontSize: isCurrentUserCard ? 16 : 15,
-                            fontWeight: FontWeight.bold,
-                            color: isDarkMode ? Colors.white : Colors.black87,
-                          ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              isCurrentUserCard ? 'your ranking' : user.displayName,
+                              style: TextStyle(
+                                fontSize: isCurrentUserCard ? 16 : 15,
+                                fontWeight: FontWeight.bold,
+                                color: isDarkMode ? Colors.white : Colors.black87,
+                              ),
+                            ),
+                            // Show rank number prominently
+                            if (user.rank != null)
+                              Text(
+                                '#${user.rank} Position',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: TugColors.primaryPurple,
+                                ),
+                              ),
+                            // Add congratulatory messages for top 3
+                            if (user.rank != null && user.rank! <= 3 && (user.isCurrentUser || isCurrentUserCard))
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Text(
+                                  _getTopRankMessage(user.rank!),
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                    color: _getTopRankColor(user.rank!),
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                         if (user.isCurrentUser && !isCurrentUserCard) ...[
                           const SizedBox(width: 6),
@@ -1547,24 +1509,25 @@ class _RankingsScreenState extends State<RankingsScreen> {
                         ],
                       ],
                     ),
-                    const SizedBox(height: 6),
-                    
-                    // Stats display
-                    Row(
-                      children: [
-                        // Activities count
-                        _buildRankCardStat(
-                          Icons.local_fire_department, 
-                          '${user.totalActivities}',
-                          isDarkMode,
-                          iconColor: TugColors.primaryPurple.withOpacity(0.8),
-                          textColor: TugColors.primaryPurple.withOpacity(0.8),
-                        ),
-                        
-                        const SizedBox(width: 12),
-                        
-                        // Show more details in the regular cards, less in current user card
-                        if (!isCurrentUserCard) ...[
+                    // Only show stats for regular leaderboard cards, not for current user card
+                    if (!isCurrentUserCard) ...[
+                      const SizedBox(height: 6),
+                      
+                      // Stats display
+                      Row(
+                        children: [
+                          // Activities count
+                          _buildRankCardStat(
+                            Icons.fitness_center, 
+                            '${user.totalActivities}',
+                            isDarkMode,
+                            iconColor: TugColors.primaryPurple.withOpacity(0.8),
+                            textColor: TugColors.primaryPurple.withOpacity(0.8),
+                          ),
+                          
+                          const SizedBox(width: 12),
+                          
+                          // Show duration and activity days for all cards
                           _buildRankCardStat(
                             Icons.hourglass_bottom, 
                             '${(user.totalDuration / 60).toStringAsFixed(1)}h',
@@ -1576,21 +1539,21 @@ class _RankingsScreenState extends State<RankingsScreen> {
                             '${user.uniqueActivityDays}d',
                             isDarkMode,
                           ),
+                          
+                          // Show streak if available
+                          if (user.streak > 0) ...[
+                            const SizedBox(width: 12),
+                            _buildRankCardStat(
+                              Icons.local_fire_department,
+                              '${user.streak}🔥',
+                              isDarkMode,
+                              iconColor: Colors.redAccent.shade400,
+                              textColor: Colors.redAccent.shade400,
+                            ),
+                          ],
                         ],
-                        
-                        // Show streak if available
-                        if (user.streak > 0) ...[
-                          const SizedBox(width: 12),
-                          _buildRankCardStat(
-                            Icons.local_fire_department,
-                            '${user.streak}🔥',
-                            isDarkMode,
-                            iconColor: Colors.redAccent.shade400,
-                            textColor: Colors.redAccent.shade400,
-                          ),
-                        ],
-                      ],
-                    ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -1662,5 +1625,32 @@ class _RankingsScreenState extends State<RankingsScreen> {
         ),
       ],
     );
+  }
+  
+  // Helper methods for top rank messages
+  String _getTopRankMessage(int rank) {
+    switch (rank) {
+      case 1:
+        return '🏆 BIG CHAMP! you\'re the definition of superior!';
+      case 2:
+        return '🥈 OH?? you\'re a beast #1 better be scared!';
+      case 3:
+        return '🥉 when did you get so AWESOME? don\'t stop ';
+      default:
+        return '';
+    }
+  }
+  
+  Color _getTopRankColor(int rank) {
+    switch (rank) {
+      case 1:
+        return Colors.amber.shade600;
+      case 2:
+        return Colors.grey.shade500;
+      case 3:
+        return Colors.brown.shade400;
+      default:
+        return TugColors.primaryPurple;
+    }
   }
 }

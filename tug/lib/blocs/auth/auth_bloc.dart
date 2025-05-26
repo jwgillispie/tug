@@ -5,6 +5,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:tug/services/api_service.dart';
+import 'package:tug/services/cache_service.dart';
+import 'package:tug/services/subscription_service.dart';
 import '../../repositories/auth_repository.dart';
 
 // Events
@@ -236,10 +238,33 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
+      // Clear all cached data before signing out
+      await _clearUserDataOnLogout();
+      
       await authRepository.signOut();
       emit(Unauthenticated());
     } catch (e) {
       emit(_mapFirebaseErrorToAuthError(e));
+    }
+  }
+
+  /// Clear all user-specific cached data on logout
+  Future<void> _clearUserDataOnLogout() async {
+    try {
+      debugPrint('AuthBloc: Clearing user data on logout...');
+      
+      // Clear all cache service data
+      await CacheService().clear();
+      debugPrint('AuthBloc: Cache service cleared');
+      
+      // Clear subscription service data (RevenueCat logout)
+      await SubscriptionService().logoutUser();
+      debugPrint('AuthBloc: Subscription service logged out');
+      
+      debugPrint('AuthBloc: User data cleared successfully');
+    } catch (e) {
+      debugPrint('AuthBloc: Error clearing user data on logout: $e');
+      // Don't rethrow - logout should still proceed even if cache clearing fails
     }
   }
 
@@ -282,6 +307,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     if (user != null) {
       emit(Authenticated(user, emailVerified: user.emailVerified));
     } else {
+      // User signed out (could be due to token expiration, logout, etc.)
+      // Clear cached data asynchronously without blocking the state change
+      _clearUserDataOnLogout().catchError((e) {
+        debugPrint('AuthBloc: Error clearing data on auth state change: $e');
+      });
       emit(Unauthenticated());
     }
   }

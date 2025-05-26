@@ -7,6 +7,7 @@ import 'package:tug/blocs/values/bloc/values_bloc.dart';
 import 'package:tug/blocs/values/bloc/values_event.dart';
 import 'package:tug/blocs/values/bloc/values_state.dart';
 import 'package:tug/utils/cosmic_particles.dart';
+import 'package:tug/utils/quantum_effects.dart';
 import 'package:tug/widgets/home/activity_chart.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../utils/theme/colors.dart';
@@ -103,22 +104,78 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          greeting,
-          style: TextStyle(
-            color: isDarkMode ? TugColors.darkTextPrimary : TugColors.lightTextPrimary,
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: isDarkMode 
+                  ? [TugColors.darkBackground, TugColors.primaryPurpleDark, TugColors.primaryPurple]
+                  : [TugColors.lightBackground, TugColors.primaryPurple.withAlpha(20)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        title: QuantumEffects.holographicShimmer(
+          child: QuantumEffects.gradientText(
+            greeting,
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.2,
+            ),
+            colors: isDarkMode ? [TugColors.primaryPurple, TugColors.primaryPurpleLight, TugColors.primaryPurpleDark] : [TugColors.primaryPurple, TugColors.primaryPurpleLight],
           ),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _refreshValues,
+          QuantumEffects.floating(
+            offset: 3,
+            child: QuantumEffects.quantumBorder(
+              glowColor: TugColors.info,
+              intensity: 0.6,
+              child: Container(
+                margin: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      TugColors.info.withAlpha(40),
+                      TugColors.info.withAlpha(10),
+                    ],
+                  ),
+                ),
+                child: IconButton(
+                  icon: Icon(Icons.refresh, color: TugColors.info),
+                  onPressed: _refreshValues,
+                  tooltip: 'refresh values',
+                ),
+              ),
+            ),
           ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () {
-              _showLogoutConfirmation();
-            },
+          QuantumEffects.floating(
+            offset: 5,
+            child: QuantumEffects.quantumBorder(
+              glowColor: TugColors.error,
+              intensity: 0.8,
+              child: Container(
+                margin: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      TugColors.error.withAlpha(40),
+                      TugColors.error.withAlpha(10),
+                    ],
+                  ),
+                ),
+                child: IconButton(
+                  icon: Icon(Icons.logout, color: TugColors.error),
+                  onPressed: _showLogoutConfirmation,
+                  tooltip: 'logout',
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -491,16 +548,16 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                   Container(
                                     padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
-                                      color: TugColors.secondaryTeal.withOpacity(isDarkMode ? 0.2 : 0.1),
+                                      color: TugColors.info.withOpacity(isDarkMode ? 0.2 : 0.1),
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
-                                        color: TugColors.secondaryTeal.withOpacity(isDarkMode ? 0.3 : 0.2),
+                                        color: TugColors.info.withOpacity(isDarkMode ? 0.3 : 0.2),
                                         width: 1,
                                       ),
                                     ),
                                     child: const Icon(
                                       Icons.insights,
-                                      color: TugColors.secondaryTeal,
+                                      color: TugColors.info,
                                       size: 28,
                                     ),
                                   ),
@@ -532,13 +589,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                     width: 32,
                                     height: 32,
                                     decoration: BoxDecoration(
-                                      color: TugColors.secondaryTeal.withOpacity(isDarkMode ? 0.1 : 0.05),
+                                      color: TugColors.info.withOpacity(isDarkMode ? 0.1 : 0.05),
                                       shape: BoxShape.circle,
                                     ),
                                     child: const Center(
                                       child: Icon(
                                         Icons.chevron_right,
-                                        color: TugColors.secondaryTeal,
+                                        color: TugColors.info,
                                       ),
                                     ),
                                   ),

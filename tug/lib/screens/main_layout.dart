@@ -192,7 +192,7 @@ class MainLayout extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'What would you like to add today?',
+                'what would you like to add today?',
                 style: TextStyle(
                   fontSize: 14,
                   color: isDarkMode
@@ -218,7 +218,7 @@ class MainLayout extends StatelessWidget {
                 title: 'add value',
                 description: 'define what matters to you',
                 icon: Icons.star_rounded,
-                gradient: TugColors.getSecondaryGradient(),
+                gradient: TugColors.getPrimaryGradient(),
                 path: '/values-input',
                 isDarkMode: isDarkMode,
               ),

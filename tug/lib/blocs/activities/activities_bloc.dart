@@ -57,6 +57,10 @@ class DeleteActivity extends ActivitiesEvent {
   List<Object?> get props => [activityId];
 }
 
+class ClearActivitiesData extends ActivitiesEvent {
+  const ClearActivitiesData();
+}
+
 // States
 abstract class ActivitiesState extends Equatable {
   const ActivitiesState();
@@ -116,6 +120,7 @@ class ActivitiesBloc extends Bloc<ActivitiesEvent, ActivitiesState> {
     on<AddActivity>(_onAddActivity);
     on<UpdateActivity>(_onUpdateActivity);
     on<DeleteActivity>(_onDeleteActivity);
+    on<ClearActivitiesData>(_onClearActivitiesData);
   }
 
   Future<void> _onLoadActivities(
@@ -286,5 +291,19 @@ class ActivitiesBloc extends Bloc<ActivitiesEvent, ActivitiesState> {
         emit(currentState);
       }
     }
+  }
+
+  void _onClearActivitiesData(
+    ClearActivitiesData event,
+    Emitter<ActivitiesState> emit,
+  ) {
+    // Clear all state data and reset to initial state
+    _initialLoadComplete = false;
+    _lastValueId = null;
+    _lastStartDate = null;
+    _lastEndDate = null;
+    
+    emit(ActivitiesInitial());
+    debugPrint('Activities data cleared - reset to initial state');
   }
 }

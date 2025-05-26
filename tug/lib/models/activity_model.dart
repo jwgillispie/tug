@@ -9,7 +9,6 @@ class ActivityModel extends Equatable {
   final DateTime date;
   final String? notes;
   final DateTime? createdAt;
-  final String? importSource; // Source of imported activity (e.g., "strava")
 
   const ActivityModel({
     this.id,
@@ -19,7 +18,6 @@ class ActivityModel extends Equatable {
     required this.date,
     this.notes,
     this.createdAt,
-    this.importSource,
   });
 
   ActivityModel copyWith({
@@ -30,7 +28,6 @@ class ActivityModel extends Equatable {
     DateTime? date,
     String? notes,
     DateTime? createdAt,
-    String? importSource,
   }) {
     return ActivityModel(
       id: id ?? this.id,
@@ -40,7 +37,6 @@ class ActivityModel extends Equatable {
       date: date ?? this.date,
       notes: notes ?? this.notes,
       createdAt: createdAt ?? this.createdAt,
-      importSource: importSource ?? this.importSource,
     );
   }
 
@@ -61,7 +57,6 @@ class ActivityModel extends Equatable {
       'duration': duration,
       'date': dateUtc.toIso8601String(), // Use UTC ISO format for API compatibility
       'notes': notes,
-      'import_source': importSource,
     };
   }
 
@@ -89,7 +84,6 @@ class ActivityModel extends Equatable {
       createdAt: json['created_at'] != null 
           ? parseToUtc(json['created_at']) 
           : null,
-      importSource: json['import_source'],
     );
   }
 
@@ -101,7 +95,6 @@ class ActivityModel extends Equatable {
     duration, 
     date, 
     notes, 
-    createdAt,
-    importSource
+    createdAt
   ];
 }

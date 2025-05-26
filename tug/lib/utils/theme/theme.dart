@@ -17,10 +17,10 @@ class TugTheme {
       onPrimaryContainer: TugColors.primaryPurpleDark,
 
       // Secondary colors
-      secondary: TugColors.secondaryTeal,
+      secondary: TugColors.success,
       onSecondary: Colors.white,
-      secondaryContainer: TugColors.secondaryTeal.withOpacity(0.15),
-      onSecondaryContainer: TugColors.secondaryTealDark,
+      secondaryContainer: TugColors.success.withOpacity(0.15),
+      onSecondaryContainer: TugColors.primaryPurpleDark,
 
       // Surface colors
       surface: TugColors.lightSurface,
@@ -34,10 +34,10 @@ class TugTheme {
       outlineVariant: TugColors.lightBorder.withOpacity(0.5),
 
       // Add tertiary color
-      tertiary: TugColors.tertiaryGold,
+      tertiary: TugColors.warning,
       onTertiary: Colors.white,
-      tertiaryContainer: TugColors.tertiaryGold.withOpacity(0.15),
-      onTertiaryContainer: Color.lerp(TugColors.tertiaryGold, Colors.black, 0.5) ?? Colors.brown,
+      tertiaryContainer: TugColors.warning.withOpacity(0.15),
+      onTertiaryContainer: Color.lerp(TugColors.warning, Colors.black, 0.5) ?? Colors.brown,
     ),
 
     // Set background color
@@ -234,10 +234,10 @@ class TugTheme {
       onPrimaryContainer: TugColors.primaryPurpleLight,
 
       // Secondary colors
-      secondary: TugColors.secondaryTeal,
+      secondary: TugColors.success,
       onSecondary: Colors.white,
-      secondaryContainer: TugColors.secondaryTeal.withOpacity(0.15),
-      onSecondaryContainer: TugColors.secondaryTeal.withOpacity(0.8),
+      secondaryContainer: TugColors.success.withOpacity(0.15),
+      onSecondaryContainer: TugColors.success.withOpacity(0.8),
 
       // Surface colors
       surface: TugColors.darkSurface,
@@ -251,10 +251,10 @@ class TugTheme {
       outlineVariant: TugColors.darkBorder.withOpacity(0.3),
 
       // Add tertiary color
-      tertiary: TugColors.tertiaryGold,
+      tertiary: TugColors.warning,
       onTertiary: Colors.black,
-      tertiaryContainer: TugColors.tertiaryGold.withOpacity(0.15),
-      onTertiaryContainer: TugColors.tertiaryGold,
+      tertiaryContainer: TugColors.warning.withOpacity(0.15),
+      onTertiaryContainer: TugColors.warning,
     ),
 
     // Set background color
