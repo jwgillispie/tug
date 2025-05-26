@@ -6,6 +6,7 @@ import 'package:tug/models/ranking_model.dart';
 import 'package:tug/services/rankings_service.dart';
 import 'package:tug/utils/theme/colors.dart';
 import 'package:tug/utils/animations.dart';
+import 'package:tug/utils/loading_messages.dart';
 import 'package:tug/widgets/subscription/premium_feature.dart';
 
 class RankingsScreen extends StatefulWidget {
@@ -463,7 +464,7 @@ class _RankingsScreenState extends State<RankingsScreen> {
               beginOffset: const Offset(0, 10),
               delay: const Duration(milliseconds: 300),
               child: Text(
-                'Loading Rankings...',
+                LoadingMessages.getRankings(),
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w500,

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../utils/theme/buttons.dart';
 import '../../utils/theme/colors.dart';
+import '../../utils/loading_messages.dart';
 import '../../widgets/common/tug_text_field.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -24,6 +25,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   bool _acceptedTerms = false;
   bool _isLoading = false;
   String? _errorMessage;
+  String _loadingMessage = '';
 
   @override
   void dispose() {
@@ -69,6 +71,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           setState(() {
             _isLoading = true;
             _errorMessage = null;
+            _loadingMessage = LoadingMessages.getAuth();
           });
         } else {
           setState(() => _isLoading = false);
@@ -275,13 +278,26 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         child: _isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
+                            ? Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Flexible(
+                                    child: Text(
+                                      _loadingMessage,
+                                      style: const TextStyle(color: Colors.white),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
                               )
                             : const Text('create account'),
                       ),

@@ -53,7 +53,7 @@ class AboutScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'version 1.2.0',
+                    'version 2.0.0',
                     style: TextStyle(
                       color: isDarkMode 
                           ? TugColors.darkTextSecondary 
@@ -102,10 +102,11 @@ class AboutScreen extends StatelessWidget {
             // Recent Features
             _buildSection(
               context,
-              'new features',
-              '• activity chart - Track your progress with a visual representation of your activity minutes\n'
-              '• streak tracking - Build and maintain daily streaks for each value\n'
-              '• activity rankings - See how you compare with others in the community\n'
+              'new in v2.0.0',
+              '• quantum ui effects - Beautiful holographic and floating animations throughout the app\n'
+              '• enhanced app bars - Stunning gradient backgrounds with shimmer effects\n'
+              '• improved rankings - Better visibility for your position and achievements\n'
+              '• visual polish - Refined design with quantum borders and cosmic effects\n'
               '• premium subscriptions - Unlock the full leaderboard experience'
             ),
             
@@ -116,7 +117,7 @@ class AboutScreen extends StatelessWidget {
               'Built with Flutter\n'
               'Firebase Authentication\n'
               'MongoDB Backend\n'
-              'Version 1.2.0 (May 2025)'
+              'Version 2.0.0 (May 2025)'
             ),
             
             const SizedBox(height: 24),

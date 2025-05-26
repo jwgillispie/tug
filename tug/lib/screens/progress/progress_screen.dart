@@ -7,6 +7,7 @@ import 'package:tug/blocs/values/bloc/values_state.dart';
 import 'package:tug/services/activity_service.dart';
 import 'package:tug/utils/theme/colors.dart';
 import 'package:tug/utils/quantum_effects.dart';
+import 'package:tug/utils/loading_messages.dart';
 import 'package:tug/widgets/tug_of_war/enhanced_tug_of_war_widget.dart';
 import 'package:tug/widgets/values/streak_overview_widget.dart';
 
@@ -403,18 +404,48 @@ class _ProgressScreenState extends State<ProgressScreen>
               onRefresh: _refreshData,
               child: _isLoading
                   ? ListView(
-                      children: const [
-                        SizedBox(height: 200),
-                        Center(child: CircularProgressIndicator()),
+                      children: [
+                        const SizedBox(height: 200),
+                        Center(
+                          child: Column(
+                            children: [
+                              const CircularProgressIndicator(),
+                              const SizedBox(height: 16),
+                              Text(
+                                LoadingMessages.getProgress(),
+                                style: TextStyle(
+                                  color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+                                  fontSize: 16,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ],
+                          ),
+                        ),
                       ],
                     )
                   : BlocBuilder<ValuesBloc, ValuesState>(
                     builder: (context, state) {
                       if (state is ValuesLoading) {
                         return ListView(
-                          children: const [
-                            SizedBox(height: 200),
-                            Center(child: CircularProgressIndicator()),
+                          children: [
+                            const SizedBox(height: 200),
+                            Center(
+                              child: Column(
+                                children: [
+                                  const CircularProgressIndicator(),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    LoadingMessages.getValues(),
+                                    style: TextStyle(
+                                      color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+                                      fontSize: 16,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                            ),
                           ],
                         );
                       }
@@ -610,14 +641,21 @@ class _ProgressScreenState extends State<ProgressScreen>
                         // Handle streak stats loaded state - this shouldn't normally be reached
                         // as streak stats are usually loaded along with values
                         return ListView(
-                          children: const [
-                            SizedBox(height: 200),
+                          children: [
+                            const SizedBox(height: 200),
                             Center(
                               child: Column(
                                 children: [
-                                  CircularProgressIndicator(),
-                                  SizedBox(height: 16),
-                                  Text('Loading values...'),
+                                  const CircularProgressIndicator(),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    LoadingMessages.getValues(),
+                                    style: TextStyle(
+                                      color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+                                      fontSize: 16,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
                                 ],
                               ),
                             ),

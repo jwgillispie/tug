@@ -343,6 +343,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           return AuthError('No user found with this email', code: error.code);
         case 'wrong-password':
           return AuthError('Incorrect password', code: error.code);
+        case 'invalid-credential':
+          return AuthError('Invalid email or password. Please check your credentials and try again.', code: error.code);
         case 'email-already-in-use':
           return AuthError('This email is already registered',
               code: error.code);

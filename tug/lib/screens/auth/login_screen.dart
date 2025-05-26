@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../utils/theme/colors.dart';
 import '../../utils/theme/buttons.dart';
+import '../../utils/loading_messages.dart';
 import '../../widgets/common/tug_text_field.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -21,6 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   String? _errorMessage;
+  String _loadingMessage = '';
 
   @override
   void dispose() {
@@ -49,6 +51,7 @@ class _LoginScreenState extends State<LoginScreen> {
           setState(() {
             _isLoading = true;
             _errorMessage = null;
+            _loadingMessage = LoadingMessages.getAuth();
           });
         } else {
           setState(() => _isLoading = false);
@@ -64,6 +67,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
             // Navigate directly to home page
             context.go('/home');
+          } else if (state is AuthError) {
+            // Handle authentication errors
+            setState(() {
+              _errorMessage = state.message;
+            });
           }
         }
       },
@@ -95,7 +103,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: TugColors.error.withOpacity(0.1),
+                        color: TugColors.error.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Row(
@@ -170,13 +178,26 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Padding(
                         padding: const EdgeInsets.symmetric(vertical: 4),
                         child: _isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
+                            ? Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Flexible(
+                                    child: Text(
+                                      _loadingMessage,
+                                      style: const TextStyle(color: Colors.white),
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
                               )
                             : const Text('sign in'),
                       ),

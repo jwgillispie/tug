@@ -8,6 +8,7 @@ import 'package:tug/blocs/values/bloc/values_event.dart';
 import 'package:tug/blocs/values/bloc/values_state.dart';
 import 'package:tug/utils/cosmic_particles.dart';
 import 'package:tug/utils/quantum_effects.dart';
+import 'package:tug/utils/loading_messages.dart';
 import 'package:tug/widgets/home/activity_chart.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../utils/theme/colors.dart';
@@ -202,8 +203,22 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               if (state is ValuesLoading && _isFirstLoad) {
                 // Only show loading indicator on first load
                 _isFirstLoad = false;
-                return const Center(
-                  child: CircularProgressIndicator(),
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const CircularProgressIndicator(),
+                      const SizedBox(height: 16),
+                      Text(
+                        LoadingMessages.getValues(),
+                        style: TextStyle(
+                          color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+                          fontSize: 16,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
                 );
               }
               
@@ -249,7 +264,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          'you gotta add some values first cuzzo',
+                          'needa add some values',
                           style: TextStyle(
                             color: isDarkMode 
                                 ? TugColors.darkTextSecondary 
@@ -378,7 +393,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                                 ),
                               ),
                               subtitle: Text(
-                                'Importance: ${value.importance}',
+                                'importance: ${value.importance}',
                                 style: TextStyle(
                                   color: isDarkMode 
                                       ? TugColors.darkTextSecondary 
@@ -762,21 +777,22 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           ),
         ],
       ),
-      child: const Center(
+      child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(
+            const CircularProgressIndicator(
               color: Colors.white,
               strokeWidth: 3,
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Text(
-              'loading your activity data...',
-              style: TextStyle(
+              LoadingMessages.getActivities(),
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 16,
               ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),

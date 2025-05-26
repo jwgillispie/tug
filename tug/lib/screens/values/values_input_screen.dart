@@ -165,7 +165,7 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
               ),
               title: QuantumEffects.holographicShimmer(
                 child: QuantumEffects.gradientText(
-                  'cosmic values',
+                  'enter values',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -231,8 +231,8 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
                         intensity: 0.05,
                         child: QuantumEffects.gradientText(
                           widget.fromHome
-                              ? 'edit your cosmic values'
-                              : 'what energizes your quantum existence?',
+                              ? 'edit your values'
+                              : 'what do you care about more than anything?',
                           style: Theme.of(context).textTheme.displayLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                             letterSpacing: 1.2,
@@ -248,7 +248,7 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
                       QuantumEffects.floating(
                         offset: 5,
                         child: Text(
-                          'manifest up to 5 dimensional values',
+                          'put up to 5 valuable values',
                           style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                             color: Theme.of(context).brightness == Brightness.dark 
                                 ? TugColors.darkTextSecondary 
@@ -784,7 +784,7 @@ class ValueCard extends StatelessWidget {
           ),
         ),
         content: Text(
-          'Are you sure you want to delete "${value.name}"? This action cannot be undone.',
+          'delete "${value.name}"? this cannot be undone.',
           style: TextStyle(
             color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
           ),

@@ -726,7 +726,7 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        'Stated Values',
+                        'stated values',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
@@ -824,7 +824,7 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
               const SizedBox(height: 8),
               Center(
                 child: Text(
-                  'Try tugging the rope!',
+                  'try tugging the rope!',
                   style: TextStyle(
                     fontSize: 10,
                     color: Colors.grey.withOpacity(0.8),

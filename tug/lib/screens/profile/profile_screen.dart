@@ -311,7 +311,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const Padding(
               padding: EdgeInsets.only(bottom: 24.0),
               child: Text(
-                'Tug v1.0.0',
+                'Tug v2.0.0',
                 style: TextStyle(
                   color: Colors.grey,
                   fontSize: 12,
@@ -342,9 +342,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         return Container(
           padding: const EdgeInsets.all(24),
-          color: isDarkMode
-              ? TugColors.primaryPurple.withOpacity(0.15)
-              : TugColors.primaryPurple.withOpacity(0.05),
           child: Column(
             children: [
               Container(
@@ -653,7 +650,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
         content: Text(
-          'are you sure you want to delete your account? this will permanently delete ALL your data including:\n\n'
+          'you deadass want to delete your account? this will permanently delete ALL your data including:\n\n'
           '• your profile information\n'
           '• all your values\n'
           '• all your activities\n'

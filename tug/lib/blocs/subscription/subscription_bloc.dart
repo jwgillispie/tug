@@ -111,10 +111,8 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     on<RestorePurchases>(_onRestorePurchases);
     on<LogoutSubscription>(_onLogoutSubscription);
 
-    // Initialize the subscription service
-    _subscriptionService.initialize();
-
-    // Listen to subscription status changes
+    // Note: SubscriptionService will be initialized lazily when first needed
+    // Listen to subscription status changes (will initialize when needed)
     _subscriptionStatusSubscription = _subscriptionService.onSubscriptionStatusChanged
         .listen((_) {
       // When subscription status changes, reload subscriptions

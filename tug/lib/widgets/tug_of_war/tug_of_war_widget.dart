@@ -444,7 +444,7 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'Stated Values',
+                            'stated values',
                             style: TugTextStyles.label.copyWith(
                               color: _valueColor,
                               fontWeight: FontWeight.w500,

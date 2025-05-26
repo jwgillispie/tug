@@ -66,10 +66,9 @@ Future<void> main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
 
-    // Initialize RevenueCat for subscriptions
+    // Create SubscriptionService without initializing (lazy initialization)
     final subscriptionService = SubscriptionService();
-    await subscriptionService.initialize();
-    debugPrint('Subscription service initialized');
+    debugPrint('Subscription service created (will initialize when needed)');
 
     final apiService = ApiService();
     final authRepository = AuthRepository();
@@ -173,8 +172,7 @@ class _TugAppState extends State<TugApp> {
     // Load theme preference
     _themeBloc.add(ThemeLoaded());
 
-    // Load subscription state
-    _subscriptionBloc.add(LoadSubscriptions());
+    // Note: Subscription state will be loaded when user first visits subscription screen
 
     _router = GoRouter(
       initialLocation: '/splash', // Start at splash screen
