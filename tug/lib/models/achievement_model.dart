@@ -64,13 +64,37 @@ class AchievementModel {
     );
   }
 
+  /// Map icon code points to constant IconData instances
+  static const Map<int, IconData> _iconMap = {
+    0xe06d: Icons.local_fire_department,
+    0xe916: Icons.calendar_today, 
+    0xe4d9: Icons.psychology,
+    0xe78e: Icons.emoji_events,
+    0xe890: Icons.balance,
+    0xe5d6: Icons.brightness_4,
+    0xe4e7: Icons.self_improvement,
+    0xe3c5: Icons.flag,
+    0xe24b: Icons.edit_note,
+    0xe5db: Icons.brightness_7_rounded,
+    0xe0b1: Icons.bar_chart,
+    0xe567: Icons.timer,
+    0xe99a: Icons.hourglass_full,
+    0xe001: Icons.access_time_filled,
+    0xe569: Icons.color_lens,
+    0xe042: Icons.refresh,
+  };
+
   /// Create an achievement from JSON
   factory AchievementModel.fromJson(Map<String, dynamic> json) {
+    // Use icon mapping to get constant IconData or fallback to a default
+    final iconCodePoint = json['icon'] as int?;
+    final icon = iconCodePoint != null ? _iconMap[iconCodePoint] ?? Icons.star : Icons.star;
+    
     return AchievementModel(
       id: json['id'],
       title: json['title'],
       description: json['description'],
-      icon: IconData(json['icon'], fontFamily: 'MaterialIcons'),
+      icon: icon,
       type: AchievementType.values[json['type']],
       color: Color(json['color']),
       requiredValue: json['requiredValue'],

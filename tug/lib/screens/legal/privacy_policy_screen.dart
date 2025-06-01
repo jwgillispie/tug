@@ -113,7 +113,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   '• Deletion: You can request that we delete your personal information.\n'
                   '• Restriction: You can request that we restrict the processing of your information.\n'
                   '• Data Portability: You can request a copy of your information in a structured, commonly used, and machine-readable format.\n\n'
-                  'To exercise these rights, please contact us at jordangillispie@outlookcom.',
+                  'To exercise these rights, please contact us at jordangillispie@outlook.com.',
             ),
 
             // Changes to this Privacy Policy
@@ -127,7 +127,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             _buildSection(
               context,
               'contact information',
-              'If you have any questions about this Privacy Policy, please contact us at jordangillispie@outlookcom.',
+              'If you have any questions about this Privacy Policy, please contact us at jordangillispie@outlook.com.',
             ),
 
             // Last section padding

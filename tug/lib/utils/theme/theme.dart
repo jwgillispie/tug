@@ -58,7 +58,7 @@ class TugTheme {
     ),
 
     // Enhanced card styling
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       elevation: 2,
       shadowColor: TugColors.primaryPurple.withOpacity(0.1),
       shape: RoundedRectangleBorder(
@@ -182,7 +182,7 @@ class TugTheme {
     ),
 
     // Tab bar theme for consistent navigation
-    tabBarTheme: TabBarTheme(
+    tabBarTheme: TabBarThemeData(
       labelColor: TugColors.primaryPurple,
       unselectedLabelColor: TugColors.lightTextSecondary,
       indicatorColor: TugColors.primaryPurple,
@@ -204,7 +204,7 @@ class TugTheme {
     ),
 
     // Dialog theme for pop-ups
-    dialogTheme: DialogTheme(
+    dialogTheme: DialogThemeData(
       backgroundColor: Colors.white,
       elevation: 24,
       shape: RoundedRectangleBorder(
@@ -275,7 +275,7 @@ class TugTheme {
     ),
 
     // Enhanced card styling
-    cardTheme: CardTheme(
+    cardTheme: CardThemeData(
       elevation: 4,
       shadowColor: Colors.black.withOpacity(0.4),
       shape: RoundedRectangleBorder(
@@ -422,7 +422,7 @@ class TugTheme {
     ),
 
     // Tab bar theme for consistent navigation
-    tabBarTheme: TabBarTheme(
+    tabBarTheme: TabBarThemeData(
       labelColor: TugColors.primaryPurpleLight,
       unselectedLabelColor: TugColors.darkTextSecondary,
       indicatorColor: TugColors.primaryPurpleLight,
@@ -444,7 +444,7 @@ class TugTheme {
     ),
 
     // Dialog theme for pop-ups
-    dialogTheme: DialogTheme(
+    dialogTheme: DialogThemeData(
       backgroundColor: TugColors.darkSurface,
       elevation: 24,
       shape: RoundedRectangleBorder(

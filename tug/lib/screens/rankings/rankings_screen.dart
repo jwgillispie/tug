@@ -1449,9 +1449,10 @@ class _RankingsScreenState extends State<RankingsScreen> {
                   children: [
                     Row(
                       children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
                             Text(
                               isCurrentUserCard ? 'your ranking' : user.displayName,
                               style: TextStyle(
@@ -1484,7 +1485,8 @@ class _RankingsScreenState extends State<RankingsScreen> {
                                   ),
                                 ),
                               ),
-                          ],
+                            ],
+                          ),
                         ),
                         if (user.isCurrentUser && !isCurrentUserCard) ...[
                           const SizedBox(width: 6),

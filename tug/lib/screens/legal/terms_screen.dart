@@ -86,6 +86,19 @@ class TermsScreen extends StatelessWidget {
                   '• Attempt to gain unauthorized access to any part of the App.',
             ),
 
+            // Auto-Renewable Subscriptions
+            _buildSection(
+              context,
+              'auto-renewable subscriptions',
+              'The App offers auto-renewable subscriptions for premium features. By purchasing a subscription, you agree to the following:\n\n'
+                  '• Payment will be charged to your Apple ID or Google Play account at confirmation of purchase.\n'
+                  '• Subscriptions automatically renew unless auto-renewal is turned off at least 24 hours before the end of the current period.\n'
+                  '• Your account will be charged for renewal within 24 hours prior to the end of the current period.\n'
+                  '• You can manage and cancel your subscription by going to your account settings on the App Store or Google Play Store after purchase.\n'
+                  '• Any unused portion of a free trial period will be forfeited when you purchase a subscription.\n'
+                  '• Cancellation of the current active subscription period is not allowed.',
+            ),
+
             // Termination
             _buildSection(
               context,

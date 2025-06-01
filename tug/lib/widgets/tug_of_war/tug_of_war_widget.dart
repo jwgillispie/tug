@@ -120,14 +120,19 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
     }
   }
 
+  // Use constant icons to avoid dynamic IconData
+  static const IconData _warningIcon = Icons.warning_amber_rounded;
+  static const IconData _infoIcon = Icons.info_outline;
+  static const IconData _checkIcon = Icons.check_circle;
+  
   // Get message icon based on position
   IconData _getMessageIcon() {
     if (_position < -0.4) {
-      return Icons.warning_amber_rounded;
+      return _warningIcon;
     } else if (_position > 0.4) {
-      return Icons.info_outline;
+      return _infoIcon;
     } else {
-      return Icons.check_circle;
+      return _checkIcon;
     }
   }
 

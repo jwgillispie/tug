@@ -184,20 +184,21 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
     }
   }
   
-  // Get icon for character state instead of emoji
-  IconData _getCharacterIcon(String side, String state) {
-    if (side == 'stated') {
-      switch (state) {
-        case 'winning': return Icons.star_rounded;
-        case 'losing': return Icons.star_outline;
-        default: return Icons.star_half_rounded;
-      }
-    } else { // actual side
-      switch (state) {
-        case 'winning': return Icons.access_time_filled_rounded;
-        case 'losing': return Icons.access_time_outlined;
-        default: return Icons.access_time_rounded;
-      }
+  // Use constant icons to avoid dynamic IconData
+  static const IconData _statedIcon = Icons.star;
+  static const IconData _actualIcon = Icons.access_time;
+  static const IconData _warningIcon = Icons.warning_amber_rounded;
+  static const IconData _infoIcon = Icons.info_outline;
+  static const IconData _checkIcon = Icons.check_circle;
+  
+  // Get message icon based on position
+  IconData _getMessageIcon() {
+    if (_position < -0.4) {
+      return _warningIcon;
+    } else if (_position > 0.4) {
+      return _infoIcon;
+    } else {
+      return _checkIcon;
     }
   }
   
@@ -511,7 +512,7 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
                                         ],
                                       ).createShader(bounds),
                                       child: Icon(
-                                        _getCharacterIcon('stated', statedCharacterState),
+                                        _statedIcon,
                                         size: 28,
                                       ),
                                     ),
@@ -567,7 +568,7 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
                                         ],
                                       ).createShader(bounds),
                                       child: Icon(
-                                        _getCharacterIcon('actual', actualCharacterState),
+                                        _actualIcon,
                                         size: 28,
                                       ),
                                     ),
@@ -775,9 +776,7 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
                 child: Row(
                   children: [
                     Icon(
-                      _position < -0.4 
-                          ? Icons.warning_amber_rounded 
-                          : (_position > 0.4 ? Icons.info_outline : Icons.check_circle),
+                      _getMessageIcon(),
                       color: _valueColor,
                       size: 18,
                     ),

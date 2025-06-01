@@ -36,7 +36,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Premium Subscription'),
+        title: const Text('Tug Pro Subscription'),
         leading: widget.showCloseButton
             ? IconButton(
                 icon: const Icon(Icons.close),
@@ -93,8 +93,8 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
               SnackBar(
                 content: Text(
                   state.hasPremium
-                      ? 'Premium subscription restored!'
-                      : 'No premium subscription found to restore.',
+                      ? 'Tug Pro subscription restored!'
+                      : 'No Tug Pro subscription found to restore.',
                 ),
                 backgroundColor: state.hasPremium ? Colors.green : Colors.orange,
               ),
@@ -197,7 +197,7 @@ class _SubscriptionContent extends StatelessWidget {
             // Premium benefits
             const SizedBox(height: 16),
             Text(
-              'Tug Premium',
+              'Tug Pro',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: TugColors.primaryPurple,
@@ -251,16 +251,20 @@ class _SubscriptionContent extends StatelessWidget {
               ),
             ),
             
-            // Terms and privacy note
+            // Subscription terms - Apple required information
             Text(
-              'Payment will be charged to your Apple ID or Google Play account at confirmation of purchase. '
-              'Subscriptions automatically renew unless canceled at least 24 hours before the end of the current period. '
-              'Manage your subscriptions in your account settings after purchase.',
+              'Monthly Auto-Renewable Subscription Terms:\n\n'
+              '• Payment will be charged to your Apple ID or Google Play account at confirmation of purchase\n'
+              '• Monthly subscription automatically renews unless auto-renewal is turned off at least 24 hours before the end of the current monthly period\n'
+              '• Account will be charged for renewal within 24 hours prior to the end of each monthly period\n'
+              '• Subscriptions may be managed and auto-renewal turned off by going to Account Settings after purchase\n'
+              '• Any unused portion of a free trial period will be forfeited when purchasing a subscription',
               style: TextStyle(
                 fontSize: 12,
                 color: isDarkMode ? Colors.grey.shade400 : Colors.grey.shade700,
+                height: 1.4,
               ),
-              textAlign: TextAlign.center,
+              textAlign: TextAlign.left,
             ),
             const SizedBox(height: 8),
             Row(
@@ -304,13 +308,13 @@ class _SubscriptionContent extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              'You have an active Premium subscription!',
+              'You have an active Tug Pro subscription!',
               style: Theme.of(context).textTheme.headlineSmall,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
             const Text(
-              'You have access to all premium features. Thank you for your support!',
+              'You have access to all pro features. Thank you for your support!',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 16),
             ),
@@ -333,7 +337,7 @@ class _SubscriptionContent extends StatelessWidget {
             const SizedBox(height: 24),
             OutlinedButton(
               onPressed: () async {
-                // For iOS sandbox testing, try to open manage subscriptions sheet
+                // Try to open manage subscriptions
                 if (Platform.isIOS) {
                   try {
                     // Try to get the management URL from RevenueCat
@@ -401,19 +405,7 @@ class _SubscriptionContent extends StatelessWidget {
                             ),
                             const SizedBox(height: 16),
                             const Text(
-                              'iOS Sandbox:',
-                              style: TextStyle(fontWeight: FontWeight.bold),
-                            ),
-                            const Text(
-                              '1. Open Settings app\n'
-                              '2. Tap your name at the top\n'
-                              '3. Tap "Subscriptions"\n'
-                              '4. Find and tap "Tug"\n'
-                              '5. Tap "Cancel Subscription"',
-                            ),
-                            const SizedBox(height: 16),
-                            const Text(
-                              'Production:',
+                              'To manage your subscription:',
                               style: TextStyle(fontWeight: FontWeight.bold),
                             ),
                             const Text(
@@ -435,19 +427,7 @@ class _SubscriptionContent extends StatelessWidget {
               },
               child: const Text('Manage Subscription'),
             ),
-            const SizedBox(height: 8),
-            Text(
-              'Sandbox subscriptions auto-renew every 5 minutes',
-              style: TextStyle(
-                fontSize: 12,
-                fontStyle: FontStyle.italic,
-                color: Theme.of(context).brightness == Brightness.dark
-                    ? Colors.grey.shade500
-                    : Colors.grey.shade600,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            // Debug option for development
+            // Support information
             if (kDebugMode) ...[
               const SizedBox(height: 16),
               TextButton(
@@ -455,28 +435,33 @@ class _SubscriptionContent extends StatelessWidget {
                   showDialog(
                     context: context,
                     builder: (context) => AlertDialog(
-                      title: const Text('Sandbox Testing Tips'),
-                      content: const SingleChildScrollView(
+                      title: const Text('Subscription Help'),
+                      content:  SingleChildScrollView(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              'For Sandbox Testing:',
-                              style: TextStyle(fontWeight: FontWeight.bold),
+                             Text(
+                              'Subscription Management:',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.white
+                                    : Colors.black87,
+                              ),
                             ),
                             SizedBox(height: 8),
                             Text(
-                              '1. Make sure you\'re signed into your Sandbox Account:\n'
-                              '   Settings → App Store → Sandbox Account\n\n'
-                              '2. Sandbox subscriptions expire quickly:\n'
-                              '   • Monthly = 5 minutes\n'
-                              '   • Annual = 1 hour\n\n'
-                              '3. To cancel immediately:\n'
-                              '   • Go to Settings → [Sandbox Account] → Subscriptions\n'
-                              '   • Or use Xcode\'s StoreKit configuration\n\n'
-                              '4. After canceling, wait 5-10 minutes for it to fully expire\n\n'
-                              '5. You can then resubscribe for testing',
+                              '1. Open the Settings app on your device\n\n'
+                              '2. Tap your name at the top\n\n'
+                              '3. Tap "Subscriptions"\n\n'
+                              '4. Find and tap "Tug"\n\n'
+                              '5. Manage or cancel your subscription as needed',
+                              style: TextStyle(
+                                color: Theme.of(context).brightness == Brightness.dark
+                                    ? Colors.white
+                                    : Colors.black87,
+                              ),
                             ),
                           ],
                         ),
@@ -491,7 +476,7 @@ class _SubscriptionContent extends StatelessWidget {
                   );
                 },
                 child: const Text(
-                  'Sandbox Testing Help',
+                  'Subscription Help',
                   style: TextStyle(fontSize: 12),
                 ),
               ),

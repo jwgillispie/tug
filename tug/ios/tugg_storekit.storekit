@@ -93,8 +93,8 @@
           "introductoryOffer" : null,
           "localizations" : [
             {
-              "description" : "Advanced activity insights and 10 values",
-              "displayName" : "Tug Pro Monthly",
+              "description" : "Leaderboard Access",
+              "displayName" : "Tug Pro",
               "locale" : "en_US"
             }
           ],
