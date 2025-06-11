@@ -20,6 +20,14 @@ class LoadingMessages {
     'downloading more RAM... just kidding!',
     'convincing electrons to behave...',
     'negotiating with the servers...',
+    'yes, we know the app is slow... patience is a virtue!',
+    'taking our sweet time, as usual...',
+    'loading at the speed of molasses...',
+    'hey, good things come to those who wait!',
+    'practicing patience while we load...',
+    'slow and steady wins the race... hopefully',
+    'giving our servers a pep talk...',
+    'waiting for the wifi hamsters to wake up...',
   ];
 
   // Authentication specific messages
@@ -34,6 +42,9 @@ class LoadingMessages {
     'verifying your quantum passport...',
     'making sure you\'re the chosen one...',
     'authenticating with the universe...',
+    'login taking forever? patience is a virtue...',
+    'yes, this usually takes a while... hang tight!',
+    'our login is slower than a sleepy sloth...',
   ];
 
   // Values specific messages
@@ -48,6 +59,8 @@ class LoadingMessages {
     'mapping your value constellation...',
     'tuning your authenticity frequency...',
     'synchronizing with your true self...',
+    'loading values slower than usual... good things take time!',
+    'patience grasshopper, your values are worth the wait...',
   ];
 
   // Activities specific messages
@@ -62,6 +75,9 @@ class LoadingMessages {
     'tallying your meaningful moments...',
     'recording your life\'s greatest hits...',
     'quantifying your awesomeness...',
+    'taking forever? try clicking another tab and coming back!',
+    'loading activities at glacial pace... bear with us!',
+    'our servers are having a coffee break...',
   ];
 
   // Rankings specific messages
@@ -76,6 +92,8 @@ class LoadingMessages {
     'computing your standing among legends...',
     'ranking the value warriors...',
     'sorting the champions...',
+    'rankings loading slowly? switch tabs and come back quickly!',
+    'this is taking a while... patience is your secret weapon!',
   ];
 
   // Progress specific messages
@@ -90,6 +108,21 @@ class LoadingMessages {
     'documenting your glow-up...',
     'measuring your boss-level gains...',
     'charting your path to greatness...',
+    'progress loading slow? try the tab-switch trick!',
+    'rome wasn\'t built in a day... neither is this progress chart!',
+    'loading progress at turtle speed... but we\'ll get there!',
+  ];
+
+  // Super slow loading messages with helpful tips
+  static const List<String> _superSlow = [
+    'okay this is taking FOREVER... try clicking another screen and coming back!',
+    'seriously slow today! quick fix: tap another tab then come back to this one',
+    'loading slower than a sloth on vacation... try the tab-switch trick!',
+    'this is embarrassingly slow... click elsewhere and return quickly!',
+    'our servers are napping... pro tip: switch screens and come back fast!',
+    'taking way too long? navigate away and return - it usually helps!',
+    'wow, even we\'re surprised how slow this is... try switching tabs!',
+    'loading at geological timescales... the screen-switch trick might save you!',
   ];
 
   static String getGeneral() => _general[_random.nextInt(_general.length)];
@@ -98,6 +131,7 @@ class LoadingMessages {
   static String getActivities() => _activities[_random.nextInt(_activities.length)];
   static String getRankings() => _rankings[_random.nextInt(_rankings.length)];
   static String getProgress() => _progress[_random.nextInt(_progress.length)];
+  static String getSuperSlow() => _superSlow[_random.nextInt(_superSlow.length)];
 
   // Get a message based on context
   static String getByContext(String context) {
@@ -117,8 +151,30 @@ class LoadingMessages {
         return getRankings();
       case 'progress':
         return getProgress();
+      case 'superslow':
+      case 'slow':
+        return getSuperSlow();
       default:
         return getGeneral();
     }
+  }
+
+  // Get a message with a chance of showing super slow message for long loads
+  static String getWithSlowChance(String context, {double slowChance = 0.3}) {
+    if (_random.nextDouble() < slowChance) {
+      return getSuperSlow();
+    }
+    return getByContext(context);
+  }
+
+  // Get a progressive message based on loading duration
+  static String getProgressive(String context, Duration loadingTime) {
+    if (loadingTime.inSeconds > 10) {
+      return getSuperSlow();
+    } else if (loadingTime.inSeconds > 5) {
+      // Mix in some patience messages
+      return getWithSlowChance(context, slowChance: 0.6);
+    }
+    return getByContext(context);
   }
 }

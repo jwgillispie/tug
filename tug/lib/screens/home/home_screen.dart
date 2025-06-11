@@ -121,15 +121,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     context.push('/values-input?fromHome=true');
   }
   
-  void _refreshValues() {
-    // Force a fresh load from the server
+  Future<void> _refreshData() async {
+    // Force a fresh load from the server for both values and activities
     context.read<ValuesBloc>().add(const LoadValues(forceRefresh: true));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('refreshing...'),
-        duration: Duration(seconds: 1),
-      ),
-    );
+    context.read<ActivitiesBloc>().add(const LoadActivities(forceRefresh: true));
+    
+    // Add a small delay to ensure the refresh indicator shows
+    await Future.delayed(const Duration(milliseconds: 500));
   }
 
   @override
@@ -183,30 +181,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         ),
         actions: [
           QuantumEffects.floating(
-            offset: 3,
-            child: QuantumEffects.quantumBorder(
-              glowColor: TugColors.info,
-              intensity: 0.6,
-              child: Container(
-                margin: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      TugColors.info.withAlpha(40),
-                      TugColors.info.withAlpha(10),
-                    ],
-                  ),
-                ),
-                child: IconButton(
-                  icon: Icon(Icons.refresh, color: TugColors.info),
-                  onPressed: _refreshValues,
-                  tooltip: 'refresh values',
-                ),
-              ),
-            ),
-          ),
-          QuantumEffects.floating(
             offset: 5,
             child: QuantumEffects.quantumBorder(
               glowColor: TugColors.error,
@@ -248,10 +222,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   ],
           ),
         ),
-        child: FadeTransition(
-          opacity: _fadeAnimation,
-          child: BlocBuilder<ValuesBloc, ValuesState>(
-            builder: (context, state) {
+        child: RefreshIndicator(
+          onRefresh: _refreshData,
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: BlocBuilder<ValuesBloc, ValuesState>(
+              builder: (context, state) {
               if (state is ValuesLoading && _isFirstLoad) {
                 // Only show loading indicator on first load
                 _isFirstLoad = false;
@@ -282,7 +258,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       Text('error: ${state.message}'),
                       const SizedBox(height: 16),
                       ElevatedButton(
-                        onPressed: _refreshValues,
+                        onPressed: () => _refreshData(),
                         child: const Text('retry'),
                       ),
                     ],
@@ -339,7 +315,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 
                 // Use SingleChildScrollView to make the entire screen scrollable
                 return SingleChildScrollView(
-                  physics: const AlwaysScrollableScrollPhysics(), 
+                  physics: const AlwaysScrollableScrollPhysics(),
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
                     child: Column(
@@ -772,7 +748,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               return const Center(
                 child: Text('loading values...'),
               );
-            },
+              },
+            ),
           ),
         ),
       ),

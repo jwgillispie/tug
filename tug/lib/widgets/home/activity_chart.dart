@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:tug/models/activity_model.dart';
 import 'package:tug/models/value_model.dart';
 import 'package:tug/utils/theme/colors.dart';
+import 'package:tug/utils/time_utils.dart';
 
 class ActivityChart extends StatefulWidget {
   final List<ActivityModel> activities;
@@ -265,7 +266,7 @@ class _ActivityChartState extends State<ActivityChart> {
                     ),
                     const SizedBox(width: 3), // Reduced spacing
                     Text(
-                      'Avg: ${_calculateDailyAverage().toInt()} min/day',
+                      'Avg: ${TimeUtils.formatMinutes(_calculateDailyAverage().toInt())}/day',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 10, // Smaller font
@@ -390,7 +391,7 @@ class _ActivityChartState extends State<ActivityChart> {
                             return Padding(
                               padding: const EdgeInsets.only(right: 8),
                               child: Text(
-                                '${value.toInt()} min',
+                                TimeUtils.formatMinutes(value.toInt()),
                                 style: TextStyle(
                                   color: Colors.white.withOpacity(0.8),
                                   fontSize: 9, // Smaller font size
@@ -453,7 +454,7 @@ class _ActivityChartState extends State<ActivityChart> {
                           
                           // Standard tooltip
                           return LineTooltipItem(
-                            '$minutes min\n${DateFormat('MMM d').format(date)}',
+                            '${TimeUtils.formatMinutes(minutes)}\n${DateFormat('MMM d').format(date)}',
                             TextStyle(
                               color: isDarkMode ? Colors.white : Colors.black,
                               fontWeight: FontWeight.bold,
@@ -493,7 +494,7 @@ class _ActivityChartState extends State<ActivityChart> {
                         ),
                         const SizedBox(width: 3), // Reduced spacing
                         Text(
-                          'Total: ${_calculateTotalMinutes()} min (${widget.daysToShow}d)',
+                          'Total: ${TimeUtils.formatMinutes(_calculateTotalMinutes())} (${widget.daysToShow}d)',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 10, // Smaller font

@@ -13,6 +13,7 @@ class User(Document):
     firebase_uid: Indexed(str, unique=True)
     email: Indexed(EmailStr, unique=True)
     display_name: str
+    profile_picture_url: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     last_login: datetime = Field(default_factory=datetime.utcnow)
     onboarding_completed: bool = False

@@ -15,20 +15,18 @@ class Database:
     
 async def init_db():
     """Initialize database connection and register models"""
-    # Log the MongoDB URL we're trying to connect to (without credentials)
+    # Initialize MongoDB connection
     connection_url = settings.MONGODB_URL
-    # Safely log the URL by removing credentials
-    safe_url = connection_url.split('@')[-1] if '@' in connection_url else connection_url
-    logger.info(f"Connecting to MongoDB: {safe_url}")
+    logger.info("Initializing MongoDB connection")
     
     client = AsyncIOMotorClient(connection_url)
     
     try:
         # Test the connection
         await client.admin.command('ping')
-        logger.info("Successfully connected to MongoDB Atlas")
+        logger.info("Successfully connected to MongoDB")
     except Exception as e:
-        logger.error(f"Failed to connect to MongoDB Atlas: {e}")
+        logger.error(f"Failed to connect to MongoDB: {e}")
         raise
     
     await init_beanie(

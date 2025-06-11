@@ -51,6 +51,14 @@ dependencies:
   shared_preferences: ^2.5.3
   confetti: ^0.8.0
   url_launcher: ^6.3.1 # For URL handling and deep links
+  flutter_local_notifications: ^18.0.1
+  timezone: ^0.10.0
+  image_picker: ^1.0.4
+
+dependency_overrides:
+  firebase_app_check: # Disable Firebase App Check
+  firebase_app_check_platform_interface: # Disable Firebase App Check platform interface
+  firebase_app_check_web: # Disable Firebase App Check web
 
 dev_dependencies:
   flutter_test:

@@ -60,6 +60,17 @@ class UserService {
     }
   }
 
+  // Sync profile picture URL with backend
+  Future<bool> syncProfilePictureUrl(String profilePictureUrl) async {
+    try {
+      await _apiService.patch('/api/v1/users/me', 
+          data: {'profile_picture_url': profilePictureUrl});
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   // Complete onboarding process
   Future<bool> completeOnboarding() async {
     try {

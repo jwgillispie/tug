@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:tug/utils/theme/colors.dart';
+import 'package:tug/utils/time_utils.dart';
 
 class EnhancedTugOfWarWidget extends StatefulWidget {
   final String valueName;
@@ -109,19 +110,6 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
     }
   }
 
-  // Helper method to get the timeframe display text
-  String _getTimeframeDisplayText() {
-    switch (widget.timeframe.toLowerCase()) {
-      case 'daily':
-        return '/day';
-      case 'weekly':
-        return '/week';
-      case 'monthly':
-        return '/month';
-      default:
-        return '/day';
-    }
-  }
 
   void _calculatePosition() {
     // Convert stated importance to percentage (1-5 → 20-100%)
@@ -160,11 +148,11 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
 
   String _getMessage() {
     if (_position < -0.4) {
-      return "your actions aren't matching your stated importance.";
+      return "not living up to your stated values - time to step up!";
     } else if (_position > 0.4) {
-      return "you're investing more time than your stated importance suggests.";
+      return "you're overworking yourself - might be time to take a break!";
     } else {
-      return "good alignment between your stated values and actions!";
+      return "perfectly balanced - you're nailing your values!";
     }
   }
 
@@ -178,6 +166,20 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
       if (_position > 0.4) return 'winning';
       if (_position < -0.4) return 'losing';
       return 'neutral';
+    }
+  }
+  
+  
+  Color _getBallColor() {
+    if (_position < -0.4) {
+      // Left side - red for bad/warning
+      return Colors.red;
+    } else if (_position > 0.4) {
+      // Right side - orange/amber for exhausted
+      return Colors.orange;
+    } else {
+      // Middle - green for balanced/good
+      return Colors.green;
     }
   }
   
@@ -201,8 +203,8 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
   }
   
   // Use constant icons to avoid dynamic IconData
-  static const IconData _statedIcon = Icons.star;
-  static const IconData _actualIcon = Icons.access_time;
+  static const IconData _statedIcon = Icons.keyboard_double_arrow_left;
+  static const IconData _actualIcon = Icons.keyboard_double_arrow_right;
   static const IconData _warningIcon = Icons.warning_amber_rounded;
   static const IconData _infoIcon = Icons.info_outline;
   static const IconData _checkIcon = Icons.check_circle;
@@ -323,7 +325,7 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 88.0),
+            padding: const EdgeInsets.fromLTRB(20.0, 20.0, 20.0, 20.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -374,7 +376,7 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    'Importance: ${widget.statedImportance}/5',
+                                    'importance: ${widget.statedImportance}/5',
                                     style: TextStyle(
                                       fontSize: 12,
                                       fontWeight: FontWeight.w500,
@@ -415,7 +417,7 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
                       ),
                     ),
                     child: Text(
-                      '${widget.actualBehavior} mins${_getTimeframeDisplayText()}',
+                      TimeUtils.formatMinutesWithTimeframe(widget.actualBehavior, widget.timeframe),
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -426,7 +428,7 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
                 ],
               ),
               
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
               
               // Enhanced Tug of War Visualization
               SizedBox(
@@ -611,75 +613,78 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
                           ),
                         ),
                         
-                        // Rope center knot with enhanced visuals
+                        // Rope center knot with state-based icon and color
                         Positioned(
                           left: MediaQuery.of(context).size.width / 2 - 36 + (position * MediaQuery.of(context).size.width / 4),
                           bottom: 15,
                           child: Transform.translate(
                             offset: Offset(0, math.sin(wavePhase) * 2), // Subtle vertical movement
-                            child: Container(
-                              width: 30,
-                              height: 30,
-                              decoration: BoxDecoration(
-                                gradient: RadialGradient(
-                                  colors: [
-                                    Color.lerp(_valueColor, Colors.white, 0.3) ?? _valueColor,
-                                    _valueColor,
-                                  ],
-                                  stops: const [0.0, 1.0],
-                                  radius: 0.8,
-                                ),
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: _valueColor.withOpacity(isDarkMode ? 0.7 : 0.5),
-                                    blurRadius: 15,
-                                    spreadRadius: 2,
-                                    offset: const Offset(0, 2),
+                            child: AnimatedBuilder(
+                              animation: _animationController,
+                              builder: (context, _) {
+                                final ballColor = _getBallColor();
+                                final pulseFactor = 0.9 + (0.2 * math.sin(wavePhase * 2));
+                                
+                                return Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                    gradient: RadialGradient(
+                                      colors: [
+                                        Color.lerp(ballColor, Colors.white, 0.3) ?? ballColor,
+                                        ballColor,
+                                      ],
+                                      stops: const [0.0, 1.0],
+                                      radius: 0.8,
+                                    ),
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: ballColor.withOpacity(isDarkMode ? 0.7 : 0.5),
+                                        blurRadius: 15,
+                                        spreadRadius: 2,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                      BoxShadow(
+                                        color: Colors.white.withOpacity(0.2),
+                                        blurRadius: 5,
+                                        spreadRadius: -1,
+                                        offset: const Offset(-1, -1),
+                                      ),
+                                    ],
                                   ),
-                                  BoxShadow(
-                                    color: Colors.white.withOpacity(0.2),
-                                    blurRadius: 5,
-                                    spreadRadius: -1,
-                                    offset: const Offset(-1, -1),
-                                  ),
-                                ],
-                              ),
-                              child: Center(
-                                child: AnimatedBuilder(
-                                  animation: _animationController,
-                                  builder: (context, _) {
-                                    // Pulsing inner knot effect
-                                    final pulseFactor = 0.9 + (0.2 * math.sin(wavePhase * 2));
-                                    
-                                    return Container(
-                                      width: 15 * pulseFactor,
-                                      height: 15 * pulseFactor,
-                                      decoration: BoxDecoration(
-                                        gradient: RadialGradient(
-                                          colors: [
-                                            Colors.white.withOpacity(0.9),
-                                            _valueColor.withOpacity(0.7),
-                                          ],
-                                          stops: const [0.3, 1.0],
-                                        ),
-                                        shape: BoxShape.circle,
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: Colors.white.withOpacity(0.7),
-                                            blurRadius: 4,
-                                            spreadRadius: 0,
+                                  child: Center(
+                                    child: Transform.scale(
+                                      scale: pulseFactor,
+                                      child: Container(
+                                        width: 20,
+                                        height: 20,
+                                        decoration: BoxDecoration(
+                                          gradient: RadialGradient(
+                                            colors: [
+                                              Colors.white.withOpacity(0.9),
+                                              ballColor.withOpacity(0.7),
+                                            ],
+                                            stops: const [0.3, 1.0],
                                           ),
-                                        ],
-                                        border: Border.all(
-                                          color: Colors.white.withOpacity(0.8),
-                                          width: 2,
+                                          shape: BoxShape.circle,
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.white.withOpacity(0.7),
+                                              blurRadius: 4,
+                                              spreadRadius: 0,
+                                            ),
+                                          ],
+                                          border: Border.all(
+                                            color: Colors.white.withOpacity(0.8),
+                                            width: 2,
+                                          ),
                                         ),
                                       ),
-                                    );
-                                  }
-                                ),
-                              ),
+                                    ),
+                                  ),
+                                );
+                              }
                             ),
                           ),
                         ),
@@ -701,7 +706,7 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
                                   mainAxisSize: MainAxisSize.min,
                                   children: const [
                                     Text(
-                                      'Drag that thang!',
+                                      'drag to see where u could end up!',
                                       style: TextStyle(
                                         color: Colors.white,
                                         fontWeight: FontWeight.bold,
@@ -725,7 +730,7 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
                 ),
               ),
               
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               
               // Labels with enhanced design
               Row(
@@ -755,7 +760,7 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
                   Row(
                     children: [
                       Text(
-                        'actual Behavior',
+                        'actual behavior',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
@@ -814,7 +819,7 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
               ),
               
               // Community comparison with enhanced design
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -825,7 +830,7 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    'community average: ${widget.communityAverage} mins${_getTimeframeDisplayText()}',
+                    'community average: ${TimeUtils.formatMinutesWithTimeframe(widget.communityAverage, widget.timeframe)}',
                     style: TextStyle(
                       fontSize: 12,
                       color: _valueColor.withOpacity(0.8),
@@ -836,7 +841,7 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
               ),
               
               // Interactive helper text
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Center(
                 child: Text(
                   'try tugging the rope!',

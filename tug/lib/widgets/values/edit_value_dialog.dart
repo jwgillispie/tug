@@ -76,7 +76,7 @@ class _EditValueDialogState extends State<EditValueDialog> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Importance: ${_importance.round()}',
+              'importance: ${_importance.round()}',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             Slider(

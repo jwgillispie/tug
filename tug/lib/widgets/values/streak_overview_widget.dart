@@ -47,7 +47,7 @@ class StreakOverviewWidget extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Streaks',
+                    'streaks',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -62,7 +62,7 @@ class StreakOverviewWidget extends StatelessWidget {
                           const LoadStreakStats(forceRefresh: true),
                         );
                       },
-                      tooltip: 'Refresh streak data',
+                      tooltip: 'refresh streak data',
                     ),
                 ],
               ),
@@ -126,7 +126,7 @@ class StreakOverviewWidget extends StatelessWidget {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Streaks',
+                      'streaks',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -141,7 +141,7 @@ class StreakOverviewWidget extends StatelessWidget {
                             const LoadStreakStats(forceRefresh: true),
                           );
                         },
-                        tooltip: 'Refresh streak data',
+                        tooltip: 'refresh streak data',
                       ),
                   ],
                 ),
@@ -173,7 +173,7 @@ class StreakOverviewWidget extends StatelessWidget {
                     Expanded(
                       child: _buildSummaryItem(
                         context,
-                        'Total Days',
+                        'total days',
                         '$totalStreakDays',
                         Icons.calendar_today,
                         TugColors.primaryPurple,
@@ -189,7 +189,7 @@ class StreakOverviewWidget extends StatelessWidget {
 
                   // Top streaks list
                   Text(
-                    'Your Streaks',
+                    'your streaks',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),

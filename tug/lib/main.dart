@@ -27,6 +27,7 @@ import 'package:tug/screens/subscription/subscription_screen.dart';
 import 'package:tug/screens/subscription/user_subscription_screen.dart';
 import 'package:tug/services/api_service.dart';
 import 'package:tug/services/cache_service.dart';
+import 'package:tug/services/notification_service.dart';
 import 'package:tug/services/subscription_service.dart';
 import 'package:tug/utils/local_storage.dart';
 import 'repositories/auth_repository.dart';
@@ -64,6 +65,10 @@ Future<void> main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
+
+    // Initialize notification service
+    final notificationService = NotificationService();
+    await notificationService.initialize();
 
     // Create SubscriptionService without initializing (lazy initialization)
     final subscriptionService = SubscriptionService();

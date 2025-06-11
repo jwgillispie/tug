@@ -13,6 +13,7 @@ import 'package:tug/models/value_model.dart';
 import 'package:tug/utils/quantum_effects.dart';
 import 'package:tug/utils/theme/colors.dart';
 import 'package:tug/utils/theme/buttons.dart';
+import 'package:tug/utils/time_utils.dart';
 import 'package:tug/widgets/activity/activity_form.dart';
 import 'package:tug/widgets/activity/edit_activity_dialog.dart';
 
@@ -160,6 +161,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                       ),
                     );
                   } else if (state is ActivitiesError) {
+                    // Don't close the modal on error, so user can see the error and try again
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(state.message),
@@ -256,7 +258,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                 icon: Icons.timer_outlined,
                 iconColor: color,
                 label: 'duration:',
-                value: '${activity.duration} minutes',
+                value: TimeUtils.formatMinutes(activity.duration),
               ),
               const SizedBox(height: 12),
               _buildDetailRow(
@@ -788,19 +790,11 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          '${activity.duration}',
+                          TimeUtils.formatMinutes(activity.duration),
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                             color: color,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          'min',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: color.withOpacity(0.7),
                           ),
                         ),
                       ],
@@ -936,7 +930,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                 ),
                 _buildSummaryItem(
                   title: 'total time',
-                  value: '${totalTime}m',
+                  value: TimeUtils.formatMinutes(totalTime),
                   icon: Icons.access_time,
                 ),
               ],
@@ -945,7 +939,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
 
           return Center(
             child: Text(
-              'Hold onnnn...',
+              'patience is a virtue',
               style: TextStyle(
                 color: isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600,
               ),

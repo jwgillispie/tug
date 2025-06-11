@@ -68,6 +68,8 @@ class StoreConfig {
       );
     }
     
-    debugPrint('StoreConfig initialized for ${_instance?.store}');
+    if (kDebugMode) {
+      debugPrint('StoreConfig initialized for ${_instance?.store}');
+    }
   }
 }

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:tug/utils/theme/colors.dart';
 import 'package:tug/utils/theme/text_styles.dart';
 import 'package:tug/utils/animations.dart';
+import 'package:tug/utils/time_utils.dart';
 
 class TugOfWarWidget extends StatefulWidget {
   final String valueName;
@@ -112,11 +113,25 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
 
   String _getMessage() {
     if (_position < -0.4) {
-      return "your actions aren't matching your stated importance.";
+      return "not living up to your stated values - time to step up!";
     } else if (_position > 0.4) {
-      return "you're investing more time than your stated importance suggests.";
+      return "you're overworking yourself - might be time to take a break!";
     } else {
-      return "good alignment between your stated values and actions!";
+      return "perfectly balanced - you're nailing your values!";
+    }
+  }
+  
+  
+  Color _getBallColor() {
+    if (_position < -0.4) {
+      // Left side - red for bad/warning
+      return Colors.red;
+    } else if (_position > 0.4) {
+      // Right side - orange/amber for exhausted
+      return Colors.orange;
+    } else {
+      // Middle - green for balanced/good
+      return Colors.green;
     }
   }
 
@@ -233,7 +248,7 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
                                 ),
                                 const SizedBox(width: 5),
                                 Text(
-                                  'Importance: ${widget.statedImportance}/5',
+                                  'importance: ${widget.statedImportance}/5',
                                   style: TugTextStyles.label.copyWith(
                                     color: _valueColor,
                                     fontWeight: FontWeight.w500,
@@ -266,7 +281,7 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
                           ),
                           const SizedBox(width: 5),
                           Text(
-                            '${widget.actualBehavior} mins/day',
+                            '${TimeUtils.formatMinutes(widget.actualBehavior)}/day',
                             style: TugTextStyles.label.copyWith(
                               color: _valueColor,
                               fontWeight: FontWeight.w600,
@@ -350,7 +365,7 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
                                   ],
                                 ),
                                 child: Icon(
-                                  Icons.arrow_back_rounded,
+                                  Icons.keyboard_double_arrow_left,
                                   color: Colors.white.withOpacity(_position < 0 ? 1.0 : 0.7),
                                   size: 20,
                                 ),
@@ -381,7 +396,7 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
                                   ],
                                 ),
                                 child: Icon(
-                                  Icons.arrow_forward_rounded,
+                                  Icons.keyboard_double_arrow_right,
                                   color: Colors.white.withOpacity(_position > 0 ? 1.0 : 0.7),
                                   size: 20,
                                 ),
@@ -389,12 +404,14 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
                             ),
                           ),
 
-                          // Center knot with shadow and animated position
+                          // Center knot with state-based icon and color
                           AnimatedBuilder(
                             animation: _positionAnimation,
                             builder: (context, child) {
+                              final ballColor = _getBallColor();
+                              
                               return Positioned(
-                                left: MediaQuery.of(context).size.width / 2 - 15 + (position * MediaQuery.of(context).size.width / 4),
+                                left: MediaQuery.of(context).size.width / 2 - 20 + (position * MediaQuery.of(context).size.width / 4),
                                 top: 0,
                                 bottom: 0,
                                 child: Center(
@@ -403,19 +420,53 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
                                     minScale: 0.95,
                                     maxScale: 1.05,
                                     child: Container(
-                                      width: 28,
-                                      height: 28,
+                                      width: 40,
+                                      height: 40,
                                       decoration: BoxDecoration(
-                                        color: _valueColor,
+                                        gradient: RadialGradient(
+                                          colors: [
+                                            Color.lerp(ballColor, Colors.white, 0.3) ?? ballColor,
+                                            ballColor,
+                                          ],
+                                          stops: const [0.0, 1.0],
+                                          radius: 0.8,
+                                        ),
                                         shape: BoxShape.circle,
                                         boxShadow: [
                                           BoxShadow(
-                                            color: _valueColor.withOpacity(isDarkMode ? 0.6 : 0.4),
-                                            blurRadius: 10,
-                                            spreadRadius: 1,
+                                            color: ballColor.withOpacity(isDarkMode ? 0.6 : 0.4),
+                                            blurRadius: 12,
+                                            spreadRadius: 2,
                                             offset: const Offset(0, 2),
                                           ),
                                         ],
+                                      ),
+                                      child: Center(
+                                        child: Container(
+                                          width: 18,
+                                          height: 18,
+                                          decoration: BoxDecoration(
+                                            gradient: RadialGradient(
+                                              colors: [
+                                                Colors.white.withOpacity(0.9),
+                                                ballColor.withOpacity(0.7),
+                                              ],
+                                              stops: const [0.3, 1.0],
+                                            ),
+                                            shape: BoxShape.circle,
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.white.withOpacity(0.7),
+                                                blurRadius: 4,
+                                                spreadRadius: 0,
+                                              ),
+                                            ],
+                                            border: Border.all(
+                                              color: Colors.white.withOpacity(0.8),
+                                              width: 2,
+                                            ),
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -460,7 +511,7 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
                       Row(
                         children: [
                           Text(
-                            'actual Behavior',
+                            'actual behavior',
                             style: TugTextStyles.label.copyWith(
                               color: _valueColor,
                               fontWeight: FontWeight.w500,
@@ -542,7 +593,7 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          'community average: ${widget.communityAverage} mins/day',
+                          'community average: ${TimeUtils.formatMinutes(widget.communityAverage)}/day',
                           style: TugTextStyles.caption.copyWith(
                             color: _valueColor.withOpacity(0.9),
                             fontWeight: FontWeight.w500,

@@ -3,11 +3,13 @@ import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:tug/config/env_confg.dart';
 import '../utils/api_error.dart';
+import 'rate_limiter.dart';
 
 class ApiService {
   final Dio _dio;
+  final RateLimiter _rateLimiter;
 
-  ApiService({Dio? dio})
+  ApiService({Dio? dio, RateLimiter? rateLimiter})
       : _dio = dio ??
             Dio(BaseOptions(
               baseUrl: EnvConfig.apiUrl, // This will use your Render URL
@@ -16,7 +18,8 @@ class ApiService {
               // Don't throw exceptions automatically for response status
               validateStatus: (status) => true,
               followRedirects: true,
-            ));
+            )),
+        _rateLimiter = rateLimiter ?? RateLimiter();
 
   // Helper method to ensure consistent URL format
   String _normalizeUrl(String path) {
@@ -59,8 +62,6 @@ class ApiService {
       // Use the exact path without modifying it
       String path = '/api/v1/users/sync';
 
-      // Debug the full API URL we're trying to reach
-      final fullUrl = '${_dio.options.baseUrl}$path';
 
       final userData = {
         'display_name': user.displayName ?? '',
@@ -93,28 +94,30 @@ class ApiService {
     // Normalize path
     path = _normalizeUrl(path);
 
-    try {
-      await _setAuthHeader();
+    return await _rateLimiter.throttle(path, () async {
+      try {
+        await _setAuthHeader();
 
-      // For GET requests, always include trailing slash to avoid redirects
-      final response =
-          await _dio.get('$path/', queryParameters: queryParameters);
+        // For GET requests, always include trailing slash to avoid redirects
+        final response =
+            await _dio.get('$path/', queryParameters: queryParameters);
 
-      // Check status code before returning data
-      if (response.statusCode! >= 200 && response.statusCode! < 300) {
-        return response.data;
-      } else {
-        throw DioException(
-          requestOptions: response.requestOptions,
-          response: response,
-          type: DioExceptionType.badResponse,
-        );
+        // Check status code before returning data
+        if (response.statusCode! >= 200 && response.statusCode! < 300) {
+          return response.data;
+        } else {
+          throw DioException(
+            requestOptions: response.requestOptions,
+            response: response,
+            type: DioExceptionType.badResponse,
+          );
+        }
+      } on DioException catch (e) {
+        _handleDioError(e);
+      } catch (e) {
+        throw Exception('Failed to complete request: $e');
       }
-    } on DioException catch (e) {
-      _handleDioError(e);
-    } catch (e) {
-      throw Exception('Failed to complete request: $e');
-    }
+    });
   }
 
   // Generic POST request with proper error handling
@@ -122,51 +125,51 @@ class ApiService {
     // Normalize path
     path = _normalizeUrl(path);
 
-    try {
-      await _setAuthHeader();
-      final fullUrl = '${_dio.options.baseUrl}$path/';
-      
-      // Special handling for activity data to preserve user's intended date context
-      if (path.contains('/activities') && data is Map) {
-        Map<String, dynamic> processedData = Map<String, dynamic>.from(data);
+    return await _rateLimiter.throttle(path, () async {
+      try {
+        await _setAuthHeader();
         
-        // For activity dates, send the local date in ISO format to preserve user intent
-        if (processedData.containsKey('date')) {
-          try {
-            final dateStr = processedData['date'];
-            if (dateStr is String && dateStr.contains('T')) {
-              // Parse the ISO8601 string and preserve local time context
-              final parsedDate = DateTime.parse(dateStr);
-              // Send as local datetime to preserve user's intended time
-              processedData['date'] = parsedDate.toLocal().toIso8601String();
+        // Special handling for activity data to preserve user's intended date context
+        if (path.contains('/activities') && data is Map) {
+          Map<String, dynamic> processedData = Map<String, dynamic>.from(data);
+          
+          // For activity dates, send the local date in ISO format to preserve user intent
+          if (processedData.containsKey('date')) {
+            try {
+              final dateStr = processedData['date'];
+              if (dateStr is String && dateStr.contains('T')) {
+                // Parse the ISO8601 string and preserve local time context
+                final parsedDate = DateTime.parse(dateStr);
+                // Send as local datetime to preserve user's intended time
+                processedData['date'] = parsedDate.toLocal().toIso8601String();
+              }
+            } catch (e) {
+              // If parsing fails, leave the date as-is
             }
-          } catch (e) {
-            // If parsing fails, leave the date as-is
           }
+          
+          // Apply the processed data
+          data = processedData;
         }
-        
-        // Apply the processed data
-        data = processedData;
+
+        final response = await _dio.post('$path/', data: data);
+
+        // Check status code before returning data
+        if (response.statusCode! >= 200 && response.statusCode! < 300) {
+          return response.data;
+        } else {
+          throw DioException(
+            requestOptions: response.requestOptions,
+            response: response,
+            type: DioExceptionType.badResponse,
+          );
+        }
+      } on DioException catch (e) {
+        _handleDioError(e);
+      } catch (e) {
+        throw Exception('Failed to complete request: $e');
       }
-
-      final response = await _dio.post('$path/', data: data);
-
-
-      // Check status code before returning data
-      if (response.statusCode! >= 200 && response.statusCode! < 300) {
-        return response.data;
-      } else {
-        throw DioException(
-          requestOptions: response.requestOptions,
-          response: response,
-          type: DioExceptionType.badResponse,
-        );
-      }
-    } on DioException catch (e) {
-      _handleDioError(e);
-    } catch (e) {
-      throw Exception('Failed to complete request: $e');
-    }
+    });
   }
 
   // Generic PUT request with proper error handling
@@ -174,25 +177,27 @@ class ApiService {
     // Normalize path
     path = _normalizeUrl(path);
 
-    try {
-      await _setAuthHeader();
-      final response = await _dio.put('$path/', data: data);
+    return await _rateLimiter.throttle(path, () async {
+      try {
+        await _setAuthHeader();
+        final response = await _dio.put('$path/', data: data);
 
-      // Check status code before returning data
-      if (response.statusCode! >= 200 && response.statusCode! < 300) {
-        return response.data;
-      } else {
-        throw DioException(
-          requestOptions: response.requestOptions,
-          response: response,
-          type: DioExceptionType.badResponse,
-        );
+        // Check status code before returning data
+        if (response.statusCode! >= 200 && response.statusCode! < 300) {
+          return response.data;
+        } else {
+          throw DioException(
+            requestOptions: response.requestOptions,
+            response: response,
+            type: DioExceptionType.badResponse,
+          );
+        }
+      } on DioException catch (e) {
+        _handleDioError(e);
+      } catch (e) {
+        throw Exception('Failed to complete request: $e');
       }
-    } on DioException catch (e) {
-      _handleDioError(e);
-    } catch (e) {
-      throw Exception('Failed to complete request: $e');
-    }
+    });
   }
 
   // Generic PATCH request with proper error handling
@@ -200,50 +205,52 @@ class ApiService {
     // Normalize path
     path = _normalizeUrl(path);
 
-    try {
-      await _setAuthHeader();
+    return await _rateLimiter.throttle(path, () async {
+      try {
+        await _setAuthHeader();
 
-      // Special handling for activity data to preserve user's intended date context
-      if (path.contains('/activities') && data is Map) {
-        Map<String, dynamic> processedData = Map<String, dynamic>.from(data);
-        
-        // For activity dates, send the local date in ISO format to preserve user intent
-        if (processedData.containsKey('date')) {
-          try {
-            final dateStr = processedData['date'];
-            if (dateStr is String && dateStr.contains('T')) {
-              // Parse the ISO8601 string and preserve local time context
-              final parsedDate = DateTime.parse(dateStr);
-              // Send as local datetime to preserve user's intended time
-              processedData['date'] = parsedDate.toLocal().toIso8601String();
+        // Special handling for activity data to preserve user's intended date context
+        if (path.contains('/activities') && data is Map) {
+          Map<String, dynamic> processedData = Map<String, dynamic>.from(data);
+          
+          // For activity dates, send the local date in ISO format to preserve user intent
+          if (processedData.containsKey('date')) {
+            try {
+              final dateStr = processedData['date'];
+              if (dateStr is String && dateStr.contains('T')) {
+                // Parse the ISO8601 string and preserve local time context
+                final parsedDate = DateTime.parse(dateStr);
+                // Send as local datetime to preserve user's intended time
+                processedData['date'] = parsedDate.toLocal().toIso8601String();
+              }
+            } catch (e) {
+              // If parsing fails, leave the date as-is
             }
-          } catch (e) {
-            // If parsing fails, leave the date as-is
           }
+          
+          // Apply the processed data
+          data = processedData;
         }
-        
-        // Apply the processed data
-        data = processedData;
-      }
 
-      // Make the request
-      final response = await _dio.patch(path, data: data);
+        // Make the request
+        final response = await _dio.patch(path, data: data);
 
-      // Check status code before returning data
-      if (response.statusCode! >= 200 && response.statusCode! < 300) {
-        return response.data;
-      } else {
-        throw DioException(
-          requestOptions: response.requestOptions,
-          response: response,
-          type: DioExceptionType.badResponse,
-        );
+        // Check status code before returning data
+        if (response.statusCode! >= 200 && response.statusCode! < 300) {
+          return response.data;
+        } else {
+          throw DioException(
+            requestOptions: response.requestOptions,
+            response: response,
+            type: DioExceptionType.badResponse,
+          );
+        }
+      } on DioException catch (e) {
+        _handleDioError(e);
+      } catch (e) {
+        throw Exception('Failed to complete request: $e');
       }
-    } on DioException catch (e) {
-      _handleDioError(e);
-    } catch (e) {
-      throw Exception('Failed to complete request: $e');
-    }
+    });
   }
 
   // Generic DELETE request with proper error handling
@@ -251,37 +258,46 @@ class ApiService {
     // Normalize path
     path = _normalizeUrl(path);
 
-    try {
-      await _setAuthHeader();
-      if (path.endsWith('/')) {
-        path = path.substring(0, path.length - 1);
+    return await _rateLimiter.throttle(path, () async {
+      try {
+        await _setAuthHeader();
+        if (path.endsWith('/')) {
+          path = path.substring(0, path.length - 1);
+        }
+
+        // For DELETE requests, always include trailing slash to avoid redirects
+        var requestUrl = path;
+
+        final response = await _dio.delete(requestUrl);
+
+        // Check status code before returning data
+        if (response.statusCode! >= 200 && response.statusCode! < 300) {
+          return response.data;
+        } else {
+          throw DioException(
+            requestOptions: response.requestOptions,
+            response: response,
+            type: DioExceptionType.badResponse,
+          );
+        }
+      } on DioException catch (e) {
+        _handleDioError(e);
+      } catch (e) {
+        throw Exception('Failed to complete request: $e');
       }
-
-
-      // For DELETE requests, always include trailing slash to avoid redirects
-      var requestUrl = path;
-
-      final response = await _dio.delete(requestUrl);
-
-      // Check status code before returning data
-      if (response.statusCode! >= 200 && response.statusCode! < 300) {
-        return response.data;
-      } else {
-        throw DioException(
-          requestOptions: response.requestOptions,
-          response: response,
-          type: DioExceptionType.badResponse,
-        );
-      }
-    } on DioException catch (e) {
-      _handleDioError(e);
-    } catch (e) {
-      throw Exception('Failed to complete request: $e');
-    }
+    });
   }
 
   void _handleDioError(DioException e) {
     final apiError = ApiError.fromException(e);
     throw apiError;
+  }
+
+  Map<String, dynamic> getRateLimiterStats() {
+    return _rateLimiter.getStats();
+  }
+
+  void resetRateLimiter() {
+    _rateLimiter.reset();
   }
 }

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:tug/models/activity_model.dart';
 import 'package:tug/services/achievement_notification_service.dart';
 import 'package:tug/utils/theme/colors.dart';
+import 'package:tug/utils/time_utils.dart';
 
 class ActivitySuccessScreen extends StatefulWidget {
   final ActivityModel? activity;
@@ -109,7 +110,7 @@ class _ActivitySuccessScreenState extends State<ActivitySuccessScreen> {
                 // Activity details if available
                 if (activity != null) ...[
                   Text(
-                    'You spent ${activity.duration} minutes on ${activity.name}',
+                    'You spent ${TimeUtils.formatMinutes(activity.duration)} on ${activity.name}',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.grey.shade700,

@@ -8,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tug/models/value_model.dart';
 import 'package:tug/utils/theme/buttons.dart';
 import 'package:tug/utils/theme/colors.dart';
+import 'package:tug/utils/time_utils.dart';
 import 'package:tug/widgets/values/streak_celebration.dart';
 
 class ActivityFormWidget extends StatefulWidget {
@@ -38,6 +39,7 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
   bool _showStreakCelebration = false;
   String _streakValueName = '';
   int _streakCount = 0;
+  bool _isSaving = false;
 
   @override
   void dispose() {
@@ -48,6 +50,9 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
   }
 
   void _handleSave() {
+    // Prevent multiple saves
+    if (_isSaving) return;
+    
     if (_formKey.currentState?.validate() ?? false) {
       if (_selectedValueId == null) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -59,6 +64,10 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
         return;
       }
 
+      setState(() {
+        _isSaving = true;
+      });
+
       final name = _nameController.text.trim();
       final duration = int.tryParse(_durationController.text) ?? 0;
       final notes =
@@ -69,6 +78,8 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
       
       // After creating the activity, wait for it to be processed, then check streak milestones
       Future.delayed(const Duration(milliseconds: 1000), () {
+        if (!mounted) return;
+        
         final valuesState = context.read<ValuesBloc>().state;
         if (valuesState is ValuesLoaded) {
           final selectedValue = valuesState.values.firstWhere(
@@ -86,11 +97,13 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
                selectedValue.currentStreak == 30 || 
                selectedValue.currentStreak == 100 ||
                selectedValue.currentStreak == 365)) {
-            setState(() {
-              _streakValueName = selectedValue.name;
-              _streakCount = selectedValue.currentStreak;
-              _showStreakCelebration = true;
-            });
+            if (mounted) {
+              setState(() {
+                _streakValueName = selectedValue.name;
+                _streakCount = selectedValue.currentStreak;
+                _showStreakCelebration = true;
+              });
+            }
           }
         }
       });
@@ -104,6 +117,19 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
       _showStreakCelebration = false;
     });
   }
+
+  @override
+  void didUpdateWidget(ActivityFormWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    
+    // Reset saving state when the external loading state changes from true to false
+    if (oldWidget.isLoading && !widget.isLoading && _isSaving) {
+      setState(() {
+        _isSaving = false;
+      });
+    }
+  }
+
 
   void _selectDuration(int minutes) {
     setState(() {
@@ -289,7 +315,7 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
                         children: [15, 30, 45, 60, 90, 120].map((minutes) {
                           return ActionChip(
                             label: Text(
-                              '$minutes min',
+                              TimeUtils.formatMinutes(minutes),
                               style: TextStyle(
                                 fontSize: 13,
                                 color: _durationController.text == minutes.toString()
@@ -486,6 +512,44 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
 
                   const SizedBox(height: 24),
 
+                  // Saving status message
+                  if (_isSaving || widget.isLoading) ...[
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: TugColors.primaryPurple.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: TugColors.primaryPurple.withOpacity(0.3),
+                          width: 1,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: TugColors.primaryPurple,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              'saving your activity... please wait',
+                              style: TextStyle(
+                                color: TugColors.primaryPurple,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+
                   // Submit Button
                   SizedBox(
                     width: double.infinity,
@@ -493,8 +557,8 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
                       style: TugButtons.primaryButtonStyle(
                         isDark: Theme.of(context).brightness == Brightness.dark
                       ),
-                      onPressed: widget.isLoading ? null : _handleSave,
-                      child: widget.isLoading
+                      onPressed: (_isSaving || widget.isLoading) ? null : _handleSave,
+                      child: (_isSaving || widget.isLoading)
                           ? const SizedBox(
                               height: 20,
                               width: 20,

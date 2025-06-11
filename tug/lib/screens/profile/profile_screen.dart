@@ -1,4 +1,5 @@
 // lib/screens/profile/profile_screen.dart
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -10,6 +11,10 @@ import 'package:tug/utils/theme/buttons.dart';
 import 'package:tug/utils/quantum_effects.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:tug/services/user_service.dart';
+import 'package:tug/services/notification_service.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'dart:io';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -20,10 +25,15 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   bool _darkModeEnabled = false;
+  bool _notificationsEnabled = false;
+  TimeOfDay _notificationTime = const TimeOfDay(hour: 20, minute: 0);
   bool _isDeleting = false;
   bool _loadingAchievements = false;
   int _unlockedAchievements = 0;
+  bool _isUploadingProfilePicture = false;
   final AchievementService _achievementService = AchievementService();
+  final NotificationService _notificationService = NotificationService();
+  final ImagePicker _imagePicker = ImagePicker();
 
   @override
   void initState() {
@@ -34,6 +44,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     // Load achievements count
     _loadAchievementsCount();
+
+    // Load notification preferences
+    _loadNotificationPreferences();
+  }
+
+  Future<void> _loadNotificationPreferences() async {
+    final enabled = await _notificationService.getNotificationsEnabled();
+    final time = await _notificationService.getNotificationTime();
+    if (mounted) {
+      setState(() {
+        _notificationsEnabled = enabled;
+        _notificationTime = time;
+      });
+    }
   }
 
   Future<void> _loadAchievementsCount() async {
@@ -58,6 +82,113 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (mounted) {
         setState(() {
           _loadingAchievements = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _showImageSourceDialog() async {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('choose profile picture'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('camera'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('gallery'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: source,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 80,
+      );
+
+      if (image != null) {
+        await _uploadProfilePicture(File(image.path));
+      }
+    } catch (e) {
+      debugPrint('Error picking image: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('error selecting image: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _uploadProfilePicture(File imageFile) async {
+    if (_isUploadingProfilePicture) return;
+
+    setState(() {
+      _isUploadingProfilePicture = true;
+    });
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        throw Exception('no user found');
+      }
+
+      // Upload to Firebase Storage
+      final storageRef = FirebaseStorage.instance
+          .ref()
+          .child('profile_pictures')
+          .child('${user.uid}.jpg');
+
+      final uploadTask = storageRef.putFile(imageFile);
+      final snapshot = await uploadTask;
+      final downloadUrl = await snapshot.ref.getDownloadURL();
+
+      // Update Firebase Auth profile
+      await user.updatePhotoURL(downloadUrl);
+      await user.reload();
+
+      // Sync with backend
+      final userService = UserService();
+      await userService.syncProfilePictureUrl(downloadUrl);
+
+      // Trigger auth state change to update UI
+      context.read<AuthBloc>().add(CheckAuthStatusEvent());
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('profile picture updated successfully')),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error uploading profile picture: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('error uploading picture: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploadingProfilePicture = false;
         });
       }
     }
@@ -138,6 +269,80 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     context.read<ThemeBloc>().add(ThemeChanged(value));
                   },
                 ),
+                _buildSwitchSettingsItem(
+                  icon: Icons.notifications_outlined,
+                  title: 'notifications',
+                  subtitle: 'daily reminders at ${_notificationTime.format(context)}',
+                  value: _notificationsEnabled,
+                  onChanged: (value) async {
+                    setState(() {
+                      _notificationsEnabled = value;
+                    });
+                    await _notificationService.setNotificationsEnabled(value);
+                  },
+                ),
+                if (_notificationsEnabled) ...[
+                  _buildSettingsItem(
+                    icon: Icons.schedule,
+                    title: 'notification time',
+                    subtitle: _notificationTime.format(context),
+                    onTap: () async {
+                      final TimeOfDay? picked = await showTimePicker(
+                        context: context,
+                        initialTime: _notificationTime,
+                      );
+                      if (picked != null && picked != _notificationTime) {
+                        setState(() {
+                          _notificationTime = picked;
+                        });
+                        await _notificationService.setNotificationTime(picked);
+                      }
+                    },
+                  ),
+                ],
+                // Add debug section in development mode
+                if (kDebugMode) ...[
+                  const SizedBox(height: 12),
+                  _buildSettingsItem(
+                    icon: Icons.bug_report_outlined,
+                    title: 'test notification (1 min)',
+                    subtitle: 'schedule a test notification for 1 minute from now',
+                    onTap: () async {
+                      await _notificationService.scheduleOneTimeNotification(const Duration(minutes: 1));
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Test notification scheduled for 1 minute from now')),
+                        );
+                      }
+                    },
+                  ),
+                  _buildSettingsItem(
+                    icon: Icons.timer_outlined,
+                    title: 'test notification (2 min)',
+                    subtitle: 'schedule a test notification for 2 minutes from now',
+                    onTap: () async {
+                      await _notificationService.scheduleOneTimeNotification(const Duration(minutes: 2));
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Test notification scheduled for 2 minutes from now')),
+                        );
+                      }
+                    },
+                  ),
+                  _buildSettingsItem(
+                    icon: Icons.schedule_outlined,
+                    title: 'test notification for set time',
+                    subtitle: 'schedule a test notification for the time you set above',
+                    onTap: () async {
+                      await _notificationService.scheduleNotificationForTime(_notificationTime);
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Test notification scheduled for ${_notificationTime.format(context)}')),
+                        );
+                      }
+                    },
+                  ),
+                ],
               ],
             ),
 
@@ -344,24 +549,62 @@ class _ProfileScreenState extends State<ProfileScreen> {
           padding: const EdgeInsets.all(24),
           child: Column(
             children: [
-              Container(
-                padding: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: TugColors.primaryPurple.withOpacity(0.3),
-                    width: 2,
+              Stack(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: TugColors.primaryPurple.withOpacity(0.3),
+                        width: 2,
+                      ),
+                    ),
+                    child: CircleAvatar(
+                      radius: 48,
+                      backgroundColor: TugColors.primaryPurple,
+                      backgroundImage: state is Authenticated && state.user.photoURL != null 
+                          ? NetworkImage(state.user.photoURL!) 
+                          : null,
+                      child: !(state is Authenticated && state.user.photoURL != null)
+                          ? const Icon(
+                              Icons.person,
+                              size: 48,
+                              color: Colors.white,
+                            )
+                          : null,
+                    ),
                   ),
-                ),
-                child: const CircleAvatar(
-                  radius: 48,
-                  backgroundColor: TugColors.primaryPurple,
-                  child: Icon(
-                    Icons.person,
-                    size: 48,
-                    color: Colors.white,
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: GestureDetector(
+                      onTap: _isUploadingProfilePicture ? null : _showImageSourceDialog,
+                      child: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: TugColors.primaryPurple,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: _isUploadingProfilePicture
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              )
+                            : const Icon(
+                                Icons.camera_alt,
+                                size: 16,
+                                color: Colors.white,
+                              ),
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
               const SizedBox(height: 16),
               Text(

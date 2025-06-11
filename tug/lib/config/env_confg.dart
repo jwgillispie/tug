@@ -15,13 +15,17 @@ class EnvConfig {
     // Use a more reliable default in case .env isn't loaded
     final url = dotenv.env['API_URL'];
     if (url != null && url.isNotEmpty) {
-      debugPrint('Using configured API URL: $url');
+      if (kDebugMode) {
+        debugPrint('Using configured API URL');
+      }
       return url;
     }
 
     // Default value for production
     const defaultUrl = 'https://tug-backend.onrender.com'; 
-    debugPrint('Using backend URL: $defaultUrl');
+    if (kDebugMode) {
+      debugPrint('Using default backend URL');
+    }
     return defaultUrl;
   }
   
@@ -53,16 +57,15 @@ class EnvConfig {
       await dotenv.load();
       _isInitialized = true;
 
-      // Print loaded environment variables for debugging
-      debugPrint('Environment variables loaded:');
-      debugPrint('API_URL: ${dotenv.env['API_URL']}');
-      debugPrint('MONGODB_URL: ${dotenv.env['MONGODB_URL']}');
-      // Don't print the full API key for security reasons
-      final rcApiKey = dotenv.env['REVENUECAT_API_KEY'] ?? '';
-      final maskedKey = rcApiKey.isNotEmpty ? '${rcApiKey.substring(0, 4)}...${rcApiKey.substring(rcApiKey.length - 4)}' : 'Not set';
-      debugPrint('REVENUECAT_API_KEY: $maskedKey');
-      debugPrint('REVENUECAT_OFFERING_ID: ${dotenv.env['REVENUECAT_OFFERING_ID'] ?? 'ofrngc4b82cdba4 (default)'}');
-      debugPrint('REVENUECAT_PREMIUM_ENTITLEMENT_ID: ${dotenv.env['REVENUECAT_PREMIUM_ENTITLEMENT_ID'] ?? 'entl0a93ea6b23 (default)'}');
+      // Only log environment status in debug mode, without exposing sensitive values
+      if (kDebugMode) {
+        debugPrint('Environment variables loaded:');
+        debugPrint('API_URL: ${dotenv.env['API_URL'] != null ? '[CONFIGURED]' : '[NOT SET]'}');
+        debugPrint('MONGODB_URL: ${dotenv.env['MONGODB_URL'] != null ? '[CONFIGURED]' : '[NOT SET]'}');
+        debugPrint('REVENUECAT_API_KEY: ${dotenv.env['REVENUECAT_API_KEY'] != null ? '[CONFIGURED]' : '[NOT SET]'}');
+        debugPrint('REVENUECAT_OFFERING_ID: ${dotenv.env['REVENUECAT_OFFERING_ID'] ?? 'ofrngc4b82cdba4 (default)'}');
+        debugPrint('REVENUECAT_PREMIUM_ENTITLEMENT_ID: ${dotenv.env['REVENUECAT_PREMIUM_ENTITLEMENT_ID'] ?? 'tug_pro (default)'}');
+      }
     } catch (e) {
       debugPrint(
           'Warning: .env file not found. Using default values. Error: $e');

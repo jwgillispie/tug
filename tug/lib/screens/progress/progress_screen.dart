@@ -28,7 +28,6 @@ class _ProgressScreenState extends State<ProgressScreen>
   bool _isLoading = false;
   bool _isFirstLoad = true;
   Map<String, Map<String, dynamic>> _activityData = {};
-  Map<String, dynamic>? _statistics;
 
   final ActivityService _activityService = ActivityService();
   final CacheService _cacheService = CacheService();
@@ -80,9 +79,6 @@ class _ProgressScreenState extends State<ProgressScreen>
             setState(() {
               _activityData = Map<String, Map<String, dynamic>>.from(
                 cachedData['activityData'] ?? {}
-              );
-              _statistics = Map<String, dynamic>.from(
-                cachedData['statistics'] ?? {}
               );
               _isLoading = false;
               _isFirstLoad = false;
@@ -146,7 +142,6 @@ class _ProgressScreenState extends State<ProgressScreen>
       if (mounted) {
         setState(() {
           _activityData = processedData;
-          _statistics = statistics;
           _isLoading = false;
           _isFirstLoad = false;
         });
@@ -219,83 +214,6 @@ class _ProgressScreenState extends State<ProgressScreen>
     }
   }
 
-  int _calculateTotalTime(List<dynamic> values) {
-    int total = 0;
-    for (final value in values) {
-      final activityData = _activityData[value.name];
-      if (activityData != null) {
-        total += activityData['minutes'] as int;
-      }
-    }
-    return total;
-  }
-
-  String _calculateAlignment(List<dynamic> values) {
-    if (values.isEmpty) return 'N/A';
-
-    int alignedCount = 0;
-    for (final value in values) {
-      final activityData = _activityData[value.name];
-      if (activityData != null) {
-        final minutes = activityData['minutes'] as int;
-        final communityAvg = activityData['community_avg'] as int;
-
-        // Convert stated importance to percentage
-        final statedImportancePercent = (value.importance / 5) * 100;
-
-        // Calculate actual behavior as percentage of community average
-        final actualBehaviorPercent = (minutes / communityAvg) * 100;
-
-        // Calculate difference
-        final difference =
-            (actualBehaviorPercent - statedImportancePercent).abs();
-
-        // Count as aligned if within 30% difference
-        if (difference <= 30) {
-          alignedCount++;
-        }
-      }
-    }
-
-    final percentage =
-        values.isEmpty ? 0 : (alignedCount / values.length) * 100;
-    return '${percentage.round()}%';
-  }
-
-
-  Widget _buildSummaryItem(
-      BuildContext context, String title, String value, IconData icon) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          icon,
-          color: TugColors.primaryPurple,
-          size: 28,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
-          textAlign: TextAlign.center,
-          overflow: TextOverflow.ellipsis,
-        ),
-        const SizedBox(height: 4),
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 14,
-            color: Colors.grey.shade600,
-          ),
-          textAlign: TextAlign.center,
-          overflow: TextOverflow.ellipsis,
-        ),
-      ],
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -498,59 +416,6 @@ class _ProgressScreenState extends State<ProgressScreen>
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                            // Overall progress summary card
-                            Card(
-                              margin: const EdgeInsets.only(bottom: 24),
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      '${_selectedTimeframe.toLowerCase()} summary',
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleLarge,
-                                    ),
-                                    const SizedBox(height: 16),
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                      child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                        children: [
-                                          Expanded(
-                                            child: _buildSummaryItem(
-                                              context,
-                                              'total time',
-                                              _statistics != null
-                                                  ? '${_statistics!['total_duration_minutes'] ?? 0} mins'
-                                                  : '${_calculateTotalTime(values)} mins',
-                                              Icons.access_time,
-                                            ),
-                                          ),
-                                          Expanded(
-                                            child: _buildSummaryItem(
-                                              context,
-                                              'values',
-                                              values.length.toString(),
-                                              Icons.star,
-                                            ),
-                                          ),
-                                          Expanded(
-                                            child: _buildSummaryItem(
-                                              context,
-                                              'alignment',
-                                              _calculateAlignment(values),
-                                              Icons.balance,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
 
                             // Enhanced streak overview widget
                             StreakOverviewWidget(
@@ -566,9 +431,19 @@ class _ProgressScreenState extends State<ProgressScreen>
                             Padding(
                               padding:
                                   const EdgeInsets.only(bottom: 8, left: 4, top: 8),
-                              child: Text(
-                                'value alignment',
-                                style: Theme.of(context).textTheme.titleMedium,
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.balance,
+                                    color: TugColors.primaryPurple,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'your tug',
+                                    style: Theme.of(context).textTheme.titleMedium,
+                                  ),
+                                ],
                               ),
                             ),
 

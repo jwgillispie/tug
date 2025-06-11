@@ -7,6 +7,7 @@ class UserBase(BaseModel):
     """Base user schema with common attributes"""
     email: EmailStr
     display_name: str = Field(..., min_length=2, max_length=50)
+    profile_picture_url: Optional[str] = None
 
 class UserCreate(UserBase):
     """Schema for creating a new user"""
@@ -15,6 +16,7 @@ class UserCreate(UserBase):
 class UserUpdate(BaseModel):
     """Schema for updating user data"""
     display_name: Optional[str] = Field(None, min_length=2, max_length=50)
+    profile_picture_url: Optional[str] = None
     onboarding_completed: Optional[bool] = None
 
 class UserInDB(UserBase):
