@@ -314,49 +314,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     },
                   ),
                 ],
-                // Add debug section in development mode
-                if (kDebugMode) ...[
-                  const SizedBox(height: 12),
-                  _buildSettingsItem(
-                    icon: Icons.bug_report_outlined,
-                    title: 'test notification (1 min)',
-                    subtitle: 'schedule a test notification for 1 minute from now',
-                    onTap: () async {
-                      await _notificationService.scheduleOneTimeNotification(const Duration(minutes: 1));
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Test notification scheduled for 1 minute from now')),
-                        );
-                      }
-                    },
-                  ),
-                  _buildSettingsItem(
-                    icon: Icons.timer_outlined,
-                    title: 'test notification (2 min)',
-                    subtitle: 'schedule a test notification for 2 minutes from now',
-                    onTap: () async {
-                      await _notificationService.scheduleOneTimeNotification(const Duration(minutes: 2));
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Test notification scheduled for 2 minutes from now')),
-                        );
-                      }
-                    },
-                  ),
-                  _buildSettingsItem(
-                    icon: Icons.schedule_outlined,
-                    title: 'test notification for set time',
-                    subtitle: 'schedule a test notification for the time you set above',
-                    onTap: () async {
-                      await _notificationService.scheduleNotificationForTime(_notificationTime);
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Test notification scheduled for ${_notificationTime.format(context)}')),
-                        );
-                      }
-                    },
-                  ),
-                ],
               ],
             ),
 
@@ -530,7 +487,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const Padding(
               padding: EdgeInsets.only(bottom: 24.0),
               child: Text(
-                'tug v2.0.0',
+                'tug v2.0.1',
                 style: TextStyle(
                   color: Colors.grey,
                   fontSize: 12,

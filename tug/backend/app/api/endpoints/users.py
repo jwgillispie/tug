@@ -270,6 +270,7 @@ async def update_user_profile(
         raise HTTPException(status_code=500, detail=f"Failed to update user: {e}")
 
 @router.post("/me/profile-picture")
+@router.post("/me/profile-picture/")
 async def upload_profile_picture(request: Request):
     """Upload and save user profile picture"""
     try:

@@ -63,10 +63,13 @@ class UserService {
   // Upload profile picture to backend
   Future<Map<String, dynamic>> uploadProfilePicture(String base64Image) async {
     try {
+      debugPrint('Uploading profile picture to backend...');
       final response = await _apiService.post('/api/v1/users/me/profile-picture', 
           data: {'image': base64Image});
+      debugPrint('Profile picture upload response: $response');
       return response;
     } catch (e) {
+      debugPrint('Profile picture upload error: $e');
       rethrow;
     }
   }

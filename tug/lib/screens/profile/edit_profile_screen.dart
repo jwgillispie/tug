@@ -7,6 +7,10 @@ import 'package:tug/utils/theme/buttons.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:tug/services/user_service.dart';
 import 'package:tug/widgets/common/tug_text_field.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
+import 'dart:convert';
+import 'dart:typed_data';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -20,8 +24,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final _displayNameController = TextEditingController();
 
   bool _isLoading = false;
+  bool _isUploadingProfilePicture = false;
   String? _errorMessage;
   String? _successMessage;
+  final ImagePicker _imagePicker = ImagePicker();
 
   @override
   void initState() {
@@ -91,6 +97,122 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         _errorMessage = 'Failed to update profile: ${e.toString()}';
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _showImageSourceDialog() async {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('choose profile picture'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('camera'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('gallery'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickImage(ImageSource.gallery);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickImage(ImageSource source) async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: source,
+        maxWidth: 512,
+        maxHeight: 512,
+        imageQuality: 80,
+      );
+
+      if (image != null) {
+        await _uploadProfilePicture(File(image.path));
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('error selecting image: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _uploadProfilePicture(File imageFile) async {
+    if (_isUploadingProfilePicture) return;
+
+    setState(() {
+      _isUploadingProfilePicture = true;
+      _errorMessage = null;
+      _successMessage = null;
+    });
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        throw Exception('no user found');
+      }
+
+      // Read image file as bytes
+      final Uint8List imageBytes = await imageFile.readAsBytes();
+      
+      // Convert to base64
+      final String base64Image = base64Encode(imageBytes);
+      
+      // Upload to backend
+      final userService = UserService();
+      final response = await userService.uploadProfilePicture(base64Image);
+      
+      if (response['profile_picture_url'] != null) {
+        final profilePictureUrl = response['profile_picture_url'] as String;
+        
+        // Update Firebase Auth profile with the URL from backend
+        await user.updatePhotoURL(profilePictureUrl);
+        await user.reload();
+
+        // Trigger auth state change to update UI
+        if (mounted) {
+          context.read<AuthBloc>().add(CheckAuthStatusEvent());
+          
+          setState(() {
+            _successMessage = 'profile picture updated successfully';
+            _isUploadingProfilePicture = false;
+          });
+        }
+      } else {
+        throw Exception('no profile picture URL returned from server');
+      }
+    } catch (e) {
+      if (mounted) {
+        String errorMessage = 'error uploading picture';
+        if (e.toString().contains('413')) {
+          errorMessage = 'image too large. please choose a smaller image.';
+        } else if (e.toString().contains('401')) {
+          errorMessage = 'please sign in again to upload';
+        } else if (e.toString().contains('500')) {
+          errorMessage = 'server error. please try again later.';
+        } else if (e.toString().contains('network')) {
+          errorMessage = 'network error. check your connection.';
+        }
+        
+        setState(() {
+          _errorMessage = errorMessage;
+          _isUploadingProfilePicture = false;
+        });
+      }
     }
   }
 
@@ -165,41 +287,65 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 const SizedBox(height: 24),
               ],
 
-              // Profile picture (Currently just a placeholder)
+              // Profile picture with upload functionality
               Center(
-                child: Column(
-                  children: [
-                    Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        color: TugColors.primaryPurple.withOpacity(0.2),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: TugColors.primaryPurple,
-                          width: 2,
+                child: BlocBuilder<AuthBloc, AuthState>(
+                  builder: (context, state) {
+                    return Column(
+                      children: [
+                        Stack(
+                          children: [
+                            Container(
+                              width: 100,
+                              height: 100,
+                              decoration: BoxDecoration(
+                                color: TugColors.primaryPurple.withOpacity(0.2),
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: TugColors.primaryPurple,
+                                  width: 2,
+                                ),
+                              ),
+                              child: CircleAvatar(
+                                radius: 48,
+                                backgroundColor: TugColors.primaryPurple.withOpacity(0.2),
+                                backgroundImage: state is Authenticated && state.user.photoURL != null 
+                                    ? NetworkImage(state.user.photoURL!) 
+                                    : null,
+                                child: !(state is Authenticated && state.user.photoURL != null)
+                                    ? const Icon(
+                                        Icons.person,
+                                        size: 50,
+                                        color: TugColors.primaryPurple,
+                                      )
+                                    : null,
+                              ),
+                            ),
+                            if (_isUploadingProfilePicture)
+                              Positioned.fill(
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.5),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: const Center(
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
-                      ),
-                      child: const Icon(
-                        Icons.person,
-                        size: 50,
-                        color: TugColors.primaryPurple,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextButton(
-                      onPressed: () {
-                        // Profile picture update functionality could be added here
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                                'Profile picture update will be available in a future update!'),
-                          ),
-                        );
-                      },
-                      child: const Text('Change Profile Picture'),
-                    ),
-                  ],
+                        const SizedBox(height: 8),
+                        TextButton(
+                          onPressed: _isUploadingProfilePicture ? null : _showImageSourceDialog,
+                          child: Text(_isUploadingProfilePicture ? 'uploading...' : 'change profile picture'),
+                        ),
+                      ],
+                    );
+                  },
                 ),
               ),
 

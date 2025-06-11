@@ -152,7 +152,9 @@ class ApiService {
           data = processedData;
         }
 
-        final response = await _dio.post('$path/', data: data);
+        // Don't add trailing slash for specific endpoints to avoid redirects
+        final postUrl = path.contains('profile-picture') ? path : '$path/';
+        final response = await _dio.post(postUrl, data: data);
 
         // Check status code before returning data
         if (response.statusCode! >= 200 && response.statusCode! < 300) {
