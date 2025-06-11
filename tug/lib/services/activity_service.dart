@@ -101,7 +101,6 @@ class ActivityService {
     if (!forceRefresh) {
       final cachedData = await _cacheService.get<List<dynamic>>(cacheKey);
       if (cachedData != null) {
-        debugPrint('Activities retrieved from cache: $cacheKey');
         return cachedData
             .map((json) => ActivityModel.fromJson(Map<String, dynamic>.from(json)))
             .toList();
@@ -136,13 +135,11 @@ class ActivityService {
           memoryCacheDuration: _cacheValidity,
           diskCacheDuration: Duration(hours: 2),
         );
-        debugPrint('Activities cached with key: $cacheKey');
 
         return response.map((json) => ActivityModel.fromJson(json)).toList();
       }
       return [];
     } catch (e) {
-      debugPrint('Error fetching activities: $e');
       rethrow;
     }
   }
@@ -160,7 +157,6 @@ class ActivityService {
 
       return ActivityModel.fromJson(response);
     } catch (e) {
-      debugPrint('Error creating activity: $e');
       rethrow;
     }
   }
@@ -182,7 +178,6 @@ class ActivityService {
 
       return ActivityModel.fromJson(response);
     } catch (e) {
-      debugPrint('Error updating activity: $e');
       rethrow;
     }
   }
@@ -197,7 +192,6 @@ class ActivityService {
 
       return true;
     } catch (e) {
-      debugPrint('Error deleting activity: $e');
       rethrow;
     }
   }
@@ -219,7 +213,6 @@ class ActivityService {
     if (!forceRefresh) {
       final cachedData = await _cacheService.get<Map<String, dynamic>>(cacheKey);
       if (cachedData != null) {
-        debugPrint('Activity statistics retrieved from cache: $cacheKey');
         return cachedData;
       }
     }
@@ -261,11 +254,9 @@ class ActivityService {
         memoryCacheDuration: _cacheValidity,
         diskCacheDuration: Duration(hours: 2),
       );
-      debugPrint('Activity statistics cached with key: $cacheKey');
 
       return result;
     } catch (e) {
-      debugPrint('Error getting activity statistics: $e');
       // Return a default statistics object with date info
       return {
         "total_activities": 0,
@@ -293,7 +284,6 @@ class ActivityService {
     if (!forceRefresh) {
       final cachedData = await _cacheService.get<Map<String, dynamic>>(cacheKey);
       if (cachedData != null) {
-        debugPrint('Activity summary retrieved from cache: $cacheKey');
         return cachedData;
       }
     }
@@ -328,11 +318,9 @@ class ActivityService {
         memoryCacheDuration: _cacheValidity,
         diskCacheDuration: Duration(hours: 2),
       );
-      debugPrint('Activity summary cached with key: $cacheKey');
 
       return result;
     } catch (e) {
-      debugPrint('Error getting activity summary: $e');
       // Return a default summary with date info
       return {
         "values": [],
@@ -347,7 +335,6 @@ class ActivityService {
     await _cacheService.clearByPrefix(_activitiesCachePrefix);
     await _cacheService.clearByPrefix(_statisticsCachePrefix);
     await _cacheService.clearByPrefix(_summaryCachePrefix);
-    debugPrint('All activity-related caches invalidated');
   }
 
   // Helper method to format dates consistently for API
@@ -382,13 +369,11 @@ class ActivityService {
             values.add(ValueModel.fromJson(response));
           }
         } catch (e) {
-          debugPrint('Error fetching value $valueId: $e');
         }
       }
 
       return values;
     } catch (e) {
-      debugPrint('Error getting values by activities: $e');
       return [];
     }
   }

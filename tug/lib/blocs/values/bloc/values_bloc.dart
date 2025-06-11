@@ -37,10 +37,8 @@ class ValuesBloc extends Bloc<ValuesEvent, ValuesState> {
       // Mark that we've done the initial load
       _initialLoadComplete = true;
       
-      debugPrint('Values loaded: ${values.length} values (forced: ${event.forceRefresh})');
     } catch (e) {
       emit(ValuesError(e.toString()));
-      debugPrint('Error loading values: $e');
     }
   }
 
@@ -59,10 +57,8 @@ class ValuesBloc extends Bloc<ValuesEvent, ValuesState> {
       final values = await valuesRepository.getValues(forceRefresh: true);
       emit(ValuesLoaded(values));
       
-      debugPrint('Value added: ${event.value.name}');
     } catch (e) {
       emit(ValuesError(e.toString()));
-      debugPrint('Error adding value: $e');
       
       // If there was an error, restore the previous state
       if (currentState is ValuesLoaded) {
@@ -98,10 +94,8 @@ class ValuesBloc extends Bloc<ValuesEvent, ValuesState> {
       final values = await valuesRepository.getValues(forceRefresh: true);
       emit(ValuesLoaded(values));
       
-      debugPrint('Value updated: ${event.value.name}');
     } catch (e) {
       emit(ValuesError(e.toString()));
-      debugPrint('Error updating value: $e');
       
       // Restore previous state if there was an error
       if (currentState is ValuesLoaded) {
@@ -132,10 +126,8 @@ class ValuesBloc extends Bloc<ValuesEvent, ValuesState> {
       final values = await valuesRepository.getValues(forceRefresh: true);
       emit(ValuesLoaded(values));
       
-      debugPrint('Value deleted: ${event.valueId}');
     } catch (e) {
       emit(ValuesError(e.toString()));
-      debugPrint('Error deleting value: $e');
       
       // Restore previous state if there was an error
       if (currentState is ValuesLoaded) {
@@ -166,10 +158,8 @@ class ValuesBloc extends Bloc<ValuesEvent, ValuesState> {
         emit(currentState);
       }
 
-      debugPrint('Streak stats loaded: ${streakStats.length} stats (forced: ${event.forceRefresh ?? false})');
     } catch (e) {
       emit(ValuesError(e.toString()));
-      debugPrint('Error loading streak stats: $e');
     }
   }
 
@@ -181,6 +171,5 @@ class ValuesBloc extends Bloc<ValuesEvent, ValuesState> {
     _initialLoadComplete = false;
     
     emit(ValuesInitial());
-    debugPrint('Values data cleared - reset to initial state');
   }
 }

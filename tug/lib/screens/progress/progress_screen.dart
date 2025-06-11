@@ -5,6 +5,7 @@ import 'package:tug/blocs/values/bloc/values_bloc.dart';
 import 'package:tug/blocs/values/bloc/values_event.dart';
 import 'package:tug/blocs/values/bloc/values_state.dart';
 import 'package:tug/services/activity_service.dart';
+import 'package:tug/services/cache_service.dart';
 import 'package:tug/utils/theme/colors.dart';
 import 'package:tug/utils/quantum_effects.dart';
 import 'package:tug/utils/loading_messages.dart';
@@ -29,16 +30,26 @@ class _ProgressScreenState extends State<ProgressScreen>
   Map<String, dynamic>? _statistics;
 
   final ActivityService _activityService = ActivityService();
+  final CacheService _cacheService = CacheService();
 
   @override
   void initState() {
     super.initState();
+    // Initialize cache service first
+    _initializeCache();
     // Load values without forcing refresh if we have cached data
     context.read<ValuesBloc>().add(LoadValues(forceRefresh: false));
     // Load streak stats without forcing refresh
     context.read<ValuesBloc>().add(LoadStreakStats(forceRefresh: false));
     // Also load activity data
     _fetchActivityData(forceRefresh: false);
+  }
+
+  Future<void> _initializeCache() async {
+    try {
+      await _cacheService.initialize();
+    } catch (e) {
+    }
   }
 
   // Implement wantKeepAlive for AutomaticKeepAliveClientMixin
@@ -48,6 +59,34 @@ class _ProgressScreenState extends State<ProgressScreen>
   Future<void> _fetchActivityData({bool forceRefresh = false}) async {
     if (!mounted) return;
 
+    // Generate cache keys for this specific timeframe and data
+    final startDate = getStartDate(_selectedTimeframe);
+    final endDate = DateTime.now();
+    final cacheKey = 'progress_data_${_selectedTimeframe}_${startDate.toIso8601String().split('T')[0]}_${endDate.toIso8601String().split('T')[0]}';
+
+    // If not forcing refresh, try to load from cache first
+    if (!forceRefresh && !_isFirstLoad) {
+      try {
+        final cachedData = await _cacheService.get<Map<String, dynamic>>(cacheKey);
+        if (cachedData != null) {
+          if (mounted) {
+            setState(() {
+              _activityData = Map<String, Map<String, dynamic>>.from(
+                cachedData['activityData'] ?? {}
+              );
+              _statistics = Map<String, dynamic>.from(
+                cachedData['statistics'] ?? {}
+              );
+              _isLoading = false;
+              _isFirstLoad = false;
+            });
+          }
+          return;
+        }
+      } catch (e) {
+      }
+    }
+
     // Only show loading indicator on first load or forced refresh
     setState(() {
       if (_isFirstLoad || forceRefresh) {
@@ -56,15 +95,6 @@ class _ProgressScreenState extends State<ProgressScreen>
     });
 
     try {
-      // Get current date and time
-      final DateTime currentDate = DateTime.now();
-
-      // Use the timeframe selector to determine the start date
-      final DateTime startDate = getStartDate(_selectedTimeframe);
-
-      // End date is today
-      final DateTime endDate = currentDate;
-
       // Try to fetch activity statistics, but handle failure gracefully
       Map<String, dynamic>? statistics;
       try {
@@ -74,7 +104,6 @@ class _ProgressScreenState extends State<ProgressScreen>
           forceRefresh: forceRefresh,
         );
       } catch (e) {
-        debugPrint('Error fetching statistics: $e');
         statistics = {
           "total_activities": 0,
           "total_duration_minutes": 0,
@@ -92,7 +121,6 @@ class _ProgressScreenState extends State<ProgressScreen>
           forceRefresh: forceRefresh,
         );
       } catch (e) {
-        debugPrint('Error fetching summary: $e');
         summary = {"values": []};
       }
 
@@ -110,6 +138,23 @@ class _ProgressScreenState extends State<ProgressScreen>
         }
       }
 
+      // Cache the combined data for faster subsequent loads
+      try {
+        await _cacheService.set(
+          cacheKey,
+          {
+            'activityData': processedData,
+            'statistics': statistics,
+            'timeframe': _selectedTimeframe,
+            'startDate': startDate.toIso8601String(),
+            'endDate': endDate.toIso8601String(),
+          },
+          memoryCacheDuration: Duration(minutes: 10),
+          diskCacheDuration: Duration(hours: 1),
+        );
+      } catch (e) {
+      }
+
       if (mounted) {
         setState(() {
           _activityData = processedData;
@@ -119,7 +164,6 @@ class _ProgressScreenState extends State<ProgressScreen>
         });
       }
     } catch (e) {
-      debugPrint('Error fetching activity data: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -140,6 +184,9 @@ class _ProgressScreenState extends State<ProgressScreen>
   // Add a refresh method to force reload from server
   Future<void> _refreshData() async {
     try {
+      // Clear relevant cache entries before refreshing
+      await _clearProgressCache();
+      
       // Load values first - this will ensure we end up in ValuesLoaded state
       if (mounted) {
         context.read<ValuesBloc>().add(LoadValues(forceRefresh: true));
@@ -157,7 +204,15 @@ class _ProgressScreenState extends State<ProgressScreen>
       // Add a small delay to ensure the refresh indicator shows
       await Future.delayed(const Duration(milliseconds: 300));
     } catch (e) {
-      debugPrint('Error during refresh: $e');
+    }
+  }
+
+  // Clear progress-specific cache entries
+  Future<void> _clearProgressCache() async {
+    try {
+      // Clear our custom progress cache
+      await _cacheService.clearByPrefix('progress_data_');
+    } catch (e) {
     }
   }
 

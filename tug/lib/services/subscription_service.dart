@@ -1,7 +1,7 @@
 // lib/services/subscription_service.dart
 import 'dart:async';
 
-import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart' show MissingPluginException;
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:tug/config/env_confg.dart';
@@ -36,7 +36,6 @@ class SubscriptionService {
     try {
       // Handle web or unsupported platforms
       if (kIsWeb) {
-        debugPrint('RevenueCat is not supported on web. Running in simulation mode.');
         _isInitialized = true;
         return;
       }
@@ -49,7 +48,6 @@ class SubscriptionService {
         await Purchases.setLogLevel(LogLevel.debug);
       } catch (e) {
         if (e is MissingPluginException) {
-          debugPrint('RevenueCat plugin not available: $e');
           _isInitialized = true;
           return;
         }
@@ -74,8 +72,7 @@ class SubscriptionService {
         await Purchases.configure(configuration);
         
         // Get the anonymous user ID (useful to display to users)
-        final appUserID = await Purchases.appUserID;
-        debugPrint('RevenueCat User ID: $appUserID');
+        await Purchases.appUserID;
         
         // Fetch initial customer info
         final customerInfo = await Purchases.getCustomerInfo();
@@ -85,13 +82,10 @@ class SubscriptionService {
         Purchases.addCustomerInfoUpdateListener(_handleCustomerInfoUpdate);
         
         _isInitialized = true;
-        debugPrint('SubscriptionService initialized successfully');
       } catch (e) {
-        debugPrint('Error configuring RevenueCat: $e');
         _isInitialized = true; // Mark as initialized to prevent retry loops
       }
     } catch (e) {
-      debugPrint('Error initializing RevenueCat: $e');
       _isInitialized = true;
     }
   }
@@ -102,15 +96,6 @@ class SubscriptionService {
     _customerInfo = info;
     
     // Debug logging
-    debugPrint('=== SUBSCRIPTION DEBUG ===');
-    debugPrint('Customer info updated');
-    debugPrint('Active subscriptions: ${info.activeSubscriptions}');
-    debugPrint('All entitlements: ${info.entitlements.all.keys}');
-    debugPrint('Active entitlements: ${info.entitlements.active.keys}');
-    debugPrint('Premium entitlement ID: ${EnvConfig.revenueCatPremiumEntitlementId}');
-    debugPrint('Has premium entitlement: ${info.entitlements.active.containsKey(EnvConfig.revenueCatPremiumEntitlementId)}');
-    debugPrint('isPremium: $isPremium');
-    debugPrint('=========================');
     
     // Check if premium status changed and notify listeners
     if (oldPremiumStatus != isPremium) {
@@ -143,14 +128,12 @@ class SubscriptionService {
     
     // If on web or plugin not available, return mock data for testing
     if (kIsWeb) {
-      debugPrint('RevenueCat not available on web, returning mock offerings');
       return null;
     }
     
     try {
       return await Purchases.getOfferings();
     } catch (e) {
-      debugPrint('Error fetching offerings: $e');
       return null;
     }
   }
@@ -158,7 +141,6 @@ class SubscriptionService {
   /// Get the default offering
   Future<Offering?> getDefaultOffering() async {
     if (kIsWeb) {
-      debugPrint('RevenueCat not available on web, returning null offering');
       return null;
     }
     
@@ -177,7 +159,6 @@ class SubscriptionService {
     _lastPurchaseError = null;
     
     if (kIsWeb) {
-      debugPrint('RevenueCat not available on web, simulating purchase');
       _subscriptionStatusController.add(true); // Simulate purchase success
       return true;
     }
@@ -194,9 +175,7 @@ class SubscriptionService {
           e.toString().contains('PURCHASE_CANCELLED') ||
           e.toString().contains('userCancelled: true')) {
         // User cancelled the purchase - no need to show error
-        debugPrint('Purchase cancelled by user: $e');
       } else {
-        debugPrint('Error making purchase: $e');
       }
       return false;
     }
@@ -207,7 +186,6 @@ class SubscriptionService {
     if (!_isInitialized) await initialize();
     
     if (kIsWeb) {
-      debugPrint('RevenueCat not available on web, simulating restore');
       return false;
     }
     
@@ -216,7 +194,6 @@ class SubscriptionService {
       _handleCustomerInfoUpdate(customerInfo);
       return true;
     } catch (e) {
-      debugPrint('Error restoring purchases: $e');
       return false;
     }
   }
@@ -227,18 +204,15 @@ class SubscriptionService {
     if (!_isInitialized) await initialize();
     
     if (kIsWeb) {
-      debugPrint('RevenueCat not available on web, simulating login');
       return true;
     }
     
     try {
       final loginResult = await Purchases.logIn(userId);
       _handleCustomerInfoUpdate(loginResult.customerInfo);
-      final newAppUserId = await Purchases.appUserID;
-      debugPrint('User logged in successfully: $newAppUserId');
+      await Purchases.appUserID;
       return true;
     } catch (e) {
-      debugPrint('Error logging in user: $e');
       return false;
     }
   }
@@ -249,7 +223,6 @@ class SubscriptionService {
     if (!_isInitialized) await initialize();
     
     if (kIsWeb) {
-      debugPrint('RevenueCat not available on web, simulating logout');
       return true;
     }
     
@@ -261,11 +234,9 @@ class SubscriptionService {
       await Purchases.logOut();
       final customerInfo = await Purchases.getCustomerInfo();
       _handleCustomerInfoUpdate(customerInfo);
-      final newAppUserId = await Purchases.appUserID;
-      debugPrint('User logged out successfully, new anonymous ID: $newAppUserId');
+      await Purchases.appUserID;
       return true;
     } catch (e) {
-      debugPrint('Error logging out user: $e');
       return false;
     }
   }
@@ -281,7 +252,6 @@ class SubscriptionService {
     try {
       return await Purchases.appUserID;
     } catch (e) {
-      debugPrint('Error getting app user ID: $e');
       return '';
     }
   }
@@ -324,14 +294,12 @@ class SubscriptionService {
       
       // Check for any active subscriptions
       if (_customerInfo != null && _customerInfo!.activeSubscriptions.isNotEmpty) {
-        debugPrint('User has active subscriptions: ${_customerInfo!.activeSubscriptions}');
         return true;
       }
       
       // No legacy purchases found that need migration
       return false;
     } catch (e) {
-      debugPrint('Error checking for legacy purchases: $e');
       return false;
     }
   }
@@ -343,7 +311,7 @@ class SubscriptionService {
         Purchases.removeCustomerInfoUpdateListener(_handleCustomerInfoUpdate);
       }
     } catch (e) {
-      debugPrint('Error removing RevenueCat listener: $e');
+      // Error removing listener - continue with cleanup
     } finally {
       _subscriptionStatusController.close();
     }

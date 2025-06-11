@@ -155,10 +155,8 @@ class ActivitiesBloc extends Bloc<ActivitiesEvent, ActivitiesState> {
       // Mark that we've done the initial load
       _initialLoadComplete = true;
       
-      debugPrint('Activities loaded: ${activities.length} activities ' '(forced: ${event.forceRefresh}, valueId: ${event.valueId})');
     } catch (e) {
       emit(ActivitiesError(e.toString()));
-      debugPrint('Error loading activities: $e');
     }
   }
 
@@ -186,10 +184,8 @@ class ActivitiesBloc extends Bloc<ActivitiesEvent, ActivitiesState> {
         activities: activities,
       ));
       
-      debugPrint('Activity added: ${event.activity.name}');
     } catch (e) {
       emit(ActivitiesError(e.toString()));
-      debugPrint('Error adding activity: $e');
       
       // If there was an error, restore the previous state
       if (currentState is ActivitiesLoaded) {
@@ -236,10 +232,8 @@ class ActivitiesBloc extends Bloc<ActivitiesEvent, ActivitiesState> {
         activities: activities,
       ));
       
-      debugPrint('Activity updated: ${event.activity.name}');
     } catch (e) {
       emit(ActivitiesError(e.toString()));
-      debugPrint('Error updating activity: $e');
       
       // If there was an error, restore the previous state
       if (currentState is ActivitiesLoaded) {
@@ -281,10 +275,8 @@ class ActivitiesBloc extends Bloc<ActivitiesEvent, ActivitiesState> {
         activities: activities,
       ));
       
-      debugPrint('Activity deleted: ${event.activityId}');
     } catch (e) {
       emit(ActivitiesError(e.toString()));
-      debugPrint('Error deleting activity: $e');
       
       // If there was an error, restore the previous state
       if (currentState is ActivitiesLoaded) {
@@ -304,6 +296,5 @@ class ActivitiesBloc extends Bloc<ActivitiesEvent, ActivitiesState> {
     _lastEndDate = null;
     
     emit(ActivitiesInitial());
-    debugPrint('Activities data cleared - reset to initial state');
   }
 }

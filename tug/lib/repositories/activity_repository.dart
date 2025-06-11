@@ -74,16 +74,13 @@ class ActivityRepository implements IActivityRepository {
         final cachedActivities = await _cacheService.get<List<dynamic>>(cacheKey);
         
         if (cachedActivities != null) {
-          debugPrint('Activities retrieved from cache with key: $cacheKey');
           return cachedActivities
               .map((activityData) => ActivityModel.fromJson(Map<String, dynamic>.from(activityData)))
               .toList();
         }
       } catch (e) {
-        debugPrint('Error fetching activities from cache: $e');
       }
     } else {
-      debugPrint('Force refresh requested, skipping cache');
     }
 
     try {
@@ -121,12 +118,10 @@ class ActivityRepository implements IActivityRepository {
           memoryCacheDuration: _cacheValidity,
           diskCacheDuration: Duration(hours: 3),
         );
-        debugPrint('Activities fetched from API and cached with key: $cacheKey');
 
         return activities;
       }
     } catch (e) {
-      debugPrint('Error fetching activities from API: $e');
     }
 
     // If API call fails or no data, return cached activities from SharedPreferences
@@ -150,7 +145,6 @@ class ActivityRepository implements IActivityRepository {
 
         // Invalidate all activities caches
         await _cacheService.clearByPrefix(_activitiesCacheKeyPrefix);
-        debugPrint('Activities cache invalidated after adding new activity');
 
         // Add to shared preferences cache as well
         final cachedActivities = await _getCachedActivities();
@@ -160,7 +154,6 @@ class ActivityRepository implements IActivityRepository {
         return newActivity;
       }
     } catch (e) {
-      debugPrint('Error adding activity to API: $e');
 
       // Store locally if offline
       if (activity.id == null) {
@@ -175,7 +168,6 @@ class ActivityRepository implements IActivityRepository {
         final cachedActivities = await _getCachedActivities();
         cachedActivities.add(tempActivity);
         await _cacheActivities(cachedActivities);
-        debugPrint('Activity stored locally due to offline state');
 
         return tempActivity;
       }
@@ -202,7 +194,6 @@ class ActivityRepository implements IActivityRepository {
 
         // Invalidate all activities caches
         await _cacheService.clearByPrefix(_activitiesCacheKeyPrefix);
-        debugPrint('Activities cache invalidated after updating activity');
 
         // Update shared preferences cache as well
         final cachedActivities = await _getCachedActivities();
@@ -215,7 +206,6 @@ class ActivityRepository implements IActivityRepository {
         return updatedActivity;
       }
     } catch (e) {
-      debugPrint('Error updating activity on API: $e');
 
       // Update locally if offline
       final cachedActivities = await _getCachedActivities();
@@ -223,7 +213,6 @@ class ActivityRepository implements IActivityRepository {
       if (index != -1) {
         cachedActivities[index] = activity;
         await _cacheActivities(cachedActivities);
-        debugPrint('Activity updated locally due to offline state');
       }
     }
 
@@ -238,20 +227,17 @@ class ActivityRepository implements IActivityRepository {
 
       // Invalidate all activities caches
       await _cacheService.clearByPrefix(_activitiesCacheKeyPrefix);
-      debugPrint('Activities cache invalidated after deleting activity');
 
       // Remove from shared preferences cache
       final cachedActivities = await _getCachedActivities();
       cachedActivities.removeWhere((activity) => activity.id == id);
       await _cacheActivities(cachedActivities);
     } catch (e) {
-      debugPrint('Error deleting activity from API: $e');
 
       // Just remove locally if offline (will need to handle sync conflicts later)
       final cachedActivities = await _getCachedActivities();
       cachedActivities.removeWhere((activity) => activity.id == id);
       await _cacheActivities(cachedActivities);
-      debugPrint('Activity removed locally due to offline state');
     }
   }
 
@@ -291,7 +277,6 @@ class ActivityRepository implements IActivityRepository {
         return activities;
       }
     } catch (e) {
-      debugPrint('Error getting cached activities from SharedPreferences: $e');
     }
     return [];
   }
@@ -302,7 +287,6 @@ class ActivityRepository implements IActivityRepository {
       final activitiesJson = activities.map((activity) => activity.toJson()).toList();
       await _prefs.setString('activities', jsonEncode(activitiesJson));
     } catch (e) {
-      debugPrint('Error caching activities to SharedPreferences: $e');
     }
   }
 

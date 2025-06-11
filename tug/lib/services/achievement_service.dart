@@ -32,13 +32,11 @@ class AchievementService {
       try {
         final cachedAchievements = await _cacheService.get<List<dynamic>>(_achievementsCacheKey);
         if (cachedAchievements != null) {
-          debugPrint('Achievements retrieved from cache');
           return cachedAchievements
               .map((data) => AchievementModel.fromJson(Map<String, dynamic>.from(data)))
               .toList();
         }
       } catch (e) {
-        debugPrint('Error retrieving achievements from cache: $e');
       }
     }
 
@@ -46,7 +44,6 @@ class AchievementService {
       // Try to get achievements from backend API first
       final achievementsData = await _fetchAchievementsFromApi();
       if (achievementsData.isNotEmpty) {
-        debugPrint('Achievements retrieved from API');
         // Cache the achievements
         await _cacheService.set(
           _achievementsCacheKey,
@@ -56,7 +53,6 @@ class AchievementService {
         return achievementsData;
       }
     } catch (e) {
-      debugPrint('Error fetching achievements from API: $e');
       // Fall back to local calculation if API fails
     }
 
@@ -75,11 +71,9 @@ class AchievementService {
           .map((json) => AchievementModel.fromJson(json))
           .toList();
       } else {
-        debugPrint('API returned status code: ${response.statusCode}');
         return [];
       }
     } catch (e) {
-      debugPrint('Error fetching achievements from API: $e');
       return [];
     }
   }
@@ -98,23 +92,19 @@ class AchievementService {
         // If we have new achievements, invalidate cache
         if (newlyUnlocked.isNotEmpty) {
           await _cacheService.remove(_achievementsCacheKey);
-          debugPrint('Unlocked ${newlyUnlocked.length} new achievements');
         }
 
         return newlyUnlocked;
       } else {
-        debugPrint('API returned status code: ${response.statusCode}');
         return [];
       }
     } catch (e) {
-      debugPrint('Error checking for new achievements: $e');
       return [];
     }
   }
 
   /// Calculate achievements locally when offline or as fallback
   Future<List<AchievementModel>> _calculateAchievementsLocally({bool forceRefresh = false}) async {
-    debugPrint('Calculating achievements locally');
 
     // Get base achievements
     final baseAchievements = AchievementModel.getPredefinedAchievements();
@@ -138,7 +128,6 @@ class AchievementService {
 
       return calculatedAchievements;
     } catch (e) {
-      debugPrint('Error calculating achievements locally: $e');
       // Return base achievements with no progress in case of error
       return baseAchievements;
     }
@@ -154,7 +143,6 @@ class AchievementService {
       ).toList();
 
       if (newlyUnlocked.isEmpty) {
-        debugPrint('No newly unlocked achievements to sync');
         return true;
       }
 
@@ -169,15 +157,12 @@ class AchievementService {
               'unlocked_at': achievement.unlockedAt?.toIso8601String(),
             }),
           );
-          debugPrint('Synced achievement: ${achievement.id}');
         } catch (e) {
-          debugPrint('Error syncing achievement ${achievement.id}: $e');
         }
       }
 
       return true;
     } catch (e) {
-      debugPrint('Error syncing achievements: $e');
       return false;
     }
   }
@@ -194,7 +179,6 @@ class AchievementService {
       // Using a placeholder implementation for now
       values = await _activityService.getValuesByActivities(activities);
     } catch (e) {
-      debugPrint('Error fetching values: $e');
     }
 
     return baseAchievements.map((achievement) {

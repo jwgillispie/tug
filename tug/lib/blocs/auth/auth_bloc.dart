@@ -136,7 +136,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     _authSubscription = authRepository
         .authStateChanges()
         .listen((user) => add(AuthStateChangedEvent(user)), onError: (error) {
-      debugPrint('Auth state stream error: $error');
       add(LogoutEvent());
     });
   }
@@ -153,28 +152,20 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      debugPrint('AuthBloc: Attempting login with ${event.email}');
       final user = await authRepository.signIn(
         event.email,
         event.password,
       );
 
       if (user != null) {
-        debugPrint('AuthBloc: Login successful, syncing with MongoDB');
         // Sync with MongoDB after successful authentication
         try {
           final apiService = ApiService();
           final syncSuccess = await apiService.syncUserWithMongoDB();
 
-          if (syncSuccess) {
-            debugPrint('AuthBloc: MongoDB sync completed successfully');
-          } else {
-            debugPrint(
-                'AuthBloc: MongoDB sync failed but continuing with login');
-          }
+          // Sync completed - continuing with login regardless of success
         } catch (e) {
           // Log but don't fail if sync fails
-          debugPrint('AuthBloc: MongoDB sync error: $e');
         }
 
         emit(Authenticated(user, emailVerified: user.emailVerified));
@@ -182,7 +173,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(const AuthError('Login failed'));
       }
     } catch (e) {
-      debugPrint('AuthBloc: Login error: $e');
       emit(_mapFirebaseErrorToAuthError(e));
     }
   }
@@ -193,7 +183,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
-      debugPrint('AuthBloc: Starting sign up process');
       final user = await authRepository.signUp(
         event.name,
         event.email,
@@ -201,33 +190,24 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
 
       if (user != null) {
-        debugPrint('AuthBloc: Signup successful, syncing with MongoDB');
         // Sync with MongoDB after successful signup
         try {
           final apiService = ApiService();
           final syncSuccess = await apiService.syncUserWithMongoDB();
 
-          if (syncSuccess) {
-            debugPrint('AuthBloc: MongoDB sync completed successfully');
-          } else {
-            debugPrint(
-                'AuthBloc: MongoDB sync failed but continuing with signup flow');
-          }
+          // Sync completed - continuing with signup regardless of success
         } catch (e) {
           // Log but don't fail if sync fails
-          debugPrint('AuthBloc: MongoDB sync error: $e');
         }
 
         // Send email verification
         await authRepository.sendEmailVerification();
-        debugPrint('AuthBloc: Email verification sent');
 
         emit(Authenticated(user, emailVerified: user.emailVerified));
       } else {
         emit(const AuthError('Sign up failed'));
       }
     } catch (e) {
-      debugPrint('AuthBloc: Sign up error caught: $e');
       emit(_mapFirebaseErrorToAuthError(e));
     }
   }
@@ -251,19 +231,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   /// Clear all user-specific cached data on logout
   Future<void> _clearUserDataOnLogout() async {
     try {
-      debugPrint('AuthBloc: Clearing user data on logout...');
       
       // Clear all cache service data
       await CacheService().clear();
-      debugPrint('AuthBloc: Cache service cleared');
       
       // Clear subscription service data (RevenueCat logout)
       await SubscriptionService().logoutUser();
-      debugPrint('AuthBloc: Subscription service logged out');
       
-      debugPrint('AuthBloc: User data cleared successfully');
     } catch (e) {
-      debugPrint('AuthBloc: Error clearing user data on logout: $e');
       // Don't rethrow - logout should still proceed even if cache clearing fails
     }
   }
@@ -301,8 +276,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthStateChangedEvent event,
     Emitter<AuthState> emit,
   ) {
-    debugPrint(
-        'AuthBloc: Auth state changed: ${event.user?.uid ?? 'Not authenticated'}');
     final user = event.user;
     if (user != null) {
       emit(Authenticated(user, emailVerified: user.emailVerified));
@@ -310,7 +283,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       // User signed out (could be due to token expiration, logout, etc.)
       // Clear cached data asynchronously without blocking the state change
       _clearUserDataOnLogout().catchError((e) {
-        debugPrint('AuthBloc: Error clearing data on auth state change: $e');
       });
       emit(Unauthenticated());
     }

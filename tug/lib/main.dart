@@ -54,7 +54,6 @@ Future<void> main() async {
     // Initialize cache service before repositories
     final cacheService = CacheService();
     await cacheService.initialize();
-    debugPrint('Cache service initialized');
 
     // Initialize local storage next
     if (!kIsWeb) {
@@ -68,7 +67,6 @@ Future<void> main() async {
 
     // Create SubscriptionService without initializing (lazy initialization)
     final subscriptionService = SubscriptionService();
-    debugPrint('Subscription service created (will initialize when needed)');
 
     final apiService = ApiService();
     final authRepository = AuthRepository();
@@ -84,7 +82,6 @@ Future<void> main() async {
       subscriptionService: subscriptionService,
     ));
   } catch (e) {
-    debugPrint('App initialization failed: $e');
     runApp(ErrorApp(error: e.toString()));
   }
 }
@@ -359,7 +356,6 @@ class _TugAppState extends State<TugApp> {
         listener: (context, state) {
           // Clear all BLoC data when user becomes unauthenticated
           if (state is Unauthenticated) {
-            debugPrint('User unauthenticated - clearing all BLoC data');
             context.read<ActivitiesBloc>().add(const ClearActivitiesData());
             context.read<ValuesBloc>().add(const ClearValuesData());
             context.read<SubscriptionBloc>().add(const LogoutSubscription());

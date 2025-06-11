@@ -32,7 +32,6 @@ class CacheService {
   Future<void> initialize() async {
     if (!_initialized) {
       try {
-        debugPrint('Initializing cache service...');
         // Load persistent cache metadata
         final prefs = await SharedPreferences.getInstance();
         final expirationData = prefs.getString('cache_expirations');
@@ -42,14 +41,11 @@ class CacheService {
           expirations.forEach((key, value) {
             _expirations[key] = DateTime.parse(value);
           });
-          debugPrint('Loaded ${_expirations.length} cache expiration records');
         }
         
         _initialized = true;
         _initCompleter.complete();
-        debugPrint('Cache service initialized successfully');
       } catch (e) {
-        debugPrint('Error initializing cache service: $e');
         _initCompleter.completeError(e);
       }
     }
@@ -64,13 +60,11 @@ class CacheService {
     // Check if key exists in memory cache and is not expired
     if (_memoryCache.containsKey(key)) {
       if (!_isExpired(key)) {
-        debugPrint('Cache hit (memory): $key');
         return _memoryCache[key] as T?;
       } else {
         // Remove expired item
         _memoryCache.remove(key);
         _expirations.remove(key);
-        debugPrint('Expired cache removed (memory): $key');
       }
     }
     
@@ -86,10 +80,8 @@ class CacheService {
           // Cache in memory for faster future access
           _memoryCache[key] = value;
           
-          debugPrint('Cache hit (disk): $key');
           return value as T?;
         } catch (e) {
-          debugPrint('Error parsing cached data for $key: $e');
           
           // Remove invalid data
           await prefs.remove('cache_$key');
@@ -98,7 +90,6 @@ class CacheService {
         // Remove expired data
         await prefs.remove('cache_$key');
         _expirations.remove(key);
-        debugPrint('Expired cache removed (disk): $key');
       }
     }
     
@@ -137,12 +128,9 @@ class CacheService {
         _expirations[key] = diskExpiryTime;
         await _persistExpirations();
         
-        debugPrint('Cached to disk: $key (expires ${diskExpiryTime.toIso8601String()})');
       } catch (e) {
-        debugPrint('Error caching to disk for $key: $e');
       }
     } else {
-      debugPrint('Cached to memory only: $key (expires ${expiryTime.toIso8601String()})');
     }
   }
 
@@ -160,7 +148,6 @@ class CacheService {
     // Update expiration timestamps
     await _persistExpirations();
     
-    debugPrint('Removed from cache: $key');
   }
 
   // Clear all cache
@@ -183,7 +170,6 @@ class CacheService {
     // Clear expirations
     await prefs.remove('cache_expirations');
     
-    debugPrint('Cache cleared');
   }
 
   // Clear cache by prefix
@@ -212,7 +198,6 @@ class CacheService {
     // Update expirations
     await _persistExpirations();
     
-    debugPrint('Cleared cache with prefix: $prefix');
   }
 
   // Check if an item is expired

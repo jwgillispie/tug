@@ -27,7 +27,6 @@ class UserService {
             // Check if values exist
             response['has_values'] = valuesResponse is List && valuesResponse.isNotEmpty;
           } catch (e) {
-            debugPrint('Error checking values: $e');
             response['has_values'] = false;
           }
         }
@@ -35,7 +34,6 @@ class UserService {
       
       return response;
     } catch (e) {
-      debugPrint('Error fetching user profile: $e');
       // Default profile with has_values set to false
       return {'has_values': false};
     }
@@ -47,7 +45,6 @@ class UserService {
       await _apiService.patch('/api/v1/users/me', data: {'has_values': true});
       return true;
     } catch (e) {
-      debugPrint('Error updating has_values status: $e');
       return false;
     }
   }
@@ -59,7 +56,6 @@ class UserService {
       final response = await _apiService.patch('/api/v1/users/me', data: data);
       return response;
     } catch (e) {
-      debugPrint('Error updating user profile: $e');
       rethrow;
     }
   }
@@ -71,7 +67,6 @@ class UserService {
           .patch('/api/v1/users/me', data: {'onboarding_completed': true});
       return true;
     } catch (e) {
-      debugPrint('Error completing onboarding: $e');
       return false;
     }
   }
@@ -82,7 +77,6 @@ class UserService {
       final response = await _apiService.get('/api/v1/users/me');
       return response != null;
     } catch (e) {
-      debugPrint('Error checking if user exists: $e');
       return false;
     }
   }
@@ -90,26 +84,21 @@ class UserService {
   // Delete user account with all associated data
   Future<bool> deleteAccount() async {
     try {
-      debugPrint('Attempting to delete user account and all associated data from backend...');
       
       // This will trigger cascading deletion on the server (values, activities, etc.)
       await _apiService.delete('/api/v1/users/me');
       
-      debugPrint('User account and all associated data successfully deleted from backend');
       return true;
     } on DioException catch (e) {
       final ApiError apiError = ApiError.fromException(e);
       
       // Log detailed error for debugging
-      debugPrint('API error during account deletion: ${apiError.message}');
-      debugPrint('Status code: ${apiError.statusCode}, Code: ${apiError.code}');
       
       if (e.response?.statusCode == 401) {
         // Handle authentication error
         throw Exception('Authentication failed. Please sign in again before deleting your account.');
       } else if (e.response?.statusCode == 404) {
         // User not found - treat as success since we're trying to delete it anyway
-        debugPrint('User not found in backend. Continuing with Firebase deletion.');
         return true;
       } else if (e.type == DioExceptionType.connectionError) {
         // Network error
@@ -120,7 +109,6 @@ class UserService {
       }
     } catch (e) {
       // Generic error handling
-      debugPrint('Unexpected error deleting account: $e');
       throw Exception('An unexpected error occurred while deleting your account. Please try again.');
     }
   }
@@ -131,7 +119,6 @@ class UserService {
       await _apiService.get('/health');
       return true;
     } catch (e) {
-      debugPrint('Backend connection check failed: $e');
       return false;
     }
   }

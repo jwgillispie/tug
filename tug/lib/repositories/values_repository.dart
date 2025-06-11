@@ -46,16 +46,13 @@ class ValuesRepository implements IValuesRepository {
         final cachedValues = await _cacheService.get<List<dynamic>>(_valuesCacheKey);
         
         if (cachedValues != null) {
-          debugPrint('Values retrieved from cache');
           return cachedValues
               .map((valueData) => ValueModel.fromJson(Map<String, dynamic>.from(valueData)))
               .toList();
         }
       } catch (e) {
-        debugPrint('Error fetching values from cache: $e');
       }
     } else {
-      debugPrint('Force refresh requested, skipping cache');
     }
 
     try {
@@ -75,12 +72,10 @@ class ValuesRepository implements IValuesRepository {
           memoryCacheDuration: _cacheValidity,
           diskCacheDuration: Duration(hours: 3),
         );
-        debugPrint('Values fetched from API and cached');
 
         return values;
       }
     } catch (e) {
-      debugPrint('Error fetching values from API: $e');
     }
 
     // If API call fails or no data, return cached values (which might be empty)
@@ -100,12 +95,10 @@ class ValuesRepository implements IValuesRepository {
 
         // Invalidate cache
         await _cacheService.remove(_valuesCacheKey);
-        debugPrint('Cache invalidated after adding value');
 
         return newValue;
       }
     } catch (e) {
-      debugPrint('Error adding value to API: $e');
 
       // Store locally if offline
       if (value.id == null) {
@@ -117,7 +110,6 @@ class ValuesRepository implements IValuesRepository {
         final cachedValues = await _getCachedValues();
         cachedValues.add(tempValue);
         await _cacheValues(cachedValues);
-        debugPrint('Value stored locally due to offline state');
 
         return tempValue;
       }
@@ -144,12 +136,10 @@ class ValuesRepository implements IValuesRepository {
 
         // Invalidate cache
         await _cacheService.remove(_valuesCacheKey);
-        debugPrint('Cache invalidated after updating value');
 
         return updatedValue;
       }
     } catch (e) {
-      debugPrint('Error updating value on API: $e');
 
       // Update locally if offline
       final cachedValues = await _getCachedValues();
@@ -157,7 +147,6 @@ class ValuesRepository implements IValuesRepository {
       if (index != -1) {
         cachedValues[index] = value;
         await _cacheValues(cachedValues);
-        debugPrint('Value updated locally due to offline state');
       }
     }
 
@@ -171,15 +160,12 @@ class ValuesRepository implements IValuesRepository {
       // Don't add trailing slash here - ApiService will handle it
       final url = '/api/v1/values/$id';
 
-      debugPrint('Deleting value: $id');
 
       await _apiService.delete(url);
 
       // Invalidate cache
       await _cacheService.remove(_valuesCacheKey);
-      debugPrint('Cache invalidated after deleting value');
     } catch (e) {
-      debugPrint('Error deleting value from API: $e');
 
       // Just mark as inactive locally if offline
       final cachedValues = await _getCachedValues();
@@ -187,7 +173,6 @@ class ValuesRepository implements IValuesRepository {
       if (index != -1) {
         cachedValues[index] = cachedValues[index].copyWith(active: false);
         await _cacheValues(cachedValues);
-        debugPrint('Value marked inactive locally due to offline state');
       }
     }
   }
@@ -204,7 +189,6 @@ class ValuesRepository implements IValuesRepository {
             .toList();
       }
     } catch (e) {
-      debugPrint('Error getting cached values from SharedPreferences: $e');
     }
     return [];
   }
@@ -215,7 +199,6 @@ class ValuesRepository implements IValuesRepository {
       final valuesJson = values.map((value) => value.toJson()).toList();
       await _prefs.setString('values', jsonEncode(valuesJson));
     } catch (e) {
-      debugPrint('Error caching values to SharedPreferences: $e');
     }
   }
 
@@ -233,14 +216,11 @@ class ValuesRepository implements IValuesRepository {
       try {
         final cachedStats = await _cacheService.get<Map<String, dynamic>>(cacheKey);
         if (cachedStats != null) {
-          debugPrint('Streak stats retrieved from cache for ${valueId ?? "all values"}');
           return cachedStats;
         }
       } catch (e) {
-        debugPrint('Error retrieving streak stats from cache: $e');
       }
     } else {
-      debugPrint('Force refresh requested for streak stats, skipping cache');
     }
 
     try {
@@ -262,12 +242,10 @@ class ValuesRepository implements IValuesRepository {
           memoryCacheDuration: _cacheValidity,
           diskCacheDuration: Duration(hours: 2),
         );
-        debugPrint('Streak stats cached for ${valueId ?? "all values"}');
 
         return stats;
       }
     } catch (e) {
-      debugPrint('Error getting streak stats from API: $e');
     }
 
     // Return empty map if API fails and no cache is available

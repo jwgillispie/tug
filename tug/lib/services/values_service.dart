@@ -22,7 +22,6 @@ class ValuesService {
       }
       return [];
     } catch (e) {
-      debugPrint('Error fetching values: $e');
       rethrow;
     }
   }
@@ -36,7 +35,6 @@ class ValuesService {
       );
       return ValueModel.fromJson(response);
     } catch (e) {
-      debugPrint('Error creating value: $e');
       rethrow;
     }
   }
@@ -54,7 +52,6 @@ class ValuesService {
       );
       return ValueModel.fromJson(response);
     } catch (e) {
-      debugPrint('Error updating value: $e');
       rethrow;
     }
   }
@@ -65,7 +62,6 @@ class ValuesService {
       await _apiService.delete('/api/v1/values/$valueId');
       return true;
     } catch (e) {
-      debugPrint('Error deleting value: $e');
       rethrow;
     }
   }
@@ -76,7 +72,6 @@ class ValuesService {
       final response = await _apiService.get('/api/v1/values/stats/count');
       return Map<String, int>.from(response);
     } catch (e) {
-      debugPrint('Error getting value counts: $e');
       return {'total': 0, 'active': 0};
     }
   }

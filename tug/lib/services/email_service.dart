@@ -22,10 +22,8 @@ class EmailService {
         'createdAt': FieldValue.serverTimestamp(),
       });
       
-      debugPrint('Email saved successfully: $email');
       return true;
     } catch (e) {
-      debugPrint('Error saving email to Firestore: $e');
       return false;
     }
   }

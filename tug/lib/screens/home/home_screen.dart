@@ -6,7 +6,8 @@ import 'package:tug/blocs/activities/activities_bloc.dart';
 import 'package:tug/blocs/values/bloc/values_bloc.dart';
 import 'package:tug/blocs/values/bloc/values_event.dart';
 import 'package:tug/blocs/values/bloc/values_state.dart';
-import 'package:tug/utils/cosmic_particles.dart';
+import 'package:tug/services/cache_service.dart';
+import 'package:tug/services/activity_service.dart';
 import 'package:tug/utils/quantum_effects.dart';
 import 'package:tug/utils/loading_messages.dart';
 import 'package:tug/widgets/home/activity_chart.dart';
@@ -25,17 +26,24 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   bool _isFirstLoad = true;
-  final ParticleEffect _particleEffect = ParticleEffect.nebula;
+  final CacheService _cacheService = CacheService();
   
   @override
   void initState() {
     super.initState();
+    
+    // Initialize cache service first
+    _initializeCache();
+    
     // Load values when screen is initialized, but don't force refresh
     // if we already have cached values
     context.read<ValuesBloc>().add(const LoadValues(forceRefresh: false));
     
     // Load activities for the chart
     context.read<ActivitiesBloc>().add(const LoadActivities(forceRefresh: false));
+    
+    // Preload progress screen data in background for faster navigation
+    _preloadProgressData();
     
     // Setup animation
     _animationController = AnimationController(
@@ -50,6 +58,50 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     
     // Start animation
     _animationController.forward();
+  }
+
+  Future<void> _initializeCache() async {
+    try {
+      await _cacheService.initialize();
+    } catch (e) {
+    }
+  }
+
+  // Preload progress screen data in the background to improve navigation performance
+  Future<void> _preloadProgressData() async {
+    try {
+      // Wait a bit to let the home screen load first
+      await Future.delayed(const Duration(seconds: 2));
+      
+      if (!mounted) return;
+      
+      // Import activity service for preloading
+      final activityService = ActivityService();
+      final now = DateTime.now();
+      
+      // Preload daily data (most commonly accessed)
+      final startDate = DateTime(now.year, now.month, now.day);
+      
+      // These calls will cache the data, making progress screen load faster
+      await Future.wait([
+        activityService.getActivityStatistics(
+          startDate: startDate,
+          endDate: now,
+          forceRefresh: false,
+        ).catchError((e) {
+          return <String, dynamic>{};
+        }),
+        activityService.getActivitySummary(
+          startDate: startDate,
+          endDate: now,
+          forceRefresh: false,
+        ).catchError((e) {
+          return <String, dynamic>{};
+        }),
+      ]);
+      
+    } catch (e) {
+    }
   }
   
   @override
