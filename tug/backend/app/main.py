@@ -2,6 +2,7 @@
 import logging
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from .core.config import settings
 from .core.database import init_db, close_db
 from .api.routes import api_router
@@ -43,6 +44,12 @@ async def log_requests(request: Request, call_next):
 
 # Include API router with the correct prefix
 app.include_router(api_router, prefix=settings.API_V1_PREFIX)
+
+# Mount static files for profile pictures
+import os
+uploads_dir = "uploads"
+os.makedirs(uploads_dir, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
 
 # Event handlers
 @app.on_event("startup")

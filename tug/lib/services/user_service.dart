@@ -60,7 +60,18 @@ class UserService {
     }
   }
 
-  // Sync profile picture URL with backend
+  // Upload profile picture to backend
+  Future<Map<String, dynamic>> uploadProfilePicture(String base64Image) async {
+    try {
+      final response = await _apiService.post('/api/v1/users/me/profile-picture', 
+          data: {'image': base64Image});
+      return response;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Sync profile picture URL with backend (fallback method)
   Future<bool> syncProfilePictureUrl(String profilePictureUrl) async {
     try {
       await _apiService.patch('/api/v1/users/me', 

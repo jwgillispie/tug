@@ -4,6 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException, status, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from typing import List, Dict, Any, Optional
 import logging
+import base64
+import os
+import uuid
 from firebase_admin import auth
 from bson import ObjectId
 from ...models.user import User
@@ -142,6 +145,7 @@ async def create_user(
             "id": str(user.id),
             "email": user.email,
             "display_name": user.display_name,
+            "profile_picture_url": user.profile_picture_url,
             "onboarding_completed": user.onboarding_completed
         }
         
@@ -179,6 +183,7 @@ async def get_current_user_profile(request: Request):
             "id": str(user.id),
             "email": user.email,
             "display_name": user.display_name,
+            "profile_picture_url": user.profile_picture_url,
             "onboarding_completed": user.onboarding_completed
         }
         
@@ -252,6 +257,7 @@ async def update_user_profile(
             "id": str(user.id),
             "email": user.email,
             "display_name": user.display_name,
+            "profile_picture_url": user.profile_picture_url,
             "onboarding_completed": user.onboarding_completed
         }
         
@@ -262,6 +268,85 @@ async def update_user_profile(
     except Exception as e:
         logger.error(f"Update user profile error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to update user: {e}")
+
+@router.post("/me/profile-picture")
+async def upload_profile_picture(request: Request):
+    """Upload and save user profile picture"""
+    try:
+        # Extract token manually
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Missing or invalid Authorization header"
+            )
+        
+        token = auth_header.split(' ')[1]
+        decoded_token = auth.verify_id_token(token)
+        firebase_uid = decoded_token.get('uid')
+        
+        # Get user
+        user = await User.find_one(User.firebase_uid == firebase_uid)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        # Get request body
+        body = await request.json()
+        base64_image = body.get('image')
+        
+        if not base64_image:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No image data provided"
+            )
+        
+        try:
+            # Decode base64 image
+            image_data = base64.b64decode(base64_image)
+            
+            # Create uploads directory if it doesn't exist
+            upload_dir = "uploads/profile_pictures"
+            os.makedirs(upload_dir, exist_ok=True)
+            
+            # Generate unique filename
+            unique_filename = f"{firebase_uid}_{uuid.uuid4().hex}.jpg"
+            file_path = os.path.join(upload_dir, unique_filename)
+            
+            # Save image to file
+            with open(file_path, 'wb') as f:
+                f.write(image_data)
+            
+            # Create full URL for the saved image
+            # Get the base URL from the request
+            base_url = f"{request.url.scheme}://{request.url.netloc}"
+            profile_picture_url = f"{base_url}/uploads/profile_pictures/{unique_filename}"
+            
+            # Update user profile with picture URL
+            user.profile_picture_url = profile_picture_url
+            await user.save()
+            
+            logger.info(f"Profile picture uploaded for user {user.id}: {profile_picture_url}")
+            
+            return {
+                "profile_picture_url": profile_picture_url,
+                "message": "Profile picture uploaded successfully"
+            }
+            
+        except Exception as e:
+            logger.error(f"Error processing image: {e}")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid image data"
+            )
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Upload profile picture error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to upload profile picture: {e}")
 
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user_profile(request: Request):

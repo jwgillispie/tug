@@ -13,8 +13,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:tug/services/user_service.dart';
 import 'package:tug/services/notification_service.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
+import 'dart:convert';
+import 'dart:typed_data';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -152,37 +153,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
         throw Exception('no user found');
       }
 
-      // Upload to Firebase Storage
-      final storageRef = FirebaseStorage.instance
-          .ref()
-          .child('profile_pictures')
-          .child('${user.uid}.jpg');
-
-      final uploadTask = storageRef.putFile(imageFile);
-      final snapshot = await uploadTask;
-      final downloadUrl = await snapshot.ref.getDownloadURL();
-
-      // Update Firebase Auth profile
-      await user.updatePhotoURL(downloadUrl);
-      await user.reload();
-
-      // Sync with backend
+      // Read image file as bytes
+      final Uint8List imageBytes = await imageFile.readAsBytes();
+      
+      // Convert to base64
+      final String base64Image = base64Encode(imageBytes);
+      
+      // Upload to backend
       final userService = UserService();
-      await userService.syncProfilePictureUrl(downloadUrl);
+      final response = await userService.uploadProfilePicture(base64Image);
+      
+      if (response['profile_picture_url'] != null) {
+        final profilePictureUrl = response['profile_picture_url'] as String;
+        
+        // Update Firebase Auth profile with the URL from backend
+        await user.updatePhotoURL(profilePictureUrl);
+        await user.reload();
 
-      // Trigger auth state change to update UI
-      context.read<AuthBloc>().add(CheckAuthStatusEvent());
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('profile picture updated successfully')),
-        );
+        // Trigger auth state change to update UI
+        if (mounted) {
+          context.read<AuthBloc>().add(CheckAuthStatusEvent());
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('profile picture updated successfully')),
+          );
+        }
+      } else {
+        throw Exception('no profile picture URL returned from server');
       }
     } catch (e) {
       debugPrint('Error uploading profile picture: $e');
       if (mounted) {
+        String errorMessage = 'error uploading picture';
+        if (e.toString().contains('413')) {
+          errorMessage = 'image too large. please choose a smaller image.';
+        } else if (e.toString().contains('401')) {
+          errorMessage = 'please sign in again to upload';
+        } else if (e.toString().contains('500')) {
+          errorMessage = 'server error. please try again later.';
+        } else if (e.toString().contains('network')) {
+          errorMessage = 'network error. check your connection.';
+        }
+        
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('error uploading picture: $e')),
+          SnackBar(content: Text(errorMessage)),
         );
       }
     } finally {
