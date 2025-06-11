@@ -148,7 +148,7 @@ class _ActivitySuccessScreenState extends State<ActivitySuccessScreen> {
                   children: [
                     ElevatedButton.icon(
                       icon: const Icon(Icons.add),
-                      label: const Text('Add Another'),
+                      label: const Text('add another'),
                       onPressed: () {
                         context.go('/activities/new');
                       },
@@ -159,7 +159,7 @@ class _ActivitySuccessScreenState extends State<ActivitySuccessScreen> {
                     ),
                     const SizedBox(width: 16),
                     TextButton(
-                      child: const Text('Done'),
+                      child: const Text('done'),
                       onPressed: () {
                         context.go('/activities');
                       },

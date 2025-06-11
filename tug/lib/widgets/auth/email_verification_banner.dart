@@ -47,7 +47,7 @@ class EmailVerificationBanner extends StatelessWidget {
                   onPressed: () {
                     context.read<AuthBloc>().add(VerifyEmailEvent());
                   },
-                  child: const Text('Resend'),
+                  child: const Text('resend'),
                 ),
               ],
             ),

@@ -41,37 +41,27 @@ class ActivityModel extends Equatable {
   }
 
   Map<String, dynamic> toJson() {
-    // Create a UTC version of the date to ensure consistent timezone handling
-    final dateUtc = DateTime.utc(
-      date.year,
-      date.month,
-      date.day,
-      date.hour,
-      date.minute,
-      date.second,
-    );
-    
+    // Send the date as-is to preserve local time context
+    // The backend should handle timezone conversion if needed
     return {
       'name': name,
       'value_id': valueId,
       'duration': duration,
-      'date': dateUtc.toIso8601String(), // Use UTC ISO format for API compatibility
+      'date': date.toIso8601String(), // Send local time to preserve user's intended date
       'notes': notes,
     };
   }
 
   factory ActivityModel.fromJson(Map<String, dynamic> json) {
-    // Parse dates and ensure they're in UTC format
-    DateTime parseToUtc(String dateStr) {
+    // Parse dates more intelligently to preserve user's local context
+    DateTime parseDate(String dateStr) {
       final parsed = DateTime.parse(dateStr);
-      return DateTime.utc(
-        parsed.year,
-        parsed.month,
-        parsed.day,
-        parsed.hour,
-        parsed.minute,
-        parsed.second,
-      );
+      // If the date comes with timezone info, convert to local time
+      // If it's UTC, convert to local; otherwise keep as-is
+      if (parsed.isUtc) {
+        return parsed.toLocal();
+      }
+      return parsed;
     }
     
     return ActivityModel(
@@ -79,10 +69,10 @@ class ActivityModel extends Equatable {
       name: json['name'],
       valueId: json['value_id'],
       duration: json['duration'],
-      date: parseToUtc(json['date']),
+      date: parseDate(json['date']),
       notes: json['notes'],
       createdAt: json['created_at'] != null 
-          ? parseToUtc(json['created_at']) 
+          ? parseDate(json['created_at']) 
           : null,
     );
   }

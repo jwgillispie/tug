@@ -60,7 +60,7 @@ class _LoginScreenState extends State<LoginScreen> {
             // Show a success message
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Hello beautiful'),
+                content: Text('hello beautiful'),
                 backgroundColor: TugColors.success,
               ),
             );

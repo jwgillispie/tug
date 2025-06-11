@@ -501,7 +501,7 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
                                           color: Colors.white,
                                         ),
                                       )
-                                    : Text(widget.fromHome ? 'done' : 'GO!'),
+                                    : Text(widget.fromHome ? 'done' : 'go!'),
                               ),
                             ),
                           ],
@@ -807,7 +807,7 @@ class ValueCard extends StatelessWidget {
             style: TextButton.styleFrom(
               foregroundColor: TugColors.error,
             ),
-            child: const Text('Delete'),
+            child: const Text('delete'),
           ),
         ],
       ),

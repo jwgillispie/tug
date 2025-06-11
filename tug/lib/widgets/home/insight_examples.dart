@@ -91,11 +91,11 @@ class InsightExamples extends StatelessWidget {
         ),
         ValueInsights(
           insights: allInsights,
-          onTap: () {
+          onTap: (insight) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text("Insight tapped! Could navigate to detailed view."),
-                duration: Duration(seconds: 2),
+              SnackBar(
+                content: Text("Insight tapped: ${insight.title}"),
+                duration: const Duration(seconds: 2),
               ),
             );
           },

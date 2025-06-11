@@ -1077,7 +1077,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                   context.read<ActivitiesBloc>().add(const LoadActivities());
                 },
                 icon: const Icon(Icons.clear, size: 16),
-                label: const Text('Reset'),
+                label: const Text('reset'),
               ),
             ],
           ),

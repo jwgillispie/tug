@@ -11,6 +11,7 @@ import 'package:tug/utils/quantum_effects.dart';
 import 'package:tug/utils/loading_messages.dart';
 import 'package:tug/widgets/tug_of_war/enhanced_tug_of_war_widget.dart';
 import 'package:tug/widgets/values/streak_overview_widget.dart';
+import 'package:tug/widgets/values/ai_insight_widget.dart';
 
 class ProgressScreen extends StatefulWidget {
   const ProgressScreen({super.key});
@@ -35,14 +36,20 @@ class _ProgressScreenState extends State<ProgressScreen>
   @override
   void initState() {
     super.initState();
-    // Initialize cache service first
-    _initializeCache();
-    // Load values without forcing refresh if we have cached data
-    context.read<ValuesBloc>().add(LoadValues(forceRefresh: false));
-    // Load streak stats without forcing refresh
-    context.read<ValuesBloc>().add(LoadStreakStats(forceRefresh: false));
-    // Also load activity data
-    _fetchActivityData(forceRefresh: false);
+    // Initialize cache service and load only essential data
+    _initializeAndLoadData();
+  }
+
+  Future<void> _initializeAndLoadData() async {
+    // Initialize services first
+    await _initializeCache();
+    
+    // Load only values initially, delay other data until values are available
+    if (mounted) {
+      context.read<ValuesBloc>().add(LoadValues(forceRefresh: false));
+      // Load activity data immediately in parallel
+      _fetchActivityData(forceRefresh: false);
+    }
   }
 
   Future<void> _initializeCache() async {
@@ -95,34 +102,15 @@ class _ProgressScreenState extends State<ProgressScreen>
     });
 
     try {
-      // Try to fetch activity statistics, but handle failure gracefully
-      Map<String, dynamic>? statistics;
-      try {
-        statistics = await _activityService.getActivityStatistics(
-          startDate: startDate,
-          endDate: endDate,
-          forceRefresh: forceRefresh,
-        );
-      } catch (e) {
-        statistics = {
-          "total_activities": 0,
-          "total_duration_minutes": 0,
-          "total_duration_hours": 0.0,
-          "average_duration_minutes": 0.0
-        };
-      }
+      // Use the optimized combined method for better performance
+      final progressData = await _activityService.getProgressData(
+        startDate: startDate,
+        endDate: endDate,
+        forceRefresh: forceRefresh,
+      );
 
-      // Try to fetch the summary data, but handle failure gracefully
-      Map<String, dynamic> summary;
-      try {
-        summary = await _activityService.getActivitySummary(
-          startDate: startDate,
-          endDate: endDate,
-          forceRefresh: forceRefresh,
-        );
-      } catch (e) {
-        summary = {"values": []};
-      }
+      final statistics = progressData['statistics'] as Map<String, dynamic>;
+      final summary = progressData['summary'] as Map<String, dynamic>;
 
       // Process the summary data into the format we need
       final Map<String, Map<String, dynamic>> processedData = {};
@@ -162,6 +150,7 @@ class _ProgressScreenState extends State<ProgressScreen>
           _isLoading = false;
           _isFirstLoad = false;
         });
+        
       }
     } catch (e) {
       if (mounted) {
@@ -187,23 +176,22 @@ class _ProgressScreenState extends State<ProgressScreen>
       // Clear relevant cache entries before refreshing
       await _clearProgressCache();
       
-      // Load values first - this will ensure we end up in ValuesLoaded state
-      if (mounted) {
-        context.read<ValuesBloc>().add(LoadValues(forceRefresh: true));
-      }
+      // Load values and activity data in parallel for faster refresh
+      await Future.wait([
+        Future(() {
+          if (mounted) {
+            context.read<ValuesBloc>().add(LoadValues(forceRefresh: true));
+          }
+        }),
+        _fetchActivityData(forceRefresh: true),
+      ]);
       
-      // Fetch activity data
-      await _fetchActivityData(forceRefresh: true);
-      
-      // Load streak stats separately but don't wait for it to complete
-      // to avoid ending up in StreakStatsLoaded state
+      // Load streak stats in background (non-blocking)
       if (mounted) {
         context.read<ValuesBloc>().add(LoadStreakStats(forceRefresh: true));
       }
-      
-      // Add a small delay to ensure the refresh indicator shows
-      await Future.delayed(const Duration(milliseconds: 300));
     } catch (e) {
+      // Silent fail - user will see individual error messages
     }
   }
 
@@ -215,6 +203,7 @@ class _ProgressScreenState extends State<ProgressScreen>
     } catch (e) {
     }
   }
+
 
   DateTime getStartDate(String timeframe) {
     final now = DateTime.now();
@@ -273,56 +262,6 @@ class _ProgressScreenState extends State<ProgressScreen>
     return '${percentage.round()}%';
   }
 
-  String _generateInsight(List<dynamic> values) {
-    // Find most and least aligned values
-    dynamic mostAligned;
-    dynamic leastAligned;
-    double mostAlignedDiff = double.infinity;
-    double leastAlignedDiff = -1;
-
-    for (final value in values) {
-      final activityData = _activityData[value.name];
-      if (activityData != null) {
-        final minutes = activityData['minutes'] as int;
-        final communityAvg = activityData['community_avg'] as int;
-
-        final statedImportancePercent = (value.importance / 5) * 100;
-        final actualBehaviorPercent = (minutes / communityAvg) * 100;
-        final difference =
-            (actualBehaviorPercent - statedImportancePercent).abs();
-
-        if (difference < mostAlignedDiff) {
-          mostAlignedDiff = difference;
-          mostAligned = value;
-        }
-
-        if (difference > leastAlignedDiff) {
-          leastAlignedDiff = difference;
-          leastAligned = value;
-        }
-      }
-    }
-
-    if (values.isEmpty) {
-      return 'add some values and we\'ll give you some super helpful advice.';
-    }
-
-    if (mostAligned != null && leastAligned != null) {
-      final activityData = _activityData[leastAligned.name];
-      if (activityData != null) {
-        final minutes = activityData['minutes'] as int;
-        final communityAvg = activityData['community_avg'] as int;
-
-        if (minutes < communityAvg) {
-          return 'your "${mostAligned.name}" value is looking good! put some more time towards "${leastAligned.name}" if you\'re fr about it.';
-        } else {
-          return 'your "${mostAligned.name}" value has a real nice tug! you\'re spending hella time on "${leastAligned.name}", just making sure you\'re all good with that';
-        }
-      }
-    }
-
-    return 'tug some activities and we\'ll get you some fantastic insights.';
-  }
 
   Widget _buildSummaryItem(
       BuildContext context, String title, String value, IconData icon) {
@@ -653,40 +592,39 @@ class _ProgressScreenState extends State<ProgressScreen>
                                         activityData['community_avg'] as int,
                                     valueColor:
                                         value.color, // Pass the value's color
+                                    timeframe: _selectedTimeframe, // Pass the selected timeframe
                                   ));
                             }),
 
                             const SizedBox(height: 16),
 
-                            // Insight card
-                            Card(
-                              margin: const EdgeInsets.only(bottom: 16),
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        const Icon(
-                                          Icons.lightbulb,
-                                          color: Colors.amber,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          'insight',
-                                          style: Theme.of(context)
-                                              .textTheme
-                                              .titleMedium,
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 12),
-                                    Text(_generateInsight(values)),
-                                  ],
-                                ),
+                            // AI Insights section
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8, left: 4),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.auto_awesome,
+                                    color: Colors.amber,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'ai insights',
+                                    style: Theme.of(context).textTheme.titleMedium,
+                                  ),
+                                ],
                               ),
                             ),
+
+                            // Individual AI Insight Widgets for each value
+                            ...values.map((value) => Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: AIInsightWidget(
+                                value: value,
+                                timeframe: _selectedTimeframe,
+                              ),
+                            )),
                           ],
                           ),
                         );

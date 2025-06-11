@@ -79,7 +79,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           if (state is Authenticated) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('YAYYYYYYYYYYYYYYY'),
+                content: Text('yayyyyyyyyyyyyyyy'),
                 backgroundColor: TugColors.success,
               ),
             );
@@ -90,7 +90,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content:
-                    Text('Verification email sent. Please check your inbox.'),
+                    Text('verification email sent. please check your inbox.'),
                 backgroundColor: TugColors.success,
               ),
             );

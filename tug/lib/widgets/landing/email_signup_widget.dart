@@ -95,7 +95,7 @@ class _EmailSignupWidgetState extends State<EmailSignupWidget> {
               TextFormField(
                 controller: _emailController,
                 decoration: InputDecoration(
-                  hintText: 'Enter your email',
+                  hintText: 'enter your email',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -132,7 +132,7 @@ class _EmailSignupWidgetState extends State<EmailSignupWidget> {
                               color: Colors.white,
                             ),
                           )
-                        : const Text('Subscribe'),
+                        : const Text('subscribe'),
                   ),
                 ),
               ),

@@ -36,7 +36,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tug Pro Subscription'),
+        title: const Text('tug pro subscription'),
         leading: widget.showCloseButton
             ? IconButton(
                 icon: const Icon(Icons.close),
@@ -49,7 +49,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
               context.read<SubscriptionBloc>().add(RestorePurchases());
             },
             child: const Text(
-              'Restore',
+              'restore',
               style: TextStyle(color: Colors.white),
             ),
           ),
@@ -61,7 +61,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
             // Show success message and close
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('Subscription purchased successfully!'),
+                content: Text('subscription purchased successfully!'),
                 backgroundColor: Colors.green,
               ),
             );
@@ -155,7 +155,7 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                       onPressed: () {
                         context.read<SubscriptionBloc>().add(LoadSubscriptions());
                       },
-                      child: const Text('Try Again'),
+                      child: const Text('try again'),
                     ),
                   ],
                 ),
@@ -247,7 +247,7 @@ class _SubscriptionContent extends StatelessWidget {
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
                 ),
-                child: const Text('Restore Previous Purchases'),
+                child: const Text('restore previous purchases'),
               ),
             ),
             
@@ -275,7 +275,7 @@ class _SubscriptionContent extends StatelessWidget {
                     // Navigate to terms of service
                     context.push('/terms');
                   },
-                  child: const Text('Terms of Service'),
+                  child: const Text('terms of service'),
                 ),
                 const Text('•'),
                 TextButton(
@@ -283,7 +283,7 @@ class _SubscriptionContent extends StatelessWidget {
                     // Navigate to privacy policy
                     context.push('/privacy');
                   },
-                  child: const Text('Privacy Policy'),
+                  child: const Text('privacy policy'),
                 ),
               ],
             ),
@@ -332,7 +332,7 @@ class _SubscriptionContent extends StatelessWidget {
             const SizedBox(height: 32),
             ElevatedButton(
               onPressed: () => context.pop(),
-              child: const Text('Continue to App'),
+              child: const Text('continue to app'),
             ),
             const SizedBox(height: 24),
             OutlinedButton(
@@ -395,7 +395,7 @@ class _SubscriptionContent extends StatelessWidget {
                     showDialog(
                       context: context,
                       builder: (context) => AlertDialog(
-                        title: const Text('Manage Subscription'),
+                        title: const Text('manage subscription'),
                         content: Column(
                           mainAxisSize: MainAxisSize.min,
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -417,7 +417,7 @@ class _SubscriptionContent extends StatelessWidget {
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(context),
-                            child: const Text('OK'),
+                            child: const Text('ok'),
                           ),
                         ],
                       ),
@@ -425,7 +425,7 @@ class _SubscriptionContent extends StatelessWidget {
                   }
                 }
               },
-              child: const Text('Manage Subscription'),
+              child: const Text('manage subscription'),
             ),
             // Support information
             if (kDebugMode) ...[
@@ -435,7 +435,7 @@ class _SubscriptionContent extends StatelessWidget {
                   showDialog(
                     context: context,
                     builder: (context) => AlertDialog(
-                      title: const Text('Subscription Help'),
+                      title: const Text('subscription help'),
                       content:  SingleChildScrollView(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
@@ -469,7 +469,7 @@ class _SubscriptionContent extends StatelessWidget {
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(context),
-                          child: const Text('Got it'),
+                          child: const Text('got it'),
                         ),
                       ],
                     ),

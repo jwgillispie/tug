@@ -52,7 +52,7 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
       if (_selectedValueId == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Please select a value'),
+            content: Text('please select a value'),
             backgroundColor: TugColors.error,
           ),
         );
@@ -147,16 +147,16 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
                   TextFormField(
                     controller: _nameController,
                     decoration: const InputDecoration(
-                      labelText: 'Activity Name',
-                      hintText: 'What did you do?',
+                      labelText: 'activity name',
+                      hintText: 'what did you do?',
                       border: OutlineInputBorder(),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter an activity name';
+                        return 'please enter an activity name';
                       }
                       if (value.length < 2) {
-                        return 'Activity name must be at least 2 characters';
+                        return 'activity name must be at least 2 characters';
                       }
                       return null;
                     },
@@ -166,8 +166,8 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
                   // Value Selector - Improved to clearly show the selected value
                   DropdownButtonFormField<String>(
                     decoration: const InputDecoration(
-                      labelText: 'Related Value',
-                      hintText: 'Which value does this support?',
+                      labelText: 'related value',
+                      hintText: 'which value does this support?',
                       border: OutlineInputBorder(),
                       contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
                     ),
@@ -264,7 +264,7 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
                     },
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please select a value';
+                        return 'please select a value';
                       }
                       return null;
                     },
@@ -274,7 +274,7 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
                   // Duration Input
                   if (_showDurationPresets) ...[
                     const Text(
-                      'Duration (minutes):',
+                      'duration (minutes):',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
@@ -318,21 +318,21 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
                           child: TextFormField(
                             controller: _durationController,
                             decoration: const InputDecoration(
-                              labelText: 'Custom Duration',
-                              hintText: 'Minutes',
+                              labelText: 'custom duration',
+                              hintText: 'minutes',
                               border: OutlineInputBorder(),
                             ),
                             keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Please enter duration';
+                                return 'please enter duration';
                               }
                               final minutes = int.tryParse(value);
                               if (minutes == null || minutes <= 0) {
-                                return 'Enter a valid number of minutes';
+                                return 'enter a valid number of minutes';
                               }
                               if (minutes > 1440) {
-                                return 'Maximum 24 hours (1440 minutes)';
+                                return 'maximum 24 hours (1440 minutes)';
                               }
                               return null;
                             },
@@ -346,7 +346,7 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
                             });
                           },
                           icon: const Icon(Icons.more_horiz, size: 16),
-                          label: const Text('More Options'),
+                          label: const Text('more options'),
                           style: TugButtons.tertiaryButtonStyle(
                             isDark: Theme.of(context).brightness == Brightness.dark
                           ).copyWith(
@@ -368,21 +368,21 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
                           child: TextFormField(
                             controller: _durationController,
                             decoration: const InputDecoration(
-                              labelText: 'Duration (minutes)',
+                              labelText: 'duration (minutes)',
                               border: OutlineInputBorder(),
                               contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
                             ),
                             keyboardType: TextInputType.number,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return 'Please enter duration';
+                                return 'please enter duration';
                               }
                               final minutes = int.tryParse(value);
                               if (minutes == null || minutes <= 0) {
-                                return 'Enter a valid number of minutes';
+                                return 'enter a valid number of minutes';
                               }
                               if (minutes > 1440) {
-                                return 'Maximum 24 hours (1440 minutes)';
+                                return 'maximum 24 hours (1440 minutes)';
                               }
                               return null;
                             },
@@ -408,7 +408,7 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
                             },
                             child: InputDecorator(
                               decoration: InputDecoration(
-                                labelText: 'Date',
+                                labelText: 'date',
                                 border: const OutlineInputBorder(),
                                 fillColor: Theme.of(context).brightness == Brightness.light
                                     ? TugColors.lightSurfaceVariant
@@ -459,7 +459,7 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
                           });
                         },
                         icon: const Icon(Icons.chevron_left, size: 18),
-                        label: const Text('Back to Simple View'),
+                        label: const Text('back to simple view'),
                         style: TugButtons.tertiaryButtonStyle(
                           isDark: Theme.of(context).brightness == Brightness.dark
                         ).copyWith(
@@ -477,8 +477,8 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
                   TextFormField(
                     controller: _notesController,
                     decoration: const InputDecoration(
-                      labelText: 'Notes (Optional)',
-                      hintText: 'Add any additional details',
+                      labelText: 'notes (optional)',
+                      hintText: 'add any additional details',
                       border: OutlineInputBorder(),
                     ),
                     maxLines: 3,
@@ -503,7 +503,7 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
                                 color: Colors.white,
                               ),
                             )
-                          : const Text('Save Activity'),
+                          : const Text('save activity'),
                     ),
                   ),
                 ],

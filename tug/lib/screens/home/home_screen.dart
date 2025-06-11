@@ -279,7 +279,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text('Error: ${state.message}'),
+                      Text('error: ${state.message}'),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: _refreshValues,
@@ -770,7 +770,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               }
               
               return const Center(
-                child: Text('Loading values...'),
+                child: Text('loading values...'),
               );
             },
           ),

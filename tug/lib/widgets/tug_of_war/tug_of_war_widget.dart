@@ -460,7 +460,7 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
                       Row(
                         children: [
                           Text(
-                            'Actual Behavior',
+                            'actual Behavior',
                             style: TugTextStyles.label.copyWith(
                               color: _valueColor,
                               fontWeight: FontWeight.w500,

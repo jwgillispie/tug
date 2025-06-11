@@ -94,8 +94,8 @@ class _EditActivityDialogState extends State<EditActivityDialog> {
                     TextField(
                       controller: _nameController,
                       decoration: const InputDecoration(
-                        labelText: 'Activity Name',
-                        hintText: 'What did you do?',
+                        labelText: 'activity name',
+                        hintText: 'what did you do?',
                         border: OutlineInputBorder(),
                       ),
                     ),
@@ -110,8 +110,8 @@ class _EditActivityDialogState extends State<EditActivityDialog> {
                         
                         return DropdownButtonFormField<String>(
                           decoration: const InputDecoration(
-                            labelText: 'Related Value',
-                            hintText: 'Which value does this support?',
+                            labelText: 'related value',
+                            hintText: 'which value does this support?',
                             border: OutlineInputBorder(),
                           ),
                           value: _valueId,
@@ -154,7 +154,7 @@ class _EditActivityDialogState extends State<EditActivityDialog> {
                     TextField(
                       controller: _durationController,
                       decoration: const InputDecoration(
-                        labelText: 'Duration (minutes)',
+                        labelText: 'duration (minutes)',
                         border: OutlineInputBorder(),
                       ),
                       keyboardType: TextInputType.number,
@@ -180,7 +180,7 @@ class _EditActivityDialogState extends State<EditActivityDialog> {
                       },
                       child: InputDecorator(
                         decoration: const InputDecoration(
-                          labelText: 'Date',
+                          labelText: 'date',
                           border: OutlineInputBorder(),
                         ),
                         child: Row(

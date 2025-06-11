@@ -1,7 +1,6 @@
 // lib/services/api_service.dart
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
-import 'package:flutter/foundation.dart';
 import 'package:tug/config/env_confg.dart';
 import '../utils/api_error.dart';
 
@@ -12,8 +11,8 @@ class ApiService {
       : _dio = dio ??
             Dio(BaseOptions(
               baseUrl: EnvConfig.apiUrl, // This will use your Render URL
-              connectTimeout: const Duration(seconds: 15), // Increased timeouts for potential API latency
-              receiveTimeout: const Duration(seconds: 15),
+              connectTimeout: const Duration(seconds: 8), // Reduced timeouts for better UX
+              receiveTimeout: const Duration(seconds: 10),
               // Don't throw exceptions automatically for response status
               validateStatus: (status) => true,
               followRedirects: true,
@@ -127,25 +126,22 @@ class ApiService {
       await _setAuthHeader();
       final fullUrl = '${_dio.options.baseUrl}$path/';
       
-      // Special handling for activity data to solve datetime issues
-      // Convert ISO8601 timestamps with timezone to simple YYYY-MM-DD format
+      // Special handling for activity data to preserve user's intended date context
       if (path.contains('/activities') && data is Map) {
         Map<String, dynamic> processedData = Map<String, dynamic>.from(data);
         
-        // Process date fields to strip timezone information
+        // For activity dates, send the local date in ISO format to preserve user intent
         if (processedData.containsKey('date')) {
           try {
             final dateStr = processedData['date'];
             if (dateStr is String && dateStr.contains('T')) {
-              // Parse the ISO8601 string
+              // Parse the ISO8601 string and preserve local time context
               final parsedDate = DateTime.parse(dateStr);
-              // Format as YYYY-MM-DD
-              final dateOnly = "${parsedDate.year.toString().padLeft(4, '0')}-"
-                  "${parsedDate.month.toString().padLeft(2, '0')}-"
-                  "${parsedDate.day.toString().padLeft(2, '0')}";
-              processedData['date'] = dateOnly;
+              // Send as local datetime to preserve user's intended time
+              processedData['date'] = parsedDate.toLocal().toIso8601String();
             }
           } catch (e) {
+            // If parsing fails, leave the date as-is
           }
         }
         
@@ -207,25 +203,22 @@ class ApiService {
     try {
       await _setAuthHeader();
 
-      // Special handling for activity data to solve datetime issues
-      // Convert ISO8601 timestamps with timezone to simple YYYY-MM-DD format
+      // Special handling for activity data to preserve user's intended date context
       if (path.contains('/activities') && data is Map) {
         Map<String, dynamic> processedData = Map<String, dynamic>.from(data);
         
-        // Process date fields to strip timezone information
+        // For activity dates, send the local date in ISO format to preserve user intent
         if (processedData.containsKey('date')) {
           try {
             final dateStr = processedData['date'];
             if (dateStr is String && dateStr.contains('T')) {
-              // Parse the ISO8601 string
+              // Parse the ISO8601 string and preserve local time context
               final parsedDate = DateTime.parse(dateStr);
-              // Format as YYYY-MM-DD
-              final dateOnly = "${parsedDate.year.toString().padLeft(4, '0')}-"
-                  "${parsedDate.month.toString().padLeft(2, '0')}-"
-                  "${parsedDate.day.toString().padLeft(2, '0')}";
-              processedData['date'] = dateOnly;
+              // Send as local datetime to preserve user's intended time
+              processedData['date'] = parsedDate.toLocal().toIso8601String();
             }
           } catch (e) {
+            // If parsing fails, leave the date as-is
           }
         }
         

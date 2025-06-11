@@ -10,6 +10,7 @@ class EnhancedTugOfWarWidget extends StatefulWidget {
   final int actualBehavior; // Minutes spent
   final int communityAverage; // Community average minutes
   final String valueColor; // Added parameter for the value's color
+  final String timeframe; // Added parameter for the timeframe (daily, weekly, monthly)
   final VoidCallback? onTap;
 
   const EnhancedTugOfWarWidget({
@@ -19,6 +20,7 @@ class EnhancedTugOfWarWidget extends StatefulWidget {
     required this.actualBehavior,
     required this.communityAverage,
     this.valueColor = '#7C3AED', // Default to purple if not provided
+    this.timeframe = 'daily', // Default to daily if not provided
     this.onTap,
   });
 
@@ -104,6 +106,20 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
     } catch (e) {
       // Return a default color if parsing fails
       return TugColors.primaryPurple;
+    }
+  }
+
+  // Helper method to get the timeframe display text
+  String _getTimeframeDisplayText() {
+    switch (widget.timeframe.toLowerCase()) {
+      case 'daily':
+        return '/day';
+      case 'weekly':
+        return '/week';
+      case 'monthly':
+        return '/month';
+      default:
+        return '/day';
     }
   }
 
@@ -399,7 +415,7 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
                       ),
                     ),
                     child: Text(
-                      '${widget.actualBehavior} mins/day',
+                      '${widget.actualBehavior} mins${_getTimeframeDisplayText()}',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -739,7 +755,7 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
                   Row(
                     children: [
                       Text(
-                        'Actual Behavior',
+                        'actual Behavior',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
@@ -809,7 +825,7 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    'community average: ${widget.communityAverage} mins/day',
+                    'community average: ${widget.communityAverage} mins${_getTimeframeDisplayText()}',
                     style: TextStyle(
                       fontSize: 12,
                       color: _valueColor.withOpacity(0.8),

@@ -232,8 +232,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   }
 
                   return TugTextField(
-                    label: 'Email',
-                    hint: 'Your email address',
+                    label: 'email',
+                    hint: 'your email address',
                     controller: TextEditingController(text: email),
                     keyboardType: TextInputType.emailAddress,
                     validator: null,

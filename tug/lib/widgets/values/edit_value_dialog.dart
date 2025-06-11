@@ -65,11 +65,11 @@ class _EditValueDialogState extends State<EditValueDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             TugTextField(
-              label: 'Value',
+              label: 'value',
               controller: _nameController,
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Please enter a value';
+                  return 'please enter a value';
                 }
                 return null;
               },
@@ -99,7 +99,7 @@ class _EditValueDialogState extends State<EditValueDialog> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Color',
+              'color',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: 8),
@@ -118,7 +118,7 @@ class _EditValueDialogState extends State<EditValueDialog> {
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
           child: Text(
-            'Cancel',
+            'cancel',
             style: TextStyle(
               color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
             ),
@@ -142,7 +142,7 @@ class _EditValueDialogState extends State<EditValueDialog> {
               Navigator.of(context).pop();
             }
           },
-          child: const Text('Save'),
+          child: const Text('save'),
         ),
       ],
     );

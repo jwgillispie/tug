@@ -8,7 +8,7 @@ import 'package:tug/utils/responsive_utils.dart';
 
 class ValueInsights extends StatefulWidget {
   final List<ValueInsight> insights;
-  final VoidCallback? onTap;
+  final void Function(ValueInsight)? onTap;
   
   const ValueInsights({
     super.key,
@@ -37,29 +37,6 @@ class _ValueInsightsState extends State<ValueInsights> with SingleTickerProvider
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
-    
-    // Auto-advance pages every 8 seconds if more than one insight
-    if (widget.insights.length > 1) {
-      Future.delayed(const Duration(seconds: 8), () {
-        _autoAdvance();
-      });
-    }
-  }
-  
-  void _autoAdvance() {
-    if (!mounted) return;
-    
-    final nextPage = (_currentPage + 1) % widget.insights.length;
-    _pageController.animateToPage(
-      nextPage,
-      duration: const Duration(milliseconds: 600),
-      curve: Curves.easeOutCubic,
-    );
-    
-    // Schedule next auto-advance
-    Future.delayed(const Duration(seconds: 8), () {
-      _autoAdvance();
-    });
   }
 
   @override
@@ -124,7 +101,7 @@ class _ValueInsightsState extends State<ValueInsights> with SingleTickerProvider
                         child: InsightCard(
                           insight: insight,
                           isDark: isDark,
-                          onTap: widget.onTap,
+                          onTap: widget.onTap != null ? () => widget.onTap!(insight) : null,
                           animation: _animationController,
                         ),
                       ),
@@ -242,10 +219,11 @@ class InsightCard extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.center,
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           // Category label
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
                               color: insight.color.withOpacity(isDark ? 0.2 : 0.1),
                               borderRadius: BorderRadius.circular(4),
@@ -255,56 +233,63 @@ class InsightCard extends StatelessWidget {
                               style: TugTextStyles.label.copyWith(
                                 color: insight.color,
                                 fontWeight: FontWeight.w600,
+                                fontSize: 11,
                               ),
                             ),
                           ),
                           
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 6),
                           
                           // Title with animation
-                          AnimatedBuilder(
-                            animation: animation,
-                            builder: (context, child) {
-                              return Opacity(
-                                opacity: animation.value,
-                                child: Transform.translate(
-                                  offset: Offset(0, (1 - animation.value) * 10),
-                                  child: Text(
-                                    insight.title,
-                                    style: TugTextStyles.titleMedium.copyWith(
-                                      color: isDark ? Colors.white : Colors.black87,
+                          Flexible(
+                            child: AnimatedBuilder(
+                              animation: animation,
+                              builder: (context, child) {
+                                return Opacity(
+                                  opacity: animation.value,
+                                  child: Transform.translate(
+                                    offset: Offset(0, (1 - animation.value) * 10),
+                                    child: Text(
+                                      insight.title,
+                                      style: TugTextStyles.titleMedium.copyWith(
+                                        color: isDark ? Colors.white : Colors.black87,
+                                        fontSize: 14,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                ),
-                              );
-                            }
+                                );
+                              }
+                            ),
                           ),
                           
-                          const SizedBox(height: 4),
+                          const SizedBox(height: 2),
                           
                           // Short message
-                          AnimatedBuilder(
-                            animation: animation,
-                            builder: (context, child) {
-                              return Opacity(
-                                opacity: Curves.easeOut.transform(animation.value),
-                                child: Transform.translate(
-                                  offset: Offset(0, (1 - animation.value) * 15),
-                                  child: Text(
-                                    insight.message,
-                                    style: TugTextStyles.bodySmall.copyWith(
-                                      color: isDark 
-                                        ? Colors.white70 
-                                        : Colors.black54,
+                          Flexible(
+                            child: AnimatedBuilder(
+                              animation: animation,
+                              builder: (context, child) {
+                                return Opacity(
+                                  opacity: Curves.easeOut.transform(animation.value),
+                                  child: Transform.translate(
+                                    offset: Offset(0, (1 - animation.value) * 15),
+                                    child: Text(
+                                      insight.message,
+                                      style: TugTextStyles.bodySmall.copyWith(
+                                        color: isDark 
+                                          ? Colors.white70 
+                                          : Colors.black54,
+                                        fontSize: 12,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                ),
-                              );
-                            }
+                                );
+                              }
+                            ),
                           ),
                         ],
                       ),

@@ -42,7 +42,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         if (state is PasswordResetSent) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Password reset email sent to ${state.email}'),
+              content: Text('password reset email sent to ${state.email}'),
               backgroundColor: TugColors.success,
             ),
           );
@@ -59,7 +59,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Reset Password'),
+          title: const Text('reset password'),
         ),
         body: SafeArea(
           child: SingleChildScrollView(
@@ -114,7 +114,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                                   color: Colors.white,
                                 ),
                               )
-                            : const Text('Reset Password'),
+                            : const Text('reset password'),
                       ),
                     ),
                   ),

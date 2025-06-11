@@ -1,5 +1,4 @@
 // lib/services/activity_service.dart
-import 'package:flutter/foundation.dart';
 import 'package:tug/models/activity_model.dart';
 import 'package:tug/models/value_model.dart';
 import 'package:tug/services/cache_service.dart';
@@ -13,6 +12,7 @@ class ActivityService {
   static const String _activitiesCachePrefix = 'api_activities';
   static const String _statisticsCachePrefix = 'api_statistics';
   static const String _summaryCachePrefix = 'api_summary';
+  static const String _progressCachePrefix = 'api_progress_combined';
   static const Duration _cacheValidity = Duration(minutes: 15);
 
   ActivityService({
@@ -330,11 +330,163 @@ class ActivityService {
     }
   }
 
+  // Combined method to fetch both statistics and summary efficiently
+  Future<Map<String, dynamic>> getProgressData({
+    DateTime? startDate,
+    DateTime? endDate,
+    bool forceRefresh = false,
+  }) async {
+    final cacheKey = '${_progressCachePrefix}_${startDate?.toIso8601String().split('T')[0] ?? 'all'}_${endDate?.toIso8601String().split('T')[0] ?? 'all'}';
+
+    // Try to get from cache if not forcing refresh
+    if (!forceRefresh) {
+      final cachedData = await _cacheService.get<Map<String, dynamic>>(cacheKey);
+      if (cachedData != null) {
+        return cachedData;
+      }
+    }
+
+    try {
+      // Fetch both statistics and summary in parallel
+      final results = await Future.wait([
+        getActivityStatistics(
+          startDate: startDate,
+          endDate: endDate,
+          forceRefresh: forceRefresh,
+        ),
+        getActivitySummary(
+          startDate: startDate,
+          endDate: endDate,
+          forceRefresh: forceRefresh,
+        ),
+      ]);
+
+      final combinedData = {
+        'statistics': results[0],
+        'summary': results[1],
+        'timestamp': DateTime.now().toIso8601String(),
+      };
+
+      // Cache the combined results
+      await _cacheService.set(
+        cacheKey,
+        combinedData,
+        memoryCacheDuration: _cacheValidity,
+        diskCacheDuration: Duration(hours: 2),
+      );
+
+      return combinedData;
+    } catch (e) {
+      // Return default data structure
+      return {
+        'statistics': {
+          "total_activities": 0,
+          "total_duration_minutes": 0,
+          "total_duration_hours": 0.0,
+          "average_duration_minutes": 0.0,
+        },
+        'summary': {"values": []},
+        'timestamp': DateTime.now().toIso8601String(),
+      };
+    }
+  }
+
+  // Get enhanced data for AI insights including individual activities
+  Future<Map<String, dynamic>> getInsightData({
+    DateTime? startDate,
+    DateTime? endDate,
+    bool forceRefresh = false,
+  }) async {
+    final insightCacheKey = '${_progressCachePrefix}_insights_${startDate?.toIso8601String().split('T')[0] ?? 'all'}_${endDate?.toIso8601String().split('T')[0] ?? 'all'}';
+
+    // Try to get from cache if not forcing refresh
+    if (!forceRefresh) {
+      final cachedData = await _cacheService.get<Map<String, dynamic>>(insightCacheKey);
+      if (cachedData != null) {
+        return cachedData;
+      }
+    }
+
+    try {
+      // Fetch progress data and individual activities in parallel
+      final results = await Future.wait([
+        getProgressData(
+          startDate: startDate,
+          endDate: endDate,
+          forceRefresh: forceRefresh,
+        ),
+        getActivities(
+          startDate: startDate,
+          endDate: endDate,
+          forceRefresh: forceRefresh,
+        ),
+      ]);
+
+      final progressData = results[0] as Map<String, dynamic>;
+      final activities = results[1] as List<ActivityModel>;
+
+      // Group activities by value for easier analysis
+      final Map<String, List<Map<String, dynamic>>> activitiesByValue = {};
+      for (final activity in activities) {
+        final key = activity.valueId;
+        if (!activitiesByValue.containsKey(key)) {
+          activitiesByValue[key] = [];
+        }
+        activitiesByValue[key]!.add({
+          'name': activity.name,
+          'duration': activity.duration,
+          'date': activity.date.toIso8601String(),
+          'notes': activity.notes,
+        });
+      }
+
+      final combinedData = {
+        'statistics': progressData['statistics'],
+        'summary': progressData['summary'],
+        'individual_activities': activities.map((a) => {
+          'name': a.name,
+          'value_id': a.valueId,
+          'duration': a.duration,
+          'date': a.date.toIso8601String(),
+          'notes': a.notes,
+        }).toList(),
+        'activities_by_value': activitiesByValue,
+        'timestamp': DateTime.now().toIso8601String(),
+      };
+
+      // Cache the results for shorter duration since this is more detailed data
+      await _cacheService.set(
+        insightCacheKey,
+        combinedData,
+        memoryCacheDuration: Duration(minutes: 10),
+        diskCacheDuration: Duration(hours: 1),
+      );
+
+      return combinedData;
+    } catch (e) {
+      // Fallback to basic progress data if enhanced data fails
+      final progressData = await getProgressData(
+        startDate: startDate,
+        endDate: endDate,
+        forceRefresh: forceRefresh,
+      );
+      
+      return {
+        'statistics': progressData['statistics'],
+        'summary': progressData['summary'],
+        'individual_activities': [],
+        'activities_by_value': {},
+        'timestamp': DateTime.now().toIso8601String(),
+      };
+    }
+  }
+
   // Helper method to invalidate all activity-related caches
   Future<void> _invalidateActivityCaches() async {
     await _cacheService.clearByPrefix(_activitiesCachePrefix);
     await _cacheService.clearByPrefix(_statisticsCachePrefix);
     await _cacheService.clearByPrefix(_summaryCachePrefix);
+    await _cacheService.clearByPrefix(_progressCachePrefix);
   }
 
   // Helper method to format dates consistently for API

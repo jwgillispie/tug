@@ -208,7 +208,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               const SizedBox(height: 4),
                               _loadingAchievements
                                   ? const Text(
-                                      'Loading...',
+                                      'loading...',
                                       style: TextStyle(
                                         fontSize: 14,
                                         color: Colors.grey,
@@ -311,7 +311,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const Padding(
               padding: EdgeInsets.only(bottom: 24.0),
               child: Text(
-                'Tug v2.0.0',
+                'tug v2.0.0',
                 style: TextStyle(
                   color: Colors.grey,
                   fontSize: 12,
@@ -332,11 +332,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
-        String displayName = 'User';
+        String displayName = 'user';
         String email = '';
 
         if (state is Authenticated) {
-          displayName = state.user.displayName ?? 'User';
+          displayName = state.user.displayName ?? 'user';
           email = state.user.email ?? '';
         }
 
@@ -831,12 +831,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     Navigator.pop(context); // Close the confirmation dialog
 
     // Show loading indicator
-    _showLoadingDialog('Preparing to delete account...');
+    _showLoadingDialog('preparing to delete account...');
 
     try {
       final user = FirebaseAuth.instance.currentUser;
       if (user == null) {
-        throw Exception('No user is currently signed in');
+        throw Exception('no user is currently signed in');
       }
 
       // 1. Re-authenticate the user before deletion (required by Firebase)
@@ -857,7 +857,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
 
       // Update loading message
-      _showLoadingDialog('Authenticating...');
+      _showLoadingDialog('authenticating...');
 
       try {
         // Re-authenticate with Firebase
@@ -873,18 +873,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
           _isDeleting = false;
         });
 
-        String errorMessage = 'Authentication failed';
+        String errorMessage = 'authentication failed';
         if (authError is FirebaseAuthException) {
           switch (authError.code) {
             case 'wrong-password':
-              errorMessage = 'Incorrect password';
+              errorMessage = 'incorrect password';
               break;
             case 'user-mismatch':
               errorMessage =
-                  'The provided credentials do not match the current user';
+                  'the provided credentials do not match the current user';
               break;
             default:
-              errorMessage = 'Authentication error: ${authError.message}';
+              errorMessage = 'authentication error: ${authError.message}';
           }
         }
 
@@ -908,18 +908,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
 
       // Update loading message
-      _showLoadingDialog('Deleting account data (values, activities, etc.)...');
+      _showLoadingDialog('deleting account data (values, activities, etc.)...');
 
       // 2. Delete account from your backend
       final userService = UserService();
       final backendDeleteSuccess = await userService.deleteAccount();
 
       if (!backendDeleteSuccess) {
-        throw Exception('Failed to delete account data from the server');
+        throw Exception('failed to delete account data from the server');
       }
 
       // Update loading message
-      _showLoadingDialog('Finalizing account deletion...');
+      _showLoadingDialog('finalizing account deletion...');
 
       // 3. Delete the Firebase account
       await user.delete();

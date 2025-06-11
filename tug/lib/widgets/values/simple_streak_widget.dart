@@ -134,7 +134,7 @@ class SimpleStreakWidget extends StatelessWidget {
                     Expanded(
                       child: _buildSummaryItem(
                         context,
-                        'Active Streaks',
+                        'active streaks',
                         '$totalActiveStreaks',
                         Icons.local_fire_department,
                         Colors.orange,
@@ -143,7 +143,7 @@ class SimpleStreakWidget extends StatelessWidget {
                     Expanded(
                       child: _buildSummaryItem(
                         context,
-                        'Top Streak',
+                        'top streak',
                         '${topStreakValue.currentStreak} days',
                         Icons.emoji_events,
                         Colors.amber,
