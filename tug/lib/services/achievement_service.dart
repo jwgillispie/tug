@@ -7,6 +7,7 @@ import 'package:tug/models/value_model.dart';
 import 'package:tug/services/activity_service.dart';
 import 'package:tug/services/api_service.dart';
 import 'package:tug/services/cache_service.dart';
+import 'package:tug/services/service_locator.dart';
 
 class AchievementService {
   final ActivityService _activityService;
@@ -22,8 +23,8 @@ class AchievementService {
     CacheService? cacheService,
     ApiService? apiService,
   })  : _activityService = activityService ?? ActivityService(),
-        _cacheService = cacheService ?? CacheService(),
-        _apiService = apiService ?? ApiService();
+        _cacheService = cacheService ?? ServiceLocator.cacheService,
+        _apiService = apiService ?? ServiceLocator.apiService;
 
   /// Gets all achievements with calculated progress based on user data
   Future<List<AchievementModel>> getAchievements({bool forceRefresh = false}) async {

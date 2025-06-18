@@ -4,9 +4,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
-import 'package:tug/services/api_service.dart';
 import 'package:tug/services/cache_service.dart';
 import 'package:tug/services/subscription_service.dart';
+import 'package:tug/services/service_locator.dart';
+import 'package:tug/utils/error_handler.dart';
 import '../../repositories/auth_repository.dart';
 
 // Events
@@ -158,16 +159,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
 
       if (user != null) {
-        // Sync with MongoDB after successful authentication
-        try {
-          final apiService = ApiService();
-          final syncSuccess = await apiService.syncUserWithMongoDB();
-
-          // Sync completed - continuing with login regardless of success
-        } catch (e) {
-          // Log but don't fail if sync fails
-        }
-
+        await _syncUserAfterAuth();
         emit(Authenticated(user, emailVerified: user.emailVerified));
       } else {
         emit(const AuthError('Login failed'));
@@ -190,16 +182,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
 
       if (user != null) {
-        // Sync with MongoDB after successful signup
-        try {
-          final apiService = ApiService();
-          final syncSuccess = await apiService.syncUserWithMongoDB();
-
-          // Sync completed - continuing with signup regardless of success
-        } catch (e) {
-          // Log but don't fail if sync fails
-        }
-
+        await _syncUserAfterAuth();
+        
         // Send email verification
         await authRepository.sendEmailVerification();
 
@@ -230,17 +214,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
   /// Clear all user-specific cached data on logout
   Future<void> _clearUserDataOnLogout() async {
-    try {
-      
-      // Clear all cache service data
-      await CacheService().clear();
-      
-      // Clear subscription service data (RevenueCat logout)
-      await SubscriptionService().logoutUser();
-      
-    } catch (e) {
-      // Don't rethrow - logout should still proceed even if cache clearing fails
-    }
+    await ErrorHandler.safeVoidOperation(
+      () async {
+        // Clear all cache service data
+        await CacheService().clear();
+        
+        // Clear subscription service data (RevenueCat logout)
+        await SubscriptionService().logoutUser();
+      },
+      onError: (error) {
+        // Don't rethrow - logout should still proceed even if cache clearing fails
+      },
+    );
   }
 
   Future<void> _onForgotPassword(
@@ -307,35 +292,24 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
+  // Helper method to sync user after authentication
+  Future<void> _syncUserAfterAuth() async {
+    await ErrorHandler.safeVoidOperation(
+      () => ServiceLocator.apiService.syncUserWithMongoDB(),
+      onError: (error) {
+        // Log but don't fail if sync fails - authentication should still proceed
+      },
+    );
+  }
+
   // Helper method to map Firebase errors to user-friendly messages
   AuthError _mapFirebaseErrorToAuthError(dynamic error) {
     if (error is FirebaseAuthException) {
-      switch (error.code) {
-        case 'user-not-found':
-          return AuthError('No user found with this email', code: error.code);
-        case 'wrong-password':
-          return AuthError('Incorrect password', code: error.code);
-        case 'invalid-credential':
-          return AuthError('Invalid email or password. Please check your credentials and try again.', code: error.code);
-        case 'email-already-in-use':
-          return AuthError('This email is already registered',
-              code: error.code);
-        case 'weak-password':
-          return AuthError('Password is too weak. Use at least 6 characters.',
-              code: error.code);
-        case 'invalid-email':
-          return AuthError('Invalid email format', code: error.code);
-        case 'user-disabled':
-          return AuthError('This account has been disabled', code: error.code);
-        case 'requires-recent-login':
-          return AuthError('Please log in again to continue', code: error.code);
-        case 'too-many-requests':
-          return AuthError('Too many attempts. Please try again later.',
-              code: error.code);
-        default:
-          return AuthError(error.message ?? 'Authentication error',
-              code: error.code);
-      }
+      final message = ErrorHandler.getFirebaseAuthErrorMessage(error.code);
+      return AuthError(
+        error.message ?? message, 
+        code: error.code
+      );
     }
     return AuthError(error.toString());
   }

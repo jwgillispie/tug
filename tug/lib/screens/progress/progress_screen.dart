@@ -55,6 +55,7 @@ class _ProgressScreenState extends State<ProgressScreen>
     try {
       await _cacheService.initialize();
     } catch (e) {
+      // Cache initialization failed - not critical for functionality
     }
   }
 
@@ -87,6 +88,7 @@ class _ProgressScreenState extends State<ProgressScreen>
           return;
         }
       } catch (e) {
+        // Failed to load cached data - will fetch fresh data instead
       }
     }
 
@@ -98,28 +100,43 @@ class _ProgressScreenState extends State<ProgressScreen>
     });
 
     try {
-      // Use the optimized combined method for better performance
-      final progressData = await _activityService.getProgressData(
+      // Fetch activities directly to ensure we have current data
+      final activities = await _activityService.getActivities(
         startDate: startDate,
         endDate: endDate,
         forceRefresh: forceRefresh,
       );
 
-      final statistics = progressData['statistics'] as Map<String, dynamic>;
-      final summary = progressData['summary'] as Map<String, dynamic>;
+      // Get values from the ValuesBloc state (before async operations)
+      List<dynamic> activeValues = [];
+      if (mounted) {
+        final valuesState = context.read<ValuesBloc>().state;
+        if (valuesState is ValuesLoaded) {
+          activeValues = valuesState.values.where((v) => v.active).toList();
+        }
+      }
 
-      // Process the summary data into the format we need
+      // Calculate user activity data locally
       final Map<String, Map<String, dynamic>> processedData = {};
 
-      if (summary['values'] is List) {
-        for (final value in summary['values']) {
-          if (value is Map<String, dynamic> && value['name'] != null) {
-            processedData[value['name']] = {
-              'minutes': value['minutes'] ?? 0,
-              'community_avg': value['community_avg'] ?? 60,
-            };
-          }
-        }
+      for (final value in activeValues) {
+        // Calculate total minutes for this value within the date range
+        final valueActivities = activities.where((activity) => 
+          activity.valueId == value.id
+        ).toList();
+
+        final totalMinutes = valueActivities.fold<int>(
+          0, 
+          (sum, activity) => sum + activity.duration
+        );
+
+        // Calculate community average based on timeframe
+        final communityAvg = _calculateCommunityAverage(value.name, _selectedTimeframe);
+
+        processedData[value.name] = {
+          'minutes': totalMinutes,
+          'community_avg': communityAvg,
+        };
       }
 
       // Cache the combined data for faster subsequent loads
@@ -128,7 +145,6 @@ class _ProgressScreenState extends State<ProgressScreen>
           cacheKey,
           {
             'activityData': processedData,
-            'statistics': statistics,
             'timeframe': _selectedTimeframe,
             'startDate': startDate.toIso8601String(),
             'endDate': endDate.toIso8601String(),
@@ -137,6 +153,7 @@ class _ProgressScreenState extends State<ProgressScreen>
           diskCacheDuration: Duration(hours: 1),
         );
       } catch (e) {
+        // Cache save failed - not critical, continue
       }
 
       if (mounted) {
@@ -196,6 +213,7 @@ class _ProgressScreenState extends State<ProgressScreen>
       // Clear our custom progress cache
       await _cacheService.clearByPrefix('progress_data_');
     } catch (e) {
+      // Cache clear failed - not critical
     }
   }
 
@@ -211,6 +229,43 @@ class _ProgressScreenState extends State<ProgressScreen>
         return now.subtract(const Duration(days: 30));
       default:
         return now.subtract(const Duration(days: 7));
+    }
+  }
+
+  /// Calculate community average based on value type and timeframe
+  int _calculateCommunityAverage(String valueName, String timeframe) {
+    // Base daily averages for different types of values (in minutes)
+    // These could be made configurable or fetched from an API in the future
+    int baseDailyAvg;
+    
+    // Estimate based on common value types
+    final lowerName = valueName.toLowerCase();
+    if (lowerName.contains('exercise') || lowerName.contains('fitness') || lowerName.contains('workout')) {
+      baseDailyAvg = 45; // 45 minutes of exercise per day
+    } else if (lowerName.contains('read') || lowerName.contains('study') || lowerName.contains('learn')) {
+      baseDailyAvg = 60; // 1 hour of reading/learning per day
+    } else if (lowerName.contains('family') || lowerName.contains('social') || lowerName.contains('friend')) {
+      baseDailyAvg = 90; // 1.5 hours of social time per day
+    } else if (lowerName.contains('work') || lowerName.contains('career') || lowerName.contains('professional')) {
+      baseDailyAvg = 480; // 8 hours of work per day
+    } else if (lowerName.contains('creative') || lowerName.contains('art') || lowerName.contains('music')) {
+      baseDailyAvg = 60; // 1 hour of creative work per day
+    } else if (lowerName.contains('meditation') || lowerName.contains('mindful') || lowerName.contains('spiritual')) {
+      baseDailyAvg = 20; // 20 minutes of meditation per day
+    } else {
+      baseDailyAvg = 60; // Default 1 hour per day
+    }
+    
+    // Adjust based on timeframe
+    switch (timeframe) {
+      case 'daily':
+        return baseDailyAvg;
+      case 'weekly':
+        return baseDailyAvg * 7; // Total for the week
+      case 'monthly':
+        return baseDailyAvg * 30; // Total for the month
+      default:
+        return baseDailyAvg;
     }
   }
 

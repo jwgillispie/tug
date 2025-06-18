@@ -2,87 +2,22 @@
 import 'package:tug/models/activity_model.dart';
 import 'package:tug/models/value_model.dart';
 import 'package:tug/services/cache_service.dart';
+import 'package:tug/services/service_locator.dart';
+import 'package:tug/utils/cache_utils.dart';
+import 'package:tug/utils/streak_utils.dart';
 import 'api_service.dart';
 
 class ActivityService {
   final ApiService _apiService;
   final CacheService _cacheService;
 
-  // Cache keys and durations
-  static const String _activitiesCachePrefix = 'api_activities';
-  static const String _statisticsCachePrefix = 'api_statistics';
-  static const String _summaryCachePrefix = 'api_summary';
-  static const String _progressCachePrefix = 'api_progress_combined';
-  static const Duration _cacheValidity = Duration(minutes: 15);
-
   ActivityService({
     ApiService? apiService,
     CacheService? cacheService,
   }) : 
-    _apiService = apiService ?? ApiService(),
-    _cacheService = cacheService ?? CacheService();
+    _apiService = apiService ?? ServiceLocator.apiService,
+    _cacheService = cacheService ?? ServiceLocator.cacheService;
 
-  // Generate cache keys based on filter parameters
-  String _generateActivitiesCacheKey({
-    String? valueId,
-    DateTime? startDate,
-    DateTime? endDate,
-  }) {
-    final parts = [_activitiesCachePrefix];
-    
-    if (valueId != null) {
-      parts.add('value_$valueId');
-    }
-    
-    if (startDate != null) {
-      parts.add('start_${startDate.toIso8601String().split('T')[0]}');
-    }
-    
-    if (endDate != null) {
-      parts.add('end_${endDate.toIso8601String().split('T')[0]}');
-    }
-    
-    return parts.join('_');
-  }
-
-  String _generateStatisticsCacheKey({
-    String? valueId,
-    DateTime? startDate,
-    DateTime? endDate,
-  }) {
-    final parts = [_statisticsCachePrefix];
-    
-    if (valueId != null) {
-      parts.add('value_$valueId');
-    }
-    
-    if (startDate != null) {
-      parts.add('start_${startDate.toIso8601String().split('T')[0]}');
-    }
-    
-    if (endDate != null) {
-      parts.add('end_${endDate.toIso8601String().split('T')[0]}');
-    }
-    
-    return parts.join('_');
-  }
-
-  String _generateSummaryCacheKey({
-    DateTime? startDate,
-    DateTime? endDate,
-  }) {
-    final parts = [_summaryCachePrefix];
-    
-    if (startDate != null) {
-      parts.add('start_${startDate.toIso8601String().split('T')[0]}');
-    }
-    
-    if (endDate != null) {
-      parts.add('end_${endDate.toIso8601String().split('T')[0]}');
-    }
-    
-    return parts.join('_');
-  }
 
   // Fetch activities with optional filtering
   Future<List<ActivityModel>> getActivities({
@@ -91,7 +26,7 @@ class ActivityService {
     DateTime? endDate,
     bool forceRefresh = false,
   }) async {
-    final cacheKey = _generateActivitiesCacheKey(
+    final cacheKey = CacheUtils.activitiesKey(
       valueId: valueId,
       startDate: startDate,
       endDate: endDate,
@@ -132,8 +67,8 @@ class ActivityService {
         await _cacheService.set(
           cacheKey,
           response,
-          memoryCacheDuration: _cacheValidity,
-          diskCacheDuration: Duration(hours: 2),
+          memoryCacheDuration: CacheUtils.getCacheDuration(CacheDataType.standardData),
+          diskCacheDuration: CacheUtils.getDiskCacheDuration(CacheDataType.standardData),
         );
 
         return response.map((json) => ActivityModel.fromJson(json)).toList();
@@ -203,7 +138,7 @@ class ActivityService {
     DateTime? endDate,
     bool forceRefresh = false,
   }) async {
-    final cacheKey = _generateStatisticsCacheKey(
+    final cacheKey = CacheUtils.statisticsKey(
       valueId: valueId,
       startDate: startDate,
       endDate: endDate,
@@ -251,8 +186,8 @@ class ActivityService {
       await _cacheService.set(
         cacheKey,
         result,
-        memoryCacheDuration: _cacheValidity,
-        diskCacheDuration: Duration(hours: 2),
+        memoryCacheDuration: CacheUtils.getCacheDuration(CacheDataType.standardData),
+        diskCacheDuration: CacheUtils.getDiskCacheDuration(CacheDataType.standardData),
       );
 
       return result;
@@ -275,7 +210,7 @@ class ActivityService {
     DateTime? endDate,
     bool forceRefresh = false,
   }) async {
-    final cacheKey = _generateSummaryCacheKey(
+    final cacheKey = CacheUtils.summaryKey(
       startDate: startDate,
       endDate: endDate,
     );
@@ -315,8 +250,8 @@ class ActivityService {
       await _cacheService.set(
         cacheKey,
         result,
-        memoryCacheDuration: _cacheValidity,
-        diskCacheDuration: Duration(hours: 2),
+        memoryCacheDuration: CacheUtils.getCacheDuration(CacheDataType.standardData),
+        diskCacheDuration: CacheUtils.getDiskCacheDuration(CacheDataType.standardData),
       );
 
       return result;
@@ -336,7 +271,10 @@ class ActivityService {
     DateTime? endDate,
     bool forceRefresh = false,
   }) async {
-    final cacheKey = '${_progressCachePrefix}_${startDate?.toIso8601String().split('T')[0] ?? 'all'}_${endDate?.toIso8601String().split('T')[0] ?? 'all'}';
+    final cacheKey = CacheUtils.progressKey(
+      startDate: startDate,
+      endDate: endDate,
+    );
 
     // Try to get from cache if not forcing refresh
     if (!forceRefresh) {
@@ -371,8 +309,8 @@ class ActivityService {
       await _cacheService.set(
         cacheKey,
         combinedData,
-        memoryCacheDuration: _cacheValidity,
-        diskCacheDuration: Duration(hours: 2),
+        memoryCacheDuration: CacheUtils.getCacheDuration(CacheDataType.standardData),
+        diskCacheDuration: CacheUtils.getDiskCacheDuration(CacheDataType.standardData),
       );
 
       return combinedData;
@@ -397,7 +335,10 @@ class ActivityService {
     DateTime? endDate,
     bool forceRefresh = false,
   }) async {
-    final insightCacheKey = '${_progressCachePrefix}_insights_${startDate?.toIso8601String().split('T')[0] ?? 'all'}_${endDate?.toIso8601String().split('T')[0] ?? 'all'}';
+    final insightCacheKey = CacheUtils.insightKey(
+      startDate: startDate,
+      endDate: endDate,
+    );
 
     // Try to get from cache if not forcing refresh
     if (!forceRefresh) {
@@ -483,10 +424,10 @@ class ActivityService {
 
   // Helper method to invalidate all activity-related caches
   Future<void> _invalidateActivityCaches() async {
-    await _cacheService.clearByPrefix(_activitiesCachePrefix);
-    await _cacheService.clearByPrefix(_statisticsCachePrefix);
-    await _cacheService.clearByPrefix(_summaryCachePrefix);
-    await _cacheService.clearByPrefix(_progressCachePrefix);
+    await _cacheService.clearByPrefix('activities');
+    await _cacheService.clearByPrefix('statistics');
+    await _cacheService.clearByPrefix('summary');
+    await _cacheService.clearByPrefix('progress');
   }
 
   // Helper method to format dates consistently for API
@@ -527,6 +468,41 @@ class ActivityService {
       return values;
     } catch (e) {
       return [];
+    }
+  }
+
+  /// Calculate streak data for a specific value based on calendar days
+  Future<StreakData> calculateValueStreak(String valueId) async {
+    try {
+      final activities = await getActivities();
+      return StreakUtils.calculateValueStreak(valueId, activities);
+    } catch (e) {
+      return const StreakData(
+        currentStreak: 0,
+        longestStreak: 0,
+        lastActivityDate: null,
+        streakDates: [],
+      );
+    }
+  }
+
+  /// Update a value with recalculated streak data based on calendar days
+  Future<ValueModel> updateValueWithStreak(ValueModel value) async {
+    try {
+      final activities = await getActivities();
+      return StreakUtils.updateValueWithStreak(value, activities);
+    } catch (e) {
+      return value;
+    }
+  }
+
+  /// Update multiple values with recalculated streak data based on calendar days
+  Future<List<ValueModel>> updateValuesWithStreaks(List<ValueModel> values) async {
+    try {
+      final activities = await getActivities();
+      return StreakUtils.updateValuesWithStreaks(values, activities);
+    } catch (e) {
+      return values;
     }
   }
 }

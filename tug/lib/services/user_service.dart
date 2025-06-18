@@ -2,13 +2,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:dio/dio.dart';
 import 'api_service.dart';
+import 'service_locator.dart';
 import '../utils/api_error.dart';
 
 class UserService {
   final ApiService _apiService;
 
   UserService({ApiService? apiService})
-      : _apiService = apiService ?? ApiService();
+      : _apiService = apiService ?? ServiceLocator.apiService;
 
   // Fetch current user profile from backend
   Future<Map<String, dynamic>> getUserProfile() async {

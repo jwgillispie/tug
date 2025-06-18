@@ -31,14 +31,6 @@ class _RankingsScreenState extends State<RankingsScreen> {
   void initState() {
     super.initState();
     
-    // Check if we should load all rankings or just current user
-    final subscriptionState = context.read<SubscriptionBloc>().state;
-    bool isPremium = false;
-    
-    if (subscriptionState is SubscriptionsLoaded) {
-      isPremium = subscriptionState.isPremium;
-    }
-    
     // Always load rankings, as we'll show the current user's rank even for non-premium users
     _loadRankings();
   }

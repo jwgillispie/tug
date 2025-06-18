@@ -3,13 +3,14 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:tug/services/api_service.dart';
 import 'package:tug/services/cache_service.dart';
+import 'package:tug/services/service_locator.dart';
 import 'package:tug/models/ranking_model.dart';
 import 'package:tug/utils/api_error.dart';
 
 class RankingsService {
   final ApiService _apiService;
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final CacheService _cacheService = CacheService();
+  final CacheService _cacheService;
   
   // Cache keys
   static const String _rankingsCacheKeyPrefix = 'rankings_';
@@ -19,8 +20,12 @@ class RankingsService {
   static const Duration _rankingsCacheDuration = Duration(minutes: 15);
   static const Duration _diskCacheDuration = Duration(hours: 2);
 
-  RankingsService({ApiService? apiService})
-      : _apiService = apiService ?? ApiService();
+  RankingsService({
+    ApiService? apiService,
+    CacheService? cacheService,
+  }) : 
+    _apiService = apiService ?? ServiceLocator.apiService,
+    _cacheService = cacheService ?? ServiceLocator.cacheService;
 
   // Get top users rankings
   Future<RankingsListModel> getTopUsers({

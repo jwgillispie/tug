@@ -2,12 +2,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:tug/models/value_model.dart';
 import 'api_service.dart';
+import 'service_locator.dart';
 
 class ValuesService {
   final ApiService _apiService;
 
   ValuesService({ApiService? apiService}) 
-      : _apiService = apiService ?? ApiService();
+      : _apiService = apiService ?? ServiceLocator.apiService;
 
   // Fetch all values
   Future<List<ValueModel>> getValues({bool includeInactive = false}) async {

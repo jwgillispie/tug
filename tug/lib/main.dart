@@ -25,10 +25,9 @@ import 'package:tug/screens/progress/progress_screen.dart';
 import 'package:tug/screens/splash_screen.dart';
 import 'package:tug/screens/subscription/subscription_screen.dart';
 import 'package:tug/screens/subscription/user_subscription_screen.dart';
-import 'package:tug/services/api_service.dart';
-import 'package:tug/services/cache_service.dart';
 import 'package:tug/services/notification_service.dart';
 import 'package:tug/services/subscription_service.dart';
+import 'package:tug/services/service_locator.dart';
 import 'package:tug/utils/local_storage.dart';
 import 'repositories/auth_repository.dart';
 import 'blocs/auth/auth_bloc.dart';
@@ -52,9 +51,8 @@ Future<void> main() async {
     // IMPORTANT: Initialize environment config first to avoid the error
     await EnvConfig.load();
 
-    // Initialize cache service before repositories
-    final cacheService = CacheService();
-    await cacheService.initialize();
+    // Initialize service locator early
+    await ServiceLocator.initialize();
 
     // Initialize local storage next
     if (!kIsWeb) {
@@ -73,12 +71,9 @@ Future<void> main() async {
     // Create SubscriptionService without initializing (lazy initialization)
     final subscriptionService = SubscriptionService();
 
-    final apiService = ApiService();
     final authRepository = AuthRepository();
-    final valuesRepository =
-        ValuesRepository(apiService: apiService, cacheService: cacheService);
-    final activityRepository =
-        ActivityRepository(apiService: apiService, cacheService: cacheService);
+    final valuesRepository = ValuesRepository();
+    final activityRepository = ActivityRepository();
 
     runApp(TugApp(
       authRepository: authRepository,
