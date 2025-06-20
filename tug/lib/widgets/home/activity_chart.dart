@@ -266,7 +266,7 @@ class _ActivityChartState extends State<ActivityChart> {
                     ),
                     const SizedBox(width: 3), // Reduced spacing
                     Text(
-                      'Avg: ${TimeUtils.formatMinutes(_calculateDailyAverage().toInt())}/day',
+                      'avg: ${TimeUtils.formatMinutes(_calculateDailyAverage().toInt())}/day',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 10, // Smaller font
@@ -494,7 +494,7 @@ class _ActivityChartState extends State<ActivityChart> {
                         ),
                         const SizedBox(width: 3), // Reduced spacing
                         Text(
-                          'Total: ${TimeUtils.formatMinutes(_calculateTotalMinutes())} (${widget.daysToShow}d)',
+                          'total: ${TimeUtils.formatMinutes(_calculateTotalMinutes())} (${widget.daysToShow}d)',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 10, // Smaller font

@@ -12,6 +12,7 @@ import 'package:tug/utils/loading_messages.dart';
 import 'package:tug/widgets/tug_of_war/enhanced_tug_of_war_widget.dart';
 import 'package:tug/widgets/values/streak_overview_widget.dart';
 import 'package:tug/widgets/values/ai_insight_widget.dart';
+import 'package:tug/utils/progress_calculator.dart';
 
 class ProgressScreen extends StatefulWidget {
   const ProgressScreen({super.key});
@@ -27,6 +28,7 @@ class _ProgressScreenState extends State<ProgressScreen>
 
   bool _isLoading = false;
   bool _isFirstLoad = true;
+  bool _isTimeframeLoading = false;
   Map<String, Map<String, dynamic>> _activityData = {};
 
   final ActivityService _activityService = ActivityService();
@@ -48,6 +50,30 @@ class _ProgressScreenState extends State<ProgressScreen>
       context.read<ValuesBloc>().add(LoadValues(forceRefresh: false));
       // Load activity data immediately in parallel
       _fetchActivityData(forceRefresh: false);
+      
+      // Pre-load other timeframes in background after a short delay
+      Future.delayed(const Duration(seconds: 2), () {
+        _preloadTimeframes();
+      });
+    }
+  }
+
+  /// Pre-load other timeframes in the background for faster switching
+  Future<void> _preloadTimeframes() async {
+    if (!mounted) return;
+    
+    for (final timeframe in _timeframes) {
+      if (timeframe != _selectedTimeframe) {
+        // Pre-load in background without updating UI
+        final originalTimeframe = _selectedTimeframe;
+        _selectedTimeframe = timeframe;
+        try {
+          await _fetchActivityData(forceRefresh: false);
+        } catch (e) {
+          // Ignore errors in background loading
+        }
+        _selectedTimeframe = originalTimeframe;
+      }
     }
   }
 
@@ -66,13 +92,21 @@ class _ProgressScreenState extends State<ProgressScreen>
   Future<void> _fetchActivityData({bool forceRefresh = false}) async {
     if (!mounted) return;
 
+    // Ensure values are loaded first
+    final valuesState = context.read<ValuesBloc>().state;
+    if (valuesState is! ValuesLoaded) {
+      // Values not loaded yet, trigger loading and return
+      context.read<ValuesBloc>().add(LoadValues(forceRefresh: true));
+      return;
+    }
+
     // Generate cache keys for this specific timeframe and data
     final startDate = getStartDate(_selectedTimeframe);
     final endDate = DateTime.now();
     final cacheKey = 'progress_data_${_selectedTimeframe}_${startDate.toIso8601String().split('T')[0]}_${endDate.toIso8601String().split('T')[0]}';
 
     // If not forcing refresh, try to load from cache first
-    if (!forceRefresh && !_isFirstLoad) {
+    if (!forceRefresh) {
       try {
         final cachedData = await _cacheService.get<Map<String, dynamic>>(cacheKey);
         if (cachedData != null) {
@@ -100,46 +134,38 @@ class _ProgressScreenState extends State<ProgressScreen>
     });
 
     try {
-      // Fetch activities directly to ensure we have current data
-      final activities = await _activityService.getActivities(
-        startDate: startDate,
-        endDate: endDate,
+      // Fetch ALL activities to ensure we have current data
+      final allActivities = await _activityService.getActivities(
         forceRefresh: forceRefresh,
       );
 
-      // Get values from the ValuesBloc state (before async operations)
-      List<dynamic> activeValues = [];
-      if (mounted) {
-        final valuesState = context.read<ValuesBloc>().state;
-        if (valuesState is ValuesLoaded) {
-          activeValues = valuesState.values.where((v) => v.active).toList();
-        }
+      // Get values from the ValuesBloc state (ensure mounted)
+      if (!mounted) return;
+      final valuesState = context.read<ValuesBloc>().state;
+      if (valuesState is! ValuesLoaded) {
+        throw Exception('Values not loaded');
       }
-
-      // Calculate user activity data locally
-      final Map<String, Map<String, dynamic>> processedData = {};
-
-      for (final value in activeValues) {
-        // Calculate total minutes for this value within the date range
-        final valueActivities = activities.where((activity) => 
-          activity.valueId == value.id
-        ).toList();
-
-        final totalMinutes = valueActivities.fold<int>(
-          0, 
-          (sum, activity) => sum + activity.duration
-        );
-
-        // Calculate community average based on timeframe
-        final communityAvg = _calculateCommunityAverage(value.name, _selectedTimeframe);
-
-        processedData[value.name] = {
-          'minutes': totalMinutes,
-          'community_avg': communityAvg,
-        };
-      }
+      
+      final activeValues = valuesState.values.where((v) => v.active).toList();
+      
+      // Use the utility to calculate progress data
+      final processedData = ProgressCalculator.calculateProgressData(
+        values: activeValues,
+        activities: allActivities,
+        timeframe: _selectedTimeframe,
+        startDate: startDate,
+        endDate: endDate,
+      );
 
       // Cache the combined data for faster subsequent loads
+      // Use longer cache duration for weekly/monthly data since it changes less frequently
+      final memoryCacheDuration = _selectedTimeframe == 'daily' 
+          ? Duration(minutes: 5)
+          : Duration(minutes: 30);
+      final diskCacheDuration = _selectedTimeframe == 'daily'
+          ? Duration(hours: 1)
+          : Duration(hours: 6);
+
       try {
         await _cacheService.set(
           cacheKey,
@@ -149,8 +175,8 @@ class _ProgressScreenState extends State<ProgressScreen>
             'startDate': startDate.toIso8601String(),
             'endDate': endDate.toIso8601String(),
           },
-          memoryCacheDuration: Duration(minutes: 10),
-          diskCacheDuration: Duration(hours: 1),
+          memoryCacheDuration: memoryCacheDuration,
+          diskCacheDuration: diskCacheDuration,
         );
       } catch (e) {
         // Cache save failed - not critical, continue
@@ -162,7 +188,6 @@ class _ProgressScreenState extends State<ProgressScreen>
           _isLoading = false;
           _isFirstLoad = false;
         });
-        
       }
     } catch (e) {
       if (mounted) {
@@ -185,8 +210,18 @@ class _ProgressScreenState extends State<ProgressScreen>
   // Add a refresh method to force reload from server
   Future<void> _refreshData() async {
     try {
-      // Clear relevant cache entries before refreshing
+      // Clear ALL cache entries before refreshing
       await _clearProgressCache();
+      
+      // Force clear activity cache as well
+      try {
+        await _cacheService.clearByPrefix('activities');
+        await _cacheService.clearByPrefix('progress');
+        await _cacheService.clearByPrefix('summary');
+        await _cacheService.clearByPrefix('statistics');
+      } catch (e) {
+        // Cache clear failed - not critical
+      }
       
       // Load values and activity data in parallel for faster refresh
       await Future.wait([
@@ -232,42 +267,6 @@ class _ProgressScreenState extends State<ProgressScreen>
     }
   }
 
-  /// Calculate community average based on value type and timeframe
-  int _calculateCommunityAverage(String valueName, String timeframe) {
-    // Base daily averages for different types of values (in minutes)
-    // These could be made configurable or fetched from an API in the future
-    int baseDailyAvg;
-    
-    // Estimate based on common value types
-    final lowerName = valueName.toLowerCase();
-    if (lowerName.contains('exercise') || lowerName.contains('fitness') || lowerName.contains('workout')) {
-      baseDailyAvg = 45; // 45 minutes of exercise per day
-    } else if (lowerName.contains('read') || lowerName.contains('study') || lowerName.contains('learn')) {
-      baseDailyAvg = 60; // 1 hour of reading/learning per day
-    } else if (lowerName.contains('family') || lowerName.contains('social') || lowerName.contains('friend')) {
-      baseDailyAvg = 90; // 1.5 hours of social time per day
-    } else if (lowerName.contains('work') || lowerName.contains('career') || lowerName.contains('professional')) {
-      baseDailyAvg = 480; // 8 hours of work per day
-    } else if (lowerName.contains('creative') || lowerName.contains('art') || lowerName.contains('music')) {
-      baseDailyAvg = 60; // 1 hour of creative work per day
-    } else if (lowerName.contains('meditation') || lowerName.contains('mindful') || lowerName.contains('spiritual')) {
-      baseDailyAvg = 20; // 20 minutes of meditation per day
-    } else {
-      baseDailyAvg = 60; // Default 1 hour per day
-    }
-    
-    // Adjust based on timeframe
-    switch (timeframe) {
-      case 'daily':
-        return baseDailyAvg;
-      case 'weekly':
-        return baseDailyAvg * 7; // Total for the week
-      case 'monthly':
-        return baseDailyAvg * 30; // Total for the month
-      default:
-        return baseDailyAvg;
-    }
-  }
 
 
   @override
@@ -333,14 +332,44 @@ class _ProgressScreenState extends State<ProgressScreen>
                         return Padding(
                           padding: const EdgeInsets.only(right: 8),
                           child: ChoiceChip(
-                            label: Text(timeframe),
+                            label: _isTimeframeLoading && timeframe == _selectedTimeframe
+                                ? Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      SizedBox(
+                                        width: 12,
+                                        height: 12,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          valueColor: AlwaysStoppedAnimation<Color>(
+                                            isSelected ? Colors.white : Colors.grey,
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(width: 6),
+                                      Text(timeframe),
+                                    ],
+                                  )
+                                : Text(timeframe),
                             selected: isSelected,
                             onSelected: (selected) {
                               if (selected) {
                                 setState(() {
                                   _selectedTimeframe = timeframe;
+                                  _isTimeframeLoading = true;
                                 });
-                                _fetchActivityData(forceRefresh: true);
+                                // Load data immediately from cache, then refresh in background
+                                _fetchActivityData(forceRefresh: false).then((_) {
+                                  // If no cached data was found, force refresh
+                                  if (_activityData.isEmpty) {
+                                    _fetchActivityData(forceRefresh: true);
+                                  }
+                                  if (mounted) {
+                                    setState(() {
+                                      _isTimeframeLoading = false;
+                                    });
+                                  }
+                                });
                               }
                             },
                             selectedColor: isDarkMode ? Colors.grey.shade700 : Colors.grey.shade600,
@@ -464,6 +493,13 @@ class _ProgressScreenState extends State<ProgressScreen>
                             ],
                           );
                         }
+
+                        // Trigger activity data fetch when values are loaded
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (_activityData.isEmpty && !_isLoading) {
+                            _fetchActivityData();
+                          }
+                        });
 
                         return SingleChildScrollView(
                           physics: const AlwaysScrollableScrollPhysics(),

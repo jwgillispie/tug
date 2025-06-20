@@ -112,6 +112,7 @@ class NotificationService {
   }
 
   Future<void> setNotificationTime(TimeOfDay time) async {
+    debugPrint('Setting notification time - hour: ${time.hour}, minute: ${time.minute}');
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_notificationHourKey, time.hour);
     await prefs.setInt(_notificationMinuteKey, time.minute);
@@ -159,6 +160,7 @@ class NotificationService {
 
   Future<tz.TZDateTime> _nextInstanceOfNotificationTime() async {
     final notificationTime = await getNotificationTime();
+    debugPrint('Retrieved notification time - hour: ${notificationTime.hour}, minute: ${notificationTime.minute}');
     final now = tz.TZDateTime.now(tz.local);
     var scheduledDate = tz.TZDateTime(
       tz.local, 
@@ -169,8 +171,11 @@ class NotificationService {
       notificationTime.minute,
     );
     
+    debugPrint('Scheduled date created: $scheduledDate (current time: $now)');
+    
     if (scheduledDate.isBefore(now)) {
       scheduledDate = scheduledDate.add(const Duration(days: 1));
+      debugPrint('Date was in past, rescheduled for tomorrow: $scheduledDate');
     }
     
     return scheduledDate;
@@ -282,7 +287,10 @@ class NotificationService {
     // Check if notifications are enabled
     if (!(await getNotificationsEnabled())) return;
 
+    debugPrint('Input TimeOfDay - hour: ${time.hour}, minute: ${time.minute}');
     final now = tz.TZDateTime.now(tz.local);
+    debugPrint('Current time: $now');
+    
     var scheduledTime = tz.TZDateTime(
       tz.local,
       now.year,
@@ -291,6 +299,8 @@ class NotificationService {
       time.hour,
       time.minute,
     );
+
+    debugPrint('Created scheduled time: $scheduledTime');
 
     // If the time is in the past, schedule for today if less than 24 hours ago, otherwise tomorrow
     if (scheduledTime.isBefore(now)) {
@@ -305,7 +315,7 @@ class NotificationService {
       }
     }
 
-    debugPrint('Scheduling notification for: $scheduledTime');
+    debugPrint('Final scheduled time: $scheduledTime');
 
     await _notifications.zonedSchedule(
       _testNotificationId,
@@ -329,6 +339,30 @@ class NotificationService {
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation: UILocalNotificationDateInterpretation.absoluteTime,
     );
+  }
+
+  // Debug method to test time conversion
+  Future<void> debugTimeConversion(TimeOfDay time) async {
+    debugPrint('=== DEBUG TIME CONVERSION ===');
+    debugPrint('Input TimeOfDay: ${time.hour}:${time.minute}');
+    debugPrint('TimeOfDay.hour (24-hour format): ${time.hour}');
+    
+    final now = tz.TZDateTime.now(tz.local);
+    debugPrint('Current timezone: ${now.timeZoneName}');
+    debugPrint('Current time: $now');
+    
+    final scheduledTime = tz.TZDateTime(
+      tz.local,
+      now.year,
+      now.month,
+      now.day,
+      time.hour,
+      time.minute,
+    );
+    debugPrint('Scheduled time created: $scheduledTime');
+    debugPrint('Scheduled hour: ${scheduledTime.hour}');
+    debugPrint('Scheduled minute: ${scheduledTime.minute}');
+    debugPrint('===============================');
   }
 
 }
