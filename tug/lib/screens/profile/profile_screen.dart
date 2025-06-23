@@ -487,7 +487,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const Padding(
               padding: EdgeInsets.only(bottom: 24.0),
               child: Text(
-                'tug v2.0.1',
+                'tug v2.0.2',
                 style: TextStyle(
                   color: Colors.grey,
                   fontSize: 12,

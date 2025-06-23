@@ -53,7 +53,7 @@ class AboutScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'version 2.0.0',
+                    'version 2.0.2',
                     style: TextStyle(
                       color: isDarkMode 
                           ? TugColors.darkTextSecondary 
@@ -102,7 +102,7 @@ class AboutScreen extends StatelessWidget {
             // Recent Features
             _buildSection(
               context,
-              'new in v2.0.0',
+              'new in v2.0.2',
               '• quantum ui effects - Beautiful holographic and floating animations throughout the app\n'
               '• enhanced app bars - Stunning gradient backgrounds with shimmer effects\n'
               '• improved rankings - Better visibility for your position and achievements\n'
@@ -117,7 +117,7 @@ class AboutScreen extends StatelessWidget {
               'Built with Flutter\n'
               'Firebase Authentication\n'
               'MongoDB Backend\n'
-              'Version 2.0.0 (May 2025)'
+              'Version 2.0.2 (June 2025)'
             ),
             
             const SizedBox(height: 24),
