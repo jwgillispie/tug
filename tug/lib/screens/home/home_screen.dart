@@ -2,15 +2,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:tug/blocs/activities/activities_bloc.dart';
-import 'package:tug/blocs/values/bloc/values_bloc.dart';
-import 'package:tug/blocs/values/bloc/values_event.dart';
-import 'package:tug/blocs/values/bloc/values_state.dart';
-import 'package:tug/services/cache_service.dart';
-import 'package:tug/services/activity_service.dart';
-import 'package:tug/utils/quantum_effects.dart';
-import 'package:tug/utils/loading_messages.dart';
-import 'package:tug/widgets/home/activity_chart.dart';
+import '../../blocs/activities/activities_bloc.dart';
+import '../../blocs/values/bloc/values_bloc.dart';
+import '../../blocs/values/bloc/values_event.dart';
+import '../../blocs/values/bloc/values_state.dart';
+import '../../blocs/vices/bloc/vices_bloc.dart';
+import '../../blocs/vices/bloc/vices_event.dart';
+import '../../blocs/vices/bloc/vices_state.dart';
+import '../../services/cache_service.dart';
+import '../../services/activity_service.dart';
+import '../../services/app_mode_service.dart';
+import '../../utils/quantum_effects.dart';
+import '../../utils/loading_messages.dart';
+import '../../widgets/home/activity_chart.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../utils/theme/colors.dart';
 import '../../utils/theme/buttons.dart';
@@ -27,13 +31,16 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   late Animation<double> _fadeAnimation;
   bool _isFirstLoad = true;
   final CacheService _cacheService = CacheService();
+  final AppModeService _appModeService = AppModeService();
+  AppMode _currentMode = AppMode.valuesMode;
   
   @override
   void initState() {
     super.initState();
     
-    // Initialize cache service first
+    // Initialize services
     _initializeCache();
+    _initializeAppMode();
     
     // Load values when screen is initialized, but don't force refresh
     // if we already have cached values
@@ -41,6 +48,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     
     // Load activities for the chart
     context.read<ActivitiesBloc>().add(const LoadActivities(forceRefresh: false));
+    
+    // Load vices for vice mode
+    context.read<VicesBloc>().add(const LoadVices());
     
     // Preload progress screen data in background for faster navigation
     _preloadProgressData();
@@ -64,6 +74,26 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     try {
       await _cacheService.initialize();
     } catch (e) {
+      // Silent failure - cache is not critical for app function
+    }
+  }
+
+  // Initialize app mode service
+  Future<void> _initializeAppMode() async {
+    try {
+      await _appModeService.initialize();
+      _appModeService.modeStream.listen((mode) {
+        if (mounted) {
+          setState(() {
+            _currentMode = mode;
+          });
+        }
+      });
+      setState(() {
+        _currentMode = _appModeService.currentMode;
+      });
+    } catch (e) {
+      // Silent failure - default to values mode
     }
   }
 
