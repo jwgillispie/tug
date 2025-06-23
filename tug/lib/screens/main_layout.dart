@@ -2,9 +2,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:tug/utils/theme/colors.dart';
+import '../utils/theme/colors.dart';
+import '../services/app_mode_service.dart';
 
-class MainLayout extends StatelessWidget {
+class MainLayout extends StatefulWidget {
   final Widget child;
   final int currentIndex;
 
@@ -15,12 +16,41 @@ class MainLayout extends StatelessWidget {
   });
 
   @override
+  State<MainLayout> createState() => _MainLayoutState();
+}
+
+class _MainLayoutState extends State<MainLayout> {
+  final AppModeService _appModeService = AppModeService();
+  AppMode _currentMode = AppMode.valuesMode;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeMode();
+  }
+
+  void _initializeMode() async {
+    await _appModeService.initialize();
+    _appModeService.modeStream.listen((mode) {
+      if (mounted) {
+        setState(() {
+          _currentMode = mode;
+        });
+      }
+    });
+    setState(() {
+      _currentMode = _appModeService.currentMode;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final mediaQuery = MediaQuery.of(context);
     final bottomPadding = mediaQuery.padding.bottom;
+    final isViceMode = _currentMode == AppMode.vicesMode;
 
-    // Define the navigation data for animation sequencing
+    // Define the navigation data based on current mode
     final navItems = [
       {
         'icon': Icons.home_outlined,
@@ -37,11 +67,11 @@ class MainLayout extends StatelessWidget {
         'path': '/progress',
       },
       {
-        'icon': Icons.history_outlined,
-        'selectedIcon': Icons.history_rounded,
-        'label': 'activities',
+        'icon': isViceMode ? Icons.warning_outlined : Icons.history_outlined,
+        'selectedIcon': isViceMode ? Icons.warning_rounded : Icons.history_rounded,
+        'label': isViceMode ? 'lapses' : 'activities',
         'index': 2,
-        'path': '/activities',
+        'path': isViceMode ? '/indulgences' : '/activities',
       },
       {
         'icon': Icons.person_outline_rounded,
@@ -55,7 +85,7 @@ class MainLayout extends StatelessWidget {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         systemNavigationBarColor:
-            isDarkMode ? TugColors.darkBackground : Colors.white,
+            TugColors.getBackgroundColor(isDarkMode, isViceMode),
         systemNavigationBarIconBrightness:
             isDarkMode ? Brightness.light : Brightness.dark,
         statusBarColor: Colors.transparent,
@@ -76,7 +106,7 @@ class MainLayout extends StatelessWidget {
               left: 0,
               right: 0,
               child: _buildImmersiveBottomNav(
-                  context, navItems, isDarkMode, bottomPadding),
+                  context, navItems, isDarkMode, bottomPadding, isViceMode),
             ),
           ],
         ),
@@ -85,10 +115,10 @@ class MainLayout extends StatelessWidget {
           width: 54,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: TugColors.primaryPurple,
+            color: TugColors.getPrimaryColor(isViceMode),
             boxShadow: [
               BoxShadow(
-                color: TugColors.primaryPurple.withOpacity(0.3),
+                color: TugColors.getPrimaryColor(isViceMode).withOpacity(0.3),
                 blurRadius: 8,
                 spreadRadius: 1,
               ),
@@ -97,7 +127,7 @@ class MainLayout extends StatelessWidget {
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: () => _showAddActionSheet(context),
+              onTap: () => _showAddActionSheet(context, isViceMode),
               borderRadius: BorderRadius.circular(27),
               child: const Icon(
                 Icons.add_rounded,
@@ -117,10 +147,11 @@ class MainLayout extends StatelessWidget {
       BuildContext context,
       List<Map<String, dynamic>> navItems,
       bool isDarkMode,
-      double bottomPadding) {
+      double bottomPadding,
+      bool isViceMode) {
     return Material(
       elevation: 4,
-      color: isDarkMode ? TugColors.darkSurface : Colors.white,
+      color: TugColors.getSurfaceColor(isDarkMode, isViceMode),
       child: Container(
         height:
             40 + bottomPadding, // Further reduced height to prevent overflow
@@ -138,6 +169,7 @@ class MainLayout extends StatelessWidget {
                   index: navItems[i]['index'],
                   path: navItems[i]['path'],
                   isDarkMode: isDarkMode,
+                  isViceMode: isViceMode,
                 ),
               ),
 
@@ -157,6 +189,7 @@ class MainLayout extends StatelessWidget {
                   index: navItems[i]['index'],
                   path: navItems[i]['path'],
                   isDarkMode: isDarkMode,
+                  isViceMode: isViceMode,
                 ),
               ),
           ],
@@ -166,12 +199,12 @@ class MainLayout extends StatelessWidget {
   }
 
   // Simplified add action sheet
-  void _showAddActionSheet(BuildContext context) {
+  void _showAddActionSheet(BuildContext context, bool isViceMode) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
     showModalBottomSheet(
       context: context,
-      backgroundColor: isDarkMode ? TugColors.darkSurface : Colors.white,
+      backgroundColor: TugColors.getSurfaceColor(isDarkMode, isViceMode),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -183,49 +216,152 @@ class MainLayout extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'create new',
+                _appModeService.primaryActionText,
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 22,
-                  color: isDarkMode ? Colors.white : Colors.black,
+                  color: TugColors.getTextColor(isDarkMode, isViceMode),
                 ),
               ),
               const SizedBox(height: 8),
               Text(
-                'what would you like to add today?',
+                isViceMode 
+                    ? 'track your vices or record an indulgence'
+                    : 'what would you like to add today?',
                 style: TextStyle(
                   fontSize: 14,
-                  color: isDarkMode
-                      ? Colors.white.withOpacity(0.7)
-                      : Colors.black.withOpacity(0.6),
+                  color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
                 ),
               ),
               const SizedBox(height: 24),
 
-              // Simpler option cards
-              _buildActionCard(
-                context: context,
-                title: 'log activity',
-                description: 'record activity session',
-                icon: Icons.timelapse_rounded,
-                gradient: TugColors.getPrimaryGradient(),
-                path: '/activities/new',
-                isDarkMode: isDarkMode,
-              ),
-              const SizedBox(height: 16),
-              _buildActionCard(
-                context: context,
-                title: 'add value',
-                description: 'define what matters to you',
-                icon: Icons.star_rounded,
-                gradient: TugColors.getPrimaryGradient(),
-                path: '/values-input',
-                isDarkMode: isDarkMode,
-              ),
+              // Mode-specific option cards
+              if (isViceMode) ...[
+                _buildActionCard(
+                  context: context,
+                  title: 'record indulgence',
+                  description: 'track when you indulged in a vice',
+                  icon: Icons.warning_rounded,
+                  gradient: TugColors.getViceGradient(),
+                  path: '/indulgences/new',
+                  isDarkMode: isDarkMode,
+                  isViceMode: isViceMode,
+                ),
+                const SizedBox(height: 16),
+                _buildActionCard(
+                  context: context,
+                  title: 'manage vices',
+                  description: 'add or edit your tracked vices',
+                  icon: Icons.psychology_rounded,
+                  gradient: TugColors.getViceGradient(),
+                  path: '/vices-input',
+                  isDarkMode: isDarkMode,
+                  isViceMode: isViceMode,
+                ),
+                const SizedBox(height: 16),
+                _buildModeToggleCard(context, isDarkMode, isViceMode),
+              ] else ...[
+                _buildActionCard(
+                  context: context,
+                  title: 'log activity',
+                  description: 'record activity session',
+                  icon: Icons.timelapse_rounded,
+                  gradient: TugColors.getPrimaryGradient(),
+                  path: '/activities/new',
+                  isDarkMode: isDarkMode,
+                  isViceMode: isViceMode,
+                ),
+                const SizedBox(height: 16),
+                _buildActionCard(
+                  context: context,
+                  title: 'add value',
+                  description: 'define what matters to you',
+                  icon: Icons.star_rounded,
+                  gradient: TugColors.getPrimaryGradient(),
+                  path: '/values-input',
+                  isDarkMode: isDarkMode,
+                  isViceMode: isViceMode,
+                ),
+                const SizedBox(height: 16),
+                _buildModeToggleCard(context, isDarkMode, isViceMode),
+              ],
             ],
           ),
         );
       },
+    );
+  }
+
+  // Mode toggle card
+  Widget _buildModeToggleCard(BuildContext context, bool isDarkMode, bool isViceMode) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: TugColors.getPrimaryColor(isViceMode).withAlpha(50),
+          width: 1,
+        ),
+      ),
+      color: TugColors.getSurfaceColor(isDarkMode, isViceMode),
+      child: InkWell(
+        onTap: () {
+          Navigator.pop(context);
+          _appModeService.toggleMode();
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: TugColors.getPrimaryColor(!isViceMode),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  isViceMode ? Icons.favorite : Icons.psychology,
+                  color: Colors.white,
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'switch to ${isViceMode ? 'values' : 'vices'} mode',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                        color: TugColors.getTextColor(isDarkMode, isViceMode),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      isViceMode 
+                          ? 'track positive habits and values'
+                          : 'track behaviors to overcome',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.swap_horiz,
+                size: 20,
+                color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -238,6 +374,7 @@ class MainLayout extends StatelessWidget {
     required LinearGradient gradient,
     required String path,
     required bool isDarkMode,
+    required bool isViceMode,
   }) {
     // Use the first color of the gradient for a solid accent
     final Color accentColor = gradient.colors.first;
@@ -253,7 +390,7 @@ class MainLayout extends StatelessWidget {
           width: 1,
         ),
       ),
-      color: isDarkMode ? TugColors.darkSurfaceVariant : Colors.white,
+      color: TugColors.getSurfaceColor(isDarkMode, isViceMode),
       child: InkWell(
         onTap: () {
           Navigator.pop(context);
@@ -295,7 +432,7 @@ class MainLayout extends StatelessWidget {
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 16,
-                        color: isDarkMode ? Colors.white : Colors.black87,
+                        color: TugColors.getTextColor(isDarkMode, isViceMode),
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -303,9 +440,7 @@ class MainLayout extends StatelessWidget {
                       description,
                       style: TextStyle(
                         fontSize: 14,
-                        color: isDarkMode
-                            ? Colors.white.withOpacity(0.7)
-                            : Colors.black54,
+                        color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
                       ),
                     ),
                   ],
@@ -314,9 +449,7 @@ class MainLayout extends StatelessWidget {
               Icon(
                 Icons.arrow_forward_ios,
                 size: 16,
-                color: isDarkMode
-                    ? Colors.white.withOpacity(0.4)
-                    : Colors.black.withOpacity(0.3),
+                color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
               ),
             ],
           ),
@@ -334,12 +467,11 @@ class MainLayout extends StatelessWidget {
     required int index,
     required String path,
     required bool isDarkMode,
+    required bool isViceMode,
   }) {
-    final isSelected = currentIndex == index;
-    final Color activeColor = TugColors.primaryPurple;
-    final Color inactiveColor = isDarkMode
-        ? Colors.white.withOpacity(0.6)
-        : Colors.black.withOpacity(0.5);
+    final isSelected = widget.currentIndex == index;
+    final Color activeColor = TugColors.getPrimaryColor(isViceMode);
+    final Color inactiveColor = TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true);
 
     return GestureDetector(
       onTap: () {
