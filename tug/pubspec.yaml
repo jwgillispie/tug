@@ -1,5 +1,5 @@
-name: tug
-description: A tug-of-war style value alignment tracker
+name: viceless
+description: Track your values and overcome your vices
 publish_to: 'none'
 version: 2.0.2+3
 

@@ -2,10 +2,18 @@
 import 'package:flutter/material.dart';
 
 class TugColors {
-  // Primary Colors - elegant purple palette
+  // Primary Colors - elegant purple palette (for values mode)
   static const primaryPurple = Color(0xFF7C3AED); // main purple
   static const primaryPurpleDark = Color(0xFF5B21B6); // darker purple
   static const primaryPurpleLight = Color(0xFF9F7AEA); // lighter purple
+
+  // Vice Mode Colors - serious red/orange palette
+  static const viceRed = Color(0xFFDC2626); // main red for vices
+  static const viceRedDark = Color(0xFF991B1B); // darker red
+  static const viceRedLight = Color(0xFFEF4444); // lighter red
+  static const viceOrange = Color(0xFFEA580C); // warning orange
+  static const viceOrangeDark = Color(0xFFC2410C); // darker orange
+  static const viceOrangeLight = Color(0xFFF97316); // lighter orange
   
   // Additional purple shades for variety
   static const purpleShade50 = Color(0xFFF5F3FF);
@@ -41,9 +49,21 @@ class TugColors {
   static const darkTextSecondary = Color(0xFF9CA3AF);
   static const darkBorder = Color(0xFF374151);
 
+  // Vice Mode Dark Theme - more serious/somber
+  static const viceModeDarkBackground = Color(0xFF0A0A0A);
+  static const viceModeDarkSurface = Color(0xFF1C1C1C);
+  static const viceModeDarkSurfaceVariant = Color(0xFF2C1810);
+  static const viceModeTextPrimary = Color(0xFFFEF2F2);
+  static const viceModeTextSecondary = Color(0xFFA1A1AA);
+  static const viceModeBorder = Color(0xFF451A03);
+
   // Gradient colors
   static const gradientPurpleStart = Color(0xFF7C3AED);
   static const gradientPurpleEnd = Color(0xFF9F7AEA);
+  
+  // Vice mode gradient colors
+  static const gradientViceStart = Color(0xFFDC2626);
+  static const gradientViceEnd = Color(0xFFEA580C);
 
   // Simple gradient sets
   static final lightGradient = [
@@ -120,5 +140,82 @@ class TugColors {
       stops: const [0.0, 0.5, 1.0],
       radius: radius,
     );
+  }
+
+  // Vice mode specific methods
+  
+  /// Get vice mode gradient
+  static LinearGradient getViceGradient({bool vertical = false, bool reversed = false}) {
+    final List<Color> colors = reversed 
+        ? [gradientViceEnd, gradientViceStart]
+        : [gradientViceStart, gradientViceEnd];
+        
+    return LinearGradient(
+      colors: colors,
+      begin: vertical ? Alignment.topCenter : Alignment.centerLeft,
+      end: vertical ? Alignment.bottomCenter : Alignment.centerRight,
+    );
+  }
+
+  /// Get mode-appropriate primary color
+  static Color getPrimaryColor(bool isViceMode) {
+    return isViceMode ? viceRed : primaryPurple;
+  }
+
+  /// Get mode-appropriate background color
+  static Color getBackgroundColor(bool isDark, bool isViceMode) {
+    if (isViceMode && isDark) return viceModeDarkBackground;
+    if (isDark) return darkBackground;
+    return lightBackground;
+  }
+
+  /// Get mode-appropriate surface color
+  static Color getSurfaceColor(bool isDark, bool isViceMode) {
+    if (isViceMode && isDark) return viceModeDarkSurface;
+    if (isDark) return darkSurface;
+    return lightSurface;
+  }
+
+  /// Get mode-appropriate text color
+  static Color getTextColor(bool isDark, bool isViceMode, {bool isSecondary = false}) {
+    if (isViceMode && isDark) {
+      return isSecondary ? viceModeTextSecondary : viceModeTextPrimary;
+    }
+    if (isDark) {
+      return isSecondary ? darkTextSecondary : darkTextPrimary;
+    }
+    return isSecondary ? lightTextSecondary : lightTextPrimary;
+  }
+
+  /// Get streak color based on mode and days
+  static Color getStreakColor(bool isViceMode, int days) {
+    if (isViceMode) {
+      // For vices, longer streaks = better (more days clean)
+      if (days >= 30) return Color(0xFF059669); // Green for 30+ days clean
+      if (days >= 7) return Color(0xFFD97706); // Orange for 7-29 days
+      if (days >= 1) return Color(0xFFEAB308); // Yellow for 1-6 days
+      return viceRed; // Red for 0 days (recent indulgence)
+    } else {
+      // For values, streaks use the standard purple theme
+      return primaryPurple;
+    }
+  }
+
+  /// Get severity color for vices (1-5 scale)
+  static Color getSeverityColor(int severity) {
+    switch (severity) {
+      case 1:
+        return Color(0xFFF59E0B); // Mild - yellow
+      case 2:
+        return Color(0xFFEA580C); // Moderate - orange
+      case 3:
+        return Color(0xFFDC2626); // Concerning - red
+      case 4:
+        return Color(0xFF991B1B); // Severe - dark red
+      case 5:
+        return Color(0xFF7F1D1D); // Critical - very dark red
+      default:
+        return Color(0xFF6B7280); // Unknown - gray
+    }
   }
 }

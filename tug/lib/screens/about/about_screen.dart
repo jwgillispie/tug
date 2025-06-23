@@ -19,7 +19,7 @@ class AboutScreen extends StatelessWidget {
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('about tug'),
+        title: const Text('about viceless'),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -45,7 +45,7 @@ class AboutScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   const Text(
-                    'Tug',
+                    'Viceless',
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
@@ -69,20 +69,22 @@ class AboutScreen extends StatelessWidget {
             // App Description
             _buildSection(
               context,
-              'what is tug?',
-              'Tug helps you visualize the pull between what you say matters and how you actually spend your time. '
-              'By tracking time spent on activities aligned with your values, Tug creates awareness of the gap between stated values and actual behavior.'
+              'what is viceless?',
+              'Viceless helps you track your personal values and overcome destructive habits. '
+              'Switch between Values Mode to build positive streaks, and Vices Mode to track your journey toward breaking free from negative behaviors. '
+              'Create awareness of the gap between your stated values and actual behavior.'
             ),
             
             // How it works
             _buildSection(
               context,
               'how it works',
-              '1. Define your personal values (up to 5)\n'
-              '2. Track time spent on value-aligned activities\n'
-              '3. Build streaks by engaging with your values daily\n'
-              '4. Visualize your progress with activity charts and rankings\n'
-              '5. Identify areas for better alignment in your life'
+              '• Values Mode: Define your personal values and track aligned activities\n'
+              '• Vices Mode: Identify destructive habits and track clean streaks\n'
+              '• Build positive streaks and break negative patterns\n'
+              '• Visualize your progress with charts and rankings\n'
+              '• Switch modes to focus on growth or recovery\n'
+              '• Create awareness between your values and actions'
             ),
             
             // Developer Info
@@ -96,18 +98,22 @@ class AboutScreen extends StatelessWidget {
             _buildSection(
               context,
               'contact',
-              'Questions or feedback? Reach out at: jordangillispie@outlook.com'
+              'Questions or feedback? Reach out at: jordangillispie@outlook.com\n\n'
+              'If you\'re struggling with addiction or mental health, please reach out to:\n'
+              '• National Suicide Prevention Lifeline: 988\n'
+              '• SAMHSA National Helpline: 1-800-662-4357'
             ),
             
             // Recent Features
             _buildSection(
               context,
               'new in v2.0.2',
-              '• quantum ui effects - Beautiful holographic and floating animations throughout the app\n'
-              '• enhanced app bars - Stunning gradient backgrounds with shimmer effects\n'
-              '• improved rankings - Better visibility for your position and achievements\n'
-              '• visual polish - Refined design with quantum borders and cosmic effects\n'
-              '• premium subscriptions - Unlock the full leaderboard experience'
+              '• dual mode system - Switch between Values and Vices tracking\n'
+              '• vice tracking - Monitor destructive habits and build clean streaks\n'
+              '• serious mode theme - Appropriate visual tone for vice recovery\n'
+              '• enhanced support - Crisis resources and coping strategies\n'
+              '• improved analytics - Better insights for both modes\n'
+              '• quantum ui effects - Beautiful animations throughout the app'
             ),
             
             // App version details
@@ -124,7 +130,7 @@ class AboutScreen extends StatelessWidget {
             Center(
               child: OutlinedButton.icon(
                 onPressed: () {
-                  _launchUrl('mailto:jordangillispie@outlook.com?subject=Tug%20App%20Feedback');
+                  _launchUrl('mailto:jordangillispie@outlook.com?subject=Viceless%20App%20Feedback');
                 },
                 icon: const Icon(Icons.email_outlined),
                 label: const Text('send feedback'),
@@ -136,7 +142,7 @@ class AboutScreen extends StatelessWidget {
             // Copyright notice
             Center(
               child: Text(
-                '© ${DateTime.now().year} Tug App. All rights reserved.',
+                '© ${DateTime.now().year} Viceless App. All rights reserved.',
                 style: TextStyle(
                   color: isDarkMode ? Colors.grey.shade600 : Colors.grey.shade400,
                   fontSize: 12,
