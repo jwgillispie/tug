@@ -38,6 +38,8 @@ import 'utils/theme/theme.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/signup_screen.dart';
 import 'screens/values/values_input_screen.dart';
+import 'screens/vices/vices_input_screen.dart';
+import 'screens/vices/indulgence_screen.dart';
 
 // Import new screens
 import 'screens/about/about_screen.dart';
@@ -277,6 +279,25 @@ class _TugAppState extends State<TugApp> {
           builder: (context, state) => const MainLayout(
             currentIndex: 2,
             child: ActivityScreen(showAddForm: true),
+          ),
+        ),
+        // Vices routes
+        GoRoute(
+          path: '/vices-input',
+          builder: (context, state) => const VicesInputScreen(),
+        ),
+        GoRoute(
+          path: '/indulgences',
+          builder: (context, state) => const MainLayout(
+            currentIndex: 2,
+            child: IndulgenceScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/indulgences/new',
+          builder: (context, state) => const MainLayout(
+            currentIndex: 2,
+            child: IndulgenceScreen(),
           ),
         ),
         GoRoute(

@@ -616,7 +616,7 @@ class ViceCard extends StatelessWidget {
       builder: (context) => AlertDialog(
         backgroundColor: isDarkMode ? TugColors.viceModeDarkSurface : Colors.white,
         title: Text(
-          'Remove Vice',
+          'remove vice',
           style: TextStyle(
             color: isDarkMode ? TugColors.viceModeTextPrimary : TugColors.lightTextPrimary,
             fontWeight: FontWeight.bold,

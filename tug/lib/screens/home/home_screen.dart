@@ -195,9 +195,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: isDarkMode 
-                  ? [TugColors.darkBackground, TugColors.primaryPurpleDark, TugColors.primaryPurple]
-                  : [TugColors.lightBackground, TugColors.primaryPurple.withAlpha(20)],
+              colors: _currentMode == AppMode.vicesMode
+                  ? (isDarkMode 
+                      ? [TugColors.darkBackground, TugColors.viceRedDark, TugColors.viceRed]
+                      : [TugColors.lightBackground, TugColors.viceRed.withAlpha(20)])
+                  : (isDarkMode 
+                      ? [TugColors.darkBackground, TugColors.primaryPurpleDark, TugColors.primaryPurple]
+                      : [TugColors.lightBackground, TugColors.primaryPurple.withAlpha(20)]),
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -211,7 +215,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               fontWeight: FontWeight.bold,
               letterSpacing: 1.2,
             ),
-            colors: isDarkMode ? [TugColors.primaryPurple, TugColors.primaryPurpleLight, TugColors.primaryPurpleDark] : [TugColors.primaryPurple, TugColors.primaryPurpleLight],
+            colors: _currentMode == AppMode.vicesMode
+                ? (isDarkMode ? [TugColors.viceRed, TugColors.viceOrange, TugColors.viceRedDark] : [TugColors.viceRed, TugColors.viceOrange])
+                : (isDarkMode ? [TugColors.primaryPurple, TugColors.primaryPurpleLight, TugColors.primaryPurpleDark] : [TugColors.primaryPurple, TugColors.primaryPurpleLight]),
           ),
         ),
         actions: [
@@ -246,22 +252,33 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: isDarkMode 
-                ? [
-                    TugColors.darkBackground,
-                    Color.lerp(TugColors.darkBackground, TugColors.primaryPurple, 0.05) ?? TugColors.darkBackground,
-                  ] 
-                : [
-                    TugColors.lightBackground,
-                    Color.lerp(TugColors.lightBackground, TugColors.primaryPurple, 0.03) ?? TugColors.lightBackground,
-                  ],
+            colors: _currentMode == AppMode.vicesMode
+                ? (isDarkMode 
+                    ? [
+                        TugColors.darkBackground,
+                        Color.lerp(TugColors.darkBackground, TugColors.viceRed, 0.05) ?? TugColors.darkBackground,
+                      ] 
+                    : [
+                        TugColors.lightBackground,
+                        Color.lerp(TugColors.lightBackground, TugColors.viceRed, 0.03) ?? TugColors.lightBackground,
+                      ])
+                : (isDarkMode 
+                    ? [
+                        TugColors.darkBackground,
+                        Color.lerp(TugColors.darkBackground, TugColors.primaryPurple, 0.05) ?? TugColors.darkBackground,
+                      ] 
+                    : [
+                        TugColors.lightBackground,
+                        Color.lerp(TugColors.lightBackground, TugColors.primaryPurple, 0.03) ?? TugColors.lightBackground,
+                      ]),
           ),
         ),
         child: RefreshIndicator(
           onRefresh: _refreshData,
           child: FadeTransition(
             opacity: _fadeAnimation,
-            child: BlocBuilder<ValuesBloc, ValuesState>(
+            child: _currentMode == AppMode.valuesMode 
+                ? BlocBuilder<ValuesBloc, ValuesState>(
               builder: (context, state) {
               if (state is ValuesLoading && _isFirstLoad) {
                 // Only show loading indicator on first load
@@ -783,6 +800,201 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               return const Center(
                 child: Text('loading values...'),
               );
+              },
+            )
+                : BlocBuilder<VicesBloc, VicesState>(
+              builder: (context, state) {
+                if (state is VicesLoading && _isFirstLoad) {
+                  _isFirstLoad = false;
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const CircularProgressIndicator(),
+                        const SizedBox(height: 16),
+                        Text(
+                          'loading vices...',
+                          style: TextStyle(
+                            color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+                            fontSize: 16,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                
+                if (state is VicesError) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 64,
+                          color: TugColors.viceRed,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'error loading vices',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: isDarkMode ? TugColors.darkTextPrimary : TugColors.lightTextPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          state.message,
+                          style: TextStyle(
+                            color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  );
+                }
+                
+                if (state is VicesLoaded) {
+                  final vices = state.vices;
+                  return SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 40),
+                          Text(
+                            'your vices',
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: TugColors.viceRed,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'track your progress in overcoming challenges',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 32),
+                          
+                          if (vices.isEmpty) ...[
+                            Center(
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    Icons.psychology_outlined,
+                                    size: 80,
+                                    color: TugColors.viceRed.withOpacity(0.5),
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'no vices tracked yet',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: isDarkMode ? TugColors.darkTextPrimary : TugColors.lightTextPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'tap the + button to start tracking',
+                                    style: TextStyle(
+                                      color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ] else ...[
+                            GridView.builder(
+                              shrinkWrap: true,
+                              physics: const NeverScrollableScrollPhysics(),
+                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                crossAxisSpacing: 16,
+                                mainAxisSpacing: 16,
+                                childAspectRatio: 1.2,
+                              ),
+                              itemCount: vices.length,
+                              itemBuilder: (context, index) {
+                                final vice = vices[index];
+                                return Card(
+                                  elevation: 2,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(12),
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                        colors: [
+                                          Color(int.parse('0xFF${vice.color.substring(1)}')),
+                                          Color(int.parse('0xFF${vice.color.substring(1)}')).withOpacity(0.7),
+                                        ],
+                                      ),
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16.0),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            vice.name,
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.white,
+                                            ),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'clean days: ${vice.currentStreak}',
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  color: Colors.white70,
+                                                ),
+                                              ),
+                                              Text(
+                                                'best: ${vice.longestStreak}',
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  color: Colors.white70,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  );
+                }
+                
+                return const Center(
+                  child: Text('loading vices...'),
+                );
               },
             ),
           ),

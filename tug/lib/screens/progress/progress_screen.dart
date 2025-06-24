@@ -4,6 +4,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tug/blocs/values/bloc/values_bloc.dart';
 import 'package:tug/blocs/values/bloc/values_event.dart';
 import 'package:tug/blocs/values/bloc/values_state.dart';
+import 'package:tug/blocs/vices/bloc/vices_bloc.dart';
+import 'package:tug/blocs/vices/bloc/vices_event.dart';
+import 'package:tug/blocs/vices/bloc/vices_state.dart';
+import 'package:tug/services/app_mode_service.dart';
 import 'package:tug/services/activity_service.dart';
 import 'package:tug/services/cache_service.dart';
 import 'package:tug/utils/theme/colors.dart';
@@ -33,6 +37,8 @@ class _ProgressScreenState extends State<ProgressScreen>
 
   final ActivityService _activityService = ActivityService();
   final CacheService _cacheService = CacheService();
+  final AppModeService _appModeService = AppModeService();
+  AppMode _currentMode = AppMode.valuesMode;
 
   @override
   void initState() {
@@ -44,10 +50,15 @@ class _ProgressScreenState extends State<ProgressScreen>
   Future<void> _initializeAndLoadData() async {
     // Initialize services first
     await _initializeCache();
+    await _initializeAppMode();
     
-    // Load only values initially, delay other data until values are available
+    // Load data based on current mode
     if (mounted) {
-      context.read<ValuesBloc>().add(LoadValues(forceRefresh: false));
+      if (_currentMode == AppMode.valuesMode) {
+        context.read<ValuesBloc>().add(LoadValues(forceRefresh: false));
+      } else {
+        context.read<VicesBloc>().add(const LoadVices());
+      }
       // Load activity data immediately in parallel
       _fetchActivityData(forceRefresh: false);
       
@@ -82,6 +93,31 @@ class _ProgressScreenState extends State<ProgressScreen>
       await _cacheService.initialize();
     } catch (e) {
       // Cache initialization failed - not critical for functionality
+    }
+  }
+
+  Future<void> _initializeAppMode() async {
+    try {
+      await _appModeService.initialize();
+      _appModeService.modeStream.listen((mode) {
+        if (mounted) {
+          setState(() {
+            _currentMode = mode;
+          });
+          // Reload data when mode changes
+          if (_currentMode == AppMode.valuesMode) {
+            context.read<ValuesBloc>().add(const LoadValues(forceRefresh: true));
+          } else {
+            context.read<VicesBloc>().add(const LoadVices());
+          }
+        }
+      });
+      setState(() {
+        _currentMode = _appModeService.currentMode;
+      });
+    } catch (e) {
+      // Mode service initialization failed - default to values mode
+      _currentMode = AppMode.valuesMode;
     }
   }
 
@@ -223,18 +259,22 @@ class _ProgressScreenState extends State<ProgressScreen>
         // Cache clear failed - not critical
       }
       
-      // Load values and activity data in parallel for faster refresh
+      // Load data based on current mode and activity data in parallel for faster refresh
       await Future.wait([
         Future(() {
           if (mounted) {
-            context.read<ValuesBloc>().add(LoadValues(forceRefresh: true));
+            if (_currentMode == AppMode.valuesMode) {
+              context.read<ValuesBloc>().add(LoadValues(forceRefresh: true));
+            } else {
+              context.read<VicesBloc>().add(const LoadVices());
+            }
           }
         }),
         _fetchActivityData(forceRefresh: true),
       ]);
       
-      // Load streak stats in background (non-blocking)
-      if (mounted) {
+      // Load streak stats in background (non-blocking) - only for values mode
+      if (mounted && _currentMode == AppMode.valuesMode) {
         context.read<ValuesBloc>().add(LoadStreakStats(forceRefresh: true));
       }
     } catch (e) {
@@ -283,9 +323,13 @@ class _ProgressScreenState extends State<ProgressScreen>
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: isDarkMode 
-                  ? [TugColors.darkBackground, TugColors.primaryPurpleDark, TugColors.primaryPurple]
-                  : [TugColors.lightBackground, TugColors.primaryPurple.withAlpha(20)],
+              colors: _currentMode == AppMode.vicesMode
+                  ? (isDarkMode 
+                      ? [TugColors.darkBackground, TugColors.viceRedDark, TugColors.viceRed]
+                      : [TugColors.lightBackground, TugColors.viceRed.withAlpha(20)])
+                  : (isDarkMode 
+                      ? [TugColors.darkBackground, TugColors.primaryPurpleDark, TugColors.primaryPurple]
+                      : [TugColors.lightBackground, TugColors.primaryPurple.withAlpha(20)]),
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -299,9 +343,9 @@ class _ProgressScreenState extends State<ProgressScreen>
               fontWeight: FontWeight.bold,
               letterSpacing: 1.2,
             ),
-            colors: isDarkMode 
-                ? [TugColors.primaryPurple, TugColors.primaryPurpleLight, TugColors.primaryPurpleDark] 
-                : [TugColors.primaryPurple, TugColors.primaryPurpleLight],
+            colors: _currentMode == AppMode.vicesMode
+                ? (isDarkMode ? [TugColors.viceRed, TugColors.viceOrange, TugColors.viceRedDark] : [TugColors.viceRed, TugColors.viceOrange])
+                : (isDarkMode ? [TugColors.primaryPurple, TugColors.primaryPurpleLight, TugColors.primaryPurpleDark] : [TugColors.primaryPurple, TugColors.primaryPurpleLight]),
           ),
         ),
       ),
@@ -420,7 +464,8 @@ class _ProgressScreenState extends State<ProgressScreen>
                         ),
                       ],
                     )
-                  : BlocBuilder<ValuesBloc, ValuesState>(
+                  : _currentMode == AppMode.valuesMode 
+                  ? BlocBuilder<ValuesBloc, ValuesState>(
                     builder: (context, state) {
                       if (state is ValuesLoading) {
                         return ListView(
@@ -524,9 +569,9 @@ class _ProgressScreenState extends State<ProgressScreen>
                                   const EdgeInsets.only(bottom: 8, left: 4, top: 8),
                               child: Row(
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.balance,
-                                    color: TugColors.primaryPurple,
+                                    color: _currentMode == AppMode.vicesMode ? TugColors.viceRed : TugColors.primaryPurple,
                                     size: 20,
                                   ),
                                   const SizedBox(width: 8),
@@ -625,6 +670,240 @@ class _ProgressScreenState extends State<ProgressScreen>
                       return ListView(
                         children: const [
                           SizedBox(height: 200),
+                          Center(
+                            child: Text('no data available'),
+                          ),
+                        ],
+                      );
+                    },
+                  )
+                  : BlocBuilder<VicesBloc, VicesState>(
+                    builder: (context, state) {
+                      if (state is VicesLoading) {
+                        return ListView(
+                          children: [
+                            const SizedBox(height: 200),
+                            Center(
+                              child: Column(
+                                children: [
+                                  const CircularProgressIndicator(),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'loading vices progress...',
+                                    style: TextStyle(
+                                      color: isDarkMode 
+                                          ? TugColors.darkTextSecondary 
+                                          : TugColors.lightTextSecondary,
+                                      fontSize: 16,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        );
+                      }
+
+                      if (state is VicesError) {
+                        return ListView(
+                          children: [
+                            const SizedBox(height: 200),
+                            Center(
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    Icons.error_outline,
+                                    size: 64,
+                                    color: TugColors.viceRed,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'error loading vices',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: isDarkMode 
+                                          ? TugColors.darkTextPrimary 
+                                          : TugColors.lightTextPrimary,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    state.message,
+                                    style: TextStyle(
+                                      color: isDarkMode 
+                                          ? TugColors.darkTextSecondary 
+                                          : TugColors.lightTextSecondary,
+                                    ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        );
+                      }
+
+                      if (state is VicesLoaded) {
+                        final vices = state.vices;
+                        
+                        if (vices.isEmpty) {
+                          return ListView(
+                            children: [
+                              const SizedBox(height: 200),
+                              Center(
+                                child: Column(
+                                  children: [
+                                    Icon(
+                                      Icons.psychology_outlined,
+                                      size: 80,
+                                      color: TugColors.viceRed.withOpacity(0.5),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      'no vices tracked yet',
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                        color: isDarkMode 
+                                            ? TugColors.darkTextPrimary 
+                                            : TugColors.lightTextPrimary,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'start tracking vices to see your progress',
+                                      style: TextStyle(
+                                        color: isDarkMode 
+                                            ? TugColors.darkTextSecondary 
+                                            : TugColors.lightTextSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          );
+                        }
+
+                        return ListView(
+                          children: [
+                            const SizedBox(height: 40),
+                            Text(
+                              'vice progress',
+                              style: TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                color: TugColors.viceRed,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'track your clean streaks and progress',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: isDarkMode 
+                                    ? TugColors.darkTextSecondary 
+                                    : TugColors.lightTextSecondary,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                            const SizedBox(height: 32),
+                            
+                            // Vice progress cards
+                            ...vices.map((vice) => Card(
+                              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              elevation: 2,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      Color(int.parse('0xFF${vice.color.substring(1)}')),
+                                      Color(int.parse('0xFF${vice.color.substring(1)}')).withOpacity(0.7),
+                                    ],
+                                  ),
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(20.0),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        vice.name,
+                                        style: const TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              const Text(
+                                                'current streak',
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: Colors.white70,
+                                                ),
+                                              ),
+                                              Text(
+                                                '${vice.currentStreak} days',
+                                                style: const TextStyle(
+                                                  fontSize: 24,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          Column(
+                                            crossAxisAlignment: CrossAxisAlignment.end,
+                                            children: [
+                                              const Text(
+                                                'best streak',
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: Colors.white70,
+                                                ),
+                                              ),
+                                              Text(
+                                                '${vice.longestStreak} days',
+                                                style: const TextStyle(
+                                                  fontSize: 24,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.white,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            )).toList(),
+                            
+                            const SizedBox(height: 32),
+                          ],
+                        );
+                      }
+
+                      return ListView(
+                        children: [
+                          const SizedBox(height: 200),
                           Center(
                             child: Text('no data available'),
                           ),
