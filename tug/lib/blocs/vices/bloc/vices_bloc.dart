@@ -1,9 +1,7 @@
 // lib/blocs/vices/bloc/vices_bloc.dart
-import 'package:bloc/bloc.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:logger/logger.dart';
 import '../../../services/vice_service.dart';
-import '../../../models/vice_model.dart';
-import '../../../models/indulgence_model.dart';
 import 'vices_event.dart';
 import 'vices_state.dart';
 
@@ -42,7 +40,7 @@ class VicesBloc extends Bloc<VicesEvent, VicesState> {
     try {
       emit(const VicesLoading());
       
-      final addedVice = await _viceService.createVice(event.vice);
+      await _viceService.createVice(event.vice);
       
       // Get updated list of vices
       final vices = await _viceService.getVices();
@@ -90,7 +88,10 @@ class VicesBloc extends Bloc<VicesEvent, VicesState> {
     try {
       emit(const VicesLoading());
       
-      await _viceService.recordIndulgence(event.indulgence);
+      final recordedIndulgence = await _viceService.recordIndulgence(event.indulgence);
+      
+      // Emit the specific success state first
+      emit(IndulgenceRecorded(recordedIndulgence));
       
       // Get updated list of vices (with updated streaks)
       final vices = await _viceService.getVices();

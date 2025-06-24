@@ -420,8 +420,8 @@ class _VicesInputScreenState extends State<VicesInputScreen> {
                     }
                     
                     if (state is VicesLoading) {
-                      return const Center(
-                        child: CircularProgressIndicator(),
+                      return Center(
+                        child: CircularProgressIndicator(color: TugColors.viceRed),
                       );
                     }
                     

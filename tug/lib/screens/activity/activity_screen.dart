@@ -16,6 +16,10 @@ import 'package:tug/utils/theme/buttons.dart';
 import 'package:tug/utils/time_utils.dart';
 import 'package:tug/widgets/activity/activity_form.dart';
 import 'package:tug/widgets/activity/edit_activity_dialog.dart';
+import 'package:tug/services/app_mode_service.dart';
+import 'package:tug/blocs/vices/bloc/vices_bloc.dart';
+import 'package:tug/blocs/vices/bloc/vices_event.dart';
+import 'package:tug/blocs/vices/bloc/vices_state.dart';
 
 class ActivityScreen extends StatefulWidget {
   final bool showAddForm;
@@ -38,13 +42,29 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
   late Animation<double> _fadeAnimation;
   bool _isFirstLoad = true;
   bool _showSwipeHint = true;
+  final AppModeService _appModeService = AppModeService();
+  AppMode _currentMode = AppMode.valuesMode;
 
   @override
   void initState() {
     super.initState();
-    // Load activities and values when screen is initialized, but don't force a refresh
+    
+    // Initialize mode service and load appropriate data
+    _initializeAppMode();
+    
+    // Load activities (always load these)
     context.read<ActivitiesBloc>().add(const LoadActivities(forceRefresh: false));
-    context.read<ValuesBloc>().add(const LoadValues(forceRefresh: false));
+    
+    // Load mode-specific data
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        if (_currentMode == AppMode.valuesMode) {
+          context.read<ValuesBloc>().add(const LoadValues(forceRefresh: false));
+        } else {
+          context.read<VicesBloc>().add(const LoadVices());
+        }
+      }
+    });
 
     // Setup animation
     _animationController = AnimationController(
@@ -399,6 +419,31 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
     }
   }
 
+  Future<void> _initializeAppMode() async {
+    try {
+      await _appModeService.initialize();
+      _appModeService.modeStream.listen((mode) {
+        if (mounted) {
+          setState(() {
+            _currentMode = mode;
+          });
+          // Reload appropriate data when mode changes
+          if (_currentMode == AppMode.valuesMode) {
+            context.read<ValuesBloc>().add(const LoadValues(forceRefresh: true));
+          } else {
+            context.read<VicesBloc>().add(const LoadVices());
+          }
+        }
+      });
+      setState(() {
+        _currentMode = _appModeService.currentMode;
+      });
+    } catch (e) {
+      // Mode service initialization failed - default to values mode
+      _currentMode = AppMode.valuesMode;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     // Must call super.build for AutomaticKeepAliveClientMixin
@@ -413,9 +458,13 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: isDarkMode 
-                  ? [TugColors.darkBackground, TugColors.primaryPurpleDark, TugColors.primaryPurple]
-                  : [TugColors.lightBackground, TugColors.primaryPurple.withAlpha(20)],
+              colors: _currentMode == AppMode.vicesMode
+                  ? (isDarkMode 
+                      ? [TugColors.darkBackground, TugColors.viceRedDark, TugColors.viceRed]
+                      : [TugColors.lightBackground, TugColors.viceRed.withAlpha(20)])
+                  : (isDarkMode 
+                      ? [TugColors.darkBackground, TugColors.primaryPurpleDark, TugColors.primaryPurple]
+                      : [TugColors.lightBackground, TugColors.primaryPurple.withAlpha(20)]),
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -423,15 +472,15 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
         ),
         title: QuantumEffects.holographicShimmer(
           child: QuantumEffects.gradientText(
-            'activity tracking',
+            _currentMode == AppMode.vicesMode ? 'lapses tracking' : 'activity tracking',
             style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
               letterSpacing: 1.2,
             ),
-            colors: isDarkMode 
-                ? [TugColors.primaryPurple, TugColors.primaryPurpleLight, TugColors.primaryPurpleDark] 
-                : [TugColors.primaryPurple, TugColors.primaryPurpleLight],
+            colors: _currentMode == AppMode.vicesMode
+                ? (isDarkMode ? [TugColors.viceRed, TugColors.viceOrange, TugColors.viceRedDark] : [TugColors.viceRed, TugColors.viceOrange])
+                : (isDarkMode ? [TugColors.primaryPurple, TugColors.primaryPurpleLight, TugColors.primaryPurpleDark] : [TugColors.primaryPurple, TugColors.primaryPurpleLight]),
           ),
         ),
         actions: [
@@ -476,26 +525,34 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
       ),
       body: FadeTransition(
         opacity: _fadeAnimation,
-        child: Column(
-          children: [
-            // Activity Summary Card
-            _buildActivitySummary(),
-    
-            // Filters
-            if (_showFilters) _buildFilters(),
-    
-            // Activities List
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: _refreshActivities,
+        child: _currentMode == AppMode.vicesMode 
+            ? _buildVicesContent()
+            : Column(
+                children: [
+                  // Activity Summary Card
+                  _buildActivitySummary(),
+          
+                  // Filters
+                  if (_showFilters) _buildFilters(),
+          
+                  // Activities List
+                  Expanded(
+                    child: RefreshIndicator(
+                      onRefresh: _refreshActivities,
                 child: BlocBuilder<ActivitiesBloc, ActivitiesState>(
                 builder: (context, state) {
                   if (state is ActivitiesLoading && _isFirstLoad) {
                     // Only show loading indicator on first load
                     return ListView(
-                      children: const [
-                        SizedBox(height: 200),
-                        Center(child: CircularProgressIndicator()),
+                      children: [
+                        const SizedBox(height: 200),
+                        Center(
+                          child: CircularProgressIndicator(
+                            color: _currentMode == AppMode.vicesMode 
+                                ? TugColors.viceRed 
+                                : TugColors.primaryPurple,
+                          ),
+                        ),
                       ],
                     );
                   }
@@ -1303,6 +1360,225 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildVicesContent() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
+    return BlocBuilder<VicesBloc, VicesState>(
+      builder: (context, state) {
+        if (state is VicesLoading) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                CircularProgressIndicator(color: TugColors.viceRed),
+                const SizedBox(height: 16),
+                Text(
+                  'loading vices...',
+                  style: TextStyle(
+                    color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        
+        if (state is VicesError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  size: 64,
+                  color: TugColors.viceRed,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'error loading vices',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: isDarkMode ? TugColors.darkTextPrimary : TugColors.lightTextPrimary,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  state.message,
+                  style: TextStyle(
+                    color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          );
+        }
+        
+        if (state is VicesLoaded) {
+          final vices = state.vices;
+          
+          return Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 20),
+                Text(
+                  'indulgence tracking',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: TugColors.viceRed,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'when in vices mode, use this space to record lapses',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+                  ),
+                ),
+                const SizedBox(height: 32),
+                
+                if (vices.isEmpty) ...[
+                  Expanded(
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.psychology_outlined,
+                            size: 80,
+                            color: TugColors.viceRed.withOpacity(0.5),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'no vices tracked yet',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: isDarkMode ? TugColors.darkTextPrimary : TugColors.lightTextPrimary,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'add vices to track indulgences',
+                            style: TextStyle(
+                              color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          ElevatedButton(
+                            onPressed: () => context.go('/vices-input'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: TugColors.viceRed,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            ),
+                            child: const Text('manage vices'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ] else ...[
+                  Text(
+                    'your vices',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: isDarkMode ? TugColors.darkTextPrimary : TugColors.lightTextPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: vices.length,
+                      itemBuilder: (context, index) {
+                        final vice = vices[index];
+                        return Card(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              gradient: LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [
+                                  Color(int.parse('0xFF${vice.color.substring(1)}')),
+                                  Color(int.parse('0xFF${vice.color.substring(1)}')).withOpacity(0.7),
+                                ],
+                              ),
+                            ),
+                            child: ListTile(
+                              contentPadding: const EdgeInsets.all(16),
+                              title: Text(
+                                vice.name,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              subtitle: Text(
+                                'clean days: ${vice.currentStreak}',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                              trailing: ElevatedButton(
+                                onPressed: () {
+                                  // Navigate to indulgence recording for this vice
+                                  context.go('/indulgences/new');
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white.withOpacity(0.2),
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                ),
+                                child: const Text('record lapse'),
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 16),
+                  Center(
+                    child: ElevatedButton(
+                      onPressed: () => context.go('/vices-input'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: TugColors.viceRed,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      ),
+                      child: const Text('manage vices'),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          );
+        }
+        
+        return const Center(
+          child: Text('no data available'),
+        );
+      },
     );
   }
 }

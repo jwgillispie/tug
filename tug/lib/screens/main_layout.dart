@@ -71,7 +71,7 @@ class _MainLayoutState extends State<MainLayout> {
         'selectedIcon': isViceMode ? Icons.warning_rounded : Icons.history_rounded,
         'label': isViceMode ? 'lapses' : 'activities',
         'index': 2,
-        'path': isViceMode ? '/indulgences' : '/activities',
+        'path': '/activities',
       },
       {
         'icon': Icons.person_outline_rounded,

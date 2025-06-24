@@ -287,7 +287,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const CircularProgressIndicator(),
+                      CircularProgressIndicator(color: TugColors.primaryPurple),
                       const SizedBox(height: 16),
                       Text(
                         LoadingMessages.getValues(),
@@ -810,7 +810,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const CircularProgressIndicator(),
+                        CircularProgressIndicator(color: TugColors.viceRed),
                         const SizedBox(height: 16),
                         Text(
                           'loading vices...',

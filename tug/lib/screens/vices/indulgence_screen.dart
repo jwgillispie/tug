@@ -195,7 +195,7 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
           child: BlocBuilder<VicesBloc, VicesState>(
             builder: (context, state) {
               if (state is VicesLoading && _selectedVice == null) {
-                return const Center(child: CircularProgressIndicator());
+                return Center(child: CircularProgressIndicator(color: TugColors.viceRed));
               }
               
               final vices = state is VicesLoaded 

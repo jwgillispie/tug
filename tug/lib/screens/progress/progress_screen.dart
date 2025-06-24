@@ -449,7 +449,11 @@ class _ProgressScreenState extends State<ProgressScreen>
                         Center(
                           child: Column(
                             children: [
-                              const CircularProgressIndicator(),
+                              CircularProgressIndicator(
+                                color: _currentMode == AppMode.vicesMode 
+                                    ? TugColors.viceRed 
+                                    : TugColors.primaryPurple,
+                              ),
                               const SizedBox(height: 16),
                               Text(
                                 LoadingMessages.getProgress(),
@@ -474,7 +478,7 @@ class _ProgressScreenState extends State<ProgressScreen>
                             Center(
                               child: Column(
                                 children: [
-                                  const CircularProgressIndicator(),
+                                  CircularProgressIndicator(color: TugColors.primaryPurple),
                                   const SizedBox(height: 16),
                                   Text(
                                     LoadingMessages.getValues(),
@@ -650,7 +654,7 @@ class _ProgressScreenState extends State<ProgressScreen>
                             Center(
                               child: Column(
                                 children: [
-                                  const CircularProgressIndicator(),
+                                  CircularProgressIndicator(color: TugColors.primaryPurple),
                                   const SizedBox(height: 16),
                                   Text(
                                     LoadingMessages.getValues(),
@@ -686,7 +690,7 @@ class _ProgressScreenState extends State<ProgressScreen>
                             Center(
                               child: Column(
                                 children: [
-                                  const CircularProgressIndicator(),
+                                  CircularProgressIndicator(color: TugColors.viceRed),
                                   const SizedBox(height: 16),
                                   Text(
                                     'loading vices progress...',
