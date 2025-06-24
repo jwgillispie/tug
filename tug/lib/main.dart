@@ -9,6 +9,8 @@ import 'package:tug/blocs/subscription/subscription_bloc.dart';
 import 'package:tug/blocs/theme/theme_bloc.dart';
 import 'package:tug/blocs/values/bloc/values_bloc.dart';
 import 'package:tug/blocs/values/bloc/values_event.dart';
+import 'package:tug/blocs/vices/bloc/vices_bloc.dart';
+import 'package:tug/services/vice_service.dart';
 import 'package:tug/config/env_confg.dart';
 import 'package:tug/repositories/activity_repository.dart';
 import 'package:tug/repositories/values_repository.dart';
@@ -153,6 +155,7 @@ class _TugAppState extends State<TugApp> {
   late final ActivitiesBloc _activitiesBloc;
   late final ThemeBloc _themeBloc;
   late final SubscriptionBloc _subscriptionBloc;
+  late final VicesBloc _vicesBloc;
 
   @override
   void initState() {
@@ -165,6 +168,7 @@ class _TugAppState extends State<TugApp> {
     _subscriptionBloc = SubscriptionBloc(
       subscriptionService: widget.subscriptionService,
     );
+    _vicesBloc = VicesBloc(viceService: ViceService());
 
     // Load theme preference
     _themeBloc.add(ThemeLoaded());
@@ -351,6 +355,7 @@ class _TugAppState extends State<TugApp> {
         BlocProvider<ActivitiesBloc>.value(value: _activitiesBloc),
         BlocProvider<ThemeBloc>.value(value: _themeBloc),
         BlocProvider<SubscriptionBloc>.value(value: _subscriptionBloc),
+        BlocProvider<VicesBloc>.value(value: _vicesBloc),
       ],
       child: BlocListener<AuthBloc, AuthState>(
         listener: (context, state) {
@@ -384,6 +389,7 @@ class _TugAppState extends State<TugApp> {
     _activitiesBloc.close();
     _themeBloc.close();
     _subscriptionBloc.close();
+    _vicesBloc.close();
     widget.subscriptionService.dispose();
     super.dispose();
   }

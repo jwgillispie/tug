@@ -42,15 +42,20 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     _initializeCache();
     _initializeAppMode();
     
-    // Load values when screen is initialized, but don't force refresh
-    // if we already have cached values
-    context.read<ValuesBloc>().add(const LoadValues(forceRefresh: false));
-    
-    // Load activities for the chart
-    context.read<ActivitiesBloc>().add(const LoadActivities(forceRefresh: false));
-    
-    // Load vices for vice mode
-    context.read<VicesBloc>().add(const LoadVices());
+    // Load bloc data after the widget is mounted
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        // Load values when screen is initialized, but don't force refresh
+        // if we already have cached values
+        context.read<ValuesBloc>().add(const LoadValues(forceRefresh: false));
+        
+        // Load activities for the chart
+        context.read<ActivitiesBloc>().add(const LoadActivities(forceRefresh: false));
+        
+        // Load vices for vice mode
+        context.read<VicesBloc>().add(const LoadVices());
+      }
+    });
     
     // Preload progress screen data in background for faster navigation
     _preloadProgressData();

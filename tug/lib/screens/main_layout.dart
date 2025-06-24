@@ -98,7 +98,7 @@ class _MainLayoutState extends State<MainLayout> {
         body: Stack(
           children: [
             // Main content
-            child,
+            widget.child,
 
             // Bottom navigation overlay - allows for glass effect
             Positioned(

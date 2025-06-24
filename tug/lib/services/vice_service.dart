@@ -48,8 +48,10 @@ class ViceService {
       
       if (e.type == DioExceptionType.connectionTimeout ||
           e.type == DioExceptionType.receiveTimeout ||
-          e.type == DioExceptionType.connectionError) {
+          e.type == DioExceptionType.connectionError ||
+          e.response?.statusCode == 404) {
         // Return cached vices if available
+        _logger.i('ViceService: Falling back to cached vices due to network error or 404');
         return _getCachedVices();
       }
       
