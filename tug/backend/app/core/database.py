@@ -6,6 +6,8 @@ from .config import settings
 from ..models.user import User
 from ..models.value import Value
 from ..models.activity import Activity
+from ..models.vice import Vice
+from ..models.indulgence import Indulgence
 import logging
 
 logger = logging.getLogger(__name__)
@@ -35,6 +37,8 @@ async def init_db():
             User,
             Value,
             Activity,
+            Vice,
+            Indulgence,
         ]
     )
     
