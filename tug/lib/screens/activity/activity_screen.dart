@@ -475,6 +475,17 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
+        leading: IconButton(
+          icon: Icon(
+            Icons.arrow_back,
+            color: _currentMode == AppMode.vicesMode
+                ? (isDarkMode ? TugColors.viceRed : TugColors.viceRedDark)
+                : (isDarkMode ? TugColors.primaryPurpleLight : TugColors.primaryPurple),
+          ),
+          onPressed: () {
+            context.go('/home');
+          },
+        ),
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
