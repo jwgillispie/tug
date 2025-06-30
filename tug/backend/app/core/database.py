@@ -8,6 +8,9 @@ from ..models.value import Value
 from ..models.activity import Activity
 from ..models.vice import Vice
 from ..models.indulgence import Indulgence
+from ..models.friendship import Friendship
+from ..models.social_post import SocialPost
+from ..models.post_comment import PostComment
 import logging
 
 logger = logging.getLogger(__name__)
@@ -39,6 +42,9 @@ async def init_db():
             Activity,
             Vice,
             Indulgence,
+            Friendship,
+            SocialPost,
+            PostComment,
         ]
     )
     
