@@ -17,12 +17,10 @@ class _SocialScreenState extends State<SocialScreen> {
   final AppModeService _appModeService = AppModeService();
   final SocialService _socialService = SocialService();
   final ScrollController _scrollController = ScrollController();
-  final TextEditingController _postController = TextEditingController();
   
   AppMode _currentMode = AppMode.valuesMode;
   List<SocialPostModel> _posts = [];
   bool _isLoading = false;
-  bool _isCreatingPost = false;
   String? _currentUserId;
 
   @override
@@ -62,9 +60,22 @@ class _SocialScreenState extends State<SocialScreen> {
     });
 
     try {
-      final posts = await _socialService.getSocialFeed(limit: 20, skip: 0);
+      final allPosts = await _socialService.getSocialFeed(limit: 50, skip: 0);
+      
+      // Filter posts based on current mode
+      final filteredPosts = allPosts.where((post) {
+        if (_currentMode == AppMode.vicesMode) {
+          // In vices mode, show only vice progress posts
+          return post.postType == PostType.viceProgress;
+        } else {
+          // In values mode, show activity updates and achievements
+          return post.postType == PostType.activityUpdate || 
+                 post.postType == PostType.achievement;
+        }
+      }).toList();
+      
       setState(() {
-        _posts = posts;
+        _posts = filteredPosts;
         _isLoading = false;
       });
     } catch (e) {
@@ -82,50 +93,6 @@ class _SocialScreenState extends State<SocialScreen> {
     }
   }
 
-  Future<void> _createPost() async {
-    if (_postController.text.trim().isEmpty || _isCreatingPost) return;
-
-    setState(() {
-      _isCreatingPost = true;
-    });
-
-    try {
-      final request = CreatePostRequest(
-        content: _postController.text.trim(),
-        postType: PostType.general,
-        isPublic: true,
-      );
-
-      final newPost = await _socialService.createPost(request);
-      
-      setState(() {
-        _posts.insert(0, newPost);
-        _postController.clear();
-        _isCreatingPost = false;
-      });
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Post created successfully!'),
-            backgroundColor: TugColors.success,
-          ),
-        );
-      }
-    } catch (e) {
-      setState(() {
-        _isCreatingPost = false;
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to create post: $e'),
-            backgroundColor: TugColors.error,
-          ),
-        );
-      }
-    }
-  }
 
   Future<void> _toggleLike(SocialPostModel post) async {
     try {
@@ -177,7 +144,6 @@ class _SocialScreenState extends State<SocialScreen> {
   @override
   void dispose() {
     _scrollController.dispose();
-    _postController.dispose();
     super.dispose();
   }
 
@@ -192,7 +158,7 @@ class _SocialScreenState extends State<SocialScreen> {
         controller: _scrollController,
         slivers: [
           _buildAppBar(isDarkMode, isViceMode),
-          _buildCreatePostSection(isDarkMode, isViceMode),
+          _buildModeInfoSection(isDarkMode, isViceMode),
           _buildFeedContent(isDarkMode, isViceMode),
         ],
       ),
@@ -240,13 +206,7 @@ class _SocialScreenState extends State<SocialScreen> {
             ),
           ),
         ),
-        title: Text(
-          'Social',
-          style: TextStyle(
-            color: TugColors.getTextColor(isDarkMode, isViceMode),
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+
         centerTitle: false,
         titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
       ),
@@ -262,7 +222,7 @@ class _SocialScreenState extends State<SocialScreen> {
     );
   }
 
-  Widget _buildCreatePostSection(bool isDarkMode, bool isViceMode) {
+  Widget _buildModeInfoSection(bool isDarkMode, bool isViceMode) {
     return SliverToBoxAdapter(
       child: Container(
         margin: const EdgeInsets.all(16),
@@ -270,68 +230,63 @@ class _SocialScreenState extends State<SocialScreen> {
         decoration: BoxDecoration(
           color: TugColors.getSurfaceColor(isDarkMode, isViceMode),
           borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.1),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          border: Border.all(
+            color: TugColors.getPrimaryColor(isViceMode).withOpacity(0.2),
+            width: 1,
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Share an update',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: TugColors.getTextColor(isDarkMode, isViceMode),
-              ),
+            Row(
+              children: [
+                Icon(
+                  isViceMode ? Icons.psychology : Icons.timeline,
+                  color: TugColors.getPrimaryColor(isViceMode),
+                  size: 24,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    isViceMode ? 'Vice Progress Feed' : 'Activity Feed',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: TugColors.getTextColor(isDarkMode, isViceMode),
+                    ),
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
-            TextField(
-              controller: _postController,
-              maxLines: 3,
-              decoration: InputDecoration(
-                hintText: 'What\'s on your mind?',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(
-                    color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
-                  ),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(
-                    color: TugColors.getPrimaryColor(isViceMode),
-                  ),
-                ),
+            Text(
+              isViceMode 
+                  ? 'See your friends\' progress overcoming vices. Posts are automatically created when they hit milestones like 7, 30, or 100 days clean!'
+                  : 'Your friends\' activities automatically appear here when they log workouts, complete goals, or hit achievements. Just like Strava!',
+              style: TextStyle(
+                fontSize: 14,
+                color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
+                height: 1.4,
               ),
             ),
             const SizedBox(height: 12),
             Row(
-              mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                ElevatedButton(
-                  onPressed: _isCreatingPost ? null : _createPost,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: TugColors.getPrimaryColor(isViceMode),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                Icon(
+                  Icons.auto_awesome,
+                  color: TugColors.getPrimaryColor(isViceMode),
+                  size: 16,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'All posts are automatically generated from activities',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: TugColors.getPrimaryColor(isViceMode),
                     ),
                   ),
-                  child: _isCreatingPost
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : const Text('Share'),
                 ),
               ],
             ),

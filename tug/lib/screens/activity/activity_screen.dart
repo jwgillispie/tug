@@ -202,7 +202,27 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                       notes: notes,
                     );
 
-                    context.read<ActivitiesBloc>().add(AddActivity(activity));
+                    // Get the value model for social sharing
+                    ValueModel? selectedValue;
+                    final valuesState = context.read<ValuesBloc>().state;
+                    if (valuesState is ValuesLoaded) {
+                      try {
+                        selectedValue = valuesState.values.firstWhere(
+                          (v) => v.id == valueId,
+                        );
+                      } catch (e) {
+                        // Value not found, will use null
+                      }
+                    }
+
+                    context.read<ActivitiesBloc>().add(AddActivityWithSocial(
+                      activity: activity,
+                      valueModel: selectedValue,
+                    ));
+                    
+                    // Navigate back to home after saving
+                    Navigator.of(context).pop();
+                    context.go('/home');
                   },
                 ),
               ),

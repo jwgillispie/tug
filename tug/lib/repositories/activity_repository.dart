@@ -2,12 +2,14 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/activity_model.dart';
+import '../models/value_model.dart';
 import '../services/api_service.dart';
 import '../services/cache_service.dart';
+import '../services/activity_service.dart';
 
 abstract class IActivityRepository {
   Future<List<ActivityModel>> getActivities({String? valueId, DateTime? startDate, DateTime? endDate, bool forceRefresh = false});
-  Future<ActivityModel> addActivity(ActivityModel activity);
+  Future<ActivityModel> addActivity(ActivityModel activity, {bool shareToSocial = true, ValueModel? valueModel});
   Future<ActivityModel> updateActivity(ActivityModel activity);
   Future<void> deleteActivity(String id);
 }
@@ -15,6 +17,7 @@ abstract class IActivityRepository {
 class ActivityRepository implements IActivityRepository {
   final ApiService _apiService;
   final CacheService _cacheService;
+  final ActivityService _activityService;
   late final SharedPreferences _prefs;
 
   // Cache keys
@@ -24,10 +27,12 @@ class ActivityRepository implements IActivityRepository {
   ActivityRepository({
     ApiService? apiService,
     CacheService? cacheService,
+    ActivityService? activityService,
     SharedPreferences? prefs,
   }) : 
     _apiService = apiService ?? ApiService(),
-    _cacheService = cacheService ?? CacheService() {
+    _cacheService = cacheService ?? CacheService(),
+    _activityService = activityService ?? ActivityService() {
     // Initialize SharedPreferences
     _initializePrefs(prefs);
   }
@@ -133,28 +138,29 @@ class ActivityRepository implements IActivityRepository {
   }
 
   @override
-  Future<ActivityModel> addActivity(ActivityModel activity) async {
+  Future<ActivityModel> addActivity(
+    ActivityModel activity, {
+    bool shareToSocial = true,
+    ValueModel? valueModel,
+  }) async {
     try {
-      final response = await _apiService.post(
-        '/api/v1/activities/',
-        data: activity.toJson(),
+      // Use the enhanced activity service with social sharing
+      final newActivity = await _activityService.createActivity(
+        activity,
+        shareToSocial: shareToSocial,
+        valueModel: valueModel,
       );
 
-      if (response != null) {
-        final newActivity = ActivityModel.fromJson(response);
+      // Invalidate all activities caches
+      await _cacheService.clearByPrefix(_activitiesCacheKeyPrefix);
 
-        // Invalidate all activities caches
-        await _cacheService.clearByPrefix(_activitiesCacheKeyPrefix);
+      // Add to shared preferences cache as well
+      final cachedActivities = await _getCachedActivities();
+      cachedActivities.add(newActivity);
+      await _cacheActivities(cachedActivities);
 
-        // Add to shared preferences cache as well
-        final cachedActivities = await _getCachedActivities();
-        cachedActivities.add(newActivity);
-        await _cacheActivities(cachedActivities);
-
-        return newActivity;
-      }
+      return newActivity;
     } catch (e) {
-
       // Store locally if offline
       if (activity.id == null) {
         // Generate a temporary ID
@@ -171,10 +177,9 @@ class ActivityRepository implements IActivityRepository {
 
         return tempActivity;
       }
+      
+      throw Exception('Failed to add activity: $e');
     }
-
-    // Return original activity if all else fails
-    return activity;
   }
 
   @override

@@ -1,8 +1,8 @@
 // lib/blocs/activities/activities_bloc.dart
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
-import 'package:flutter/foundation.dart';
 import '../../models/activity_model.dart';
+import '../../models/value_model.dart';
 import '../../repositories/activity_repository.dart';
 
 // Events
@@ -37,6 +37,21 @@ class AddActivity extends ActivitiesEvent {
 
   @override
   List<Object?> get props => [activity];
+}
+
+class AddActivityWithSocial extends ActivitiesEvent {
+  final ActivityModel activity;
+  final ValueModel? valueModel;
+  final bool shareToSocial;
+
+  const AddActivityWithSocial({
+    required this.activity,
+    this.valueModel,
+    this.shareToSocial = true,
+  });
+
+  @override
+  List<Object?> get props => [activity, valueModel, shareToSocial];
 }
 
 class UpdateActivity extends ActivitiesEvent {
@@ -118,6 +133,7 @@ class ActivitiesBloc extends Bloc<ActivitiesEvent, ActivitiesState> {
   ActivitiesBloc({required this.activityRepository}) : super(ActivitiesInitial()) {
     on<LoadActivities>(_onLoadActivities);
     on<AddActivity>(_onAddActivity);
+    on<AddActivityWithSocial>(_onAddActivityWithSocial);
     on<UpdateActivity>(_onUpdateActivity);
     on<DeleteActivity>(_onDeleteActivity);
     on<ClearActivitiesData>(_onClearActivitiesData);
@@ -170,6 +186,44 @@ class ActivitiesBloc extends Bloc<ActivitiesEvent, ActivitiesState> {
     emit(ActivitiesLoading());
     try {
       await activityRepository.addActivity(event.activity);
+      
+      // Get updated list of activities
+      final activities = await activityRepository.getActivities(
+        valueId: _lastValueId,
+        startDate: _lastStartDate,
+        endDate: _lastEndDate,
+        forceRefresh: true, // Force refresh to get the latest data
+      );
+      
+      emit(ActivityOperationSuccess(
+        message: 'Activity added successfully',
+        activities: activities,
+      ));
+      
+    } catch (e) {
+      emit(ActivitiesError(e.toString()));
+      
+      // If there was an error, restore the previous state
+      if (currentState is ActivitiesLoaded) {
+        emit(currentState);
+      }
+    }
+  }
+
+  Future<void> _onAddActivityWithSocial(
+    AddActivityWithSocial event,
+    Emitter<ActivitiesState> emit,
+  ) async {
+    // Keep track of the current state to restore it if needed
+    final currentState = state;
+    
+    emit(ActivitiesLoading());
+    try {
+      await activityRepository.addActivity(
+        event.activity,
+        shareToSocial: event.shareToSocial,
+        valueModel: event.valueModel,
+      );
       
       // Get updated list of activities
       final activities = await activityRepository.getActivities(

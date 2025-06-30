@@ -1,8 +1,11 @@
 // lib/services/activity_service.dart
+import 'package:logger/logger.dart';
 import 'package:tug/models/activity_model.dart';
 import 'package:tug/models/value_model.dart';
+import 'package:tug/models/social_models.dart';
 import 'package:tug/services/cache_service.dart';
 import 'package:tug/services/service_locator.dart';
+import 'package:tug/services/social_service.dart';
 import 'package:tug/utils/cache_utils.dart';
 import 'package:tug/utils/streak_utils.dart';
 import 'api_service.dart';
@@ -10,13 +13,17 @@ import 'api_service.dart';
 class ActivityService {
   final ApiService _apiService;
   final CacheService _cacheService;
+  final SocialService _socialService;
+  final Logger _logger = Logger();
 
   ActivityService({
     ApiService? apiService,
     CacheService? cacheService,
+    SocialService? socialService,
   }) : 
     _apiService = apiService ?? ServiceLocator.apiService,
-    _cacheService = cacheService ?? ServiceLocator.cacheService;
+    _cacheService = cacheService ?? ServiceLocator.cacheService,
+    _socialService = socialService ?? SocialService();
 
 
   // Fetch activities with optional filtering
@@ -80,17 +87,34 @@ class ActivityService {
   }
 
   // Create a new activity
-  Future<ActivityModel> createActivity(ActivityModel activity) async {
+  Future<ActivityModel> createActivity(
+    ActivityModel activity, {
+    bool shareToSocial = true,
+    ValueModel? valueModel,
+  }) async {
     try {
       final response = await _apiService.post(
         '/api/v1/activities',
         data: activity.toJson(),
       );
 
+      final createdActivity = ActivityModel.fromJson(response);
+
       // Invalidate relevant caches
       await _invalidateActivityCaches();
 
-      return ActivityModel.fromJson(response);
+      // Auto-create social post if sharing is enabled
+      if (shareToSocial) {
+        try {
+          await _createActivitySocialPost(createdActivity, valueModel);
+        } catch (e) {
+          // Don't fail the activity creation if social posting fails
+          _logger.e('Failed to create social post for activity: $e');
+          _logger.i('Activity completed successfully, but social post creation failed');
+        }
+      }
+
+      return createdActivity;
     } catch (e) {
       rethrow;
     }
@@ -503,6 +527,68 @@ class ActivityService {
       return StreakUtils.updateValuesWithStreaks(values, activities);
     } catch (e) {
       return values;
+    }
+  }
+
+  /// Create a social post for a completed activity
+  Future<void> _createActivitySocialPost(ActivityModel activity, ValueModel? valueModel) async {
+    if (activity.id == null) return;
+
+    // Generate engaging content for the activity post
+    final content = _generateActivityPostContent(activity, valueModel);
+    
+    final socialPostRequest = CreatePostRequest(
+      content: content,
+      postType: PostType.activityUpdate,
+      activityId: activity.id,
+      isPublic: false, // Only friends can see activity posts
+    );
+
+    await _socialService.createPost(socialPostRequest);
+  }
+
+  /// Generate engaging content for activity social posts
+  String _generateActivityPostContent(ActivityModel activity, ValueModel? valueModel) {
+    final valueName = valueModel?.name ?? 'personal growth';
+    final durationText = _formatDuration(activity.duration);
+    
+    // Generate different post styles based on activity characteristics
+    final postTemplates = [
+      '🎯 Just completed $durationText of ${activity.name} for my $valueName journey!',
+      '✨ Invested $durationText in ${activity.name} today - building my $valueName habits!',
+      '💪 Another $durationText focused on ${activity.name} - staying consistent with $valueName!',
+      '🚀 Dedicated $durationText to ${activity.name} - progress on my $valueName goals!',
+      '⭐ Spent $durationText on ${activity.name} - nurturing my $valueName practice!',
+    ];
+
+    // Add milestone celebrations for longer activities
+    if (activity.duration >= 120) { // 2+ hours
+      return '🔥 Epic $durationText session of ${activity.name}! Absolutely crushing my $valueName goals today! 💯';
+    } else if (activity.duration >= 60) { // 1+ hour  
+      return '🎉 Solid $durationText of ${activity.name} completed! Really investing in my $valueName journey! 💪';
+    }
+    
+    // Add notes if they exist
+    String baseContent = postTemplates[DateTime.now().millisecond % postTemplates.length];
+    
+    if (activity.notes != null && activity.notes!.trim().isNotEmpty) {
+      baseContent += '\n\n💭 "${activity.notes!.trim()}"';
+    }
+    
+    return baseContent;
+  }
+
+  /// Format duration in a human-friendly way
+  String _formatDuration(int minutes) {
+    if (minutes < 60) {
+      return '$minutes minutes';
+    } else if (minutes < 120) {
+      final remainingMins = minutes % 60;
+      return remainingMins == 0 ? '1 hour' : '1 hour $remainingMins minutes';
+    } else {
+      final hours = minutes ~/ 60;
+      final remainingMins = minutes % 60;
+      return remainingMins == 0 ? '$hours hours' : '$hours hours $remainingMins minutes';
     }
   }
 }
