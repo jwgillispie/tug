@@ -15,9 +15,12 @@ import '../../services/app_mode_service.dart';
 import '../../utils/quantum_effects.dart';
 import '../../utils/loading_messages.dart';
 import '../../widgets/home/activity_chart.dart';
+import '../../widgets/home/item_list_section.dart';
+import '../../widgets/home/empty_state.dart';
+import '../../models/value_model.dart';
+import '../../models/vice_model.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../utils/theme/colors.dart';
-import '../../utils/theme/buttons.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -155,10 +158,17 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     // Pass a parameter to indicate we should show a back button
     context.push('/values-input?fromHome=true');
   }
+
+  // Navigate to vices edit with return flag
+  void _navigateToVicesEdit() {
+    // Pass a parameter to indicate we should show a back button
+    context.push('/vices-input?fromHome=true');
+  }
   
   Future<void> _refreshData() async {
-    // Force a fresh load from the server for both values and activities
+    // Force a fresh load from the server for values, vices, and activities
     context.read<ValuesBloc>().add(const LoadValues(forceRefresh: true));
+    context.read<VicesBloc>().add(const LoadVices());
     context.read<ActivitiesBloc>().add(const LoadActivities(forceRefresh: true));
     
     // Add a small delay to ensure the refresh indicator shows
@@ -283,38 +293,17 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               if (state is ValuesLoading && _isFirstLoad) {
                 // Only show loading indicator on first load
                 _isFirstLoad = false;
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      CircularProgressIndicator(color: TugColors.primaryPurple),
-                      const SizedBox(height: 16),
-                      Text(
-                        LoadingMessages.getValues(),
-                        style: TextStyle(
-                          color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
-                          fontSize: 16,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
+                return LoadingState(
+                  appMode: _currentMode,
+                  message: LoadingMessages.getValues(),
                 );
               }
               
               if (state is ValuesError) {
-                return Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text('error: ${state.message}'),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () => _refreshData(),
-                        child: const Text('retry'),
-                      ),
-                    ],
-                  ),
+                return ErrorState(
+                  appMode: _currentMode,
+                  message: state.message,
+                  onRetry: _refreshData,
                 );
               }
               
@@ -325,43 +314,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 final values = state.values.where((v) => v.active).toList();
                 
                 if (values.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.star_border_rounded,
-                          size: 64,
-                          color: TugColors.primaryPurple.withOpacity(0.5),
-                        ),
-                        const SizedBox(height: 16),
-                        const Text(
-                          'no values defined yet',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'needa add some values',
-                          style: TextStyle(
-                            color: isDarkMode 
-                                ? TugColors.darkTextSecondary 
-                                : TugColors.lightTextSecondary,
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-                        ElevatedButton(
-                          style: TugButtons.primaryButtonStyle(isDark: Theme.of(context).brightness == Brightness.dark),
-                          onPressed: _navigateToValuesEdit,
-                          child: const Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16),
-                            child: Text('add values'),
-                          ),
-                        ),
-                      ],
-                    ),
+                  return EmptyState(
+                    appMode: _currentMode,
+                    onAddPressed: _navigateToValuesEdit,
                   );
                 }
                 
@@ -393,120 +348,16 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         
                         // Values List
                         const SizedBox(height: 24),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'your values',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            OutlinedButton(
-                              onPressed: _navigateToValuesEdit,
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: TugColors.primaryPurple,
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 8,
-                                ),
-                              ),
-                              child: const Text('edit values'),
-                            ),
-                          ],
+                        ItemListSection<ValueModel>(
+                          title: 'your values',
+                          editButtonText: 'edit values',
+                          items: values,
+                          onEditPressed: _navigateToValuesEdit,
+                          onItemTap: _navigateToValuesEdit,
+                          appMode: _currentMode,
+                          isEmpty: false,
+                          emptyStateWidget: const SizedBox.shrink(),
                         ),
-                        const SizedBox(height: 12),
-                        ...values.map((value) {
-                          final Color valueColor = Color(
-                            int.parse(value.color.substring(1), radix: 16) + 0xFF000000,
-                          );
-                          
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            decoration: BoxDecoration(
-                              color: isDarkMode ? TugColors.darkSurface : Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: isDarkMode 
-                                      ? Colors.black.withOpacity(0.2) 
-                                      : Colors.black.withOpacity(0.05),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                              border: Border.all(
-                                color: isDarkMode 
-                                    ? Colors.white.withOpacity(0.05) 
-                                    : Colors.black.withOpacity(0.03),
-                                width: 0.5,
-                              ),
-                            ),
-                            child: ListTile(
-                              leading: Container(
-                                width: 40,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                  color: valueColor.withOpacity(isDarkMode ? 0.15 : 0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: valueColor.withOpacity(isDarkMode ? 0.3 : 0.2),
-                                    width: 1,
-                                  ),
-                                ),
-                                child: Center(
-                                  child: Container(
-                                    width: 16,
-                                    height: 16,
-                                    decoration: BoxDecoration(
-                                      color: valueColor,
-                                      shape: BoxShape.circle,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              title: Text(
-                                value.name,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              subtitle: Text(
-                                'importance: ${value.importance}',
-                                style: TextStyle(
-                                  color: isDarkMode 
-                                      ? TugColors.darkTextSecondary 
-                                      : TugColors.lightTextSecondary,
-                                  fontSize: 13,
-                                ),
-                              ),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  // Star Icons based on importance
-                                  ...List.generate(
-                                    value.importance,
-                                    (index) => Icon(
-                                      Icons.star,
-                                      size: 16,
-                                      color: valueColor,
-                                    ),
-                                  ),
-                                  ...List.generate(
-                                    5 - value.importance,
-                                    (index) => Icon(
-                                      Icons.star_border,
-                                      size: 16,
-                                      color: valueColor.withOpacity(0.3),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              onTap: _navigateToValuesEdit,
-                            ),
-                          );
-                        }),
                         
                         const SizedBox(height: 24),
                         
@@ -806,194 +657,134 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               builder: (context, state) {
                 if (state is VicesLoading && _isFirstLoad) {
                   _isFirstLoad = false;
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        CircularProgressIndicator(color: TugColors.viceRed),
-                        const SizedBox(height: 16),
-                        Text(
-                          'loading vices...',
-                          style: TextStyle(
-                            color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
-                            fontSize: 16,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
+                  return LoadingState(
+                    appMode: _currentMode,
+                    message: 'loading vices...',
                   );
                 }
                 
                 if (state is VicesError) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.error_outline,
-                          size: 64,
-                          color: TugColors.viceRed,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'error loading vices',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: isDarkMode ? TugColors.darkTextPrimary : TugColors.lightTextPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          state.message,
-                          style: TextStyle(
-                            color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                    ),
+                  return ErrorState(
+                    appMode: _currentMode,
+                    message: state.message,
+                    onRetry: _refreshData,
                   );
                 }
                 
                 if (state is VicesLoaded) {
                   final vices = state.vices;
+                  
+                  if (vices.isEmpty) {
+                    return EmptyState(
+                      appMode: _currentMode,
+                      onAddPressed: _navigateToVicesEdit,
+                    );
+                  }
+                  
                   return SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
                     child: Padding(
-                      padding: const EdgeInsets.all(24.0),
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const SizedBox(height: 40),
-                          Text(
-                            'your vices',
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: TugColors.viceRed,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'track your progress in overcoming challenges',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
-                            ),
-                          ),
-                          const SizedBox(height: 32),
-                          
-                          if (vices.isEmpty) ...[
-                            Center(
-                              child: Column(
-                                children: [
-                                  Icon(
-                                    Icons.psychology_outlined,
-                                    size: 80,
-                                    color: TugColors.viceRed.withOpacity(0.5),
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    'no vices tracked yet',
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: isDarkMode ? TugColors.darkTextPrimary : TugColors.lightTextPrimary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'tap the + button to start tracking',
-                                    style: TextStyle(
-                                      color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ] else ...[
-                            GridView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 2,
-                                crossAxisSpacing: 16,
-                                mainAxisSpacing: 16,
-                                childAspectRatio: 1.2,
-                              ),
-                              itemCount: vices.length,
-                              itemBuilder: (context, index) {
-                                final vice = vices[index];
-                                return Card(
-                                  elevation: 2,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Container(
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(12),
-                                      gradient: LinearGradient(
-                                        begin: Alignment.topLeft,
-                                        end: Alignment.bottomRight,
-                                        colors: [
-                                          Color(int.parse('0xFF${vice.color.substring(1)}')),
-                                          Color(int.parse('0xFF${vice.color.substring(1)}')).withOpacity(0.7),
-                                        ],
-                                      ),
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(16.0),
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            vice.name,
-                                            style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.white,
-                                            ),
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                          Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                'clean days: ${vice.currentStreak}',
-                                                style: const TextStyle(
-                                                  fontSize: 12,
-                                                  color: Colors.white70,
-                                                ),
-                                              ),
-                                              Text(
-                                                'best: ${vice.longestStreak}',
-                                                style: const TextStyle(
-                                                  fontSize: 12,
-                                                  color: Colors.white70,
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
+                          // Activity Chart (same as values mode)
+                          BlocBuilder<ActivitiesBloc, ActivitiesState>(
+                            builder: (context, activityState) {
+                              if (activityState is ActivitiesLoaded) {
+                                return ActivityChart(
+                                  activities: activityState.activities,
+                                  values: [], // Empty values for vices mode
                                 );
-                              },
+                              } else if (activityState is ActivitiesLoading) {
+                                return _buildLoadingChart(context);
+                              } else if (activityState is ActivitiesError) {
+                                return _buildErrorChart(context, activityState.message);
+                              } else {
+                                return _buildEmptyChart(context);
+                              }
+                            },
+                          ),
+                          
+                          const SizedBox(height: 24),
+                          
+                          // Vices List
+                          ItemListSection<ViceModel>(
+                            title: 'your vices',
+                            editButtonText: 'edit vices',
+                            items: vices,
+                            onEditPressed: _navigateToVicesEdit,
+                            onItemTap: _navigateToVicesEdit,
+                            appMode: _currentMode,
+                            isEmpty: false,
+                            emptyStateWidget: const SizedBox.shrink(),
+                          ),
+                          
+                          const SizedBox(height: 24),
+                          
+                          // Feature Cards Section
+                          const Text(
+                            'features',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
                             ),
-                          ],
+                          ),
+                          const SizedBox(height: 16),
+                          
+                          // AI Counselor Card
+                          GestureDetector(
+                            onTap: () {
+                              context.push('/ai-counselor');
+                            },
+                            child: _buildFeatureCard(
+                              context,
+                              isDarkMode,
+                              icon: Icons.psychology,
+                              iconColor: TugColors.viceRed,
+                              title: 'ai counselor',
+                              subtitle: 'talk through your challenges',
+                            ),
+                          ),
+                          
+                          // Progress Tracking Card
+                          GestureDetector(
+                            onTap: () {
+                              context.go('/progress');
+                            },
+                            child: _buildFeatureCard(
+                              context,
+                              isDarkMode,
+                              icon: Icons.insights,
+                              iconColor: TugColors.info,
+                              title: 'progress',
+                              subtitle: 'see how you\'re doing',
+                            ),
+                          ),
+                          
+                          // Social Card
+                          GestureDetector(
+                            onTap: () {
+                              context.go('/social');
+                            },
+                            child: _buildFeatureCard(
+                              context,
+                              isDarkMode,
+                              icon: Icons.groups,
+                              iconColor: TugColors.viceOrange,
+                              title: 'social',
+                              subtitle: 'connect with others on similar journeys',
+                            ),
+                          ),
                         ],
                       ),
                     ),
                   );
                 }
                 
-                return const Center(
-                  child: Text('loading vices...'),
+                return LoadingState(
+                  appMode: _currentMode,
+                  message: 'loading vices...',
                 );
               },
             ),
@@ -1214,4 +1005,98 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       ),
     );
   }
+
+  Widget _buildFeatureCard(
+    BuildContext context,
+    bool isDarkMode, {
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: isDarkMode ? TugColors.darkSurface : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: isDarkMode 
+                ? Colors.black.withOpacity(0.2) 
+                : Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        border: Border.all(
+          color: isDarkMode 
+              ? Colors.white.withOpacity(0.05) 
+              : Colors.black.withOpacity(0.03),
+          width: 0.5,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(isDarkMode ? 0.2 : 0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: iconColor.withOpacity(isDarkMode ? 0.3 : 0.2),
+                  width: 1,
+                ),
+              ),
+              child: Icon(
+                icon,
+                color: iconColor,
+                size: 28,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      color: isDarkMode 
+                          ? TugColors.darkTextSecondary 
+                          : TugColors.lightTextSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: iconColor.withOpacity(isDarkMode ? 0.1 : 0.05),
+                shape: BoxShape.circle,
+              ),
+              child: Center(
+                child: Icon(
+                  Icons.chevron_right,
+                  color: iconColor,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
 }

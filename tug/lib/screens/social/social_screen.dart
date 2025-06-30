@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../utils/theme/colors.dart';
 import '../../services/app_mode_service.dart';
+import '../../services/social_service.dart';
+import '../../models/social_models.dart';
+import '../../blocs/auth/auth_bloc.dart';
 
 class SocialScreen extends StatefulWidget {
   const SocialScreen({super.key});
@@ -11,13 +15,22 @@ class SocialScreen extends StatefulWidget {
 
 class _SocialScreenState extends State<SocialScreen> {
   final AppModeService _appModeService = AppModeService();
-  AppMode _currentMode = AppMode.valuesMode;
+  final SocialService _socialService = SocialService();
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _postController = TextEditingController();
+  
+  AppMode _currentMode = AppMode.valuesMode;
+  List<SocialPostModel> _posts = [];
+  bool _isLoading = false;
+  bool _isCreatingPost = false;
+  String? _currentUserId;
 
   @override
   void initState() {
     super.initState();
     _initializeMode();
+    _getCurrentUser();
+    _loadSocialFeed();
   }
 
   void _initializeMode() async {
@@ -34,9 +47,137 @@ class _SocialScreenState extends State<SocialScreen> {
     });
   }
 
+  void _getCurrentUser() {
+    final authState = context.read<AuthBloc>().state;
+    if (authState is Authenticated) {
+      _currentUserId = authState.user.uid;
+    }
+  }
+
+  Future<void> _loadSocialFeed() async {
+    if (_isLoading) return;
+    
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final posts = await _socialService.getSocialFeed(limit: 20, skip: 0);
+      setState(() {
+        _posts = posts;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load social feed: $e'),
+            backgroundColor: TugColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _createPost() async {
+    if (_postController.text.trim().isEmpty || _isCreatingPost) return;
+
+    setState(() {
+      _isCreatingPost = true;
+    });
+
+    try {
+      final request = CreatePostRequest(
+        content: _postController.text.trim(),
+        postType: PostType.general,
+        isPublic: true,
+      );
+
+      final newPost = await _socialService.createPost(request);
+      
+      setState(() {
+        _posts.insert(0, newPost);
+        _postController.clear();
+        _isCreatingPost = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Post created successfully!'),
+            backgroundColor: TugColors.success,
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isCreatingPost = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to create post: $e'),
+            backgroundColor: TugColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _toggleLike(SocialPostModel post) async {
+    try {
+      final result = await _socialService.likePost(post.id);
+      
+      setState(() {
+        // Update the post in our local list
+        final index = _posts.indexWhere((p) => p.id == post.id);
+        if (index != -1) {
+          final updatedLikes = List<String>.from(_posts[index].likes);
+          if (result['liked']) {
+            if (_currentUserId != null && !updatedLikes.contains(_currentUserId!)) {
+              updatedLikes.add(_currentUserId!);
+            }
+          } else {
+            updatedLikes.remove(_currentUserId);
+          }
+          
+          _posts[index] = SocialPostModel(
+            id: _posts[index].id,
+            userId: _posts[index].userId,
+            content: _posts[index].content,
+            postType: _posts[index].postType,
+            activityId: _posts[index].activityId,
+            viceId: _posts[index].viceId,
+            achievementId: _posts[index].achievementId,
+            likes: updatedLikes,
+            commentsCount: _posts[index].commentsCount,
+            isPublic: _posts[index].isPublic,
+            createdAt: _posts[index].createdAt,
+            updatedAt: _posts[index].updatedAt,
+            username: _posts[index].username,
+            userDisplayName: _posts[index].userDisplayName,
+          );
+        }
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to toggle like: $e'),
+            backgroundColor: TugColors.error,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   void dispose() {
     _scrollController.dispose();
+    _postController.dispose();
     super.dispose();
   }
 
@@ -51,6 +192,7 @@ class _SocialScreenState extends State<SocialScreen> {
         controller: _scrollController,
         slivers: [
           _buildAppBar(isDarkMode, isViceMode),
+          _buildCreatePostSection(isDarkMode, isViceMode),
           _buildFeedContent(isDarkMode, isViceMode),
         ],
       ),
@@ -86,7 +228,7 @@ class _SocialScreenState extends State<SocialScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'See what your friends are up to',
+                    'Connect with your community',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.white.withOpacity(0.9),
@@ -111,159 +253,161 @@ class _SocialScreenState extends State<SocialScreen> {
       actions: [
         IconButton(
           icon: Icon(
-            Icons.search,
+            Icons.refresh,
             color: TugColors.getTextColor(isDarkMode, isViceMode),
           ),
-          onPressed: () {
-            // TODO: Implement friend search
-          },
-        ),
-        IconButton(
-          icon: Icon(
-            Icons.person_add,
-            color: TugColors.getTextColor(isDarkMode, isViceMode),
-          ),
-          onPressed: () {
-            // TODO: Implement add friends
-          },
+          onPressed: _loadSocialFeed,
         ),
       ],
+    );
+  }
+
+  Widget _buildCreatePostSection(bool isDarkMode, bool isViceMode) {
+    return SliverToBoxAdapter(
+      child: Container(
+        margin: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: TugColors.getSurfaceColor(isDarkMode, isViceMode),
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Share an update',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+                color: TugColors.getTextColor(isDarkMode, isViceMode),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _postController,
+              maxLines: 3,
+              decoration: InputDecoration(
+                hintText: 'What\'s on your mind?',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
+                  ),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: TugColors.getPrimaryColor(isViceMode),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                ElevatedButton(
+                  onPressed: _isCreatingPost ? null : _createPost,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: TugColors.getPrimaryColor(isViceMode),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: _isCreatingPost
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text('Share'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 
   Widget _buildFeedContent(bool isDarkMode, bool isViceMode) {
-    return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (context, index) {
-          if (index == 0) {
-            return _buildComingSoonCard(isDarkMode, isViceMode);
-          }
-          
-          // Mock feed items for now
-          return _buildFeedItem(
-            isDarkMode: isDarkMode,
-            isViceMode: isViceMode,
-            username: _getMockUsername(index),
-            activity: _getMockActivity(index, isViceMode),
-            timeAgo: _getMockTimeAgo(index),
-            likes: _getMockLikes(index),
-            comments: _getMockComments(index),
-          );
-        },
-        childCount: 6, // 1 coming soon card + 5 mock items
-      ),
-    );
-  }
-
-  Widget _buildComingSoonCard(bool isDarkMode, bool isViceMode) {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: TugColors.getSurfaceColor(isDarkMode, isViceMode),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: TugColors.getPrimaryColor(isViceMode).withOpacity(0.2),
-          width: 1,
+    if (_isLoading && _posts.isEmpty) {
+      return SliverToBoxAdapter(
+        child: Container(
+          height: 200,
+          child: Center(
+            child: CircularProgressIndicator(
+              color: TugColors.getPrimaryColor(isViceMode),
+            ),
+          ),
         ),
-      ),
-      child: Column(
-        children: [
-          Icon(
-            Icons.construction,
-            size: 48,
-            color: TugColors.getPrimaryColor(isViceMode),
+      );
+    }
+
+    if (_posts.isEmpty) {
+      return SliverToBoxAdapter(
+        child: Container(
+          margin: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: TugColors.getSurfaceColor(isDarkMode, isViceMode),
+            borderRadius: BorderRadius.circular(12),
           ),
-          const SizedBox(height: 16),
-          Text(
-            'Social Features Coming Soon!',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: TugColors.getTextColor(isDarkMode, isViceMode),
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Connect with friends, share your progress, and motivate each other on your journey.',
-            style: TextStyle(
-              fontSize: 14,
-              color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          child: Column(
             children: [
-              _buildFeaturePreview(
-                icon: Icons.favorite,
-                label: 'Kudos',
-                isDarkMode: isDarkMode,
-                isViceMode: isViceMode,
+              Icon(
+                Icons.people_outline,
+                size: 48,
+                color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
               ),
-              _buildFeaturePreview(
-                icon: Icons.comment,
-                label: 'Comments',
-                isDarkMode: isDarkMode,
-                isViceMode: isViceMode,
+              const SizedBox(height: 16),
+              Text(
+                'No posts yet',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: TugColors.getTextColor(isDarkMode, isViceMode),
+                ),
               ),
-              _buildFeaturePreview(
-                icon: Icons.leaderboard,
-                label: 'Challenges',
-                isDarkMode: isDarkMode,
-                isViceMode: isViceMode,
+              const SizedBox(height: 8),
+              Text(
+                'Be the first to share an update with your community!',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
+                ),
               ),
             ],
           ),
-        ],
+        ),
+      );
+    }
+
+    return SliverList(
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          final post = _posts[index];
+          return _buildFeedItem(post, isDarkMode, isViceMode);
+        },
+        childCount: _posts.length,
       ),
     );
   }
 
-  Widget _buildFeaturePreview({
-    required IconData icon,
-    required String label,
-    required bool isDarkMode,
-    required bool isViceMode,
-  }) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: TugColors.getPrimaryColor(isViceMode).withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Icon(
-            icon,
-            color: TugColors.getPrimaryColor(isViceMode),
-            size: 24,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w500,
-            color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFeedItem({
-    required bool isDarkMode,
-    required bool isViceMode,
-    required String username,
-    required String activity,
-    required String timeAgo,
-    required int likes,
-    required int comments,
-  }) {
+  Widget _buildFeedItem(SocialPostModel post, bool isDarkMode, bool isViceMode) {
+    final isLiked = _currentUserId != null && post.isLikedBy(_currentUserId!);
+    
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(16),
@@ -288,7 +432,7 @@ class _SocialScreenState extends State<SocialScreen> {
                 radius: 20,
                 backgroundColor: TugColors.getPrimaryColor(isViceMode),
                 child: Text(
-                  username[0].toUpperCase(),
+                  post.displayName[0].toUpperCase(),
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -301,14 +445,14 @@ class _SocialScreenState extends State<SocialScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      username,
+                      post.displayName,
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
                         color: TugColors.getTextColor(isDarkMode, isViceMode),
                       ),
                     ),
                     Text(
-                      timeAgo,
+                      post.timeAgoText,
                       style: TextStyle(
                         fontSize: 12,
                         color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
@@ -317,16 +461,34 @@ class _SocialScreenState extends State<SocialScreen> {
                   ],
                 ),
               ),
+              // Post type indicator
+              if (post.postType != PostType.general)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: TugColors.getPrimaryColor(isViceMode).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    _getPostTypeLabel(post.postType),
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                      color: TugColors.getPrimaryColor(isViceMode),
+                    ),
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 12),
           
-          // Activity content
+          // Post content
           Text(
-            activity,
+            post.content,
             style: TextStyle(
               fontSize: 14,
               color: TugColors.getTextColor(isDarkMode, isViceMode),
+              height: 1.4,
             ),
           ),
           const SizedBox(height: 12),
@@ -335,22 +497,24 @@ class _SocialScreenState extends State<SocialScreen> {
           Row(
             children: [
               _buildActionButton(
-                icon: Icons.favorite_border,
-                count: likes,
+                icon: isLiked ? Icons.favorite : Icons.favorite_border,
+                iconColor: isLiked ? TugColors.error : null,
+                count: post.likes.length,
                 isDarkMode: isDarkMode,
                 isViceMode: isViceMode,
-                onTap: () {
-                  // TODO: Implement like functionality
-                },
+                onTap: () => _toggleLike(post),
               ),
               const SizedBox(width: 24),
               _buildActionButton(
                 icon: Icons.comment_outlined,
-                count: comments,
+                count: post.commentsCount,
                 isDarkMode: isDarkMode,
                 isViceMode: isViceMode,
                 onTap: () {
-                  // TODO: Implement comment functionality
+                  // TODO: Open comments screen
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Comments coming soon!')),
+                  );
                 },
               ),
               const Spacer(),
@@ -362,6 +526,9 @@ class _SocialScreenState extends State<SocialScreen> {
                 ),
                 onPressed: () {
                   // TODO: Implement share functionality
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Share coming soon!')),
+                  );
                 },
               ),
             ],
@@ -373,6 +540,7 @@ class _SocialScreenState extends State<SocialScreen> {
 
   Widget _buildActionButton({
     required IconData icon,
+    Color? iconColor,
     required int count,
     required bool isDarkMode,
     required bool isViceMode,
@@ -385,7 +553,7 @@ class _SocialScreenState extends State<SocialScreen> {
           Icon(
             icon,
             size: 18,
-            color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
+            color: iconColor ?? TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
           ),
           const SizedBox(width: 4),
           Text(
@@ -400,44 +568,16 @@ class _SocialScreenState extends State<SocialScreen> {
     );
   }
 
-  // Mock data generators
-  String _getMockUsername(int index) {
-    final names = ['alex_runner', 'sarah_fit', 'mike_strong', 'emma_zen', 'david_goals'];
-    return names[index % names.length];
-  }
-
-  String _getMockActivity(int index, bool isViceMode) {
-    if (isViceMode) {
-      final activities = [
-        'Successfully avoided social media for 3 hours! 💪',
-        'Resisted the urge to order takeout and cooked at home instead 🍳',
-        'Had a productive work session without checking my phone 📱',
-        'Chose water over soda today - small wins count! 💧',
-        'Meditated for 10 minutes instead of scrolling endlessly 🧘‍♀️',
-      ];
-      return activities[index % activities.length];
-    } else {
-      final activities = [
-        'Completed a 30-minute morning jog! Feeling energized 🏃‍♂️',
-        'Read for 45 minutes today - halfway through my monthly goal 📚',
-        'Practiced guitar for an hour. Getting better at that difficult song! 🎸',
-        'Had a great meditation session. Finding more peace each day 🧘‍♀️',
-        'Cooked a healthy meal from scratch. Nourishing my body well 🥗',
-      ];
-      return activities[index % activities.length];
+  String _getPostTypeLabel(PostType postType) {
+    switch (postType) {
+      case PostType.activityUpdate:
+        return 'Activity';
+      case PostType.viceProgress:
+        return 'Progress';
+      case PostType.achievement:
+        return 'Achievement';
+      case PostType.general:
+        return 'General';
     }
-  }
-
-  String _getMockTimeAgo(int index) {
-    final times = ['2h ago', '4h ago', '1d ago', '2d ago', '3d ago'];
-    return times[index % times.length];
-  }
-
-  int _getMockLikes(int index) {
-    return [12, 8, 15, 6, 20][index % 5];
-  }
-
-  int _getMockComments(int index) {
-    return [3, 1, 5, 2, 7][index % 5];
   }
 }

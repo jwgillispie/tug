@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import '../models/vice_model.dart';
 import '../models/indulgence_model.dart';
 import '../config/env_confg.dart';
@@ -15,14 +16,20 @@ class ViceService {
     _dio.options.baseUrl = EnvConfig.apiUrl;
     _dio.options.connectTimeout = const Duration(seconds: 30);
     _dio.options.receiveTimeout = const Duration(seconds: 30);
+    _dio.options.followRedirects = true;
+    _dio.options.maxRedirects = 3;
     
     // Add auth interceptor
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
-        final prefs = await SharedPreferences.getInstance();
-        final token = prefs.getString('auth_token');
-        if (token != null) {
-          options.headers['Authorization'] = 'Bearer $token';
+        try {
+          final user = firebase_auth.FirebaseAuth.instance.currentUser;
+          if (user != null) {
+            final token = await user.getIdToken(true);
+            options.headers['Authorization'] = 'Bearer $token';
+          }
+        } catch (e) {
+          _logger.e('ViceService: Error getting Firebase auth token: $e');
         }
         handler.next(options);
       },
@@ -35,7 +42,7 @@ class ViceService {
     try {
       _logger.i('ViceService: Getting vices');
       
-      final response = await _dio.get('/api/v1/vices');
+      final response = await _dio.get('/api/v1/vices/');
       
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data['vices'] ?? [];
@@ -67,7 +74,7 @@ class ViceService {
       _logger.i('ViceService: Creating vice: ${vice.name}');
       
       final response = await _dio.post(
-        '/api/v1/vices',
+        '/api/v1/vices/',
         data: vice.toJson(),
       );
       
@@ -96,7 +103,7 @@ class ViceService {
       _logger.i('ViceService: Updating vice: ${vice.id}');
       
       final response = await _dio.put(
-        '/api/v1/vices/${vice.id}',
+        '/api/v1/vices/${vice.id}/',
         data: vice.toJson(),
       );
       
@@ -124,7 +131,7 @@ class ViceService {
     try {
       _logger.i('ViceService: Deleting vice: $viceId');
       
-      final response = await _dio.delete('/api/v1/vices/$viceId');
+      final response = await _dio.delete('/api/v1/vices/$viceId/');
       
       if (response.statusCode == 200) {
         _logger.i('ViceService: Vice deleted successfully');

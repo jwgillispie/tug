@@ -1,7 +1,7 @@
 // lib/services/social_service.dart
 import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import '../models/social_models.dart';
 import '../config/env_confg.dart';
 
@@ -13,14 +13,20 @@ class SocialService {
     _dio.options.baseUrl = EnvConfig.apiUrl;
     _dio.options.connectTimeout = const Duration(seconds: 30);
     _dio.options.receiveTimeout = const Duration(seconds: 30);
+    _dio.options.followRedirects = true;
+    _dio.options.maxRedirects = 3;
     
     // Add auth interceptor
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
-        final prefs = await SharedPreferences.getInstance();
-        final token = prefs.getString('auth_token');
-        if (token != null) {
-          options.headers['Authorization'] = 'Bearer $token';
+        try {
+          final user = firebase_auth.FirebaseAuth.instance.currentUser;
+          if (user != null) {
+            final token = await user.getIdToken(true);
+            options.headers['Authorization'] = 'Bearer $token';
+          }
+        } catch (e) {
+          _logger.e('SocialService: Error getting Firebase auth token: $e');
         }
         handler.next(options);
       },
@@ -34,7 +40,7 @@ class SocialService {
       _logger.i('SocialService: Searching users with query: $query');
       
       final response = await _dio.get(
-        '/api/v1/social/users/search',
+        '/api/v1/social/users/search/',
         queryParameters: {'q': query, 'limit': 20},
       );
       
@@ -59,7 +65,7 @@ class SocialService {
       
       final request = FriendRequestCreate(addresseeId: userId);
       final response = await _dio.post(
-        '/api/v1/social/friends/request',
+        '/api/v1/social/friends/request/',
         data: request.toJson(),
       );
       
