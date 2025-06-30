@@ -24,6 +24,7 @@ import 'package:tug/screens/legal/terms_screen.dart';
 import 'package:tug/screens/main_layout.dart';
 import 'package:tug/screens/profile/profile_screen.dart';
 import 'package:tug/screens/progress/progress_screen.dart';
+import 'package:tug/screens/social/social_screen.dart';
 import 'package:tug/screens/splash_screen.dart';
 import 'package:tug/screens/subscription/subscription_screen.dart';
 import 'package:tug/screens/subscription/user_subscription_screen.dart';
@@ -268,11 +269,15 @@ class _TugAppState extends State<TugApp> {
           ),
         ),
         GoRoute(
-          path: '/activities',
+          path: '/social',
           builder: (context, state) => const MainLayout(
             currentIndex: 2,
-            child: ActivityScreen(),
+            child: SocialScreen(),
           ),
+        ),
+        GoRoute(
+          path: '/activities',
+          builder: (context, state) => const ActivityScreen(),
         ),
         GoRoute(
           path: '/activities/new',

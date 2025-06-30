@@ -67,11 +67,11 @@ class _MainLayoutState extends State<MainLayout> {
         'path': '/progress',
       },
       {
-        'icon': isViceMode ? Icons.warning_outlined : Icons.history_outlined,
-        'selectedIcon': isViceMode ? Icons.warning_rounded : Icons.history_rounded,
-        'label': isViceMode ? 'lapses' : 'activities',
+        'icon': Icons.people_outline,
+        'selectedIcon': Icons.people,
+        'label': 'social',
         'index': 2,
-        'path': '/activities',
+        'path': '/social',
       },
       {
         'icon': Icons.person_outline_rounded,

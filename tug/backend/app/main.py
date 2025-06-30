@@ -83,6 +83,7 @@ async def root():
         "endpoints": [
             f"{settings.API_V1_PREFIX}/users",
             f"{settings.API_V1_PREFIX}/values",
-            f"{settings.API_V1_PREFIX}/activities"
+            f"{settings.API_V1_PREFIX}/activities",
+            f"{settings.API_V1_PREFIX}/vices"
         ]
     }
