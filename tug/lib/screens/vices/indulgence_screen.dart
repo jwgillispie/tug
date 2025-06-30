@@ -61,7 +61,7 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Please select a vice'),
-            backgroundColor: Colors.red,
+            backgroundColor: TugColors.indulgenceGreen,
           ),
         );
         return;
@@ -132,7 +132,7 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
-              backgroundColor: TugColors.viceRed,
+              backgroundColor: TugColors.indulgenceGreen,
             ),
           );
         }
@@ -141,7 +141,7 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: const Text('Indulgence recorded'),
-              backgroundColor: TugColors.viceOrange,
+              backgroundColor: TugColors.indulgenceGreenLight,
             ),
           );
           context.pop();
@@ -155,8 +155,8 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: isDarkMode 
-                    ? [TugColors.viceRed, TugColors.viceOrange, TugColors.viceRedDark]
-                    : [TugColors.lightBackground, TugColors.viceRed.withAlpha(20)],
+                    ? [TugColors.indulgenceGreen, TugColors.indulgenceGreenLight, TugColors.indulgenceGreenDark]
+                    : [TugColors.lightBackground, TugColors.indulgenceGreen.withAlpha(20)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -168,11 +168,11 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
               fontSize: 24,
               fontWeight: FontWeight.bold,
               letterSpacing: 1.2,
-              color: isDarkMode ? TugColors.viceModeTextPrimary : TugColors.viceRed,
+              color: isDarkMode ? TugColors.viceModeTextPrimary : TugColors.indulgenceGreen,
             ),
           ),
           leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: TugColors.viceRed),
+            icon: Icon(Icons.arrow_back, color: TugColors.indulgenceGreen),
             onPressed: () => context.pop(),
           ),
         ),
@@ -184,18 +184,18 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
               colors: isDarkMode 
                   ? [
                       TugColors.viceModeDarkBackground,
-                      Color.lerp(TugColors.viceModeDarkBackground, TugColors.viceRed, 0.08) ?? TugColors.viceModeDarkBackground,
+                      Color.lerp(TugColors.viceModeDarkBackground, TugColors.indulgenceGreen, 0.08) ?? TugColors.viceModeDarkBackground,
                     ] 
                   : [
                       TugColors.lightBackground,
-                      Color.lerp(TugColors.lightBackground, TugColors.viceRed, 0.04) ?? TugColors.lightBackground,
+                      Color.lerp(TugColors.lightBackground, TugColors.indulgenceGreen, 0.04) ?? TugColors.lightBackground,
                     ],
             ),
           ),
           child: BlocBuilder<VicesBloc, VicesState>(
             builder: (context, state) {
               if (state is VicesLoading && _selectedVice == null) {
-                return Center(child: CircularProgressIndicator(color: TugColors.viceRed));
+                return Center(child: CircularProgressIndicator(color: TugColors.indulgenceGreen));
               }
               
               final vices = state is VicesLoaded 
@@ -232,7 +232,7 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
                       ElevatedButton(
                         onPressed: () => context.go('/vices-input'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: TugColors.viceRed,
+                          backgroundColor: TugColors.indulgenceGreen,
                           foregroundColor: Colors.white,
                         ),
                         child: const Text('manage vices'),
@@ -254,17 +254,17 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
                         padding: const EdgeInsets.all(16),
                         margin: const EdgeInsets.only(bottom: 24),
                         decoration: BoxDecoration(
-                          color: TugColors.viceOrange.withAlpha(30),
+                          color: TugColors.indulgenceMint.withAlpha(30),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: TugColors.viceOrange.withAlpha(100),
+                            color: TugColors.indulgenceMint.withAlpha(100),
                           ),
                         ),
                         child: Row(
                           children: [
                             Icon(
                               Icons.healing,
-                              color: TugColors.viceOrange,
+                              color: TugColors.indulgenceGreen,
                               size: 24,
                             ),
                             const SizedBox(width: 12),
@@ -272,7 +272,7 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
                               child: Text(
                                 'recording helps build awareness. be honest and kind to yourself.',
                                 style: TextStyle(
-                                  color: TugColors.viceOrange,
+                                  color: TugColors.indulgenceGreen,
                                   fontSize: 14,
                                 ),
                               ),
@@ -285,7 +285,7 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
                       Text(
                         'which vice?',
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: isDarkMode ? TugColors.viceModeTextPrimary : TugColors.viceRed,
+                          color: isDarkMode ? TugColors.viceModeTextPrimary : TugColors.indulgenceGreen,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -296,7 +296,7 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
                           color: isDarkMode ? TugColors.viceModeDarkSurface : Colors.white,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: TugColors.viceRed.withAlpha(50),
+                            color: TugColors.indulgenceGreen.withAlpha(50),
                           ),
                         ),
                         child: DropdownButton<ViceModel>(
@@ -372,7 +372,7 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
                                 Text(
                                   'date',
                                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    color: isDarkMode ? TugColors.viceModeTextPrimary : TugColors.viceRed,
+                                    color: isDarkMode ? TugColors.viceModeTextPrimary : TugColors.indulgenceGreen,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -385,14 +385,14 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
                                       color: isDarkMode ? TugColors.viceModeDarkSurface : Colors.white,
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
-                                        color: TugColors.viceRed.withAlpha(50),
+                                        color: TugColors.indulgenceGreen.withAlpha(50),
                                       ),
                                     ),
                                     child: Row(
                                       children: [
                                         Icon(
                                           Icons.calendar_today,
-                                          color: TugColors.viceRed,
+                                          color: TugColors.indulgenceGreen,
                                           size: 20,
                                         ),
                                         const SizedBox(width: 12),
@@ -417,7 +417,7 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
                                 Text(
                                   'time',
                                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    color: isDarkMode ? TugColors.viceModeTextPrimary : TugColors.viceRed,
+                                    color: isDarkMode ? TugColors.viceModeTextPrimary : TugColors.indulgenceGreen,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -430,14 +430,14 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
                                       color: isDarkMode ? TugColors.viceModeDarkSurface : Colors.white,
                                       borderRadius: BorderRadius.circular(12),
                                       border: Border.all(
-                                        color: TugColors.viceRed.withAlpha(50),
+                                        color: TugColors.indulgenceGreen.withAlpha(50),
                                       ),
                                     ),
                                     child: Row(
                                       children: [
                                         Icon(
                                           Icons.access_time,
-                                          color: TugColors.viceRed,
+                                          color: TugColors.indulgenceGreen,
                                           size: 20,
                                         ),
                                         const SizedBox(width: 12),
@@ -473,7 +473,7 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
                       Text(
                         'emotional state before (1 = very low, 10 = very good)',
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: isDarkMode ? TugColors.viceModeTextPrimary : TugColors.viceRed,
+                          color: isDarkMode ? TugColors.viceModeTextPrimary : TugColors.indulgenceGreen,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -483,7 +483,7 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
                         max: 10,
                         divisions: 9,
                         label: _emotionalState.toString(),
-                        activeColor: TugColors.viceOrange,
+                        activeColor: TugColors.indulgenceGreenLight,
                         onChanged: (value) {
                           setState(() {
                             _emotionalState = value.round();
@@ -497,7 +497,7 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
                       Text(
                         'what triggered this? (tap to select)',
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: isDarkMode ? TugColors.viceModeTextPrimary : TugColors.viceRed,
+                          color: isDarkMode ? TugColors.viceModeTextPrimary : TugColors.indulgenceGreen,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -519,11 +519,11 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
                                 }
                               });
                             },
-                            selectedColor: TugColors.viceOrange.withAlpha(100),
-                            checkmarkColor: TugColors.viceOrange,
+                            selectedColor: TugColors.indulgenceMint.withAlpha(100),
+                            checkmarkColor: TugColors.indulgenceGreen,
                             labelStyle: TextStyle(
                               color: isSelected 
-                                  ? TugColors.viceOrange
+                                  ? TugColors.indulgenceGreen
                                   : (isDarkMode ? TugColors.viceModeTextSecondary : TugColors.lightTextSecondary),
                             ),
                           );
@@ -547,7 +547,7 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
                         width: double.infinity,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: TugColors.viceRed,
+                            backgroundColor: TugColors.indulgenceGreen,
                             foregroundColor: Colors.white,
                             padding: const EdgeInsets.symmetric(vertical: 16),
                             shape: RoundedRectangleBorder(
@@ -571,8 +571,10 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
+                                
                         ),
                       ),
+                      SizedBox(height: 100,)
                     ],
                   ),
                 ),

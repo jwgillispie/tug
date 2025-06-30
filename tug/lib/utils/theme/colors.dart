@@ -15,6 +15,14 @@ class TugColors {
   static const viceOrangeDark = Color(0xFFC2410C); // darker orange
   static const viceOrangeLight = Color(0xFFF97316); // lighter orange
   
+  // Indulgence Colors - calming green palette for acceptance and growth
+  static const indulgenceGreen = Color(0xFF059669); // main green for indulgences
+  static const indulgenceGreenDark = Color(0xFF047857); // darker green
+  static const indulgenceGreenLight = Color(0xFF10B981); // lighter green
+  static const indulgenceForest = Color(0xFF064E3B); // deep forest green
+  static const indulgenceEmerald = Color(0xFF065F46); // emerald green
+  static const indulgenceMint = Color(0xFF6EE7B7); // soft mint green
+  
   // Additional purple shades for variety
   static const purpleShade50 = Color(0xFFF5F3FF);
   static const purpleShade100 = Color(0xFFEDE9FE);
@@ -64,6 +72,10 @@ class TugColors {
   // Vice mode gradient colors
   static const gradientViceStart = Color(0xFFDC2626);
   static const gradientViceEnd = Color(0xFFEA580C);
+  
+  // Indulgence mode gradient colors
+  static const gradientIndulgenceStart = Color(0xFF059669);
+  static const gradientIndulgenceEnd = Color(0xFF10B981);
 
   // Simple gradient sets
   static final lightGradient = [
@@ -157,9 +169,32 @@ class TugColors {
     );
   }
 
+  /// Get indulgence mode gradient
+  static LinearGradient getIndulgenceGradient({bool vertical = false, bool reversed = false}) {
+    final List<Color> colors = reversed 
+        ? [gradientIndulgenceEnd, gradientIndulgenceStart]
+        : [gradientIndulgenceStart, gradientIndulgenceEnd];
+        
+    return LinearGradient(
+      colors: colors,
+      begin: vertical ? Alignment.topCenter : Alignment.centerLeft,
+      end: vertical ? Alignment.bottomCenter : Alignment.centerRight,
+    );
+  }
+
   /// Get mode-appropriate primary color
   static Color getPrimaryColor(bool isViceMode) {
     return isViceMode ? viceRed : primaryPurple;
+  }
+
+  /// Get indulgence-specific primary color
+  static Color getIndulgencePrimaryColor() {
+    return indulgenceGreen;
+  }
+
+  /// Get indulgence-specific secondary color
+  static Color getIndulgenceSecondaryColor() {
+    return indulgenceGreenLight;
   }
 
   /// Get mode-appropriate background color
