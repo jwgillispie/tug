@@ -116,14 +116,17 @@ async def get_current_user(
                 last_login=datetime.utcnow()
             )
             await user.insert()
+            await user.ensure_username()
         except Exception as e:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail=f"Failed to create user: {str(e)}",
             )
     else:
-        # Update last login time
+        # Update last login time and ensure username exists
         user.last_login = datetime.utcnow()
+        if not user.username:
+            await user.ensure_username()
         await user.save()
     
     return user

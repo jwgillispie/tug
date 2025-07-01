@@ -78,11 +78,17 @@ async def sync_user(request: Request):
                 last_login=datetime.utcnow()
             )
             await user.insert()
-            logger.info(f"User created with ID: {user.id}")
+            await user.ensure_username()
+            logger.info(f"User created with ID: {user.id} and username: {user.username}")
         else:
             # Update existing user
             logger.info(f"Updating existing user: {user.id}")
             user.last_login = datetime.utcnow()
+            
+            # Ensure existing user has a username
+            if not user.username:
+                await user.ensure_username()
+                logger.info(f"Generated username for existing user: {user.username}")
             if display_name:
                 user.display_name = display_name
             
@@ -128,6 +134,11 @@ async def create_user(
             # Update existing user
             user.display_name = user_data.display_name
             user.last_login = datetime.utcnow()
+            
+            # Ensure existing user has a username
+            if not user.username:
+                await user.ensure_username()
+                
             await user.save()
         else:
             # Create new user
@@ -139,6 +150,7 @@ async def create_user(
                 last_login=datetime.utcnow()
             )
             await user.insert()
+            await user.ensure_username()
         
         # Manually convert to response format
         response = {

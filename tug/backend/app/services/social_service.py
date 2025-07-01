@@ -190,13 +190,15 @@ class SocialService:
     async def search_users(current_user: User, query: str, limit: int = 10) -> List[UserSearchResult]:
         """Search for users by username or display name"""
         try:
-            # Search users by username or display_name (case insensitive)
+            # Search users by username, display_name, or email (case insensitive)
+            # Handle case where username might be None for older users
             users = await User.find({
                 "$and": [
                     {"_id": {"$ne": ObjectId(current_user.id)}},  # Exclude current user
                     {"$or": [
                         {"username": {"$regex": query, "$options": "i"}},
-                        {"display_name": {"$regex": query, "$options": "i"}}
+                        {"display_name": {"$regex": query, "$options": "i"}},
+                        {"email": {"$regex": query, "$options": "i"}}
                     ]}
                 ]
             }).limit(limit).to_list()
@@ -220,9 +222,14 @@ class SocialService:
             results = []
             for user in users:
                 user_id = str(user.id)
+                
+                # Ensure user has a username, generate if missing
+                if not user.username:
+                    await user.ensure_username()
+                
                 results.append(UserSearchResult(
                     id=user_id,
-                    username=user.username,
+                    username=user.username or user.effective_username,
                     display_name=user.display_name,
                     friendship_status=friendship_map.get(user_id)
                 ))
