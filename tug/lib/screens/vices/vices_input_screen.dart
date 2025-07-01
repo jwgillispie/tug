@@ -96,7 +96,7 @@ class _VicesInputScreenState extends State<VicesInputScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.message),
-              backgroundColor: TugColors.viceRed,
+              backgroundColor: TugColors.viceGreen,
             ),
           );
         }
@@ -109,8 +109,8 @@ class _VicesInputScreenState extends State<VicesInputScreen> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: isDarkMode 
-                    ? [TugColors.viceRed, TugColors.viceOrange, TugColors.viceRedDark]
-                    : [TugColors.lightBackground, TugColors.viceRed.withAlpha(20)],
+                    ? [TugColors.viceGreen, TugColors.viceEmerald, TugColors.viceGreenDark]
+                    : [TugColors.lightBackground, TugColors.viceGreen.withAlpha(20)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -122,12 +122,12 @@ class _VicesInputScreenState extends State<VicesInputScreen> {
               fontSize: 24,
               fontWeight: FontWeight.bold,
               letterSpacing: 1.2,
-              color: isDarkMode ? TugColors.viceModeTextPrimary : TugColors.viceRed,
+              color: isDarkMode ? TugColors.viceModeTextPrimary : TugColors.viceGreen,
             ),
           ),
           leading: widget.fromHome 
               ? IconButton(
-                  icon: Icon(Icons.arrow_back, color: TugColors.viceRed),
+                  icon: Icon(Icons.arrow_back, color: TugColors.viceGreen),
                   onPressed: () => context.pop(),
                 )
               : null,
@@ -140,11 +140,11 @@ class _VicesInputScreenState extends State<VicesInputScreen> {
               colors: isDarkMode 
                   ? [
                       TugColors.viceModeDarkBackground,
-                      Color.lerp(TugColors.viceModeDarkBackground, TugColors.viceRed, 0.08) ?? TugColors.viceModeDarkBackground,
+                      Color.lerp(TugColors.viceModeDarkBackground, TugColors.viceGreen, 0.08) ?? TugColors.viceModeDarkBackground,
                     ] 
                   : [
                       TugColors.lightBackground,
-                      Color.lerp(TugColors.lightBackground, TugColors.viceRed, 0.04) ?? TugColors.lightBackground,
+                      Color.lerp(TugColors.lightBackground, TugColors.viceGreen, 0.04) ?? TugColors.lightBackground,
                     ],
             ),
           ),
@@ -159,10 +159,10 @@ class _VicesInputScreenState extends State<VicesInputScreen> {
                     padding: const EdgeInsets.all(16),
                     margin: const EdgeInsets.only(bottom: 24),
                     decoration: BoxDecoration(
-                      color: TugColors.viceOrange.withAlpha(30),
+                      color: TugColors.viceEmerald.withAlpha(30),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: TugColors.viceOrange.withAlpha(100),
+                        color: TugColors.viceEmerald.withAlpha(100),
                       ),
                     ),
                     child: Column(
@@ -172,7 +172,7 @@ class _VicesInputScreenState extends State<VicesInputScreen> {
                           children: [
                             Icon(
                               Icons.warning_amber_rounded,
-                              color: TugColors.viceOrange,
+                              color: TugColors.viceEmerald,
                               size: 24,
                             ),
                             const SizedBox(width: 8),
@@ -180,14 +180,14 @@ class _VicesInputScreenState extends State<VicesInputScreen> {
                               child: Text(
                                 'approach with care',
                                 style: TextStyle(
-                                  color: TugColors.viceOrange,
+                                  color: TugColors.viceEmerald,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
                                 ),
                               ),
                             ),
                             IconButton(
-                              icon: Icon(Icons.close, size: 20, color: TugColors.viceOrange),
+                              icon: Icon(Icons.close, size: 20, color: TugColors.viceEmerald),
                               onPressed: () => setState(() => _showWarning = false),
                             ),
                           ],
@@ -196,7 +196,7 @@ class _VicesInputScreenState extends State<VicesInputScreen> {
                         Text(
                           'this mode is for tracking behaviors you want to overcome. if you\'re struggling with serious addiction, consider professional support.',
                           style: TextStyle(
-                            color: TugColors.viceOrange,
+                            color: TugColors.viceEmerald,
                             fontSize: 14,
                           ),
                         ),
@@ -211,12 +211,12 @@ class _VicesInputScreenState extends State<VicesInputScreen> {
                   style: Theme.of(context).textTheme.displayLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.2,
-                    color: isDarkMode ? TugColors.viceModeTextPrimary : TugColors.viceRed,
+                    color: isDarkMode ? TugColors.viceModeTextPrimary : TugColors.viceGreen,
                   ) ?? TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 1.2,
-                    color: isDarkMode ? TugColors.viceModeTextPrimary : TugColors.viceRed,
+                    color: isDarkMode ? TugColors.viceModeTextPrimary : TugColors.viceGreen,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -305,7 +305,7 @@ class _VicesInputScreenState extends State<VicesInputScreen> {
                             width: double.infinity,
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: TugColors.viceRed,
+                                backgroundColor: TugColors.viceGreen,
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(vertical: 16),
                                 shape: RoundedRectangleBorder(
@@ -368,7 +368,7 @@ class _VicesInputScreenState extends State<VicesInputScreen> {
                           Text(
                             'your vices',
                             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              color: isDarkMode ? TugColors.viceModeTextPrimary : TugColors.viceRed,
+                              color: isDarkMode ? TugColors.viceModeTextPrimary : TugColors.viceGreen,
                             ),
                           ),
                           const SizedBox(height: 16),
@@ -391,7 +391,7 @@ class _VicesInputScreenState extends State<VicesInputScreen> {
                             width: double.infinity,
                             child: ElevatedButton(
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: isDarkMode ? TugColors.viceRed : TugColors.viceRedDark,
+                                backgroundColor: isDarkMode ? TugColors.viceGreen : TugColors.viceGreenDark,
                                 foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(vertical: 16),
                                 shape: RoundedRectangleBorder(
@@ -421,7 +421,7 @@ class _VicesInputScreenState extends State<VicesInputScreen> {
                     
                     if (state is VicesLoading) {
                       return Center(
-                        child: CircularProgressIndicator(color: TugColors.viceRed),
+                        child: CircularProgressIndicator(color: TugColors.viceGreen),
                       );
                     }
                     
@@ -464,14 +464,14 @@ class ViceCard extends StatelessWidget {
           children: [
             SlidableAction(
               onPressed: (_) => onEdit(),
-              backgroundColor: TugColors.viceOrange,
+              backgroundColor: TugColors.viceEmerald,
               foregroundColor: Colors.white,
               icon: Icons.edit,
               label: 'Edit',
             ),
             SlidableAction(
               onPressed: (_) => _showDeleteConfirmation(context),
-              backgroundColor: TugColors.viceRedDark,
+              backgroundColor: TugColors.viceGreenDark,
               foregroundColor: Colors.white,
               icon: Icons.delete,
               label: 'Delete',
@@ -644,7 +644,7 @@ class ViceCard extends StatelessWidget {
               onDelete();
             },
             style: TextButton.styleFrom(
-              foregroundColor: TugColors.viceRed,
+              foregroundColor: TugColors.viceGreen,
             ),
             child: const Text('remove'),
           ),

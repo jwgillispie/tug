@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tug/blocs/auth/auth_bloc.dart';
 import 'package:tug/utils/theme/colors.dart';
 import 'package:tug/utils/theme/buttons.dart';
+import 'package:tug/services/app_mode_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:tug/services/user_service.dart';
 import 'package:tug/widgets/common/tug_text_field.dart';
@@ -11,6 +12,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'dart:convert';
 import 'dart:typed_data';
+import 'dart:async';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -22,21 +24,43 @@ class EditProfileScreen extends StatefulWidget {
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   final _displayNameController = TextEditingController();
+  final AppModeService _appModeService = AppModeService();
 
   bool _isLoading = false;
   bool _isUploadingProfilePicture = false;
   String? _errorMessage;
   String? _successMessage;
   final ImagePicker _imagePicker = ImagePicker();
+  
+  AppMode _currentMode = AppMode.valuesMode;
+  StreamSubscription<AppMode>? _modeSubscription;
 
   @override
   void initState() {
     super.initState();
+    _initializeMode();
     _loadUserData();
+  }
+
+  void _initializeMode() async {
+    await _appModeService.initialize();
+    _modeSubscription = _appModeService.modeStream.listen((mode) {
+      if (mounted) {
+        setState(() {
+          _currentMode = mode;
+        });
+      }
+    });
+    if (mounted) {
+      setState(() {
+        _currentMode = _appModeService.currentMode;
+      });
+    }
   }
 
   @override
   void dispose() {
+    _modeSubscription?.cancel();
     _displayNameController.dispose();
     super.dispose();
   }
@@ -218,6 +242,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isViceMode = _currentMode == AppMode.vicesMode;
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Edit Profile'),
@@ -299,24 +325,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               width: 100,
                               height: 100,
                               decoration: BoxDecoration(
-                                color: TugColors.primaryPurple.withOpacity(0.2),
+                                color: TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.2),
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: TugColors.primaryPurple,
+                                  color: TugColors.getPrimaryColor(isViceMode),
                                   width: 2,
                                 ),
                               ),
                               child: CircleAvatar(
                                 radius: 48,
-                                backgroundColor: TugColors.primaryPurple.withOpacity(0.2),
+                                backgroundColor: TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.2),
                                 backgroundImage: state is Authenticated && state.user.photoURL != null 
                                     ? NetworkImage(state.user.photoURL!) 
                                     : null,
                                 child: !(state is Authenticated && state.user.photoURL != null)
-                                    ? const Icon(
+                                    ? Icon(
                                         Icons.person,
                                         size: 50,
-                                        color: TugColors.primaryPurple,
+                                        color: TugColors.getPrimaryColor(isViceMode),
                                       )
                                     : null,
                               ),

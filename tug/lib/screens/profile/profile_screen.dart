@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import 'package:tug/blocs/auth/auth_bloc.dart';
 import 'package:tug/blocs/theme/theme_bloc.dart';
 import 'package:tug/services/achievement_service.dart';
+import 'package:tug/services/app_mode_service.dart';
 import 'package:tug/utils/theme/colors.dart';
 import 'package:tug/utils/theme/buttons.dart';
 import 'package:tug/utils/quantum_effects.dart';
@@ -16,6 +17,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'dart:convert';
 import 'dart:typed_data';
+import 'dart:async';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -35,6 +37,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final AchievementService _achievementService = AchievementService();
   final NotificationService _notificationService = NotificationService();
   final ImagePicker _imagePicker = ImagePicker();
+  final AppModeService _appModeService = AppModeService();
+  
+  AppMode _currentMode = AppMode.valuesMode;
+  StreamSubscription<AppMode>? _modeSubscription;
 
   @override
   void initState() {
@@ -43,11 +49,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final themeState = context.read<ThemeBloc>().state;
     _darkModeEnabled = themeState.isDarkMode;
 
+    // Initialize app mode
+    _initializeMode();
+
     // Load achievements count
     _loadAchievementsCount();
 
     // Load notification preferences
     _loadNotificationPreferences();
+  }
+
+  void _initializeMode() async {
+    await _appModeService.initialize();
+    _modeSubscription = _appModeService.modeStream.listen((mode) {
+      if (mounted) {
+        setState(() {
+          _currentMode = mode;
+        });
+      }
+    });
+    if (mounted) {
+      setState(() {
+        _currentMode = _appModeService.currentMode;
+      });
+    }
   }
 
   Future<void> _loadNotificationPreferences() async {
@@ -209,8 +234,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   @override
+  void dispose() {
+    _modeSubscription?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final isViceMode = _currentMode == AppMode.vicesMode;
     
     return Scaffold(
       appBar: AppBar(
@@ -219,9 +251,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: isDarkMode 
-                  ? [TugColors.darkBackground, TugColors.primaryPurpleDark, TugColors.primaryPurple]
-                  : [TugColors.lightBackground, TugColors.primaryPurple.withAlpha(20)],
+              colors: isViceMode
+                  ? (isDarkMode 
+                      ? [TugColors.darkBackground, TugColors.viceGreenDark, TugColors.viceGreen]
+                      : [TugColors.lightBackground, TugColors.viceGreen.withAlpha(20)])
+                  : (isDarkMode 
+                      ? [TugColors.darkBackground, TugColors.primaryPurpleDark, TugColors.primaryPurple]
+                      : [TugColors.lightBackground, TugColors.primaryPurple.withAlpha(20)]),
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -235,9 +271,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               fontWeight: FontWeight.bold,
               letterSpacing: 1.2,
             ),
-            colors: isDarkMode 
-                ? [TugColors.primaryPurple, TugColors.primaryPurpleLight, TugColors.primaryPurpleDark] 
-                : [TugColors.primaryPurple, TugColors.primaryPurpleLight],
+            colors: isViceMode
+                ? (isDarkMode ? [TugColors.viceGreen, TugColors.viceGreenLight, TugColors.viceGreenDark] : [TugColors.viceGreen, TugColors.viceGreenLight])
+                : (isDarkMode ? [TugColors.primaryPurple, TugColors.primaryPurpleLight, TugColors.primaryPurpleDark] : [TugColors.primaryPurple, TugColors.primaryPurpleLight]),
           ),
         ),
       ),
@@ -336,9 +372,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         // Achievement icon
                         Stack(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.emoji_events_outlined,
-                              color: TugColors.primaryPurple,
+                              color: TugColors.getPrimaryColor(_currentMode == AppMode.vicesMode),
                             ),
                             if (_unlockedAchievements > 0)
                               Positioned(
@@ -505,6 +541,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildProfileHeader() {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final isViceMode = _currentMode == AppMode.vicesMode;
 
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
@@ -527,13 +564,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: TugColors.primaryPurple.withOpacity(0.3),
+                        color: TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.3),
                         width: 2,
                       ),
                     ),
                     child: CircleAvatar(
                       radius: 48,
-                      backgroundColor: TugColors.primaryPurple,
+                      backgroundColor: TugColors.getPrimaryColor(isViceMode),
                       backgroundImage: state is Authenticated && state.user.photoURL != null 
                           ? NetworkImage(state.user.photoURL!) 
                           : null,
@@ -554,7 +591,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       child: Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: TugColors.primaryPurple,
+                          color: TugColors.getPrimaryColor(isViceMode),
                           shape: BoxShape.circle,
                           border: Border.all(color: Colors.white, width: 2),
                         ),
@@ -673,7 +710,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           children: [
             Icon(
               icon,
-              color: TugColors.primaryPurple,
+              color: TugColors.getPrimaryColor(_currentMode == AppMode.vicesMode),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -726,7 +763,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         children: [
           Icon(
             icon,
-            color: TugColors.primaryPurple,
+            color: TugColors.getPrimaryColor(_currentMode == AppMode.vicesMode),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -758,7 +795,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: TugColors.primaryPurple,
+            activeColor: TugColors.getPrimaryColor(_currentMode == AppMode.vicesMode),
           ),
         ],
       ),

@@ -184,7 +184,7 @@ class _SocialScreenState extends State<SocialScreen> {
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
           decoration: BoxDecoration(
-            gradient: TugColors.getPrimaryGradient(),
+            gradient: TugColors.getModeGradient(isViceMode),
           ),
           child: SafeArea(
             child: Padding(

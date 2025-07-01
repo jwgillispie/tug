@@ -69,7 +69,7 @@ class _EditViceDialogState extends State<EditViceDialog> {
       title: Text(
         'edit vice',
         style: TextStyle(
-          color: isDarkMode ? TugColors.viceModeTextPrimary : TugColors.viceRed,
+          color: isDarkMode ? TugColors.viceModeTextPrimary : TugColors.viceGreen,
           fontWeight: FontWeight.bold,
         ),
       ),
@@ -155,7 +155,7 @@ class _EditViceDialogState extends State<EditViceDialog> {
         ElevatedButton(
           onPressed: _saveVice,
           style: ElevatedButton.styleFrom(
-            backgroundColor: TugColors.viceRed,
+            backgroundColor: TugColors.viceGreen,
             foregroundColor: Colors.white,
           ),
           child: const Text('save'),

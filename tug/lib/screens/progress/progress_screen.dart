@@ -15,7 +15,6 @@ import 'package:tug/utils/quantum_effects.dart';
 import 'package:tug/utils/loading_messages.dart';
 import 'package:tug/widgets/tug_of_war/enhanced_tug_of_war_widget.dart';
 import 'package:tug/widgets/values/streak_overview_widget.dart';
-import 'package:tug/widgets/values/ai_insight_widget.dart';
 import 'package:tug/utils/progress_calculator.dart';
 
 class ProgressScreen extends StatefulWidget {
@@ -325,8 +324,8 @@ class _ProgressScreenState extends State<ProgressScreen>
             gradient: LinearGradient(
               colors: _currentMode == AppMode.vicesMode
                   ? (isDarkMode 
-                      ? [TugColors.darkBackground, TugColors.viceRedDark, TugColors.viceRed]
-                      : [TugColors.lightBackground, TugColors.viceRed.withAlpha(20)])
+                      ? [TugColors.darkBackground, TugColors.viceGreenDark, TugColors.viceGreen]
+                      : [TugColors.lightBackground, TugColors.viceGreen.withValues(alpha: 0.08)])
                   : (isDarkMode 
                       ? [TugColors.darkBackground, TugColors.primaryPurpleDark, TugColors.primaryPurple]
                       : [TugColors.lightBackground, TugColors.primaryPurple.withAlpha(20)]),
@@ -344,7 +343,7 @@ class _ProgressScreenState extends State<ProgressScreen>
               letterSpacing: 1.2,
             ),
             colors: _currentMode == AppMode.vicesMode
-                ? (isDarkMode ? [TugColors.viceRed, TugColors.viceOrange, TugColors.viceRedDark] : [TugColors.viceRed, TugColors.viceOrange])
+                ? (isDarkMode ? [TugColors.viceGreen, TugColors.viceEmerald, TugColors.viceGreenDark] : [TugColors.viceGreen, TugColors.viceEmerald])
                 : (isDarkMode ? [TugColors.primaryPurple, TugColors.primaryPurpleLight, TugColors.primaryPurpleDark] : [TugColors.primaryPurple, TugColors.primaryPurpleLight]),
           ),
         ),
@@ -451,7 +450,7 @@ class _ProgressScreenState extends State<ProgressScreen>
                             children: [
                               CircularProgressIndicator(
                                 color: _currentMode == AppMode.vicesMode 
-                                    ? TugColors.viceRed 
+                                    ? TugColors.viceGreen 
                                     : TugColors.primaryPurple,
                               ),
                               const SizedBox(height: 16),
@@ -575,7 +574,7 @@ class _ProgressScreenState extends State<ProgressScreen>
                                 children: [
                                   Icon(
                                     Icons.balance,
-                                    color: _currentMode == AppMode.vicesMode ? TugColors.viceRed : TugColors.primaryPurple,
+                                    color: _currentMode == AppMode.vicesMode ? TugColors.viceGreen : TugColors.primaryPurple,
                                     size: 20,
                                   ),
                                   const SizedBox(width: 8),
@@ -633,13 +632,7 @@ class _ProgressScreenState extends State<ProgressScreen>
                             ),
 
                             // Individual AI Insight Widgets for each value
-                            ...values.map((value) => Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              child: AIInsightWidget(
-                                value: value,
-                                timeframe: _selectedTimeframe,
-                              ),
-                            )),
+                            // AI insights have been removed
                           ],
                           ),
                         );
@@ -690,7 +683,7 @@ class _ProgressScreenState extends State<ProgressScreen>
                             Center(
                               child: Column(
                                 children: [
-                                  CircularProgressIndicator(color: TugColors.viceRed),
+                                  CircularProgressIndicator(color: TugColors.viceGreen),
                                   const SizedBox(height: 16),
                                   Text(
                                     'loading vices progress...',
@@ -719,7 +712,7 @@ class _ProgressScreenState extends State<ProgressScreen>
                                   Icon(
                                     Icons.error_outline,
                                     size: 64,
-                                    color: TugColors.viceRed,
+                                    color: TugColors.viceGreen,
                                   ),
                                   const SizedBox(height: 16),
                                   Text(
@@ -762,7 +755,7 @@ class _ProgressScreenState extends State<ProgressScreen>
                                     Icon(
                                       Icons.psychology_outlined,
                                       size: 80,
-                                      color: TugColors.viceRed.withOpacity(0.5),
+                                      color: TugColors.viceGreen.withValues(alpha: 0.5),
                                     ),
                                     const SizedBox(height: 16),
                                     Text(
@@ -799,7 +792,7 @@ class _ProgressScreenState extends State<ProgressScreen>
                               style: TextStyle(
                                 fontSize: 28,
                                 fontWeight: FontWeight.bold,
-                                color: TugColors.viceRed,
+                                color: TugColors.viceGreen,
                               ),
                               textAlign: TextAlign.center,
                             ),

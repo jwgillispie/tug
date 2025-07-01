@@ -41,7 +41,6 @@ import 'screens/auth/signup_screen.dart';
 import 'screens/values/values_input_screen.dart';
 import 'screens/vices/vices_input_screen.dart';
 import 'screens/vices/indulgence_screen.dart';
-import 'screens/ai_counselor/ai_counselor_screen.dart';
 
 // Import new screens
 import 'screens/about/about_screen.dart';
@@ -305,10 +304,6 @@ class _TugAppState extends State<TugApp> {
             currentIndex: 2,
             child: IndulgenceScreen(),
           ),
-        ),
-        GoRoute(
-          path: '/ai-counselor',
-          builder: (context, state) => const AICounselorScreen(),
         ),
         GoRoute(
           path: '/profile',

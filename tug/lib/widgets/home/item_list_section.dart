@@ -52,7 +52,7 @@ class ItemListSection<T> extends StatelessWidget {
             OutlinedButton(
               onPressed: onEditPressed,
               style: OutlinedButton.styleFrom(
-                foregroundColor: isViceMode ? TugColors.viceRed : TugColors.primaryPurple,
+                foregroundColor: isViceMode ? TugColors.viceGreen : TugColors.primaryPurple,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 8,

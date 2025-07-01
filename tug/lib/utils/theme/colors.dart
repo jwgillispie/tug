@@ -7,13 +7,13 @@ class TugColors {
   static const primaryPurpleDark = Color(0xFF5B21B6); // darker purple
   static const primaryPurpleLight = Color(0xFF9F7AEA); // lighter purple
 
-  // Vice Mode Colors - serious red/orange palette
-  static const viceRed = Color(0xFFDC2626); // main red for vices
-  static const viceRedDark = Color(0xFF991B1B); // darker red
-  static const viceRedLight = Color(0xFFEF4444); // lighter red
-  static const viceOrange = Color(0xFFEA580C); // warning orange
-  static const viceOrangeDark = Color(0xFFC2410C); // darker orange
-  static const viceOrangeLight = Color(0xFFF97316); // lighter orange
+  // Vice Mode Colors - calming green palette
+  static const viceGreen = Color(0xFF059669); // main green for vices
+  static const viceGreenDark = Color(0xFF047857); // darker green
+  static const viceGreenLight = Color(0xFF10B981); // lighter green
+  static const viceEmerald = Color(0xFF065F46); // emerald green
+  static const viceEmeraldDark = Color(0xFF064E3B); // darker emerald
+  static const viceEmeraldLight = Color(0xFF34D399); // lighter emerald
   
   // Indulgence Colors - calming green palette for acceptance and growth
   static const indulgenceGreen = Color(0xFF059669); // main green for indulgences
@@ -57,21 +57,21 @@ class TugColors {
   static const darkTextSecondary = Color(0xFF9CA3AF);
   static const darkBorder = Color(0xFF374151);
 
-  // Vice Mode Dark Theme - more serious/somber
-  static const viceModeDarkBackground = Color(0xFF0A0A0A);
-  static const viceModeDarkSurface = Color(0xFF1C1C1C);
-  static const viceModeDarkSurfaceVariant = Color(0xFF2C1810);
-  static const viceModeTextPrimary = Color(0xFFFEF2F2);
-  static const viceModeTextSecondary = Color(0xFFA1A1AA);
-  static const viceModeBorder = Color(0xFF451A03);
+  // Vice Mode Dark Theme - calming green tones
+  static const viceModeDarkBackground = Color(0xFF0A120A);
+  static const viceModeDarkSurface = Color(0xFF1C241C);
+  static const viceModeDarkSurfaceVariant = Color(0xFF1A2E1A);
+  static const viceModeTextPrimary = Color(0xFFF0FDF4);
+  static const viceModeTextSecondary = Color(0xFF9CA3AF);
+  static const viceModeBorder = Color(0xFF064E3B);
 
   // Gradient colors
   static const gradientPurpleStart = Color(0xFF7C3AED);
   static const gradientPurpleEnd = Color(0xFF9F7AEA);
   
   // Vice mode gradient colors
-  static const gradientViceStart = Color(0xFFDC2626);
-  static const gradientViceEnd = Color(0xFFEA580C);
+  static const gradientViceStart = Color(0xFF059669);
+  static const gradientViceEnd = Color(0xFF10B981);
   
   // Indulgence mode gradient colors
   static const gradientIndulgenceStart = Color(0xFF059669);
@@ -184,7 +184,14 @@ class TugColors {
 
   /// Get mode-appropriate primary color
   static Color getPrimaryColor(bool isViceMode) {
-    return isViceMode ? viceRed : primaryPurple;
+    return isViceMode ? viceGreen : primaryPurple;
+  }
+
+  /// Get mode-appropriate gradient
+  static LinearGradient getModeGradient(bool isViceMode, {bool vertical = false, bool reversed = false}) {
+    return isViceMode 
+        ? getViceGradient(vertical: vertical, reversed: reversed)
+        : getPrimaryGradient(vertical: vertical, reversed: reversed);
   }
 
   /// Get indulgence-specific primary color
@@ -229,7 +236,7 @@ class TugColors {
       if (days >= 30) return Color(0xFF059669); // Green for 30+ days clean
       if (days >= 7) return Color(0xFFD97706); // Orange for 7-29 days
       if (days >= 1) return Color(0xFFEAB308); // Yellow for 1-6 days
-      return viceRed; // Red for 0 days (recent indulgence)
+      return viceGreenDark; // Dark green for 0 days (recent indulgence)
     } else {
       // For values, streaks use the standard purple theme
       return primaryPurple;
@@ -240,15 +247,15 @@ class TugColors {
   static Color getSeverityColor(int severity) {
     switch (severity) {
       case 1:
-        return Color(0xFFF59E0B); // Mild - yellow
+        return Color(0xFF34D399); // Mild - light green
       case 2:
-        return Color(0xFFEA580C); // Moderate - orange
+        return Color(0xFF10B981); // Moderate - green
       case 3:
-        return Color(0xFFDC2626); // Concerning - red
+        return Color(0xFF059669); // Concerning - medium green
       case 4:
-        return Color(0xFF991B1B); // Severe - dark red
+        return Color(0xFF047857); // Severe - dark green
       case 5:
-        return Color(0xFF7F1D1D); // Critical - very dark red
+        return Color(0xFF064E3B); // Critical - very dark green
       default:
         return Color(0xFF6B7280); // Unknown - gray
     }

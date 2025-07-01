@@ -26,8 +26,8 @@ class EmptyState extends StatelessWidget {
           Icon(
             isViceMode ? Icons.psychology_outlined : Icons.star_border_rounded,
             size: 64,
-            color: (isViceMode ? TugColors.viceRed : TugColors.primaryPurple)
-                .withOpacity(0.5),
+            color: (isViceMode ? TugColors.viceGreen : TugColors.primaryPurple)
+                .withValues(alpha: 0.5),
           ),
           const SizedBox(height: 16),
           Text(
@@ -83,7 +83,7 @@ class LoadingState extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           CircularProgressIndicator(
-            color: isViceMode ? TugColors.viceRed : TugColors.primaryPurple,
+            color: isViceMode ? TugColors.viceGreen : TugColors.primaryPurple,
           ),
           const SizedBox(height: 16),
           Text(
@@ -126,7 +126,7 @@ class ErrorState extends StatelessWidget {
           Icon(
             Icons.error_outline,
             size: 64,
-            color: isViceMode ? TugColors.viceRed : TugColors.primaryPurple,
+            color: isViceMode ? TugColors.viceGreen : TugColors.primaryPurple,
           ),
           const SizedBox(height: 16),
           Text(

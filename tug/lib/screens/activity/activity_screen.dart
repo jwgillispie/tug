@@ -479,7 +479,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
           icon: Icon(
             Icons.arrow_back,
             color: _currentMode == AppMode.vicesMode
-                ? (isDarkMode ? TugColors.viceRed : TugColors.viceRedDark)
+                ? (isDarkMode ? TugColors.viceGreen : TugColors.viceGreenDark)
                 : (isDarkMode ? TugColors.primaryPurpleLight : TugColors.primaryPurple),
           ),
           onPressed: () {
@@ -491,8 +491,8 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
             gradient: LinearGradient(
               colors: _currentMode == AppMode.vicesMode
                   ? (isDarkMode 
-                      ? [TugColors.darkBackground, TugColors.viceRedDark, TugColors.viceRed]
-                      : [TugColors.lightBackground, TugColors.viceRed.withAlpha(20)])
+                      ? [TugColors.darkBackground, TugColors.viceGreenDark, TugColors.viceGreen]
+                      : [TugColors.lightBackground, TugColors.viceGreen.withValues(alpha: 0.08)])
                   : (isDarkMode 
                       ? [TugColors.darkBackground, TugColors.primaryPurpleDark, TugColors.primaryPurple]
                       : [TugColors.lightBackground, TugColors.primaryPurple.withAlpha(20)]),
@@ -510,7 +510,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
               letterSpacing: 1.2,
             ),
             colors: _currentMode == AppMode.vicesMode
-                ? (isDarkMode ? [TugColors.viceRed, TugColors.viceOrange, TugColors.viceRedDark] : [TugColors.viceRed, TugColors.viceOrange])
+                ? (isDarkMode ? [TugColors.viceGreen, TugColors.viceEmerald, TugColors.viceGreenDark] : [TugColors.viceGreen, TugColors.viceEmerald])
                 : (isDarkMode ? [TugColors.primaryPurple, TugColors.primaryPurpleLight, TugColors.primaryPurpleDark] : [TugColors.primaryPurple, TugColors.primaryPurpleLight]),
           ),
         ),
@@ -580,7 +580,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                         Center(
                           child: CircularProgressIndicator(
                             color: _currentMode == AppMode.vicesMode 
-                                ? TugColors.viceRed 
+                                ? TugColors.viceGreen 
                                 : TugColors.primaryPurple,
                           ),
                         ),
@@ -1404,7 +1404,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                CircularProgressIndicator(color: TugColors.viceRed),
+                CircularProgressIndicator(color: TugColors.viceGreen),
                 const SizedBox(height: 16),
                 Text(
                   'loading vices...',
@@ -1426,7 +1426,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                 Icon(
                   Icons.error_outline,
                   size: 64,
-                  color: TugColors.viceRed,
+                  color: TugColors.viceGreen,
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -1464,7 +1464,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: TugColors.viceRed,
+                    color: TugColors.viceGreen,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -1486,7 +1486,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                           Icon(
                             Icons.psychology_outlined,
                             size: 80,
-                            color: TugColors.viceRed.withOpacity(0.5),
+                            color: TugColors.viceGreen.withValues(alpha: 0.5),
                           ),
                           const SizedBox(height: 16),
                           Text(
@@ -1508,7 +1508,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                           ElevatedButton(
                             onPressed: () => context.go('/vices-input'),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: TugColors.viceRed,
+                              backgroundColor: TugColors.viceGreen,
                               foregroundColor: Colors.white,
                               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                             ),
@@ -1593,7 +1593,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                     child: ElevatedButton(
                       onPressed: () => context.go('/vices-input'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: TugColors.viceRed,
+                        backgroundColor: TugColors.viceGreen,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                       ),

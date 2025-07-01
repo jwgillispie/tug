@@ -17,6 +17,7 @@ import '../../utils/loading_messages.dart';
 import '../../widgets/home/activity_chart.dart';
 import '../../widgets/home/item_list_section.dart';
 import '../../widgets/home/empty_state.dart';
+import '../../widgets/vices/vice_statistics.dart';
 import '../../models/value_model.dart';
 import '../../models/vice_model.dart';
 import '../../blocs/auth/auth_bloc.dart';
@@ -207,8 +208,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             gradient: LinearGradient(
               colors: _currentMode == AppMode.vicesMode
                   ? (isDarkMode 
-                      ? [TugColors.darkBackground, TugColors.viceRedDark, TugColors.viceRed]
-                      : [TugColors.lightBackground, TugColors.viceRed.withAlpha(20)])
+                      ? [TugColors.darkBackground, TugColors.viceGreenDark, TugColors.viceGreen]
+                      : [TugColors.lightBackground, TugColors.viceGreen.withValues(alpha: 0.08)])
                   : (isDarkMode 
                       ? [TugColors.darkBackground, TugColors.primaryPurpleDark, TugColors.primaryPurple]
                       : [TugColors.lightBackground, TugColors.primaryPurple.withAlpha(20)]),
@@ -226,7 +227,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               letterSpacing: 1.2,
             ),
             colors: _currentMode == AppMode.vicesMode
-                ? (isDarkMode ? [TugColors.viceRed, TugColors.viceOrange, TugColors.viceRedDark] : [TugColors.viceRed, TugColors.viceOrange])
+                ? (isDarkMode ? [TugColors.viceGreen, TugColors.viceEmerald, TugColors.viceGreenDark] : [TugColors.viceGreen, TugColors.viceEmerald])
                 : (isDarkMode ? [TugColors.primaryPurple, TugColors.primaryPurpleLight, TugColors.primaryPurpleDark] : [TugColors.primaryPurple, TugColors.primaryPurpleLight]),
           ),
         ),
@@ -266,11 +267,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 ? (isDarkMode 
                     ? [
                         TugColors.darkBackground,
-                        Color.lerp(TugColors.darkBackground, TugColors.viceRed, 0.05) ?? TugColors.darkBackground,
+                        Color.lerp(TugColors.darkBackground, TugColors.viceGreen, 0.05) ?? TugColors.darkBackground,
                       ] 
                     : [
                         TugColors.lightBackground,
-                        Color.lerp(TugColors.lightBackground, TugColors.viceRed, 0.03) ?? TugColors.lightBackground,
+                        Color.lerp(TugColors.lightBackground, TugColors.viceGreen, 0.03) ?? TugColors.lightBackground,
                       ])
                 : (isDarkMode 
                     ? [
@@ -688,23 +689,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Activity Chart (same as values mode)
-                          BlocBuilder<ActivitiesBloc, ActivitiesState>(
-                            builder: (context, activityState) {
-                              if (activityState is ActivitiesLoaded) {
-                                return ActivityChart(
-                                  activities: activityState.activities,
-                                  values: [], // Empty values for vices mode
-                                );
-                              } else if (activityState is ActivitiesLoading) {
-                                return _buildLoadingChart(context);
-                              } else if (activityState is ActivitiesError) {
-                                return _buildErrorChart(context, activityState.message);
-                              } else {
-                                return _buildEmptyChart(context);
-                              }
-                            },
-                          ),
+                          // Vice Statistics instead of activity chart
+                          ViceStatistics(vices: vices),
                           
                           const SizedBox(height: 24),
                           
@@ -732,21 +718,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                           ),
                           const SizedBox(height: 16),
                           
-                          // AI Counselor Card
-                          GestureDetector(
-                            onTap: () {
-                              context.push('/ai-counselor');
-                            },
-                            child: _buildFeatureCard(
-                              context,
-                              isDarkMode,
-                              icon: Icons.psychology,
-                              iconColor: TugColors.viceRed,
-                              title: 'ai counselor',
-                              subtitle: 'talk through your challenges',
-                            ),
-                          ),
-                          
                           // Progress Tracking Card
                           GestureDetector(
                             onTap: () {
@@ -771,7 +742,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                               context,
                               isDarkMode,
                               icon: Icons.groups,
-                              iconColor: TugColors.viceOrange,
+                              iconColor: TugColors.viceEmerald,
                               title: 'social',
                               subtitle: 'connect with others on similar journeys',
                             ),
