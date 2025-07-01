@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../services/social_service.dart';
 import '../../services/app_mode_service.dart';
 import '../../utils/theme/colors.dart';
-import '../../models/social_models.dart';
 
 class SocialStatistics extends StatefulWidget {
   const SocialStatistics({super.key});
@@ -40,53 +39,12 @@ class _SocialStatisticsState extends State<SocialStatistics> {
     setState(() => _isLoading = true);
 
     try {
-      // Load various social data
-      final results = await Future.wait([
-        _socialService.getSocialFeed(limit: 1000, skip: 0), // Get all user's posts
-        _socialService.getFriends(), // Get friends list
-        _socialService.getPendingFriendRequests(), // Get friend requests
-      ]);
-
-      final posts = results[0] as List<SocialPostModel>;
-      final friends = results[1] as List<FriendshipModel>;
-      final friendRequests = results[2] as List<FriendshipModel>;
-
-      // Calculate statistics
-      final totalPosts = posts.length;
-      final totalLikes = posts.fold<int>(0, (sum, post) => sum + post.likes.length);
-      final totalComments = posts.fold<int>(0, (sum, post) => sum + post.commentsCount);
-      final friendsCount = friends.length;
-      final pendingRequestsCount = friendRequests.length;
-
-      // Calculate engagement metrics
-      final avgLikesPerPost = totalPosts > 0 ? (totalLikes / totalPosts).round() : 0;
-      final avgCommentsPerPost = totalPosts > 0 ? (totalComments / totalPosts).round() : 0;
-
-      // Find most popular post
-      final mostPopularPost = posts.isNotEmpty 
-          ? posts.reduce((a, b) => a.likes.length > b.likes.length ? a : b)
-          : null;
-
-      // Calculate post type breakdown
-      final postTypeBreakdown = <String, int>{};
-      for (final post in posts) {
-        final type = post.postType.toString().split('.').last;
-        postTypeBreakdown[type] = (postTypeBreakdown[type] ?? 0) + 1;
-      }
-
+      // Use the new backend endpoint for optimized statistics
+      final stats = await _socialService.getSocialStatistics();
+      
       if (mounted) {
         setState(() {
-          _socialStats = {
-            'total_posts': totalPosts,
-            'total_likes': totalLikes,
-            'total_comments': totalComments,
-            'friends_count': friendsCount,
-            'pending_requests': pendingRequestsCount,
-            'avg_likes_per_post': avgLikesPerPost,
-            'avg_comments_per_post': avgCommentsPerPost,
-            'most_popular_post': mostPopularPost,
-            'post_type_breakdown': postTypeBreakdown,
-          };
+          _socialStats = stats;
           _isLoading = false;
         });
       }
@@ -99,10 +57,16 @@ class _SocialStatisticsState extends State<SocialStatistics> {
             'total_comments': 0,
             'friends_count': 0,
             'pending_requests': 0,
-            'avg_likes_per_post': 0,
-            'avg_comments_per_post': 0,
-            'most_popular_post': null,
-            'post_type_breakdown': <String, int>{},
+            'avg_likes_per_post': 0.0,
+            'avg_comments_per_post': 0.0,
+            'most_popular_post_id': null,
+            'most_popular_post_likes': 0,
+            'post_type_breakdown': {
+              'activity_update': 0,
+              'vice_progress': 0,
+              'achievement': 0,
+              'general': 0,
+            },
           };
           _isLoading = false;
         });
@@ -200,7 +164,7 @@ class _SocialStatisticsState extends State<SocialStatistics> {
             const SizedBox(height: 16),
             _buildEngagementMetrics(),
             if (_socialStats['post_type_breakdown'] != null && 
-                (_socialStats['post_type_breakdown'] as Map).isNotEmpty) ...[
+                (_socialStats['post_type_breakdown'] as Map).values.any((v) => v > 0)) ...[
               const SizedBox(height: 16),
               _buildPostTypeBreakdown(),
             ],
@@ -326,7 +290,7 @@ class _SocialStatisticsState extends State<SocialStatistics> {
   }
 
   Widget _buildPostTypeBreakdown() {
-    final breakdown = _socialStats['post_type_breakdown'] as Map<String, int>;
+    final breakdown = _socialStats['post_type_breakdown'] as Map<String, dynamic>? ?? {};
     
     return Container(
       padding: const EdgeInsets.all(12),
@@ -360,7 +324,7 @@ class _SocialStatisticsState extends State<SocialStatistics> {
             ],
           ),
           const SizedBox(height: 12),
-          ...breakdown.entries.map((entry) => _buildPostTypeItem(entry.key, entry.value)),
+          ...breakdown.entries.map((entry) => _buildPostTypeItem(entry.key, entry.value as int)),
         ],
       ),
     );
@@ -456,9 +420,9 @@ class _SocialStatisticsState extends State<SocialStatistics> {
   }
 
   Widget _buildPostTypeItem(String type, int count) {
-    final displayType = type == 'activityUpdate' 
+    final displayType = type == 'activity_update' 
         ? 'activity updates'
-        : type == 'viceProgress'
+        : type == 'vice_progress'
             ? 'recovery posts'
             : type == 'achievement'
                 ? 'achievements'

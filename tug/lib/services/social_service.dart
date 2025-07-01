@@ -274,4 +274,24 @@ class SocialService {
       throw Exception('Failed to get comments: $e');
     }
   }
+
+  Future<Map<String, dynamic>> getSocialStatistics() async {
+    try {
+      _logger.i('SocialService: Getting social statistics');
+      
+      final response = await _dio.get('/api/v1/social/statistics');
+      
+      if (response.statusCode == 200) {
+        return response.data as Map<String, dynamic>;
+      } else {
+        throw Exception('Failed to get social statistics: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      _logger.e('SocialService: DioException getting social statistics: ${e.message}');
+      throw Exception('Network error: ${e.message}');
+    } catch (e) {
+      _logger.e('SocialService: Error getting social statistics: $e');
+      throw Exception('Failed to get social statistics: $e');
+    }
+  }
 }

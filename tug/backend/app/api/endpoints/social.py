@@ -7,7 +7,7 @@ from ...models.user import User
 from ...schemas.social import (
     FriendRequestCreate, FriendRequestResponse, FriendshipData,
     SocialPostCreate, SocialPostUpdate, SocialPostData,
-    CommentCreate, CommentData, UserSearchResult
+    CommentCreate, CommentData, UserSearchResult, SocialStatisticsResponse
 )
 from ...services.social_service import SocialService
 from ...core.auth import get_current_user
@@ -241,4 +241,23 @@ async def get_post_comments(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to get comments"
+        )
+
+# Social Statistics Endpoint
+
+@router.get("/statistics", response_model=SocialStatisticsResponse)
+async def get_social_statistics(
+    current_user: User = Depends(get_current_user)
+):
+    """Get comprehensive social statistics for the current user"""
+    try:
+        stats = await SocialService.get_social_statistics(current_user)
+        return stats
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in get_social_statistics endpoint: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get social statistics"
         )

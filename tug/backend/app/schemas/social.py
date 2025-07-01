@@ -83,3 +83,22 @@ class SocialFeedResponse(BaseModel):
     posts: List[SocialPostData]
     has_more: bool
     next_cursor: Optional[str] = None
+
+# Social statistics schemas
+class PostTypeStats(BaseModel):
+    activity_update: int = 0
+    vice_progress: int = 0
+    achievement: int = 0
+    general: int = 0
+
+class SocialStatisticsResponse(BaseModel):
+    total_posts: int
+    total_likes: int
+    total_comments: int
+    friends_count: int
+    pending_requests: int
+    avg_likes_per_post: float
+    avg_comments_per_post: float
+    post_type_breakdown: PostTypeStats
+    most_popular_post_id: Optional[str] = None
+    most_popular_post_likes: int = 0

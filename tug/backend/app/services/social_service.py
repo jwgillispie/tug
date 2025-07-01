@@ -11,7 +11,8 @@ from ..models.social_post import SocialPost, PostType
 from ..models.post_comment import PostComment
 from ..schemas.social import (
     FriendRequestCreate, SocialPostCreate, SocialPostUpdate,
-    CommentCreate, CommentUpdate, UserSearchResult, SocialPostData, CommentData
+    CommentCreate, CommentUpdate, UserSearchResult, SocialPostData, CommentData,
+    SocialStatisticsResponse, PostTypeStats
 )
 
 logger = logging.getLogger(__name__)
@@ -464,4 +465,83 @@ class SocialService:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to get post comments"
+            )
+    
+    @staticmethod
+    async def get_social_statistics(current_user: User) -> SocialStatisticsResponse:
+        """Get comprehensive social statistics for the current user"""
+        try:
+            # Get all user's posts
+            user_posts = await SocialPost.find({"user_id": current_user.id}).to_list()
+            
+            # Get friends count
+            friends = await Friendship.find({
+                "$or": [
+                    {"requester_id": current_user.id, "status": FriendshipStatus.ACCEPTED},
+                    {"addressee_id": current_user.id, "status": FriendshipStatus.ACCEPTED}
+                ]
+            }).to_list()
+            
+            # Get pending friend requests
+            pending_requests = await Friendship.find({
+                "addressee_id": current_user.id,
+                "status": FriendshipStatus.PENDING
+            }).to_list()
+            
+            # Calculate basic stats
+            total_posts = len(user_posts)
+            total_likes = sum(len(post.likes) for post in user_posts)
+            total_comments = sum(post.comments_count for post in user_posts)
+            friends_count = len(friends)
+            pending_requests_count = len(pending_requests)
+            
+            # Calculate averages
+            avg_likes_per_post = total_likes / total_posts if total_posts > 0 else 0.0
+            avg_comments_per_post = total_comments / total_posts if total_posts > 0 else 0.0
+            
+            # Find most popular post
+            most_popular_post = None
+            most_popular_likes = 0
+            for post in user_posts:
+                if len(post.likes) > most_popular_likes:
+                    most_popular_post = post
+                    most_popular_likes = len(post.likes)
+            
+            # Calculate post type breakdown
+            post_type_counts = {
+                PostType.ACTIVITY_UPDATE: 0,
+                PostType.VICE_PROGRESS: 0,
+                PostType.ACHIEVEMENT: 0,
+                PostType.GENERAL: 0
+            }
+            
+            for post in user_posts:
+                if post.post_type in post_type_counts:
+                    post_type_counts[post.post_type] += 1
+            
+            post_type_breakdown = PostTypeStats(
+                activity_update=post_type_counts[PostType.ACTIVITY_UPDATE],
+                vice_progress=post_type_counts[PostType.VICE_PROGRESS],
+                achievement=post_type_counts[PostType.ACHIEVEMENT],
+                general=post_type_counts[PostType.GENERAL]
+            )
+            
+            return SocialStatisticsResponse(
+                total_posts=total_posts,
+                total_likes=total_likes,
+                total_comments=total_comments,
+                friends_count=friends_count,
+                pending_requests=pending_requests_count,
+                avg_likes_per_post=round(avg_likes_per_post, 2),
+                avg_comments_per_post=round(avg_comments_per_post, 2),
+                post_type_breakdown=post_type_breakdown,
+                most_popular_post_id=str(most_popular_post.id) if most_popular_post else None,
+                most_popular_post_likes=most_popular_likes
+            )
+            
+        except Exception as e:
+            logger.error(f"Error getting social statistics: {e}", exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to get social statistics"
             )
