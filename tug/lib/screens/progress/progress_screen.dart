@@ -74,15 +74,11 @@ class _ProgressScreenState extends State<ProgressScreen>
     
     for (final timeframe in _timeframes) {
       if (timeframe != _selectedTimeframe) {
-        // Pre-load in background without updating UI
-        final originalTimeframe = _selectedTimeframe;
-        _selectedTimeframe = timeframe;
         try {
-          await _fetchActivityData(forceRefresh: false);
+          await _fetchActivityDataForTimeframe(timeframe, forceRefresh: false);
         } catch (e) {
           // Ignore errors in background loading
         }
-        _selectedTimeframe = originalTimeframe;
       }
     }
   }
@@ -124,7 +120,7 @@ class _ProgressScreenState extends State<ProgressScreen>
   @override
   bool get wantKeepAlive => true;
 
-  Future<void> _fetchActivityData({bool forceRefresh = false}) async {
+  Future<void> _fetchActivityDataForTimeframe(String timeframe, {bool forceRefresh = false}) async {
     if (!mounted) return;
 
     // Ensure values are loaded first
@@ -136,16 +132,17 @@ class _ProgressScreenState extends State<ProgressScreen>
     }
 
     // Generate cache keys for this specific timeframe and data
-    final startDate = getStartDate(_selectedTimeframe);
+    final startDate = getStartDate(timeframe);
     final endDate = DateTime.now();
-    final cacheKey = 'progress_data_${_selectedTimeframe}_${startDate.toIso8601String().split('T')[0]}_${endDate.toIso8601String().split('T')[0]}';
+    final cacheKey = 'progress_data_${timeframe}_${startDate.toIso8601String().split('T')[0]}_${endDate.toIso8601String().split('T')[0]}';
 
     // If not forcing refresh, try to load from cache first
     if (!forceRefresh) {
       try {
         final cachedData = await _cacheService.get<Map<String, dynamic>>(cacheKey);
         if (cachedData != null) {
-          if (mounted) {
+          // For background preloading, we don't update the UI state
+          if (timeframe == _selectedTimeframe && mounted) {
             setState(() {
               _activityData = Map<String, Map<String, dynamic>>.from(
                 cachedData['activityData'] ?? {}
@@ -161,12 +158,14 @@ class _ProgressScreenState extends State<ProgressScreen>
       }
     }
 
-    // Only show loading indicator on first load or forced refresh
-    setState(() {
-      if (_isFirstLoad || forceRefresh) {
-        _isLoading = true;
-      }
-    });
+    // Only show loading indicator for current timeframe on first load or forced refresh
+    if (timeframe == _selectedTimeframe && mounted) {
+      setState(() {
+        if (_isFirstLoad || forceRefresh) {
+          _isLoading = true;
+        }
+      });
+    }
 
     try {
       // Fetch ALL activities to ensure we have current data
@@ -187,17 +186,17 @@ class _ProgressScreenState extends State<ProgressScreen>
       final processedData = ProgressCalculator.calculateProgressData(
         values: activeValues,
         activities: allActivities,
-        timeframe: _selectedTimeframe,
+        timeframe: timeframe,
         startDate: startDate,
         endDate: endDate,
       );
 
       // Cache the combined data for faster subsequent loads
       // Use longer cache duration for weekly/monthly data since it changes less frequently
-      final memoryCacheDuration = _selectedTimeframe == 'daily' 
+      final memoryCacheDuration = timeframe == 'daily' 
           ? Duration(minutes: 5)
           : Duration(minutes: 30);
-      final diskCacheDuration = _selectedTimeframe == 'daily'
+      final diskCacheDuration = timeframe == 'daily'
           ? Duration(hours: 1)
           : Duration(hours: 6);
 
@@ -206,7 +205,7 @@ class _ProgressScreenState extends State<ProgressScreen>
           cacheKey,
           {
             'activityData': processedData,
-            'timeframe': _selectedTimeframe,
+            'timeframe': timeframe,
             'startDate': startDate.toIso8601String(),
             'endDate': endDate.toIso8601String(),
           },
@@ -217,7 +216,8 @@ class _ProgressScreenState extends State<ProgressScreen>
         // Cache save failed - not critical, continue
       }
 
-      if (mounted) {
+      // Only update UI state if this is for the currently selected timeframe
+      if (timeframe == _selectedTimeframe && mounted) {
         setState(() {
           _activityData = processedData;
           _isLoading = false;
@@ -225,7 +225,8 @@ class _ProgressScreenState extends State<ProgressScreen>
         });
       }
     } catch (e) {
-      if (mounted) {
+      // Only update UI state if this is for the currently selected timeframe
+      if (timeframe == _selectedTimeframe && mounted) {
         setState(() {
           _isLoading = false;
           _isFirstLoad = false;
@@ -240,6 +241,10 @@ class _ProgressScreenState extends State<ProgressScreen>
         );
       }
     }
+  }
+
+  Future<void> _fetchActivityData({bool forceRefresh = false}) async {
+    return _fetchActivityDataForTimeframe(_selectedTimeframe, forceRefresh: forceRefresh);
   }
 
   // Add a refresh method to force reload from server
@@ -611,28 +616,6 @@ class _ProgressScreenState extends State<ProgressScreen>
                             }),
 
                             const SizedBox(height: 16),
-
-                            // AI Insights section
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 8, left: 4),
-                              child: Row(
-                                children: [
-                                  const Icon(
-                                    Icons.auto_awesome,
-                                    color: Colors.amber,
-                                    size: 20,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'ai insights',
-                                    style: Theme.of(context).textTheme.titleMedium,
-                                  ),
-                                ],
-                              ),
-                            ),
-
-                            // Individual AI Insight Widgets for each value
-                            // AI insights have been removed
                           ],
                           ),
                         );
@@ -824,7 +807,7 @@ class _ProgressScreenState extends State<ProgressScreen>
                                     end: Alignment.bottomRight,
                                     colors: [
                                       Color(int.parse('0xFF${vice.color.substring(1)}')),
-                                      Color(int.parse('0xFF${vice.color.substring(1)}')).withOpacity(0.7),
+                                      Color(int.parse('0xFF${vice.color.substring(1)}')).withValues(alpha: 0.7),
                                     ],
                                   ),
                                 ),
@@ -891,7 +874,7 @@ class _ProgressScreenState extends State<ProgressScreen>
                                   ),
                                 ),
                               ),
-                            )).toList(),
+                            )),
                             
                             const SizedBox(height: 32),
                           ],

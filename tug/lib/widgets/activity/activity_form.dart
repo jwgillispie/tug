@@ -13,7 +13,7 @@ import 'package:tug/widgets/values/streak_celebration.dart';
 
 class ActivityFormWidget extends StatefulWidget {
   final Function(String name, String valueId, int duration, DateTime date,
-      String? notes) onSave;
+      String? notes, bool isPublic, bool notesPublic) onSave;
   final bool isLoading;
 
   const ActivityFormWidget({
@@ -40,6 +40,19 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
   String _streakValueName = '';
   int _streakCount = 0;
   bool _isSaving = false;
+  bool _isPublic = true; // Default to public for social sharing
+  bool _notesPublic = false; // Default notes to private for privacy
+
+  @override
+  void initState() {
+    super.initState();
+    // Listen to notes changes to show/hide notes privacy toggle
+    _notesController.addListener(() {
+      setState(() {
+        // Force rebuild to show/hide notes privacy toggle
+      });
+    });
+  }
 
   @override
   void dispose() {
@@ -108,7 +121,7 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
         }
       });
 
-      widget.onSave(name, _selectedValueId!, duration, _selectedDate, notes);
+      widget.onSave(name, _selectedValueId!, duration, _selectedDate, notes, _isPublic, _notesPublic);
     }
   }
   
@@ -508,6 +521,126 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
                       border: OutlineInputBorder(),
                     ),
                     maxLines: 3,
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Privacy Controls
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                        width: 1,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.visibility,
+                              size: 18,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'privacy settings',
+                              style: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        
+                        // Share Activity Toggle
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'share activity',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: Theme.of(context).colorScheme.onSurface,
+                                    ),
+                                  ),
+                                  Text(
+                                    'post this activity to your social feed',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Switch(
+                              value: _isPublic,
+                              onChanged: (value) {
+                                setState(() {
+                                  _isPublic = value;
+                                  // If activity is private, notes should be private too
+                                  if (!value) {
+                                    _notesPublic = false;
+                                  }
+                                });
+                              },
+                              activeColor: Theme.of(context).colorScheme.primary,
+                            ),
+                          ],
+                        ),
+                        
+                        // Include Notes Toggle (only show if activity is public and notes exist)
+                        if (_isPublic && _notesController.text.isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'include notes',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w500,
+                                        color: Theme.of(context).colorScheme.onSurface,
+                                      ),
+                                    ),
+                                    Text(
+                                      'share your notes with friends',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Switch(
+                                value: _notesPublic,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _notesPublic = value;
+                                  });
+                                },
+                                activeColor: Theme.of(context).colorScheme.primary,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
 
                   const SizedBox(height: 24),

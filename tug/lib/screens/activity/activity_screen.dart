@@ -193,13 +193,15 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                 child: ActivityFormWidget(
                   isLoading: context.watch<ActivitiesBloc>().state
                       is ActivitiesLoading,
-                  onSave: (name, valueId, duration, date, notes) {
+                  onSave: (name, valueId, duration, date, notes, isPublic, notesPublic) {
                     final activity = ActivityModel(
                       name: name,
                       valueId: valueId,
                       duration: duration,
                       date: date,
                       notes: notes,
+                      isPublic: isPublic,
+                      notesPublic: notesPublic,
                     );
 
                     // Get the value model for social sharing

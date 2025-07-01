@@ -28,6 +28,8 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
   int _emotionalState = 5;
   List<String> _selectedTriggers = [];
   bool _isLoading = false;
+  bool _isPublic = false; // Default indulgences to private for sensitivity
+  bool _notesPublic = false; // Default notes to private for privacy
 
   final List<String> _commonTriggers = [
     'stress',
@@ -46,6 +48,13 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
   void initState() {
     super.initState();
     context.read<VicesBloc>().add(const LoadVices());
+    
+    // Listen to notes changes to show/hide notes privacy toggle
+    _notesController.addListener(() {
+      setState(() {
+        // Force rebuild to show/hide notes privacy toggle
+      });
+    });
   }
 
   @override
@@ -86,6 +95,8 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
         severityAtTime: _selectedVice!.severity,
         triggers: _selectedTriggers,
         emotionalState: _emotionalState,
+        isPublic: _isPublic,
+        notesPublic: _notesPublic,
       );
 
       context.read<VicesBloc>().add(RecordIndulgence(indulgence));
@@ -548,6 +559,125 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
                         hint: 'how are you feeling? what will you do differently next time?',
                         controller: _notesController,
                         maxLines: 4,
+                      ),
+                      
+                      const SizedBox(height: 24),
+
+                      // Privacy Controls
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: isDarkMode ? TugColors.viceModeDarkSurface : Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: TugColors.indulgenceGreen.withAlpha(50),
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.visibility,
+                                  size: 18,
+                                  color: TugColors.indulgenceGreen,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'privacy settings',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: TugColors.indulgenceGreen,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            
+                            // Share Indulgence Toggle
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'share indulgence',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                          color: isDarkMode ? TugColors.viceModeTextPrimary : TugColors.lightTextPrimary,
+                                        ),
+                                      ),
+                                      Text(
+                                        'post this indulgence to your social feed',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: isDarkMode ? TugColors.viceModeTextSecondary : TugColors.lightTextSecondary,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Switch(
+                                  value: _isPublic,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      _isPublic = value;
+                                      // If indulgence is private, notes should be private too
+                                      if (!value) {
+                                        _notesPublic = false;
+                                      }
+                                    });
+                                  },
+                                  activeColor: TugColors.indulgenceGreen,
+                                ),
+                              ],
+                            ),
+                            
+                            // Include Notes Toggle (only show if indulgence is public and notes exist)
+                            if (_isPublic && _notesController.text.isNotEmpty) ...[
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'include notes',
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                            color: isDarkMode ? TugColors.viceModeTextPrimary : TugColors.lightTextPrimary,
+                                          ),
+                                        ),
+                                        Text(
+                                          'share your notes with friends',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: isDarkMode ? TugColors.viceModeTextSecondary : TugColors.lightTextSecondary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Switch(
+                                    value: _notesPublic,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _notesPublic = value;
+                                      });
+                                    },
+                                    activeColor: TugColors.indulgenceGreen,
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
+                        ),
                       ),
                       
                       const SizedBox(height: 32),

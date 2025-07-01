@@ -60,7 +60,7 @@ class _SocialScreenState extends State<SocialScreen> {
     }
   }
 
-  Future<void> _loadSocialFeed() async {
+  Future<void> _loadSocialFeed({bool forceRefresh = false}) async {
     if (_isLoading) return;
     
     setState(() {
@@ -68,7 +68,11 @@ class _SocialScreenState extends State<SocialScreen> {
     });
 
     try {
-      final allPosts = await _socialService.getSocialFeed(limit: 50, skip: 0);
+      final allPosts = await _socialService.getSocialFeed(
+        limit: 50, 
+        skip: 0, 
+        forceRefresh: forceRefresh,
+      );
       
       // Filter posts based on current mode
       final filteredPosts = allPosts.where((post) {
@@ -99,6 +103,10 @@ class _SocialScreenState extends State<SocialScreen> {
         );
       }
     }
+  }
+
+  Future<void> _refreshSocialFeed() async {
+    await _loadSocialFeed(forceRefresh: true);
   }
 
 
@@ -163,13 +171,17 @@ class _SocialScreenState extends State<SocialScreen> {
 
     return Scaffold(
       backgroundColor: TugColors.getBackgroundColor(isDarkMode, isViceMode),
-      body: CustomScrollView(
-        controller: _scrollController,
-        slivers: [
-          _buildAppBar(isDarkMode, isViceMode),
-          _buildModeInfoSection(isDarkMode, isViceMode),
-          _buildFeedContent(isDarkMode, isViceMode),
-        ],
+      body: RefreshIndicator(
+        onRefresh: _refreshSocialFeed,
+        color: TugColors.getPrimaryColor(isViceMode),
+        child: CustomScrollView(
+          controller: _scrollController,
+          slivers: [
+            _buildAppBar(isDarkMode, isViceMode),
+            _buildModeInfoSection(isDarkMode, isViceMode),
+            _buildFeedContent(isDarkMode, isViceMode),
+          ],
+        ),
       ),
     );
   }

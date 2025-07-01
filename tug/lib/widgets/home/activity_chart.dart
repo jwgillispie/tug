@@ -10,23 +10,55 @@ import 'package:tug/utils/time_utils.dart';
 class ActivityChart extends StatefulWidget {
   final List<ActivityModel> activities;
   final List<ValueModel> values;
-  final int daysToShow;
+  final int? daysToShow; // Made optional to allow time range selection
   
   const ActivityChart({
     super.key,
     required this.activities,
     required this.values,
-    this.daysToShow = 7, // Default to showing a week
+    this.daysToShow, // No default, will use internal time range selection
   });
 
   @override
   State<ActivityChart> createState() => _ActivityChartState();
 }
 
+enum TimeRange {
+  week('1W', 7),
+  month('1M', 30),
+  threeMonths('3M', 90),
+  ytd('YTD', null); // null for year-to-date calculation
+
+  const TimeRange(this.label, this.days);
+  final String label;
+  final int? days;
+  
+  // Determine data aggregation level based on time range
+  DataAggregation get aggregation {
+    switch (this) {
+      case TimeRange.week:
+        return DataAggregation.daily;
+      case TimeRange.month:
+        return DataAggregation.daily;
+      case TimeRange.threeMonths:
+        return DataAggregation.weekly;
+      case TimeRange.ytd:
+        return DataAggregation.weekly;
+    }
+  }
+}
+
+enum DataAggregation {
+  daily,
+  weekly,
+  monthly;
+}
+
 class _ActivityChartState extends State<ActivityChart> {
   late List<FlSpot> _spots;
   late double _maxY;
   late List<DateTime> _dateLabels;
+  TimeRange _selectedTimeRange = TimeRange.week;
   
   @override
   void initState() {
@@ -42,16 +74,47 @@ class _ActivityChartState extends State<ActivityChart> {
       _prepareChartData();
     }
   }
+
+  int get _effectiveDaysToShow {
+    // Use provided daysToShow if available, otherwise use selected time range
+    if (widget.daysToShow != null) {
+      return widget.daysToShow!;
+    }
+    
+    if (_selectedTimeRange == TimeRange.ytd) {
+      // Calculate days from start of year to today
+      final now = DateTime.now();
+      final startOfYear = DateTime(now.year, 1, 1);
+      return now.difference(startOfYear).inDays + 1;
+    }
+    
+    return _selectedTimeRange.days!;
+  }
   
   void _prepareChartData() {
-    // Get the range of dates to show
     final now = DateTime.now();
+    final effectiveDays = _effectiveDaysToShow;
     final startDate = DateTime(now.year, now.month, now.day)
-        .subtract(Duration(days: widget.daysToShow - 1));
+        .subtract(Duration(days: effectiveDays - 1));
     
+    // Get aggregation level based on time range
+    final aggregation = widget.daysToShow != null 
+        ? DataAggregation.daily 
+        : _selectedTimeRange.aggregation;
+    
+    if (aggregation == DataAggregation.daily) {
+      _prepareDailyData(startDate, effectiveDays);
+    } else {
+      _prepareWeeklyData(startDate, effectiveDays);
+    }
+    
+    _updateMaxY();
+  }
+
+  void _prepareDailyData(DateTime startDate, int days) {
     // Create a list of dates for the x-axis
     _dateLabels = List.generate(
-      widget.daysToShow,
+      days,
       (index) => startDate.add(Duration(days: index)),
     );
     
@@ -66,24 +129,16 @@ class _ActivityChartState extends State<ActivityChart> {
     
     // Sum the activity durations for each day
     for (final activity in widget.activities) {
-      // Normalize to just the date (no time)
       final activityDate = DateTime(
         activity.date.year,
         activity.date.month,
         activity.date.day,
       );
       
-      // Convert dates to strings for accurate comparison without time
       final activityKey = '${activityDate.year}-${activityDate.month}-${activityDate.day}';
       
-      // Check if this date is in our range by comparing with date keys
-      bool isInRange = _dateLabels.any((dateLabel) {
-        final labelKey = '${dateLabel.year}-${dateLabel.month}-${dateLabel.day}';
-        return labelKey == activityKey;
-      });
-      
-      if (isInRange) {
-        dailyTotals[activityKey] = (dailyTotals[activityKey] ?? 0) + activity.duration;
+      if (dailyTotals.containsKey(activityKey)) {
+        dailyTotals[activityKey] = dailyTotals[activityKey]! + activity.duration;
       }
     }
     
@@ -95,8 +150,178 @@ class _ActivityChartState extends State<ActivityChart> {
       final minutes = dailyTotals[dateKey] ?? 0;
       return FlSpot(index.toDouble(), minutes.toDouble());
     }).toList();
+  }
+
+  void _prepareWeeklyData(DateTime startDate, int days) {
+    // Group data by weeks for better readability on longer time frames
+    final weeklyTotals = <DateTime, int>{};
     
-    _updateMaxY();
+    // Find the Monday of the week containing startDate
+    final startOfWeek = startDate.subtract(Duration(days: startDate.weekday - 1));
+    
+    // Calculate number of weeks to show
+    final numWeeks = (days / 7).ceil();
+    
+    // Create weekly date labels
+    _dateLabels = List.generate(
+      numWeeks,
+      (index) => startOfWeek.add(Duration(days: index * 7)),
+    );
+    
+    // Initialize weekly totals
+    for (final weekStart in _dateLabels) {
+      weeklyTotals[weekStart] = 0;
+    }
+    
+    // Sum activities by week
+    for (final activity in widget.activities) {
+      final activityDate = DateTime(
+        activity.date.year,
+        activity.date.month,
+        activity.date.day,
+      );
+      
+      // Skip if activity is outside our range
+      if (activityDate.isBefore(startDate) || 
+          activityDate.isAfter(startDate.add(Duration(days: days)))) {
+        continue;
+      }
+      
+      // Find which week this activity belongs to
+      final weekStart = activityDate.subtract(Duration(days: activityDate.weekday - 1));
+      
+      // Find the closest week in our data
+      DateTime? closestWeek;
+      int minDiff = double.maxFinite.toInt();
+      
+      for (final week in _dateLabels) {
+        final diff = (week.difference(weekStart).inDays).abs();
+        if (diff < minDiff) {
+          minDiff = diff;
+          closestWeek = week;
+        }
+      }
+      
+      if (closestWeek != null && minDiff <= 3) { // Within same week
+        weeklyTotals[closestWeek] = weeklyTotals[closestWeek]! + activity.duration;
+      }
+    }
+    
+    // Create spots for weekly data
+    _spots = _dateLabels.asMap().entries.map((entry) {
+      final index = entry.key;
+      final weekStart = entry.value;
+      final totalMinutes = weeklyTotals[weekStart] ?? 0;
+      // Average daily minutes for the week for better comparison
+      final avgDailyMinutes = totalMinutes / 7;
+      return FlSpot(index.toDouble(), avgDailyMinutes);
+    }).toList();
+  }
+
+  // Smart X-axis interval calculation for cleaner labels
+  double _getXAxisInterval() {
+    final numPoints = _dateLabels.length;
+    final aggregation = widget.daysToShow != null 
+        ? DataAggregation.daily 
+        : _selectedTimeRange.aggregation;
+    
+    if (aggregation == DataAggregation.daily) {
+      // For daily data, show fewer labels as time range increases
+      if (numPoints <= 7) return 1.0; // Show every day for week
+      if (numPoints <= 30) return 3.0; // Every 3 days for month
+      return 7.0; // Every week for longer periods
+    } else {
+      // For weekly data, show every few weeks
+      if (numPoints <= 12) return 1.0; // Show every week for ~3 months
+      return 2.0; // Every 2 weeks for longer periods
+    }
+  }
+
+  // Format date labels based on aggregation level
+  String _formatDateLabel(DateTime date, DataAggregation aggregation) {
+    switch (aggregation) {
+      case DataAggregation.daily:
+        final now = DateTime.now();
+        final isCurrentYear = date.year == now.year;
+        
+        if (_effectiveDaysToShow <= 7) {
+          // For week view: show day abbreviation
+          return DateFormat('E').format(date);
+        } else if (_effectiveDaysToShow <= 30) {
+          // For month view: show day number
+          return DateFormat('d').format(date);
+        } else {
+          // For longer periods: show month/day
+          return isCurrentYear 
+              ? DateFormat('M/d').format(date)
+              : DateFormat('M/d/yy').format(date);
+        }
+      
+      case DataAggregation.weekly:
+        final now = DateTime.now();
+        final isCurrentYear = date.year == now.year;
+        
+        // For weekly data: show month/day of week start
+        return isCurrentYear 
+            ? DateFormat('M/d').format(date)
+            : DateFormat('M/d/yy').format(date);
+      
+      case DataAggregation.monthly:
+        // For monthly data: show month abbreviation
+        return DateFormat('MMM').format(date);
+    }
+  }
+
+  // Adaptive line width for better visibility
+  double _getLineWidth() {
+    final aggregation = widget.daysToShow != null 
+        ? DataAggregation.daily 
+        : _selectedTimeRange.aggregation;
+    
+    return aggregation == DataAggregation.daily ? 2.5 : 3.0;
+  }
+
+  // Smart dot visibility - hide dots for longer time ranges like Robinhood
+  FlDotData _getDotData() {
+    final numPoints = _dateLabels.length;
+    final aggregation = widget.daysToShow != null 
+        ? DataAggregation.daily 
+        : _selectedTimeRange.aggregation;
+    
+    // Hide dots for longer time ranges to reduce clutter
+    final showDots = numPoints <= 30 && aggregation == DataAggregation.daily;
+    
+    if (!showDots) {
+      return const FlDotData(show: false);
+    }
+    
+    return FlDotData(
+      show: true,
+      getDotPainter: (spot, percent, barData, index) {
+        return FlDotCirclePainter(
+          radius: 3,
+          color: Colors.white,
+          strokeWidth: 1.5,
+          strokeColor: TugColors.primaryPurple,
+        );
+      },
+    );
+  }
+
+  // Get appropriate footer text based on aggregation
+  String _getFooterText() {
+    final aggregation = widget.daysToShow != null 
+        ? DataAggregation.daily 
+        : _selectedTimeRange.aggregation;
+    
+    if (aggregation == DataAggregation.weekly) {
+      final totalMinutes = _calculateTotalMinutes();
+      final weeks = _dateLabels.length;
+      return 'total: ${TimeUtils.formatMinutes(totalMinutes)} (${weeks}w)';
+    } else {
+      final totalMinutes = _calculateTotalMinutes();
+      return 'total: ${TimeUtils.formatMinutes(totalMinutes)} (${_effectiveDaysToShow}d)';
+    }
   }
   
   void _updateMaxY() {
@@ -156,7 +381,7 @@ class _ActivityChartState extends State<ActivityChart> {
     
     // Calculate average minutes per day across all days in the range
     // This will include days with zero activity in the average
-    return totalMinutes / widget.daysToShow;
+    return totalMinutes / _effectiveDaysToShow;
   }
   
   // Calculate the total minutes across all days in the range
@@ -209,24 +434,72 @@ class _ActivityChartState extends State<ActivityChart> {
       ],
     );
     
-    return Container(
-      height: 220, // Same height as the quotes widget
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: chartGradient,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: TugColors.primaryPurple.withOpacity(isDarkMode ? 0.4 : 0.3),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-            spreadRadius: -4,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Time Range Selector (only show if daysToShow is not provided)
+        if (widget.daysToShow == null) ...[
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: TimeRange.values.map((timeRange) {
+                  final isSelected = timeRange == _selectedTimeRange;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: Text(timeRange.label),
+                      selected: isSelected,
+                      onSelected: (selected) {
+                        if (selected) {
+                          setState(() {
+                            _selectedTimeRange = timeRange;
+                          });
+                          _prepareChartData();
+                        }
+                      },
+                      selectedColor: isDarkMode ? Colors.grey.shade700 : Colors.grey.shade600,
+                      backgroundColor: isDarkMode ? Colors.grey.shade800 : Colors.grey.shade200,
+                      labelStyle: TextStyle(
+                        color: isSelected
+                            ? Colors.white
+                            : isDarkMode 
+                                ? Colors.grey.shade300 
+                                : Colors.grey.shade700,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                        fontSize: 12,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
           ),
+          const SizedBox(height: 8),
         ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+        
+        // Chart Container
+        Container(
+          height: 220, // Same height as the quotes widget
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: chartGradient,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: TugColors.primaryPurple.withValues(alpha: isDarkMode ? 0.4 : 0.3),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
+                spreadRadius: -4,
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
           // Chart title and stats
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -304,9 +577,9 @@ class _ActivityChartState extends State<ActivityChart> {
                       axisNameWidget: Padding(
                         padding: const EdgeInsets.only(top: 4), // Reduced padding
                         child: Text(
-                          'past week',
+                          widget.daysToShow != null ? 'past week' : _selectedTimeRange.label.toLowerCase(),
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.8),
+                            color: Colors.white.withValues(alpha: 0.8),
                             fontSize: 11, // Slightly smaller font
                             fontStyle: FontStyle.italic,
                           ),
@@ -314,7 +587,8 @@ class _ActivityChartState extends State<ActivityChart> {
                       ),
                       sideTitles: SideTitles(
                         showTitles: true,
-                        reservedSize: 45, // Increased for more vertical space
+                        reservedSize: 30,
+                        interval: _getXAxisInterval(),
                         getTitlesWidget: (value, meta) {
                           final index = value.toInt();
                           if (index < 0 || index >= _dateLabels.length) {
@@ -322,47 +596,18 @@ class _ActivityChartState extends State<ActivityChart> {
                           }
                           
                           final date = _dateLabels[index];
-                          final now = DateTime.now();
-                          final isToday = date.year == now.year && 
-                                         date.month == now.month && 
-                                         date.day == now.day;
+                          final aggregation = widget.daysToShow != null 
+                              ? DataAggregation.daily 
+                              : _selectedTimeRange.aggregation;
                           
-                          // Compact date display to fit in the available space
                           return Padding(
                             padding: const EdgeInsets.only(top: 4),
-                            child: SizedBox(
-                              height: 34, // Fixed height to prevent overflow
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min, // Use minimum space needed
-                                children: [
-                                  Text(
-                                    DateFormat('E').format(date), // Day of week
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(isToday ? 1.0 : 0.8),
-                                      fontSize: 9, // Slightly smaller font
-                                      fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2), // Reduced spacing
-                                  Text(
-                                    DateFormat('d').format(date), // Day number
-                                    style: TextStyle(
-                                      color: Colors.white.withOpacity(isToday ? 1.0 : 0.8),
-                                      fontSize: 9, // Slightly smaller font
-                                      fontWeight: isToday ? FontWeight.bold : FontWeight.normal,
-                                    ),
-                                  ),
-                                  if (isToday)
-                                    Container(
-                                      margin: const EdgeInsets.only(top: 1), // Reduced margin
-                                      width: 3, // Slightly smaller dot
-                                      height: 3, // Slightly smaller dot
-                                      decoration: const BoxDecoration(
-                                        color: Colors.white,
-                                        shape: BoxShape.circle,
-                                      ),
-                                    ),
-                                ],
+                            child: Text(
+                              _formatDateLabel(date, aggregation),
+                              style: TextStyle(
+                                color: Colors.white.withValues(alpha: 0.8),
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           );
@@ -413,7 +658,7 @@ class _ActivityChartState extends State<ActivityChart> {
                   ),
                   borderData: FlBorderData(show: false),
                   minX: 0,
-                  maxX: (widget.daysToShow - 1).toDouble(),
+                  maxX: (_dateLabels.length - 1).toDouble(),
                   minY: 0,
                   maxY: _maxY,
                   lineBarsData: [
@@ -421,22 +666,12 @@ class _ActivityChartState extends State<ActivityChart> {
                       spots: _spots,
                       isCurved: true,
                       color: Colors.white,
-                      barWidth: 3,
+                      barWidth: _getLineWidth(),
                       isStrokeCapRound: true,
-                      dotData: FlDotData(
-                        show: true,
-                        getDotPainter: (spot, percent, barData, index) {
-                          return FlDotCirclePainter(
-                            radius: 4,
-                            color: Colors.white,
-                            strokeWidth: 2,
-                            strokeColor: TugColors.primaryPurple,
-                          );
-                        },
-                      ),
+                      dotData: _getDotData(),
                       belowBarData: BarAreaData(
                         show: true,
-                        color: Colors.white.withOpacity(0.2),
+                        color: Colors.white.withValues(alpha: 0.15),
                       ),
                     ),
                   ],
@@ -451,13 +686,23 @@ class _ActivityChartState extends State<ActivityChart> {
                           final index = touchedSpot.x.toInt();
                           final date = _dateLabels[index];
                           final minutes = touchedSpot.y.toInt();
+                          final aggregation = widget.daysToShow != null 
+                              ? DataAggregation.daily 
+                              : _selectedTimeRange.aggregation;
                           
-                          // Standard tooltip
+                          String tooltip;
+                          if (aggregation == DataAggregation.weekly) {
+                            tooltip = '${TimeUtils.formatMinutes(minutes)}/day avg\nWeek of ${DateFormat('MMM d').format(date)}';
+                          } else {
+                            tooltip = '${TimeUtils.formatMinutes(minutes)}\n${DateFormat('MMM d').format(date)}';
+                          }
+                          
                           return LineTooltipItem(
-                            '${TimeUtils.formatMinutes(minutes)}\n${DateFormat('MMM d').format(date)}',
+                            tooltip,
                             TextStyle(
                               color: isDarkMode ? Colors.white : Colors.black,
                               fontWeight: FontWeight.bold,
+                              fontSize: 12,
                             ),
                           );
                         }).toList();
@@ -494,7 +739,7 @@ class _ActivityChartState extends State<ActivityChart> {
                         ),
                         const SizedBox(width: 3), // Reduced spacing
                         Text(
-                          'total: ${TimeUtils.formatMinutes(_calculateTotalMinutes())} (${widget.daysToShow}d)',
+                          _getFooterText(),
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 10, // Smaller font
@@ -521,6 +766,8 @@ class _ActivityChartState extends State<ActivityChart> {
           ),
         ],
       ),
-    );
+    ),
+  ],
+);
   }
 }

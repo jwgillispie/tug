@@ -9,6 +9,8 @@ class ActivityModel extends Equatable {
   final DateTime date;
   final String? notes;
   final DateTime? createdAt;
+  final bool isPublic;
+  final bool notesPublic;
 
   const ActivityModel({
     this.id,
@@ -18,6 +20,8 @@ class ActivityModel extends Equatable {
     required this.date,
     this.notes,
     this.createdAt,
+    this.isPublic = true, // Default to public for social sharing
+    this.notesPublic = false, // Default notes to private for privacy
   });
 
   ActivityModel copyWith({
@@ -28,6 +32,8 @@ class ActivityModel extends Equatable {
     DateTime? date,
     String? notes,
     DateTime? createdAt,
+    bool? isPublic,
+    bool? notesPublic,
   }) {
     return ActivityModel(
       id: id ?? this.id,
@@ -37,6 +43,8 @@ class ActivityModel extends Equatable {
       date: date ?? this.date,
       notes: notes ?? this.notes,
       createdAt: createdAt ?? this.createdAt,
+      isPublic: isPublic ?? this.isPublic,
+      notesPublic: notesPublic ?? this.notesPublic,
     );
   }
 
@@ -49,6 +57,8 @@ class ActivityModel extends Equatable {
       'duration': duration,
       'date': date.toIso8601String(), // Send local time to preserve user's intended date
       'notes': notes,
+      'is_public': isPublic,
+      'notes_public': notesPublic,
     };
   }
 
@@ -74,6 +84,8 @@ class ActivityModel extends Equatable {
       createdAt: json['created_at'] != null 
           ? parseDate(json['created_at']) 
           : null,
+      isPublic: json['is_public'] ?? false, // Default old activities to private for safety
+      notesPublic: json['notes_public'] ?? false, // Default notes to private
     );
   }
 
@@ -85,6 +97,8 @@ class ActivityModel extends Equatable {
     duration, 
     date, 
     notes, 
-    createdAt
+    createdAt,
+    isPublic,
+    notesPublic,
   ];
 }

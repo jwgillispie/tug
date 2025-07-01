@@ -103,8 +103,8 @@ class ActivityService {
       // Invalidate relevant caches
       await _invalidateActivityCaches();
 
-      // Auto-create social post if sharing is enabled
-      if (shareToSocial) {
+      // Auto-create social post if sharing is enabled AND activity is public
+      if (shareToSocial && createdActivity.isPublic) {
         try {
           await _createActivitySocialPost(createdActivity, valueModel);
         } catch (e) {
@@ -533,6 +533,13 @@ class ActivityService {
   /// Create a social post for a completed activity
   Future<void> _createActivitySocialPost(ActivityModel activity, ValueModel? valueModel) async {
     if (activity.id == null) return;
+    
+    // Extra safety check: Only create social posts for explicitly public activities
+    // This prevents old activities without privacy fields from being posted
+    if (!activity.isPublic) {
+      _logger.i('ActivityService: Activity is private, skipping social post creation');
+      return;
+    }
 
     // Generate engaging content for the activity post
     final content = _generateActivityPostContent(activity, valueModel);
@@ -568,10 +575,10 @@ class ActivityService {
       return '🎉 Solid $durationText of ${activity.name} completed! Really investing in my $valueName journey! 💪';
     }
     
-    // Add notes if they exist
+    // Add notes if they exist and are marked as public
     String baseContent = postTemplates[DateTime.now().millisecond % postTemplates.length];
     
-    if (activity.notes != null && activity.notes!.trim().isNotEmpty) {
+    if (activity.notes != null && activity.notes!.trim().isNotEmpty && activity.notesPublic) {
       baseContent += '\n\n💭 "${activity.notes!.trim()}"';
     }
     

@@ -4,10 +4,12 @@ import 'package:logger/logger.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import '../models/social_models.dart';
 import '../config/env_confg.dart';
+import 'cache_service.dart';
 
 class SocialService {
   final Dio _dio;
   final Logger _logger = Logger();
+  final CacheService _cacheService = CacheService();
   
   SocialService() : _dio = Dio() {
     _dio.options.baseUrl = EnvConfig.apiUrl;
@@ -65,13 +67,17 @@ class SocialService {
       
       final request = FriendRequestCreate(addresseeId: userId);
       final response = await _dio.post(
-        '/api/v1/social/friends/request/',
+        '/api/v1/social/friends/request',
         data: request.toJson(),
       );
       
       if (response.statusCode == 201) {
         final friendship = FriendshipModel.fromJson(response.data['friendship']);
         _logger.i('SocialService: Friend request sent successfully');
+        
+        // Invalidate friends cache
+        await _invalidateFriendsCache();
+        
         return friendship;
       } else {
         throw Exception('Failed to send friend request: ${response.statusCode}');
@@ -96,6 +102,10 @@ class SocialService {
       
       if (response.statusCode == 200) {
         _logger.i('SocialService: Friend request response successful');
+        
+        // Invalidate friends cache since friendship status changed
+        await _invalidateFriendsCache();
+        
       } else {
         throw Exception('Failed to respond to friend request: ${response.statusCode}');
       }
@@ -108,15 +118,44 @@ class SocialService {
     }
   }
 
-  Future<List<FriendshipModel>> getFriends() async {
+  Future<List<FriendshipModel>> getFriends({bool forceRefresh = false}) async {
     try {
       _logger.i('SocialService: Getting friends list');
+      
+      const cacheKey = 'friends_list';
+      
+      // Try to get from cache first (unless force refresh)
+      if (!forceRefresh) {
+        try {
+          final cachedData = await _cacheService.get<List<dynamic>>(cacheKey);
+          if (cachedData != null) {
+            _logger.i('SocialService: Returning cached friends list');
+            return cachedData.map((json) => FriendshipModel.fromJson(json)).toList();
+          }
+        } catch (e) {
+          _logger.w('SocialService: Failed to load cached friends: $e');
+        }
+      }
       
       final response = await _dio.get('/api/v1/social/friends');
       
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data['friends'] ?? [];
-        return data.map((json) => FriendshipModel.fromJson(json)).toList();
+        final friends = data.map((json) => FriendshipModel.fromJson(json)).toList();
+        
+        // Cache the data
+        try {
+          await _cacheService.set(
+            cacheKey, 
+            data,
+            memoryCacheDuration: const Duration(minutes: 10), // Friends list changes less frequently
+            diskCacheDuration: const Duration(hours: 2), // 2 hours disk cache
+          );
+        } catch (e) {
+          _logger.w('SocialService: Failed to cache friends: $e');
+        }
+        
+        return friends;
       } else {
         throw Exception('Failed to get friends: ${response.statusCode}');
       }
@@ -164,6 +203,11 @@ class SocialService {
       if (response.statusCode == 201) {
         final post = SocialPostModel.fromJson(response.data['post']);
         _logger.i('SocialService: Post created successfully');
+        
+        // Invalidate relevant caches
+        await _invalidateFeedCache();
+        await _invalidateStatisticsCache();
+        
         return post;
       } else {
         throw Exception('Failed to create post: ${response.statusCode}');
@@ -177,9 +221,25 @@ class SocialService {
     }
   }
 
-  Future<List<SocialPostModel>> getSocialFeed({int limit = 20, int skip = 0}) async {
+  Future<List<SocialPostModel>> getSocialFeed({int limit = 20, int skip = 0, bool forceRefresh = false}) async {
     try {
-      _logger.i('SocialService: Getting social feed (limit: $limit, skip: $skip)');
+      _logger.i('SocialService: Getting social feed (limit: $limit, skip: $skip, forceRefresh: $forceRefresh)');
+      
+      // Generate cache key based on limit and skip
+      final cacheKey = 'social_feed_${limit}_$skip';
+      
+      // Try to get from cache first (unless force refresh)
+      if (!forceRefresh) {
+        try {
+          final cachedData = await _cacheService.get<List<dynamic>>(cacheKey);
+          if (cachedData != null) {
+            _logger.i('SocialService: Returning cached social feed');
+            return cachedData.map((json) => SocialPostModel.fromJson(json)).toList();
+          }
+        } catch (e) {
+          _logger.w('SocialService: Failed to load cached social feed: $e');
+        }
+      }
       
       final response = await _dio.get(
         '/api/v1/social/feed',
@@ -188,7 +248,21 @@ class SocialService {
       
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data['posts'] ?? [];
-        return data.map((json) => SocialPostModel.fromJson(json)).toList();
+        final posts = data.map((json) => SocialPostModel.fromJson(json)).toList();
+        
+        // Cache the data
+        try {
+          await _cacheService.set(
+            cacheKey, 
+            data,
+            memoryCacheDuration: const Duration(minutes: 2), // Short memory cache for social feed
+            diskCacheDuration: const Duration(minutes: 10), // 10 minutes disk cache
+          );
+        } catch (e) {
+          _logger.w('SocialService: Failed to cache social feed: $e');
+        }
+        
+        return posts;
       } else {
         throw Exception('Failed to get social feed: ${response.statusCode}');
       }
@@ -209,6 +283,11 @@ class SocialService {
       
       if (response.statusCode == 200) {
         _logger.i('SocialService: Post like toggled successfully');
+        
+        // Invalidate relevant caches (likes affect feed and statistics)
+        await _invalidateFeedCache();
+        await _invalidateStatisticsCache();
+        
         return {
           'liked': response.data['liked'],
           'likes_count': response.data['likes_count'],
@@ -238,6 +317,12 @@ class SocialService {
       if (response.statusCode == 201) {
         final comment = CommentModel.fromJson(response.data['comment']);
         _logger.i('SocialService: Comment added successfully');
+        
+        // Invalidate relevant caches
+        await _invalidateCommentsCache(postId);
+        await _invalidateFeedCache(); // Comments count affects feed
+        await _invalidateStatisticsCache();
+        
         return comment;
       } else {
         throw Exception('Failed to add comment: ${response.statusCode}');
@@ -251,9 +336,25 @@ class SocialService {
     }
   }
 
-  Future<List<CommentModel>> getPostComments(String postId, {int limit = 50, int skip = 0}) async {
+  Future<List<CommentModel>> getPostComments(String postId, {int limit = 50, int skip = 0, bool forceRefresh = false}) async {
     try {
       _logger.i('SocialService: Getting comments for post: $postId');
+      
+      // Generate cache key based on post ID, limit, and skip
+      final cacheKey = 'comments_${postId}_${limit}_$skip';
+      
+      // Try to get from cache first (unless force refresh)
+      if (!forceRefresh) {
+        try {
+          final cachedData = await _cacheService.get<List<dynamic>>(cacheKey);
+          if (cachedData != null) {
+            _logger.i('SocialService: Returning cached comments for post: $postId');
+            return cachedData.map((json) => CommentModel.fromJson(json)).toList();
+          }
+        } catch (e) {
+          _logger.w('SocialService: Failed to load cached comments: $e');
+        }
+      }
       
       final response = await _dio.get(
         '/api/v1/social/posts/$postId/comments',
@@ -262,7 +363,21 @@ class SocialService {
       
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data['comments'] ?? [];
-        return data.map((json) => CommentModel.fromJson(json)).toList();
+        final comments = data.map((json) => CommentModel.fromJson(json)).toList();
+        
+        // Cache the data
+        try {
+          await _cacheService.set(
+            cacheKey, 
+            data,
+            memoryCacheDuration: const Duration(minutes: 5), // Comments change less frequently
+            diskCacheDuration: const Duration(hours: 1), // 1 hour disk cache
+          );
+        } catch (e) {
+          _logger.w('SocialService: Failed to cache comments: $e');
+        }
+        
+        return comments;
       } else {
         throw Exception('Failed to get comments: ${response.statusCode}');
       }
@@ -275,14 +390,43 @@ class SocialService {
     }
   }
 
-  Future<Map<String, dynamic>> getSocialStatistics() async {
+  Future<Map<String, dynamic>> getSocialStatistics({bool forceRefresh = false}) async {
     try {
       _logger.i('SocialService: Getting social statistics');
+      
+      const cacheKey = 'social_statistics';
+      
+      // Try to get from cache first (unless force refresh)
+      if (!forceRefresh) {
+        try {
+          final cachedData = await _cacheService.get<Map<String, dynamic>>(cacheKey);
+          if (cachedData != null) {
+            _logger.i('SocialService: Returning cached social statistics');
+            return cachedData;
+          }
+        } catch (e) {
+          _logger.w('SocialService: Failed to load cached social statistics: $e');
+        }
+      }
       
       final response = await _dio.get('/api/v1/social/statistics');
       
       if (response.statusCode == 200) {
-        return response.data as Map<String, dynamic>;
+        final stats = response.data as Map<String, dynamic>;
+        
+        // Cache the data
+        try {
+          await _cacheService.set(
+            cacheKey, 
+            stats,
+            memoryCacheDuration: const Duration(minutes: 5), // Statistics change periodically
+            diskCacheDuration: const Duration(hours: 1), // 1 hour disk cache
+          );
+        } catch (e) {
+          _logger.w('SocialService: Failed to cache social statistics: $e');
+        }
+        
+        return stats;
       } else {
         throw Exception('Failed to get social statistics: ${response.statusCode}');
       }
@@ -292,6 +436,48 @@ class SocialService {
     } catch (e) {
       _logger.e('SocialService: Error getting social statistics: $e');
       throw Exception('Failed to get social statistics: $e');
+    }
+  }
+
+  // Cache invalidation methods
+  
+  /// Invalidates social feed cache when new posts are created or feed changes
+  Future<void> _invalidateFeedCache() async {
+    try {
+      await _cacheService.clearByPrefix('social_feed_');
+      _logger.i('SocialService: Social feed cache invalidated');
+    } catch (e) {
+      _logger.w('SocialService: Failed to invalidate feed cache: $e');
+    }
+  }
+
+  /// Invalidates comments cache for a specific post
+  Future<void> _invalidateCommentsCache(String postId) async {
+    try {
+      await _cacheService.clearByPrefix('comments_$postId');
+      _logger.i('SocialService: Comments cache invalidated for post: $postId');
+    } catch (e) {
+      _logger.w('SocialService: Failed to invalidate comments cache: $e');
+    }
+  }
+
+  /// Invalidates social statistics cache
+  Future<void> _invalidateStatisticsCache() async {
+    try {
+      await _cacheService.remove('social_statistics');
+      _logger.i('SocialService: Social statistics cache invalidated');
+    } catch (e) {
+      _logger.w('SocialService: Failed to invalidate statistics cache: $e');
+    }
+  }
+
+  /// Invalidates friends cache
+  Future<void> _invalidateFriendsCache() async {
+    try {
+      await _cacheService.remove('friends_list');
+      _logger.i('SocialService: Friends cache invalidated');
+    } catch (e) {
+      _logger.w('SocialService: Failed to invalidate friends cache: $e');
     }
   }
 }

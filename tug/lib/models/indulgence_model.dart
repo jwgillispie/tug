@@ -13,6 +13,8 @@ class IndulgenceModel extends Equatable {
   final int emotionalState; // 1-10 scale before indulgence
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final bool isPublic;
+  final bool notesPublic;
 
   const IndulgenceModel({
     this.id,
@@ -26,6 +28,8 @@ class IndulgenceModel extends Equatable {
     this.emotionalState = 5,
     this.createdAt,
     this.updatedAt,
+    this.isPublic = false, // Default indulgences to private for sensitivity
+    this.notesPublic = false, // Default notes to private for privacy
   });
 
   IndulgenceModel copyWith({
@@ -40,6 +44,8 @@ class IndulgenceModel extends Equatable {
     int? emotionalState,
     DateTime? createdAt,
     DateTime? updatedAt,
+    bool? isPublic,
+    bool? notesPublic,
   }) {
     return IndulgenceModel(
       id: id ?? this.id,
@@ -53,6 +59,8 @@ class IndulgenceModel extends Equatable {
       emotionalState: emotionalState ?? this.emotionalState,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      isPublic: isPublic ?? this.isPublic,
+      notesPublic: notesPublic ?? this.notesPublic,
     );
   }
 
@@ -66,6 +74,8 @@ class IndulgenceModel extends Equatable {
       'severity_at_time': severityAtTime,
       'triggers': triggers,
       'emotional_state': emotionalState,
+      'is_public': isPublic,
+      'notes_public': notesPublic,
     };
   }
 
@@ -88,6 +98,8 @@ class IndulgenceModel extends Equatable {
       updatedAt: json['updated_at'] != null 
           ? DateTime.parse(json['updated_at']) 
           : null,
+      isPublic: json['is_public'] ?? false, // Default indulgences to private
+      notesPublic: json['notes_public'] ?? false, // Default notes to private
     );
   }
 
@@ -138,5 +150,7 @@ class IndulgenceModel extends Equatable {
     emotionalState,
     createdAt,
     updatedAt,
+    isPublic,
+    notesPublic,
   ];
 }
