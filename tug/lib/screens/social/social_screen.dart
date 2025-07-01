@@ -194,7 +194,7 @@ class _SocialScreenState extends State<SocialScreen> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   Text(
-                    'Social Feed',
+                    'social feed',
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
@@ -203,7 +203,7 @@ class _SocialScreenState extends State<SocialScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Connect with your community',
+                    'connect with your community',
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.white.withOpacity(0.9),
@@ -281,7 +281,7 @@ class _SocialScreenState extends State<SocialScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    isViceMode ? 'Vice Progress Feed' : 'Activity Feed',
+                    isViceMode ? 'vice progress feed' : 'activity feed',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -294,8 +294,8 @@ class _SocialScreenState extends State<SocialScreen> {
             const SizedBox(height: 12),
             Text(
               isViceMode 
-                  ? 'See your friends\' progress overcoming vices. Posts are automatically created when they hit milestones like 7, 30, or 100 days clean!'
-                  : 'Your friends\' activities automatically appear here when they log workouts, complete goals, or hit achievements. Just like Strava!',
+                  ? 'see your friends\' progress overcoming vices. posts are automatically created when they hit milestones like 7, 30, or 100 days clean!'
+                  : 'your friends\' activities automatically appear here when they log workouts, complete goals, or hit achievements. just like strava!',
               style: TextStyle(
                 fontSize: 14,
                 color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
@@ -313,7 +313,7 @@ class _SocialScreenState extends State<SocialScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'All posts are automatically generated from activities',
+                    'all posts are automatically generated from activities',
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
@@ -361,7 +361,7 @@ class _SocialScreenState extends State<SocialScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                'No posts yet',
+                'no posts yet',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -370,7 +370,7 @@ class _SocialScreenState extends State<SocialScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Be the first to share an update with your community!',
+                'be the first to share an update with your community!',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
@@ -385,7 +385,7 @@ class _SocialScreenState extends State<SocialScreen> {
                   );
                 },
                 icon: const Icon(Icons.info_outline),
-                label: const Text('Learn About Social'),
+                label: const Text('learn about social'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: TugColors.getPrimaryColor(isViceMode),
                   foregroundColor: Colors.white,
@@ -576,13 +576,13 @@ class _SocialScreenState extends State<SocialScreen> {
   String _getPostTypeLabel(PostType postType) {
     switch (postType) {
       case PostType.activityUpdate:
-        return 'Activity';
+        return 'activity';
       case PostType.viceProgress:
-        return 'Progress';
+        return 'progress';
       case PostType.achievement:
-        return 'Achievement';
+        return 'achievement';
       case PostType.general:
-        return 'General';
+        return 'general';
     }
   }
 }

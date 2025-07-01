@@ -190,7 +190,7 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
     return Scaffold(
       backgroundColor: TugColors.getBackgroundColor(isDarkMode, isViceMode),
       appBar: AppBar(
-        title: const Text('Find Friends'),
+        title: const Text('find friends'),
         backgroundColor: TugColors.getBackgroundColor(isDarkMode, isViceMode),
         elevation: 0,
       ),
@@ -210,7 +210,7 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
               controller: _searchController,
               onChanged: _searchUsers,
               decoration: InputDecoration(
-                hintText: 'Search for friends by username or email...',
+                hintText: 'search for friends by username or email...',
                 hintStyle: TextStyle(
                   color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
                 ),
@@ -240,7 +240,7 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Friend Requests',
+                    'friend requests',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -302,7 +302,7 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Friend Request', // We'll need to get user info from another API call
+                  'friend request', // We'll need to get user info from another API call
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     color: TugColors.getTextColor(isDarkMode, isViceMode),
@@ -323,7 +323,7 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
               TextButton(
                 onPressed: () => _respondToFriendRequest(request.id, false),
                 child: Text(
-                  'Decline',
+                  'decline',
                   style: TextStyle(color: TugColors.error),
                 ),
               ),
@@ -334,7 +334,7 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
                   backgroundColor: TugColors.getPrimaryColor(isViceMode),
                   foregroundColor: Colors.white,
                 ),
-                child: const Text('Accept'),
+                child: const Text('accept'),
               ),
             ],
           ),
@@ -364,7 +364,7 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'Search for friends',
+              'search for friends',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -373,7 +373,7 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Enter a username or email to find friends',
+              'enter a username or email to find friends',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
@@ -396,7 +396,7 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'No users found',
+              'no users found',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -405,7 +405,7 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Try a different search term',
+              'try a different search term',
               style: TextStyle(
                 color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
               ),
@@ -492,7 +492,7 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
-            'Friends',
+            'friends',
             style: TextStyle(
               color: TugColors.success,
               fontWeight: FontWeight.w500,
@@ -508,7 +508,7 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(
-            'Pending',
+            'pending',
             style: TextStyle(
               color: TugColors.warning,
               fontWeight: FontWeight.w500,
@@ -523,7 +523,7 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
             backgroundColor: TugColors.getPrimaryColor(isViceMode),
             foregroundColor: Colors.white,
           ),
-          child: const Text('Accept'),
+          child: const Text('accept'),
         );
       default:
         return ElevatedButton(
@@ -532,7 +532,7 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
             backgroundColor: TugColors.getPrimaryColor(isViceMode),
             foregroundColor: Colors.white,
           ),
-          child: const Text('Add Friend'),
+          child: const Text('add friend'),
         );
     }
   }

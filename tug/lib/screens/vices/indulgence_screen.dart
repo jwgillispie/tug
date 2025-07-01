@@ -144,7 +144,11 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
               backgroundColor: TugColors.indulgenceGreenLight,
             ),
           );
-          context.pop();
+          if (context.canPop()) {
+            context.pop();
+          } else {
+            context.go('/home');
+          }
         }
       },
       child: Scaffold(
@@ -173,7 +177,13 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
           ),
           leading: IconButton(
             icon: Icon(Icons.arrow_back, color: TugColors.indulgenceGreen),
-            onPressed: () => context.pop(),
+            onPressed: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go('/home');
+              }
+            },
           ),
         ),
         body: Container(
@@ -310,7 +320,7 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
                           isExpanded: true,
                           underline: const SizedBox(),
                           dropdownColor: isDarkMode ? TugColors.viceModeDarkSurface : Colors.white,
-                          items: vices.map((vice) {
+                          items: vices.toSet().map((vice) {
                             final color = Color(int.parse(vice.color.substring(1), radix: 16) + 0xFF000000);
                             return DropdownMenuItem<ViceModel>(
                               value: vice,

@@ -70,7 +70,7 @@ class ViceStatistics extends StatelessWidget {
               const SizedBox(width: 12),
               const Expanded(
                 child: Text(
-                  'Recovery Progress',
+                  'recovery progress',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 20,
@@ -89,16 +89,16 @@ class ViceStatistics extends StatelessWidget {
                 Expanded(
                   child: _buildStatCard(
                     icon: Icons.trending_up,
-                    label: 'Active Streaks',
+                    label: 'active streaks',
                     value: '$activeStreaks/$totalVices',
-                    subtitle: activeStreaks == totalVices ? 'All clean!' : 'Keep going!',
+                    subtitle: activeStreaks == totalVices ? 'all clean!' : 'keep going!',
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildStatCard(
                     icon: Icons.calendar_today,
-                    label: 'Total Clean Days',
+                    label: 'total clean days',
                     value: '$totalCleanDays',
                     subtitle: totalCleanDays == 1 ? 'day' : 'days',
                   ),
@@ -111,7 +111,7 @@ class ViceStatistics extends StatelessWidget {
                 Expanded(
                   child: _buildStatCard(
                     icon: Icons.timeline,
-                    label: 'Average Streak',
+                    label: 'average streak',
                     value: '$averageStreak',
                     subtitle: averageStreak == 1 ? 'day' : 'days',
                   ),
@@ -120,7 +120,7 @@ class ViceStatistics extends StatelessWidget {
                 Expanded(
                   child: _buildStatCard(
                     icon: Icons.emoji_events,
-                    label: 'Best Streak',
+                    label: 'best streak',
                     value: '$longestStreak',
                     subtitle: longestStreak == 1 ? 'day' : 'days',
                   ),
@@ -131,9 +131,9 @@ class ViceStatistics extends StatelessWidget {
               const SizedBox(height: 12),
               _buildStatCard(
                 icon: Icons.stars,
-                label: 'Milestones Achieved',
+                label: 'milestones achieved',
                 value: '$totalMilestones',
-                subtitle: 'Recovery milestones unlocked',
+                subtitle: 'recovery milestones unlocked',
                 isWide: true,
               ),
             ],
@@ -151,7 +151,7 @@ class ViceStatistics extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   const Text(
-                    'No vices tracked yet',
+                    'no vices tracked yet',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 16,
@@ -160,7 +160,7 @@ class ViceStatistics extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Add some vices to see your recovery progress',
+                    'add some vices to see your recovery progress',
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.8),
                       fontSize: 14,
@@ -268,7 +268,7 @@ class ViceStatistics extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               const Text(
-                'Recovery Spotlight',
+                'recovery spotlight',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 14,
@@ -297,7 +297,7 @@ class ViceStatistics extends StatelessWidget {
             ),
           ] else ...[
             Text(
-              'Every journey starts with a single day. You\'ve got this! 💪',
+              'every journey starts with a single day. you\'ve got this! 💪',
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.9),
                 fontSize: 13,
@@ -311,11 +311,11 @@ class ViceStatistics extends StatelessWidget {
   }
 
   String _getMotivationalMessage(int streak) {
-    if (streak >= 365) return 'Incredible! A full year of freedom! 🎉';
-    if (streak >= 100) return 'Amazing! You\'ve hit triple digits! 🚀';
-    if (streak >= 30) return 'Fantastic! A full month of progress! 🌟';
-    if (streak >= 7) return 'Great job! A week of strength! 💪';
-    if (streak >= 3) return 'Building momentum! Keep going! ⚡';
-    return 'Every day counts! Stay strong! 🌱';
+    if (streak >= 365) return 'incredible! a full year of freedom! 🎉';
+    if (streak >= 100) return 'amazing! you\'ve hit triple digits! 🚀';
+    if (streak >= 30) return 'fantastic! a full month of progress! 🌟';
+    if (streak >= 7) return 'great job! a week of strength! 💪';
+    if (streak >= 3) return 'building momentum! keep going! ⚡';
+    return 'every day counts! stay strong! 🌱';
   }
 }

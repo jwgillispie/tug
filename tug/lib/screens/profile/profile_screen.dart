@@ -18,6 +18,7 @@ import 'dart:io';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:async';
+import '../../widgets/profile/social_statistics.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -351,6 +352,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ],
               ],
+            ),
+
+            // Social Statistics Section
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: const SocialStatistics(),
             ),
 
             _buildSettingsSection(

@@ -151,7 +151,7 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
     return Scaffold(
       backgroundColor: TugColors.getBackgroundColor(isDarkMode, isViceMode),
       appBar: AppBar(
-        title: const Text('Friends'),
+        title: const Text('friends'),
         backgroundColor: TugColors.getBackgroundColor(isDarkMode, isViceMode),
         elevation: 0,
         actions: [
@@ -175,10 +175,10 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
           unselectedLabelColor: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
           tabs: [
             Tab(
-              text: 'Friends (${_friends.length})',
+              text: 'friends (${_friends.length})',
             ),
             Tab(
-              text: 'Requests (${_pendingRequests.length})',
+              text: 'requests (${_pendingRequests.length})',
             ),
           ],
         ),
@@ -214,7 +214,7 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
             ),
             const SizedBox(height: 16),
             Text(
-              'No friends yet',
+              'no friends yet',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -223,7 +223,7 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
             ),
             const SizedBox(height: 8),
             Text(
-              'Search for friends to get started!',
+              'search for friends to get started!',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
@@ -238,7 +238,7 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
                 );
               },
               icon: const Icon(Icons.search),
-              label: const Text('Find Friends'),
+              label: const Text('find friends'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: TugColors.getPrimaryColor(isViceMode),
                 foregroundColor: Colors.white,
@@ -283,7 +283,7 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
             ),
             const SizedBox(height: 16),
             Text(
-              'No pending requests',
+              'no pending requests',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -292,7 +292,7 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
             ),
             const SizedBox(height: 8),
             Text(
-              'Friend requests will appear here',
+              'friend requests will appear here',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
@@ -343,14 +343,14 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Friend', // We'll need to get user info from another API call
+                  'friend', // We'll need to get user info from another API call
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     color: TugColors.getTextColor(isDarkMode, isViceMode),
                   ),
                 ),
                 Text(
-                  'Connected since ${_formatDate(friendship.createdAt)}',
+                  'connected since ${_formatDate(friendship.createdAt)}',
                   style: TextStyle(
                     fontSize: 12,
                     color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
@@ -366,7 +366,7 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
-              'Friends',
+              'friends',
               style: TextStyle(
                 color: TugColors.success,
                 fontWeight: FontWeight.w500,
@@ -409,14 +409,14 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Friend Request',
+                  'friend request',
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     color: TugColors.getTextColor(isDarkMode, isViceMode),
                   ),
                 ),
                 Text(
-                  'From: ${request.requesterId}',
+                  'from: ${request.requesterId}',
                   style: TextStyle(
                     fontSize: 12,
                     color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
@@ -430,7 +430,7 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
               TextButton(
                 onPressed: () => _respondToFriendRequest(request.id, false),
                 child: Text(
-                  'Decline',
+                  'decline',
                   style: TextStyle(color: TugColors.error),
                 ),
               ),
@@ -441,7 +441,7 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
                   backgroundColor: TugColors.getPrimaryColor(isViceMode),
                   foregroundColor: Colors.white,
                 ),
-                child: const Text('Accept'),
+                child: const Text('accept'),
               ),
             ],
           ),
