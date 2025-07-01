@@ -19,6 +19,7 @@ class Vice(Document):
     last_indulgence_date: Optional[datetime] = None
     total_indulgences: int = Field(default=0, ge=0, description="Total number of indulgences")
     indulgence_dates: List[datetime] = Field(default_factory=list)
+    milestone_achievements: List[int] = Field(default_factory=list, description="List of milestone days achieved (7, 30, 100, etc.)")
 
     class Settings:
         name = "vices"
@@ -84,10 +85,19 @@ class Vice(Document):
 
     async def update_clean_streak(self, days: int):
         """Update clean streak manually"""
+        old_streak = self.current_streak
         self.current_streak = days
         if days > self.longest_streak:
             self.longest_streak = days
         self.updated_at = datetime.utcnow()
+        
+        # Check if a milestone was reached
+        milestone = self.check_milestone_reached(old_streak, days)
+        if milestone:
+            await self.record_milestone_achievement(milestone)
+            # Note: Social posting would need to be handled at the service level
+            # to access the user context
+        
         await self.save()
 
     def calculate_current_streak(self) -> int:
@@ -116,3 +126,18 @@ class Vice(Document):
     def is_on_clean_streak(self) -> bool:
         """Check if currently on a clean streak"""
         return self.current_streak > 0
+
+    def check_milestone_reached(self, old_streak: int, new_streak: int) -> Optional[int]:
+        """Check if a milestone was crossed between old and new streak"""
+        VICE_MILESTONES = [7, 30, 100, 365]  # 7 days, 30 days, 100 days, 1 year
+        
+        for milestone in VICE_MILESTONES:
+            if old_streak < milestone <= new_streak and milestone not in self.milestone_achievements:
+                return milestone
+        return None
+
+    async def record_milestone_achievement(self, milestone: int):
+        """Record that a milestone has been achieved"""
+        if milestone not in self.milestone_achievements:
+            self.milestone_achievements.append(milestone)
+            await self.save()

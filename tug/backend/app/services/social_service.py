@@ -264,6 +264,38 @@ class SocialService:
             )
     
     @staticmethod
+    async def create_vice_milestone_post(user: User, vice, milestone: int) -> SocialPost:
+        """Create an automatic social post for vice milestone achievements"""
+        try:
+            # Generate milestone message
+            milestone_messages = {
+                7: f"🌟 One week clean from {vice.name}! Small steps, big progress! 💪",
+                30: f"🎉 30 days clean from {vice.name}! This is just the beginning of amazing things! ✨",
+                100: f"🔥 100 DAYS clean from {vice.name}! What an incredible achievement! This is the power of commitment! 💎",
+                365: f"🏆 ONE YEAR clean from {vice.name}! A full year of growth, strength, and dedication! Absolutely inspiring! 🌈"
+            }
+            
+            content = milestone_messages.get(milestone, f"🎯 {milestone} days clean from {vice.name}! Keep going strong! 💪")
+            
+            post = SocialPost(
+                user_id=user.id,
+                content=content,
+                post_type=PostType.VICE_PROGRESS,
+                vice_id=str(vice.id),
+                is_public=True
+            )
+            
+            await post.save()
+            logger.info(f"Vice milestone post created for user {user.id}: {milestone} days clean from {vice.name}")
+            
+            return post
+            
+        except Exception as e:
+            logger.error(f"Error creating vice milestone post: {e}", exc_info=True)
+            # Don't raise exception here to avoid breaking vice update flow
+            return None
+    
+    @staticmethod
     async def get_social_feed(current_user: User, limit: int = 20, skip: int = 0) -> List[SocialPostData]:
         """Get social feed for current user (posts from friends)"""
         try:

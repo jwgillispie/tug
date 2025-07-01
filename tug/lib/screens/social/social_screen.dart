@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../utils/theme/colors.dart';
@@ -5,6 +6,10 @@ import '../../services/app_mode_service.dart';
 import '../../services/social_service.dart';
 import '../../models/social_models.dart';
 import '../../blocs/auth/auth_bloc.dart';
+import 'user_search_screen.dart';
+import 'friends_screen.dart';
+import 'comments_screen.dart';
+import 'social_onboarding_screen.dart';
 
 class SocialScreen extends StatefulWidget {
   const SocialScreen({super.key});
@@ -22,6 +27,7 @@ class _SocialScreenState extends State<SocialScreen> {
   List<SocialPostModel> _posts = [];
   bool _isLoading = false;
   String? _currentUserId;
+  StreamSubscription<AppMode>? _modeSubscription;
 
   @override
   void initState() {
@@ -33,16 +39,18 @@ class _SocialScreenState extends State<SocialScreen> {
 
   void _initializeMode() async {
     await _appModeService.initialize();
-    _appModeService.modeStream.listen((mode) {
+    _modeSubscription = _appModeService.modeStream.listen((mode) {
       if (mounted) {
         setState(() {
           _currentMode = mode;
         });
       }
     });
-    setState(() {
-      _currentMode = _appModeService.currentMode;
-    });
+    if (mounted) {
+      setState(() {
+        _currentMode = _appModeService.currentMode;
+      });
+    }
   }
 
   void _getCurrentUser() {
@@ -143,6 +151,7 @@ class _SocialScreenState extends State<SocialScreen> {
 
   @override
   void dispose() {
+    _modeSubscription?.cancel();
     _scrollController.dispose();
     super.dispose();
   }
@@ -211,6 +220,30 @@ class _SocialScreenState extends State<SocialScreen> {
         titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
       ),
       actions: [
+        IconButton(
+          icon: Icon(
+            Icons.people,
+            color: TugColors.getTextColor(isDarkMode, isViceMode),
+          ),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const FriendsScreen()),
+            );
+          },
+        ),
+        IconButton(
+          icon: Icon(
+            Icons.person_add,
+            color: TugColors.getTextColor(isDarkMode, isViceMode),
+          ),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const UserSearchScreen()),
+            );
+          },
+        ),
         IconButton(
           icon: Icon(
             Icons.refresh,
@@ -343,6 +376,21 @@ class _SocialScreenState extends State<SocialScreen> {
                   color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
                 ),
               ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const SocialOnboardingScreen()),
+                  );
+                },
+                icon: const Icon(Icons.info_outline),
+                label: const Text('Learn About Social'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: TugColors.getPrimaryColor(isViceMode),
+                  foregroundColor: Colors.white,
+                ),
+              ),
             ],
           ),
         ),
@@ -466,9 +514,11 @@ class _SocialScreenState extends State<SocialScreen> {
                 isDarkMode: isDarkMode,
                 isViceMode: isViceMode,
                 onTap: () {
-                  // TODO: Open comments screen
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Comments coming soon!')),
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => CommentsScreen(post: post),
+                    ),
                   );
                 },
               ),

@@ -53,11 +53,21 @@ class ViceService:
         
         vices = await Vice.find(query).sort(-Vice.created_at).to_list()
         
-        # Update current streaks based on calculation
+        # Update current streaks based on calculation and check for milestones
         for vice in vices:
             calculated_streak = vice.calculate_current_streak()
             if calculated_streak != vice.current_streak:
+                old_streak = vice.current_streak
                 vice.current_streak = calculated_streak
+                
+                # Check if a milestone was reached
+                milestone = vice.check_milestone_reached(old_streak, calculated_streak)
+                if milestone:
+                    await vice.record_milestone_achievement(milestone)
+                    # Import here to avoid circular imports
+                    from .social_service import SocialService
+                    await SocialService.create_vice_milestone_post(user, vice, milestone)
+                
                 await vice.save()
         
         return vices
@@ -166,7 +176,15 @@ class ViceService:
     async def update_vice_streak(user: User, vice_id: str, new_streak: int) -> Vice:
         """Manually update a vice's current streak"""
         vice = await ViceService.get_vice(user, vice_id)
+        old_streak = vice.current_streak
         await vice.update_clean_streak(new_streak)
+        
+        # Check if a milestone was reached during manual update
+        milestone = vice.check_milestone_reached(old_streak, new_streak)
+        if milestone:
+            from .social_service import SocialService
+            await SocialService.create_vice_milestone_post(user, vice, milestone)
+        
         return vice
 
     @staticmethod
@@ -176,9 +194,17 @@ class ViceService:
         
         # For now, we'll just increment the current streak
         # In a more sophisticated system, you might track individual clean days
+        old_streak = vice.current_streak
         vice.current_streak += 1
         if vice.current_streak > vice.longest_streak:
             vice.longest_streak = vice.current_streak
+        
+        # Check if a milestone was reached
+        milestone = vice.check_milestone_reached(old_streak, vice.current_streak)
+        if milestone:
+            await vice.record_milestone_achievement(milestone)
+            from .social_service import SocialService
+            await SocialService.create_vice_milestone_post(user, vice, milestone)
         
         vice.updated_at = datetime.utcnow()
         await vice.save()
