@@ -186,7 +186,7 @@ async def like_post(
         post = await SocialService.like_post(current_user, post_id)
         
         # Return just the updated like status
-        is_liked = current_user.id in post.likes
+        is_liked = str(current_user.id) in post.likes
         return {
             "liked": is_liked,
             "likes_count": len(post.likes)

@@ -25,6 +25,10 @@ class FriendshipModel {
   final DateTime createdAt;
   @JsonKey(name: 'updated_at')
   final DateTime updatedAt;
+  @JsonKey(name: 'friend_username')
+  final String? friendUsername;
+  @JsonKey(name: 'friend_display_name')
+  final String? friendDisplayName;
 
   FriendshipModel({
     required this.id,
@@ -33,6 +37,8 @@ class FriendshipModel {
     required this.status,
     required this.createdAt,
     required this.updatedAt,
+    this.friendUsername,
+    this.friendDisplayName,
   });
 
   factory FriendshipModel.fromJson(Map<String, dynamic> json) =>

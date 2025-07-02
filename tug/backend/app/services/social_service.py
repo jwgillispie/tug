@@ -12,7 +12,7 @@ from ..models.post_comment import PostComment
 from ..schemas.social import (
     FriendRequestCreate, SocialPostCreate, SocialPostUpdate,
     CommentCreate, CommentUpdate, UserSearchResult, SocialPostData, CommentData,
-    SocialStatisticsResponse, PostTypeStats
+    SocialStatisticsResponse, PostTypeStats, FriendshipData
 )
 
 logger = logging.getLogger(__name__)
@@ -135,8 +135,8 @@ class SocialService:
             )
     
     @staticmethod
-    async def get_friends(current_user: User) -> List[User]:
-        """Get list of user's friends"""
+    async def get_friends(current_user: User) -> List[FriendshipData]:
+        """Get list of user's friends with friendship data"""
         try:
             # Find all accepted friendships where user is involved
             friendships = await Friendship.find({
@@ -149,18 +149,43 @@ class SocialService:
                 ]
             }).to_list()
             
-            # Extract friend user IDs
+            # Extract friend user IDs and create ID mapping
             friend_ids = []
+            friendship_map = {}
             for friendship in friendships:
                 if friendship.requester_id == str(current_user.id):
-                    friend_ids.append(friendship.addressee_id)
+                    friend_id = friendship.addressee_id
                 else:
-                    friend_ids.append(friendship.requester_id)
+                    friend_id = friendship.requester_id
+                friend_ids.append(friend_id)
+                friendship_map[friend_id] = friendship
             
             # Get friend user objects
             friends = await User.find({"_id": {"$in": [ObjectId(fid) for fid in friend_ids]}}).to_list()
             
-            return friends
+            # Build friendship data with user info
+            friendship_data_list = []
+            for friend in friends:
+                friend_id = str(friend.id)
+                friendship = friendship_map[friend_id]
+                
+                # Ensure friend has username
+                if not friend.username:
+                    await friend.ensure_username()
+                
+                friendship_data = FriendshipData(
+                    id=str(friendship.id),
+                    requester_id=friendship.requester_id,
+                    addressee_id=friendship.addressee_id,
+                    status=friendship.status,
+                    created_at=friendship.created_at,
+                    updated_at=friendship.updated_at,
+                    friend_username=friend.username or friend.effective_username,
+                    friend_display_name=friend.display_name
+                )
+                friendship_data_list.append(friendship_data)
+            
+            return friendship_data_list
             
         except Exception as e:
             logger.error(f"Error getting friends: {e}", exc_info=True)
@@ -170,15 +195,41 @@ class SocialService:
             )
     
     @staticmethod
-    async def get_pending_friend_requests(current_user: User) -> List[Friendship]:
-        """Get pending friend requests for current user"""
+    async def get_pending_friend_requests(current_user: User) -> List[FriendshipData]:
+        """Get pending friend requests for current user with requester info"""
         try:
             pending_requests = await Friendship.find({
                 "addressee_id": str(current_user.id),
                 "status": FriendshipStatus.PENDING
             }).to_list()
             
-            return pending_requests
+            # Get requester user info
+            requester_ids = [req.requester_id for req in pending_requests]
+            requesters = await User.find({"_id": {"$in": [ObjectId(uid) for uid in requester_ids]}}).to_list()
+            requester_map = {str(user.id): user for user in requesters}
+            
+            # Build friendship data with requester info
+            request_data_list = []
+            for request in pending_requests:
+                requester = requester_map.get(request.requester_id)
+                
+                # Ensure requester has username
+                if requester and not requester.username:
+                    await requester.ensure_username()
+                
+                request_data = FriendshipData(
+                    id=str(request.id),
+                    requester_id=request.requester_id,
+                    addressee_id=request.addressee_id,
+                    status=request.status,
+                    created_at=request.created_at,
+                    updated_at=request.updated_at,
+                    friend_username=requester.username or requester.effective_username if requester else "Unknown",
+                    friend_display_name=requester.display_name if requester else None
+                )
+                request_data_list.append(request_data)
+            
+            return request_data_list
             
         except Exception as e:
             logger.error(f"Error getting pending friend requests: {e}", exc_info=True)

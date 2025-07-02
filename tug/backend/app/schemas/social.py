@@ -20,6 +20,10 @@ class FriendshipData(BaseModel):
     status: FriendshipStatus
     created_at: datetime
     updated_at: datetime
+    
+    # User info for display
+    friend_username: Optional[str] = None
+    friend_display_name: Optional[str] = None
 
 # Social post schemas
 class SocialPostCreate(BaseModel):
