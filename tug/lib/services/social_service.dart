@@ -26,6 +26,9 @@ class SocialService {
           if (user != null) {
             final token = await user.getIdToken(true);
             options.headers['Authorization'] = 'Bearer $token';
+            // Auth token added successfully
+          } else {
+            _logger.w('SocialService: No Firebase user found');
           }
         } catch (e) {
           _logger.e('SocialService: Error getting Firebase auth token: $e');
@@ -66,9 +69,12 @@ class SocialService {
       _logger.i('SocialService: Sending friend request to: $userId');
       
       final request = FriendRequestCreate(addresseeId: userId);
+      final requestData = request.toJson();
+      _logger.i('SocialService: Request data: $requestData');
+      
       final response = await _dio.post(
         '/api/v1/social/friends/request',
-        data: request.toJson(),
+        data: requestData,
       );
       
       if (response.statusCode == 201) {
@@ -84,6 +90,9 @@ class SocialService {
       }
     } on DioException catch (e) {
       _logger.e('SocialService: DioException sending friend request: ${e.message}');
+      _logger.e('SocialService: Response data: ${e.response?.data}');
+      _logger.e('SocialService: Response status: ${e.response?.statusCode}');
+      _logger.e('SocialService: Response headers: ${e.response?.headers}');
       throw Exception('Network error: ${e.message}');
     } catch (e) {
       _logger.e('SocialService: Error sending friend request: $e');

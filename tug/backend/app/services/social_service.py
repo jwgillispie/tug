@@ -25,7 +25,7 @@ class SocialService:
         """Send a friend request to another user"""
         try:
             # Check if user is trying to add themselves
-            if current_user.id == request.addressee_id:
+            if str(current_user.id) == request.addressee_id:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Cannot send friend request to yourself"
@@ -42,8 +42,8 @@ class SocialService:
             # Check if friendship already exists
             existing_friendship = await Friendship.find_one({
                 "$or": [
-                    {"requester_id": current_user.id, "addressee_id": request.addressee_id},
-                    {"requester_id": request.addressee_id, "addressee_id": current_user.id}
+                    {"requester_id": str(current_user.id), "addressee_id": request.addressee_id},
+                    {"requester_id": request.addressee_id, "addressee_id": str(current_user.id)}
                 ]
             })
             
@@ -66,7 +66,7 @@ class SocialService:
             
             # Create new friendship
             friendship = Friendship(
-                requester_id=current_user.id,
+                requester_id=str(current_user.id),
                 addressee_id=request.addressee_id,
                 status=FriendshipStatus.PENDING
             )
@@ -97,7 +97,7 @@ class SocialService:
                 )
             
             # Check if current user is the addressee
-            if friendship.addressee_id != current_user.id:
+            if friendship.addressee_id != str(current_user.id):
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Not authorized to respond to this friend request"
@@ -143,8 +143,8 @@ class SocialService:
                 "$and": [
                     {"status": FriendshipStatus.ACCEPTED},
                     {"$or": [
-                        {"requester_id": current_user.id},
-                        {"addressee_id": current_user.id}
+                        {"requester_id": str(current_user.id)},
+                        {"addressee_id": str(current_user.id)}
                     ]}
                 ]
             }).to_list()
@@ -152,7 +152,7 @@ class SocialService:
             # Extract friend user IDs
             friend_ids = []
             for friendship in friendships:
-                if friendship.requester_id == current_user.id:
+                if friendship.requester_id == str(current_user.id):
                     friend_ids.append(friendship.addressee_id)
                 else:
                     friend_ids.append(friendship.requester_id)
@@ -174,7 +174,7 @@ class SocialService:
         """Get pending friend requests for current user"""
         try:
             pending_requests = await Friendship.find({
-                "addressee_id": current_user.id,
+                "addressee_id": str(current_user.id),
                 "status": FriendshipStatus.PENDING
             }).to_list()
             
@@ -208,15 +208,15 @@ class SocialService:
             user_ids = [str(user.id) for user in users]
             friendships = await Friendship.find({
                 "$or": [
-                    {"requester_id": current_user.id, "addressee_id": {"$in": user_ids}},
-                    {"requester_id": {"$in": user_ids}, "addressee_id": current_user.id}
+                    {"requester_id": str(current_user.id), "addressee_id": {"$in": user_ids}},
+                    {"requester_id": {"$in": user_ids}, "addressee_id": str(current_user.id)}
                 ]
             }).to_list()
             
             # Create friendship status map
             friendship_map = {}
             for friendship in friendships:
-                other_user_id = friendship.addressee_id if friendship.requester_id == current_user.id else friendship.requester_id
+                other_user_id = friendship.addressee_id if friendship.requester_id == str(current_user.id) else friendship.requester_id
                 friendship_map[other_user_id] = friendship.status.value
             
             # Build search results
@@ -250,7 +250,7 @@ class SocialService:
         """Create a new social post"""
         try:
             post = SocialPost(
-                user_id=current_user.id,
+                user_id=str(current_user.id),
                 content=post_data.content,
                 post_type=post_data.post_type,
                 activity_id=post_data.activity_id,
@@ -312,7 +312,7 @@ class SocialService:
             friend_ids = [str(friend.id) for friend in friends]
             
             # Include current user's posts in feed
-            user_ids = friend_ids + [current_user.id]
+            user_ids = friend_ids + [str(current_user.id)]
             
             # Get posts from friends and self, ordered by creation date
             posts = await SocialPost.find({
@@ -368,11 +368,11 @@ class SocialService:
                 )
             
             # Toggle like
-            if current_user.id in post.likes:
-                post.remove_like(current_user.id)
+            if str(current_user.id) in post.likes:
+                post.remove_like(str(current_user.id))
                 action = "unliked"
             else:
-                post.add_like(current_user.id)
+                post.add_like(str(current_user.id))
                 action = "liked"
             
             await post.save()
@@ -404,7 +404,7 @@ class SocialService:
             # Create comment
             comment = PostComment(
                 post_id=post_id,
-                user_id=current_user.id,
+                user_id=str(current_user.id),
                 content=comment_data.content
             )
             
@@ -472,19 +472,19 @@ class SocialService:
         """Get comprehensive social statistics for the current user"""
         try:
             # Get all user's posts
-            user_posts = await SocialPost.find({"user_id": current_user.id}).to_list()
+            user_posts = await SocialPost.find({"user_id": str(current_user.id)}).to_list()
             
             # Get friends count
             friends = await Friendship.find({
                 "$or": [
-                    {"requester_id": current_user.id, "status": FriendshipStatus.ACCEPTED},
-                    {"addressee_id": current_user.id, "status": FriendshipStatus.ACCEPTED}
+                    {"requester_id": str(current_user.id), "status": FriendshipStatus.ACCEPTED},
+                    {"addressee_id": str(current_user.id), "status": FriendshipStatus.ACCEPTED}
                 ]
             }).to_list()
             
             # Get pending friend requests
             pending_requests = await Friendship.find({
-                "addressee_id": current_user.id,
+                "addressee_id": str(current_user.id),
                 "status": FriendshipStatus.PENDING
             }).to_list()
             
