@@ -329,9 +329,11 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
           CircleAvatar(
             radius: 20,
             backgroundColor: TugColors.getPrimaryColor(isViceMode),
-            child: const Text(
-              'F', // Default since we don't have user info in FriendshipModel
-              style: TextStyle(
+            child: Text(
+              (friendship.friendUsername?.isNotEmpty ?? false) 
+                  ? friendship.friendUsername![0].toUpperCase() 
+                  : 'F',
+              style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
               ),
@@ -343,7 +345,7 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'friend', // We'll need to get user info from another API call
+                  friendship.friendDisplayName ?? friendship.friendUsername ?? 'friend',
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     color: TugColors.getTextColor(isDarkMode, isViceMode),
@@ -395,9 +397,11 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
           CircleAvatar(
             radius: 20,
             backgroundColor: TugColors.getPrimaryColor(isViceMode),
-            child: const Text(
-              'R', // Default since we don't have user info in FriendshipModel
-              style: TextStyle(
+            child: Text(
+              (request.friendUsername?.isNotEmpty ?? false) 
+                  ? request.friendUsername![0].toUpperCase() 
+                  : 'R',
+              style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
               ),
@@ -409,14 +413,14 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'friend request',
+                  request.friendDisplayName ?? request.friendUsername ?? 'friend request',
                   style: TextStyle(
                     fontWeight: FontWeight.w600,
                     color: TugColors.getTextColor(isDarkMode, isViceMode),
                   ),
                 ),
                 Text(
-                  'from: ${request.requesterId}',
+                  'wants to be friends',
                   style: TextStyle(
                     fontSize: 12,
                     color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),

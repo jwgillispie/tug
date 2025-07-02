@@ -337,7 +337,7 @@ class SocialService:
             content = milestone_messages.get(milestone, f"🎯 {milestone} days clean from {vice.name}! Keep going strong! 💪")
             
             post = SocialPost(
-                user_id=user.id,
+                user_id=str(user.id),
                 content=content,
                 post_type=PostType.VICE_PROGRESS,
                 vice_id=str(vice.id),
@@ -359,8 +359,14 @@ class SocialService:
         """Get social feed for current user (posts from friends)"""
         try:
             # Get user's friends
-            friends = await SocialService.get_friends(current_user)
-            friend_ids = [str(friend.id) for friend in friends]
+            friendships = await SocialService.get_friends(current_user)
+            friend_ids = []
+            for friendship in friendships:
+                # Get the friend's ID (the other person in the friendship)
+                if friendship.requester_id == str(current_user.id):
+                    friend_ids.append(friendship.addressee_id)
+                else:
+                    friend_ids.append(friendship.requester_id)
             
             # Include current user's posts in feed
             user_ids = friend_ids + [str(current_user.id)]
@@ -370,6 +376,8 @@ class SocialService:
                 "user_id": {"$in": user_ids},
                 "is_public": True
             }).sort([("created_at", -1)]).skip(skip).limit(limit).to_list()
+            
+            logger.info(f"Social feed: Current user {current_user.id}, Friend IDs: {friend_ids}, Total user IDs: {user_ids}, Found {len(posts)} posts")
             
             # Get user info for posts
             post_user_ids = list(set([post.user_id for post in posts]))
