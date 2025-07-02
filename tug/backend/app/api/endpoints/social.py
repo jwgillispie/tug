@@ -243,6 +243,30 @@ async def get_post_comments(
             detail="Failed to get comments"
         )
 
+@router.post("/comments/{comment_id}/like")
+async def like_comment(
+    comment_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Like or unlike a comment"""
+    try:
+        comment = await SocialService.like_comment(current_user, comment_id)
+        
+        # Return just the updated like status
+        is_liked = str(current_user.id) in comment.likes
+        return {
+            "liked": is_liked,
+            "likes_count": len(comment.likes)
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in like_comment endpoint: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to like comment"
+        )
+
 # Social Statistics Endpoint
 
 @router.get("/statistics", response_model=SocialStatisticsResponse)

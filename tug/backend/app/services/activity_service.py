@@ -55,8 +55,8 @@ class ActivityService:
         
         await new_activity.insert()
         
-        # Create social post if activity is public
-        if activity_data.is_public:
+        # Create social post if activity is public and has user-provided notes
+        if activity_data.is_public and activity_data.notes_public and activity_data.notes:
             await ActivityService._create_activity_social_post(user, new_activity, value)
         
         return new_activity
@@ -267,30 +267,12 @@ class ActivityService:
     
     @staticmethod
     async def _create_activity_social_post(user: User, activity: Activity, value: Value) -> None:
-        """Create a social post for a public activity"""
+        """Create a social post for a public activity with user-provided content"""
         try:
-            # Generate content based on activity
-            duration_hours = round(activity.duration / 60, 2) if activity.duration >= 60 else None
+            # Only use user-provided notes as the content
+            content = activity.notes
             
-            if duration_hours and duration_hours >= 1:
-                duration_text = f"{duration_hours}h"
-            else:
-                duration_text = f"{activity.duration}m"
-                
-            # Create engaging content
-            content = f"💪 Just completed {duration_text} of {activity.name}"
-            
-            # Add value context if available
-            if value:
-                content += f" working on {value.name}!"
-            else:
-                content += "!"
-            
-            # Add notes if they're public
-            if activity.notes_public and activity.notes:
-                content += f"\n\n📝 {activity.notes}"
-            
-            # Create the social post
+            # Create the social post with user's own words
             social_post = SocialPost(
                 user_id=str(user.id),
                 content=content,

@@ -26,7 +26,7 @@ class ActivityChart extends StatefulWidget {
 enum TimeRange {
   week('1W', 7),
   month('1M', 30),
-  threeMonths('3M', 90),
+  threeMonths('3M', null), // null for actual 3-month calculation
   ytd('YTD', null); // null for year-to-date calculation
 
   const TimeRange(this.label, this.days);
@@ -86,6 +86,13 @@ class _ActivityChartState extends State<ActivityChart> {
       final now = DateTime.now();
       final startOfYear = DateTime(now.year, 1, 1);
       return now.difference(startOfYear).inDays + 1;
+    }
+    
+    if (_selectedTimeRange == TimeRange.threeMonths) {
+      // Calculate actual 3-month period (90-93 days depending on months)
+      final now = DateTime.now();
+      final threeMonthsAgo = DateTime(now.year, now.month - 3, now.day);
+      return now.difference(threeMonthsAgo).inDays + 1;
     }
     
     return _selectedTimeRange.days!;

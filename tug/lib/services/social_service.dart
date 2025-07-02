@@ -305,6 +305,31 @@ class SocialService {
     }
   }
 
+  Future<Map<String, dynamic>> likeComment(String commentId) async {
+    try {
+      _logger.i('SocialService: Toggling like for comment: $commentId');
+      
+      final response = await _dio.post('/api/v1/social/comments/$commentId/like');
+      
+      if (response.statusCode == 200) {
+        _logger.i('SocialService: Comment like toggled successfully');
+        
+        return {
+          'liked': response.data['liked'],
+          'likes_count': response.data['likes_count'],
+        };
+      } else {
+        throw Exception('Failed to like comment: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      _logger.e('SocialService: DioException liking comment: ${e.message}');
+      throw Exception('Network error: ${e.message}');
+    } catch (e) {
+      _logger.e('SocialService: Error liking comment: $e');
+      throw Exception('Failed to like comment: $e');
+    }
+  }
+
   Future<List<CommentModel>> getPostComments(String postId, {int limit = 50, int skip = 0, bool forceRefresh = false}) async {
     try {
       _logger.i('SocialService: Getting comments for post: $postId');

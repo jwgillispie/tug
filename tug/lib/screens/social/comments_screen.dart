@@ -9,10 +9,12 @@ import '../../blocs/auth/auth_bloc.dart';
 
 class CommentsScreen extends StatefulWidget {
   final SocialPostModel post;
+  final Function(SocialPostModel)? onPostUpdated;
   
   const CommentsScreen({
     super.key,
     required this.post,
+    this.onPostUpdated,
   });
 
   @override
@@ -31,10 +33,12 @@ class _CommentsScreenState extends State<CommentsScreen> {
   bool _isPostingComment = false;
   String? _currentUserId;
   StreamSubscription<AppMode>? _modeSubscription;
+  late SocialPostModel _currentPost;
 
   @override
   void initState() {
     super.initState();
+    _currentPost = widget.post;
     _initializeMode();
     _getCurrentUser();
     _loadComments();
@@ -91,6 +95,55 @@ class _CommentsScreenState extends State<CommentsScreen> {
     }
   }
 
+  Future<void> _toggleCommentLike(CommentModel comment) async {
+    final commentIndex = _comments.indexWhere((c) => c.id == comment.id);
+    if (commentIndex == -1) return;
+
+    // Optimistic update
+    final wasLiked = comment.likes.contains(_currentUserId);
+    final updatedLikes = List<String>.from(comment.likes);
+    
+    if (wasLiked) {
+      updatedLikes.remove(_currentUserId);
+    } else {
+      updatedLikes.add(_currentUserId!);
+    }
+
+    final updatedComment = CommentModel(
+      id: comment.id,
+      postId: comment.postId,
+      userId: comment.userId,
+      content: comment.content,
+      likes: updatedLikes,
+      createdAt: comment.createdAt,
+      updatedAt: comment.updatedAt,
+      username: comment.username,
+      userDisplayName: comment.userDisplayName,
+    );
+
+    setState(() {
+      _comments[commentIndex] = updatedComment;
+    });
+
+    try {
+      await _socialService.likeComment(comment.id);
+    } catch (e) {
+      // Rollback on error
+      setState(() {
+        _comments[commentIndex] = comment;
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update like: $e'),
+            backgroundColor: TugColors.error,
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _postComment() async {
     final content = _commentController.text.trim();
     if (content.isEmpty) return;
@@ -101,11 +154,34 @@ class _CommentsScreenState extends State<CommentsScreen> {
 
     try {
       final comment = await _socialService.addComment(widget.post.id, content);
+      
+      // Update local state
       setState(() {
         _comments.add(comment);
         _commentController.clear();
         _isPostingComment = false;
+        
+        // Update post comment count
+        _currentPost = SocialPostModel(
+          id: _currentPost.id,
+          userId: _currentPost.userId,
+          content: _currentPost.content,
+          postType: _currentPost.postType,
+          activityId: _currentPost.activityId,
+          viceId: _currentPost.viceId,
+          achievementId: _currentPost.achievementId,
+          likes: _currentPost.likes,
+          commentsCount: _currentPost.commentsCount + 1,
+          isPublic: _currentPost.isPublic,
+          createdAt: _currentPost.createdAt,
+          updatedAt: _currentPost.updatedAt,
+          username: _currentPost.username,
+          userDisplayName: _currentPost.userDisplayName,
+        );
       });
+      
+      // Notify parent if callback provided
+      widget.onPostUpdated?.call(_currentPost);
       
       // Scroll to bottom to show new comment
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -180,7 +256,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
                       radius: 16,
                       backgroundColor: TugColors.getPrimaryColor(isViceMode),
                       child: Text(
-                        widget.post.displayName[0].toUpperCase(),
+                        _currentPost.displayName[0].toUpperCase(),
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
@@ -194,7 +270,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            widget.post.displayName,
+                            _currentPost.displayName,
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
                               fontSize: 14,
@@ -202,7 +278,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
                             ),
                           ),
                           Text(
-                            widget.post.timeAgoText,
+                            _currentPost.timeAgoText,
                             style: TextStyle(
                               fontSize: 11,
                               color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
@@ -217,7 +293,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
                 
                 // Post content
                 Text(
-                  widget.post.content,
+                  _currentPost.content,
                   style: TextStyle(
                     fontSize: 14,
                     color: TugColors.getTextColor(isDarkMode, isViceMode),
@@ -230,7 +306,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
                 Row(
                   children: [
                     Text(
-                      '${widget.post.likes.length} likes',
+                      '${_currentPost.likes.length} likes',
                       style: TextStyle(
                         fontSize: 12,
                         color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
@@ -238,7 +314,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
                     ),
                     const SizedBox(width: 16),
                     Text(
-                      '${_comments.length} comments',
+                      '${_currentPost.commentsCount} comments',
                       style: TextStyle(
                         fontSize: 12,
                         color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
@@ -369,6 +445,47 @@ class _CommentsScreenState extends State<CommentsScreen> {
                     color: TugColors.getTextColor(isDarkMode, isViceMode),
                     height: 1.3,
                   ),
+                ),
+                const SizedBox(height: 8),
+                
+                // Comment actions
+                Row(
+                  children: [
+                    InkWell(
+                      onTap: () => _toggleCommentLike(comment),
+                      borderRadius: BorderRadius.circular(12),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              comment.likes.contains(_currentUserId) 
+                                  ? Icons.favorite 
+                                  : Icons.favorite_border,
+                              size: 14,
+                              color: comment.likes.contains(_currentUserId)
+                                  ? TugColors.error
+                                  : TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
+                            ),
+                            if (comment.likes.isNotEmpty) ...[
+                              const SizedBox(width: 4),
+                              Text(
+                                comment.likes.length.toString(),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

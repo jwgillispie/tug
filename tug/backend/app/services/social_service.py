@@ -539,6 +539,39 @@ class SocialService:
             )
     
     @staticmethod
+    async def like_comment(current_user: User, comment_id: str) -> PostComment:
+        """Like or unlike a comment"""
+        try:
+            comment = await PostComment.get(comment_id)
+            if not comment:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Comment not found"
+                )
+            
+            # Toggle like
+            if str(current_user.id) in comment.likes:
+                comment.remove_like(str(current_user.id))
+                action = "unliked"
+            else:
+                comment.add_like(str(current_user.id))
+                action = "liked"
+            
+            await comment.save()
+            logger.info(f"User {current_user.id} {action} comment {comment_id}")
+            
+            return comment
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error liking comment: {e}", exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to like comment"
+            )
+    
+    @staticmethod
     async def get_social_statistics(current_user: User) -> SocialStatisticsResponse:
         """Get comprehensive social statistics for the current user"""
         try:

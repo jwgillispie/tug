@@ -111,20 +111,57 @@ class _SocialScreenState extends State<SocialScreen> {
 
 
   Future<void> _toggleLike(SocialPostModel post) async {
+    // Prevent multiple rapid taps
+    if (_currentUserId == null) return;
+    
+    // Optimistic UI update
+    setState(() {
+      final index = _posts.indexWhere((p) => p.id == post.id);
+      if (index != -1) {
+        final updatedLikes = List<String>.from(_posts[index].likes);
+        final isCurrentlyLiked = updatedLikes.contains(_currentUserId!);
+        
+        if (isCurrentlyLiked) {
+          updatedLikes.remove(_currentUserId!);
+        } else {
+          updatedLikes.add(_currentUserId!);
+        }
+        
+        _posts[index] = SocialPostModel(
+          id: _posts[index].id,
+          userId: _posts[index].userId,
+          content: _posts[index].content,
+          postType: _posts[index].postType,
+          activityId: _posts[index].activityId,
+          viceId: _posts[index].viceId,
+          achievementId: _posts[index].achievementId,
+          likes: updatedLikes,
+          commentsCount: _posts[index].commentsCount,
+          isPublic: _posts[index].isPublic,
+          createdAt: _posts[index].createdAt,
+          updatedAt: _posts[index].updatedAt,
+          username: _posts[index].username,
+          userDisplayName: _posts[index].userDisplayName,
+        );
+      }
+    });
+    
     try {
       final result = await _socialService.likePost(post.id);
       
+      // Sync with server response
       setState(() {
-        // Update the post in our local list
         final index = _posts.indexWhere((p) => p.id == post.id);
         if (index != -1) {
           final updatedLikes = List<String>.from(_posts[index].likes);
+          
+          // Ensure state matches server response
           if (result['liked']) {
-            if (_currentUserId != null && !updatedLikes.contains(_currentUserId!)) {
+            if (!updatedLikes.contains(_currentUserId!)) {
               updatedLikes.add(_currentUserId!);
             }
           } else {
-            updatedLikes.remove(_currentUserId);
+            updatedLikes.remove(_currentUserId!);
           }
           
           _posts[index] = SocialPostModel(
@@ -146,6 +183,39 @@ class _SocialScreenState extends State<SocialScreen> {
         }
       });
     } catch (e) {
+      // Revert optimistic update on error
+      setState(() {
+        final index = _posts.indexWhere((p) => p.id == post.id);
+        if (index != -1) {
+          final updatedLikes = List<String>.from(_posts[index].likes);
+          final isCurrentlyLiked = updatedLikes.contains(_currentUserId!);
+          
+          // Revert the optimistic change
+          if (isCurrentlyLiked) {
+            updatedLikes.remove(_currentUserId!);
+          } else {
+            updatedLikes.add(_currentUserId!);
+          }
+          
+          _posts[index] = SocialPostModel(
+            id: _posts[index].id,
+            userId: _posts[index].userId,
+            content: _posts[index].content,
+            postType: _posts[index].postType,
+            activityId: _posts[index].activityId,
+            viceId: _posts[index].viceId,
+            achievementId: _posts[index].achievementId,
+            likes: updatedLikes,
+            commentsCount: _posts[index].commentsCount,
+            isPublic: _posts[index].isPublic,
+            createdAt: _posts[index].createdAt,
+            updatedAt: _posts[index].updatedAt,
+            username: _posts[index].username,
+            userDisplayName: _posts[index].userDisplayName,
+          );
+        }
+      });
+      
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -218,7 +288,7 @@ class _SocialScreenState extends State<SocialScreen> {
                     'connect with your community',
                     style: TextStyle(
                       fontSize: 16,
-                      color: Colors.white.withOpacity(0.9),
+                      color: Colors.white.withValues(alpha: 0.9),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -276,7 +346,7 @@ class _SocialScreenState extends State<SocialScreen> {
           color: TugColors.getSurfaceColor(isDarkMode, isViceMode),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: TugColors.getPrimaryColor(isViceMode).withOpacity(0.2),
+            color: TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.2),
             width: 1,
           ),
         ),
@@ -431,7 +501,7 @@ class _SocialScreenState extends State<SocialScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.1),
+            color: Colors.black.withValues(alpha: isDarkMode ? 0.3 : 0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -481,7 +551,7 @@ class _SocialScreenState extends State<SocialScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: TugColors.getPrimaryColor(isViceMode).withOpacity(0.1),
+                    color: TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(
@@ -529,7 +599,17 @@ class _SocialScreenState extends State<SocialScreen> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => CommentsScreen(post: post),
+                      builder: (context) => CommentsScreen(
+                        post: post,
+                        onPostUpdated: (updatedPost) {
+                          setState(() {
+                            final index = _posts.indexWhere((p) => p.id == updatedPost.id);
+                            if (index != -1) {
+                              _posts[index] = updatedPost;
+                            }
+                          });
+                        },
+                      ),
                     ),
                   );
                 },
