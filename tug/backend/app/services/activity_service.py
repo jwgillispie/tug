@@ -8,6 +8,7 @@ import logging
 from ..models.user import User
 from ..models.value import Value
 from ..models.activity import Activity
+from ..models.social_post import SocialPost, PostType
 from ..schemas.activity import ActivityCreate, ActivityUpdate, ActivityStatistics
 
 
@@ -47,10 +48,17 @@ class ActivityService:
             name=activity_data.name,
             duration=activity_data.duration,
             date=activity_data.date,
-            notes=activity_data.notes
+            notes=activity_data.notes,
+            is_public=activity_data.is_public,
+            notes_public=activity_data.notes_public
         )
         
         await new_activity.insert()
+        
+        # Create social post if activity is public
+        if activity_data.is_public:
+            await ActivityService._create_activity_social_post(user, new_activity, value)
+        
         return new_activity
 
     @staticmethod
@@ -256,3 +264,44 @@ class ActivityService:
             "period_days": (end_date - start_date).days + 1,
             "values": result
         }
+    
+    @staticmethod
+    async def _create_activity_social_post(user: User, activity: Activity, value: Value) -> None:
+        """Create a social post for a public activity"""
+        try:
+            # Generate content based on activity
+            duration_hours = round(activity.duration / 60, 2) if activity.duration >= 60 else None
+            
+            if duration_hours and duration_hours >= 1:
+                duration_text = f"{duration_hours}h"
+            else:
+                duration_text = f"{activity.duration}m"
+                
+            # Create engaging content
+            content = f"💪 Just completed {duration_text} of {activity.name}"
+            
+            # Add value context if available
+            if value:
+                content += f" working on {value.name}!"
+            else:
+                content += "!"
+            
+            # Add notes if they're public
+            if activity.notes_public and activity.notes:
+                content += f"\n\n📝 {activity.notes}"
+            
+            # Create the social post
+            social_post = SocialPost(
+                user_id=str(user.id),
+                content=content,
+                post_type=PostType.ACTIVITY_UPDATE,
+                activity_id=str(activity.id),
+                is_public=True
+            )
+            
+            await social_post.save()
+            logger.info(f"Created social post for activity {activity.id} by user {user.id}")
+            
+        except Exception as e:
+            logger.error(f"Failed to create social post for activity {activity.id}: {e}")
+            # Don't raise exception to avoid breaking activity creation

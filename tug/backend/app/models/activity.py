@@ -15,6 +15,8 @@ class Activity(Document):
     date: datetime = Indexed()
     notes: Optional[str] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
+    is_public: bool = Field(default=True)  # Whether activity is shared publicly
+    notes_public: bool = Field(default=False)  # Whether notes are shared publicly
     version: int = 1
 
     class Settings:

@@ -9,6 +9,8 @@ class ActivityBase(BaseModel):
     duration: int = Field(..., gt=0, le=1440)  # in minutes, max 24 hours
     value_id: str
     notes: Optional[str] = None
+    is_public: bool = Field(default=True)  # Whether activity is shared publicly
+    notes_public: bool = Field(default=False)  # Whether notes are shared publicly
 
 class ActivityCreate(ActivityBase):
     """Schema for creating a new activity"""
@@ -21,6 +23,8 @@ class ActivityUpdate(BaseModel):
     value_id: Optional[str] = None
     date: Optional[datetime] = None
     notes: Optional[str] = None
+    is_public: Optional[bool] = None
+    notes_public: Optional[bool] = None
 
 class ActivityInDB(ActivityBase):
     """Schema for activity as stored in database"""
