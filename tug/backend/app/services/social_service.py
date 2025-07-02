@@ -379,6 +379,18 @@ class SocialService:
             
             logger.info(f"Social feed: Current user {current_user.id}, Friend IDs: {friend_ids}, Total user IDs: {user_ids}, Found {len(posts)} posts")
             
+            # Debug: Check if there are any posts at all from these users
+            all_posts_from_users = await SocialPost.find({"user_id": {"$in": user_ids}}).to_list()
+            public_posts_from_users = await SocialPost.find({"user_id": {"$in": user_ids}, "is_public": True}).to_list()
+            logger.info(f"Debug: Total posts from these users: {len(all_posts_from_users)}, Public posts: {len(public_posts_from_users)}")
+            
+            # Debug: Check all posts in database
+            all_posts = await SocialPost.find({}).to_list()
+            logger.info(f"Debug: Total posts in database: {len(all_posts)}")
+            if all_posts:
+                sample_post = all_posts[0]
+                logger.info(f"Debug: Sample post - user_id: {sample_post.user_id}, is_public: {sample_post.is_public}, content: {sample_post.content[:50]}...")
+            
             # Get user info for posts
             post_user_ids = list(set([post.user_id for post in posts]))
             users = await User.find({"_id": {"$in": [ObjectId(uid) for uid in post_user_ids]}}).to_list()
