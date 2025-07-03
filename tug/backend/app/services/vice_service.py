@@ -146,13 +146,19 @@ class ViceService:
             notes=indulgence_data.notes,
             severity_at_time=indulgence_data.severity_at_time,
             triggers=indulgence_data.triggers,
-            emotional_state=indulgence_data.emotional_state
+            emotional_state=indulgence_data.emotional_state,
+            is_public=indulgence_data.is_public,
+            notes_public=indulgence_data.notes_public
         )
         
         await new_indulgence.insert()
         
         # Update the vice's streak information
         await vice.update_streak_on_indulgence()
+        
+        # Create social post if indulgence is public and has user-provided notes
+        if indulgence_data.is_public and indulgence_data.notes_public and indulgence_data.notes:
+            await ViceService._create_indulgence_social_post(user, new_indulgence, vice)
         
         return new_indulgence
 
@@ -243,3 +249,29 @@ class ViceService:
                 "average_current_streak": round(average_streak, 1),
                 "longest_streak_overall": max((v.longest_streak for v in vices), default=0)
             }
+    
+    @staticmethod
+    async def _create_indulgence_social_post(user: User, indulgence: Indulgence, vice: Vice) -> None:
+        """Create a social post for a public indulgence with user-provided content"""
+        try:
+            # Only use user-provided notes as the content
+            content = indulgence.notes
+            
+            # Create the social post with user's own words
+            # Import here to avoid circular imports
+            from ..models.social_post import SocialPost, PostType
+            
+            social_post = SocialPost(
+                user_id=str(user.id),
+                content=content,
+                post_type=PostType.VICE_PROGRESS,
+                vice_id=str(vice.id),
+                is_public=True
+            )
+            
+            await social_post.save()
+            logger.info(f"Created social post for indulgence {indulgence.id} by user {user.id}")
+            
+        except Exception as e:
+            logger.error(f"Failed to create social post for indulgence {indulgence.id}: {e}")
+            # Don't raise exception to avoid breaking indulgence creation

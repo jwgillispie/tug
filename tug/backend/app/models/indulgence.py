@@ -15,6 +15,8 @@ class Indulgence(Document):
     severity_at_time: int = Field(..., ge=1, le=5, description="Vice severity level at time of indulgence")
     triggers: List[str] = Field(default_factory=list, description="What triggered this indulgence")
     emotional_state: int = Field(default=5, ge=1, le=10, description="Emotional state before indulgence (1-10)")
+    is_public: bool = Field(default=False, description="Whether indulgence is shared publicly")
+    notes_public: bool = Field(default=False, description="Whether notes are shared publicly")
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 

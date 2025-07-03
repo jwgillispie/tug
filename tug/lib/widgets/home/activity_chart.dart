@@ -91,7 +91,14 @@ class _ActivityChartState extends State<ActivityChart> {
     if (_selectedTimeRange == TimeRange.threeMonths) {
       // Calculate actual 3-month period (90-93 days depending on months)
       final now = DateTime.now();
-      final threeMonthsAgo = DateTime(now.year, now.month - 3, now.day);
+      // Handle month overflow correctly
+      int targetYear = now.year;
+      int targetMonth = now.month - 3;
+      if (targetMonth <= 0) {
+        targetYear--;
+        targetMonth += 12;
+      }
+      final threeMonthsAgo = DateTime(targetYear, targetMonth, now.day);
       return now.difference(threeMonthsAgo).inDays + 1;
     }
     
@@ -188,12 +195,6 @@ class _ActivityChartState extends State<ActivityChart> {
         activity.date.day,
       );
       
-      // Skip if activity is outside our range
-      if (activityDate.isBefore(startDate) || 
-          activityDate.isAfter(startDate.add(Duration(days: days)))) {
-        continue;
-      }
-      
       // Find which week this activity belongs to
       final weekStart = activityDate.subtract(Duration(days: activityDate.weekday - 1));
       
@@ -210,7 +211,11 @@ class _ActivityChartState extends State<ActivityChart> {
       }
       
       if (closestWeek != null && minDiff <= 3) { // Within same week
-        weeklyTotals[closestWeek] = weeklyTotals[closestWeek]! + activity.duration;
+        // Only include if activity is within our date range
+        final endDate = startDate.add(Duration(days: days - 1));
+        if (!activityDate.isBefore(startDate) && !activityDate.isAfter(endDate)) {
+          weeklyTotals[closestWeek] = weeklyTotals[closestWeek]! + activity.duration;
+        }
       }
     }
     

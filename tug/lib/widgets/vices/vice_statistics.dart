@@ -70,7 +70,7 @@ class ViceStatistics extends StatelessWidget {
               const SizedBox(width: 12),
               const Expanded(
                 child: Text(
-                  'recovery progress',
+                  'vice check',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 20,
@@ -268,7 +268,7 @@ class ViceStatistics extends StatelessWidget {
               ),
               const SizedBox(width: 6),
               const Text(
-                'recovery spotlight',
+                'clean streak',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 14,

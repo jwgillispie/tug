@@ -11,6 +11,8 @@ class IndulgenceBase(BaseModel):
     severity_at_time: int = Field(..., ge=1, le=5, description="Vice severity level at time of indulgence")
     triggers: List[str] = Field(default_factory=list, description="What triggered this indulgence")
     emotional_state: int = Field(default=5, ge=1, le=10, description="Emotional state before indulgence (1-10)")
+    is_public: bool = Field(default=False, description="Whether indulgence is shared publicly")
+    notes_public: bool = Field(default=False, description="Whether notes are shared publicly")
 
 class IndulgenceCreate(IndulgenceBase):
     """Schema for creating a new indulgence"""
@@ -24,6 +26,8 @@ class IndulgenceUpdate(BaseModel):
     severity_at_time: Optional[int] = Field(None, ge=1, le=5)
     triggers: Optional[List[str]] = None
     emotional_state: Optional[int] = Field(None, ge=1, le=10)
+    is_public: Optional[bool] = None
+    notes_public: Optional[bool] = None
 
 class IndulgenceInDB(IndulgenceBase):
     """Schema for indulgence as stored in database"""
