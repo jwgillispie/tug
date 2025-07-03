@@ -363,93 +363,189 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _buildSettingsSection(
               title: 'progress',
               items: [
-                // Special achievements item with badge
+                // Special achievements item with enhanced badge
                 InkWell(
                   onTap: () {
                     context.push('/achievements');
                   },
-                  borderRadius: BorderRadius.circular(12),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 16,
-                      horizontal: 16,
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(16),
+                      gradient: _unlockedAchievements > 0
+                          ? LinearGradient(
+                              colors: [
+                                TugColors.success.withValues(alpha: 0.1),
+                                TugColors.success.withValues(alpha: 0.05),
+                              ],
+                            )
+                          : null,
                     ),
-                    child: Row(
-                      children: [
-                        // Achievement icon
-                        Stack(
-                          children: [
-                            Icon(
-                              Icons.emoji_events_outlined,
-                              color: TugColors.getPrimaryColor(_currentMode == AppMode.vicesMode),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 18,
+                        horizontal: 20,
+                      ),
+                      child: Row(
+                        children: [
+                          // Enhanced achievement icon with glow effect
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: _unlockedAchievements > 0
+                                    ? [TugColors.success.withValues(alpha: 0.2), TugColors.success.withValues(alpha: 0.1)]
+                                    : [TugColors.getPrimaryColor(_currentMode == AppMode.vicesMode).withValues(alpha: 0.15), TugColors.getPrimaryColor(_currentMode == AppMode.vicesMode).withValues(alpha: 0.05)],
+                              ),
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                            if (_unlockedAchievements > 0)
-                              Positioned(
-                                right: -4,
-                                top: -4,
-                                child: Container(
-                                  padding: const EdgeInsets.all(4),
-                                  decoration: const BoxDecoration(
-                                    color: TugColors.success,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  constraints: const BoxConstraints(
-                                    minWidth: 16,
-                                    minHeight: 16,
-                                  ),
-                                  child: Text(
-                                    '$_unlockedAchievements',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
+                            child: Stack(
+                              children: [
+                                Icon(
+                                  Icons.emoji_events,
+                                  color: _unlockedAchievements > 0
+                                      ? TugColors.success
+                                      : TugColors.getPrimaryColor(_currentMode == AppMode.vicesMode),
+                                  size: 22,
                                 ),
-                              ),
-                          ],
-                        ),
-                        const SizedBox(width: 16),
-
-                        // Achievement details
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'achievements',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              _loadingAchievements
-                                  ? const Text(
-                                      'loading...',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.grey,
+                                if (_unlockedAchievements > 0)
+                                  Positioned(
+                                    right: -2,
+                                    top: -2,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(2),
+                                      decoration: BoxDecoration(
+                                        gradient: const LinearGradient(
+                                          colors: [TugColors.success, Color(0xFF4CAF50)],
+                                        ),
+                                        shape: BoxShape.circle,
+                                        border: Border.all(color: Colors.white, width: 1),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: TugColors.success.withValues(alpha: 0.4),
+                                            blurRadius: 6,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
                                       ),
-                                    )
-                                  : Text(
-                                      _unlockedAchievements > 0
-                                          ? 'you\'ve unlocked $_unlockedAchievements ${_unlockedAchievements == 1 ? 'achievement' : 'achievements'}'
-                                          : 'view your progress and unlocked rewards',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.grey.shade600,
+                                      constraints: const BoxConstraints(
+                                        minWidth: 18,
+                                        minHeight: 18,
+                                      ),
+                                      child: Text(
+                                        '$_unlockedAchievements',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                        textAlign: TextAlign.center,
                                       ),
                                     ),
-                            ],
+                                  ),
+                              ],
+                            ),
                           ),
-                        ),
-                        const Icon(
-                          Icons.chevron_right,
-                          color: Colors.grey,
-                        ),
-                      ],
+                          const SizedBox(width: 16),
+
+                          // Enhanced achievement details
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    Text(
+                                      'achievements',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: Theme.of(context).brightness == Brightness.dark
+                                            ? TugColors.darkTextPrimary
+                                            : TugColors.lightTextPrimary,
+                                      ),
+                                    ),
+                                    if (_unlockedAchievements > 0) ...[
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                        decoration: BoxDecoration(
+                                          color: TugColors.success,
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: const Text(
+                                          'NEW',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                                const SizedBox(height: 4),
+                                _loadingAchievements
+                                    ? Row(
+                                        children: [
+                                          SizedBox(
+                                            width: 12,
+                                            height: 12,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              valueColor: AlwaysStoppedAnimation<Color>(
+                                                TugColors.getPrimaryColor(_currentMode == AppMode.vicesMode),
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Text(
+                                            'loading achievements...',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: Theme.of(context).brightness == Brightness.dark
+                                                  ? TugColors.darkTextSecondary
+                                                  : TugColors.lightTextSecondary,
+                                            ),
+                                          ),
+                                        ],
+                                      )
+                                    : Text(
+                                        _unlockedAchievements > 0
+                                            ? 'you\'ve unlocked $_unlockedAchievements ${_unlockedAchievements == 1 ? 'achievement' : 'achievements'}! 🎉'
+                                            : 'discover your achievements and unlock rewards',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Theme.of(context).brightness == Brightness.dark
+                                              ? TugColors.darkTextSecondary
+                                              : TugColors.lightTextSecondary,
+                                          fontWeight: FontWeight.w400,
+                                        ),
+                                      ),
+                              ],
+                            ),
+                          ),
+                          // Enhanced chevron
+                          Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).brightness == Brightness.dark
+                                  ? TugColors.darkSurfaceVariant.withValues(alpha: 0.3)
+                                  : TugColors.lightSurfaceVariant.withValues(alpha: 0.5),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              Icons.chevron_right,
+                              color: _unlockedAchievements > 0
+                                  ? TugColors.success
+                                  : TugColors.getPrimaryColor(_currentMode == AppMode.vicesMode).withValues(alpha: 0.7),
+                              size: 20,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -508,20 +604,53 @@ class _ProfileScreenState extends State<ProfileScreen> {
             // Add the danger zone section
             _buildDangerSection(),
 
-            // Logout button
+            // Enhanced logout button
             Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.red.shade50,
-                    foregroundColor: Colors.red,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+              padding: const EdgeInsets.all(24.0),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.red.shade50.withValues(alpha: 0.5),
+                      Colors.red.shade100.withValues(alpha: 0.3),
+                    ],
                   ),
-                  onPressed: _isDeleting ? null : _showLogoutConfirmationDialog,
-                  icon: const Icon(Icons.logout),
-                  label: const Text('log out'),
+                  border: Border.all(
+                    color: Colors.red.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      foregroundColor: Colors.red.shade700,
+                      padding: const EdgeInsets.symmetric(vertical: 18),
+                      elevation: 0,
+                      shadowColor: Colors.transparent,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ).copyWith(
+                      overlayColor: WidgetStateProperty.all(
+                        Colors.red.withValues(alpha: 0.1),
+                      ),
+                    ),
+                    onPressed: _isDeleting ? null : _showLogoutConfirmationDialog,
+                    icon: Icon(
+                      Icons.logout_outlined,
+                      color: Colors.red.shade700,
+                    ),
+                    label: Text(
+                      'log out',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.red.shade700,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -561,94 +690,308 @@ class _ProfileScreenState extends State<ProfileScreen> {
         }
 
         return Container(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            children: [
-              Stack(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.3),
-                        width: 2,
-                      ),
-                    ),
-                    child: CircleAvatar(
-                      radius: 48,
-                      backgroundColor: TugColors.getPrimaryColor(isViceMode),
-                      backgroundImage: state is Authenticated && state.user.photoURL != null 
-                          ? NetworkImage(state.user.photoURL!) 
-                          : null,
-                      child: !(state is Authenticated && state.user.photoURL != null)
-                          ? const Icon(
-                              Icons.person,
-                              size: 48,
-                              color: Colors.white,
-                            )
-                          : null,
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: GestureDetector(
-                      onTap: _isUploadingProfilePicture ? null : _showImageSourceDialog,
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: TugColors.getPrimaryColor(isViceMode),
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 2),
-                        ),
-                        child: _isUploadingProfilePicture
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                ),
-                              )
-                            : const Icon(
-                                Icons.camera_alt,
-                                size: 16,
-                                color: Colors.white,
-                              ),
-                      ),
-                    ),
-                  ),
-                ],
+          margin: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: isViceMode
+                  ? [
+                      TugColors.viceGreen.withValues(alpha: 0.12),
+                      TugColors.viceGreenLight.withValues(alpha: 0.06),
+                      TugColors.viceGreenDark.withValues(alpha: 0.18),
+                      TugColors.viceGreen.withValues(alpha: 0.08),
+                    ]
+                  : [
+                      TugColors.primaryPurple.withValues(alpha: 0.12),
+                      TugColors.primaryPurpleLight.withValues(alpha: 0.06),
+                      TugColors.primaryPurpleDark.withValues(alpha: 0.18),
+                      TugColors.primaryPurple.withValues(alpha: 0.08),
+                    ],
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.15),
+                blurRadius: 32,
+                offset: const Offset(0, 12),
+                spreadRadius: 2,
               ),
-              const SizedBox(height: 16),
-              Text(
-                displayName,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                email,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: isDarkMode
-                      ? TugColors.darkTextSecondary
-                      : TugColors.lightTextSecondary,
-                ),
-              ),
-              const SizedBox(height: 16),
-              OutlinedButton(
-                style: TugButtons.secondaryButtonStyle(
-                    isDark: Theme.of(context).brightness == Brightness.dark),
-                onPressed: () {
-                  context.push('/edit-profile');
-                },
-                child: const Text('edit profile'),
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDarkMode ? 0.4 : 0.08),
+                blurRadius: 16,
+                offset: const Offset(0, 6),
               ),
             ],
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(36),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(28),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Theme.of(context).cardColor.withValues(alpha: 0.95),
+                  Theme.of(context).cardColor.withValues(alpha: 0.85),
+                ],
+              ),
+              border: Border.all(
+                color: TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.25),
+                width: 1.5,
+              ),
+            ),
+            child: Column(
+              children: [
+                // Enhanced profile picture with premium glow effect
+                Stack(
+                  children: [
+                    // Outer glow ring
+                    Container(
+                      width: 140,
+                      height: 140,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        gradient: RadialGradient(
+                          colors: [
+                            TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.4),
+                            TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.2),
+                            Colors.transparent,
+                          ],
+                          stops: const [0.0, 0.7, 1.0],
+                        ),
+                      ),
+                    ),
+                    // Inner glow ring
+                    Positioned(
+                      left: 10,
+                      top: 10,
+                      child: Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.2),
+                              Colors.transparent,
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Main avatar container
+                    Positioned(
+                      left: 10,
+                      top: 10,
+                      child: Container(
+                        width: 120,
+                        height: 120,
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: LinearGradient(
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                            colors: isViceMode
+                                ? [
+                                    TugColors.viceGreen,
+                                    TugColors.viceGreenLight,
+                                    TugColors.viceGreenDark,
+                                  ]
+                                : [
+                                    TugColors.primaryPurple,
+                                    TugColors.primaryPurpleLight,
+                                    TugColors.primaryPurpleDark,
+                                  ],
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.5),
+                              blurRadius: 20,
+                              offset: const Offset(0, 6),
+                              spreadRadius: 1,
+                            ),
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: isDarkMode ? 0.3 : 0.1),
+                              blurRadius: 12,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: CircleAvatar(
+                          radius: 56,
+                          backgroundColor: Colors.white,
+                          child: CircleAvatar(
+                            radius: 54,
+                            backgroundColor: TugColors.getPrimaryColor(isViceMode),
+                            backgroundImage: state is Authenticated && state.user.photoURL != null 
+                                ? NetworkImage(state.user.photoURL!) 
+                                : null,
+                            child: !(state is Authenticated && state.user.photoURL != null)
+                                ? Icon(
+                                    Icons.person,
+                                    size: 56,
+                                    color: Colors.white,
+                                  )
+                                : null,
+                          ),
+                        ),
+                      ),
+                    ),
+                    // Enhanced camera button with premium styling
+                    Positioned(
+                      bottom: 8,
+                      right: 18,
+                      child: GestureDetector(
+                        onTap: _isUploadingProfilePicture ? null : _showImageSourceDialog,
+                        child: Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                              colors: isViceMode
+                                  ? [
+                                      TugColors.viceGreen,
+                                      TugColors.viceGreenDark,
+                                      TugColors.viceGreenLight,
+                                    ]
+                                  : [
+                                      TugColors.primaryPurple,
+                                      TugColors.primaryPurpleDark,
+                                      TugColors.primaryPurpleLight,
+                                    ],
+                            ),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 3.5),
+                            boxShadow: [
+                              BoxShadow(
+                                color: TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.4),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                                spreadRadius: 1,
+                              ),
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: _isUploadingProfilePicture
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  ),
+                                )
+                              : const Icon(
+                                  Icons.camera_alt,
+                                  size: 20,
+                                  color: Colors.white,
+                                ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+                
+                // Enhanced name with gradient text
+                QuantumEffects.gradientText(
+                  displayName,
+                  style: const TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
+                  ),
+                  colors: isViceMode
+                      ? [TugColors.viceGreen, TugColors.viceGreenLight, TugColors.viceGreenDark]
+                      : [TugColors.primaryPurple, TugColors.primaryPurpleLight, TugColors.primaryPurpleDark],
+                ),
+                const SizedBox(height: 8),
+                
+                // Enhanced email with better styling
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: isDarkMode
+                        ? TugColors.darkSurfaceVariant.withValues(alpha: 0.5)
+                        : TugColors.lightSurfaceVariant.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.2),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.email_outlined,
+                        size: 16,
+                        color: isDarkMode
+                            ? TugColors.darkTextSecondary
+                            : TugColors.lightTextSecondary,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        email,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: isDarkMode
+                              ? TugColors.darkTextSecondary
+                              : TugColors.lightTextSecondary,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                
+                // Premium edit profile button
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                    gradient: LinearGradient(
+                      colors: isViceMode
+                          ? [TugColors.viceGreen.withValues(alpha: 0.1), TugColors.viceGreenLight.withValues(alpha: 0.05)]
+                          : [TugColors.primaryPurple.withValues(alpha: 0.1), TugColors.primaryPurpleLight.withValues(alpha: 0.05)],
+                    ),
+                  ),
+                  child: ElevatedButton.icon(
+                    style: TugButtons.secondaryButtonStyle(
+                        isDark: Theme.of(context).brightness == Brightness.dark,
+                        isViceMode: _currentMode == AppMode.vicesMode).copyWith(
+                      backgroundColor: WidgetStateProperty.all(Colors.transparent),
+                      elevation: WidgetStateProperty.all(0),
+                      padding: WidgetStateProperty.all(
+                        const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                      ),
+                    ),
+                    onPressed: () {
+                      context.push('/edit-profile');
+                    },
+                    icon: Icon(
+                      Icons.edit_outlined,
+                      size: 20,
+                      color: TugColors.getPrimaryColor(isViceMode),
+                    ),
+                    label: Text(
+                      'customize profile',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: TugColors.getPrimaryColor(isViceMode),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         );
       },
@@ -659,40 +1002,80 @@ class _ProfileScreenState extends State<ProfileScreen> {
     required String title,
     required List<Widget> items,
   }) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final isViceMode = _currentMode == AppMode.vicesMode;
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.only(
-            left: 16,
+            left: 24,
             right: 16,
-            top: 24,
-            bottom: 8,
+            top: 32,
+            bottom: 12,
           ),
-          child: Text(
-            title,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey.shade600,
-            ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: isViceMode
+                        ? [TugColors.viceGreen.withValues(alpha: 0.2), TugColors.viceGreenLight.withValues(alpha: 0.1)]
+                        : [TugColors.primaryPurple.withValues(alpha: 0.2), TugColors.primaryPurpleLight.withValues(alpha: 0.1)],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  title.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: TugColors.getPrimaryColor(isViceMode),
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
-            color: Theme.of(context).cardColor,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Theme.of(context).cardColor,
+                Theme.of(context).cardColor.withValues(alpha: 0.8),
+              ],
+            ),
+            border: Border.all(
+              color: isDarkMode
+                  ? TugColors.darkSurfaceVariant.withValues(alpha: 0.3)
+                  : TugColors.lightSurfaceVariant.withValues(alpha: 0.5),
+              width: 1,
+            ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.05),
-                blurRadius: 4,
+                color: TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.05),
+                blurRadius: 20,
+                offset: const Offset(0, 4),
+              ),
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDarkMode ? 0.2 : 0.1),
+                blurRadius: 10,
                 offset: const Offset(0, 2),
               ),
             ],
           ),
-          child: Column(
-            children: items,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Column(
+              children: items,
+            ),
           ),
         ),
       ],
@@ -705,50 +1088,86 @@ class _ProfileScreenState extends State<ProfileScreen> {
     String? subtitle,
     required VoidCallback onTap,
   }) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final isViceMode = _currentMode == AppMode.vicesMode;
+    
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(
-          vertical: 16,
-          horizontal: 16,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          color: Colors.transparent,
         ),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              color: TugColors.getPrimaryColor(_currentMode == AppMode.vicesMode),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            vertical: 18,
+            horizontal: 20,
+          ),
+          child: Row(
+            children: [
+              // Enhanced icon with background
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: isViceMode
+                        ? [TugColors.viceGreen.withValues(alpha: 0.15), TugColors.viceGreenLight.withValues(alpha: 0.05)]
+                        : [TugColors.primaryPurple.withValues(alpha: 0.15), TugColors.primaryPurpleLight.withValues(alpha: 0.05)],
                   ),
-                  if (subtitle != null) ...[
-                    const SizedBox(height: 4),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  color: TugColors.getPrimaryColor(isViceMode),
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Text(
-                      subtitle,
+                      title,
                       style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey.shade600,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: isDarkMode ? TugColors.darkTextPrimary : TugColors.lightTextPrimary,
                       ),
                     ),
+                    if (subtitle != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ],
                   ],
-                ],
+                ),
               ),
-            ),
-            const Icon(
-              Icons.chevron_right,
-              color: Colors.grey,
-            ),
-          ],
+              // Enhanced chevron
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: isDarkMode
+                      ? TugColors.darkSurfaceVariant.withValues(alpha: 0.3)
+                      : TugColors.lightSurfaceVariant.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.chevron_right,
+                  color: TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.7),
+                  size: 20,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -1,8 +1,176 @@
-// Enhanced decorations.dart with modern UI elements
+// Enhanced decorations.dart with modern UI elements and premium styling patterns
 import 'package:flutter/material.dart';
 import 'colors.dart';
 
 class TugDecorations {
+  // Premium hero container with enhanced gradients and glow effects
+  static BoxDecoration heroContainer({
+    bool isDark = false,
+    bool isViceMode = false,
+  }) => BoxDecoration(
+    borderRadius: BorderRadius.circular(24),
+    gradient: LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: isViceMode
+          ? [
+              TugColors.viceGreen.withValues(alpha: 0.1),
+              TugColors.viceGreenLight.withValues(alpha: 0.05),
+              TugColors.viceGreenDark.withValues(alpha: 0.15),
+            ]
+          : [
+              TugColors.primaryPurple.withValues(alpha: 0.1),
+              TugColors.primaryPurpleLight.withValues(alpha: 0.05),
+              TugColors.primaryPurpleDark.withValues(alpha: 0.15),
+            ],
+    ),
+    boxShadow: [
+      BoxShadow(
+        color: TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.1),
+        blurRadius: 20,
+        offset: const Offset(0, 8),
+      ),
+    ],
+  );
+
+  // Enhanced section header with gradient background
+  static BoxDecoration sectionHeaderDecoration({
+    bool isDark = false,
+    bool isViceMode = false,
+  }) => BoxDecoration(
+    gradient: LinearGradient(
+      colors: isViceMode
+          ? [TugColors.viceGreen.withValues(alpha: 0.2), TugColors.viceGreenLight.withValues(alpha: 0.1)]
+          : [TugColors.primaryPurple.withValues(alpha: 0.2), TugColors.primaryPurpleLight.withValues(alpha: 0.1)],
+    ),
+    borderRadius: BorderRadius.circular(12),
+  );
+
+  // Enhanced icon container decoration
+  static BoxDecoration iconContainerDecoration({
+    bool isDark = false,
+    bool isViceMode = false,
+  }) => BoxDecoration(
+    gradient: LinearGradient(
+      colors: isViceMode
+          ? [TugColors.viceGreen.withValues(alpha: 0.15), TugColors.viceGreenLight.withValues(alpha: 0.05)]
+          : [TugColors.primaryPurple.withValues(alpha: 0.15), TugColors.primaryPurpleLight.withValues(alpha: 0.05)],
+    ),
+    borderRadius: BorderRadius.circular(12),
+  );
+
+  // Premium button decoration with gradients
+  static BoxDecoration premiumButtonDecoration({
+    bool isDark = false,
+    bool isViceMode = false,
+  }) => BoxDecoration(
+    borderRadius: BorderRadius.circular(16),
+    gradient: LinearGradient(
+      colors: isViceMode
+          ? [TugColors.viceGreen, TugColors.viceGreenDark]
+          : [TugColors.primaryPurple, TugColors.primaryPurpleDark],
+    ),
+    boxShadow: [
+      BoxShadow(
+        color: TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.3),
+        blurRadius: 12,
+        offset: const Offset(0, 4),
+      ),
+    ],
+  );
+
+  // Premium card with enhanced styling
+  static BoxDecoration premiumCard({
+    bool isDark = false,
+    bool isViceMode = false,
+    bool elevated = true,
+  }) => BoxDecoration(
+    borderRadius: BorderRadius.circular(20),
+    gradient: LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [
+        isDark ? TugColors.darkSurface : Colors.white,
+        (isDark ? TugColors.darkSurface : Colors.white).withValues(alpha: 0.8),
+      ],
+    ),
+    border: Border.all(
+      color: isDark
+          ? TugColors.darkSurfaceVariant.withValues(alpha: 0.3)
+          : TugColors.lightSurfaceVariant.withValues(alpha: 0.5),
+      width: 1,
+    ),
+    boxShadow: elevated ? [
+      BoxShadow(
+        color: TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.05),
+        blurRadius: 20,
+        offset: const Offset(0, 4),
+      ),
+      BoxShadow(
+        color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.1),
+        blurRadius: 10,
+        offset: const Offset(0, 2),
+      ),
+    ] : [],
+  );
+
+  // Enhanced app background with mode-specific gradients
+  static BoxDecoration enhancedAppBackground({
+    bool isDark = false,
+    bool isViceMode = false,
+  }) => BoxDecoration(
+    gradient: LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [
+        Colors.transparent,
+        TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.02),
+      ],
+    ),
+  );
+
+  // Enhanced avatar decoration with glow effects
+  static BoxDecoration enhancedAvatarDecoration({
+    bool isDark = false,
+    bool isViceMode = false,
+  }) => BoxDecoration(
+    shape: BoxShape.circle,
+    gradient: LinearGradient(
+      colors: isViceMode
+          ? [TugColors.viceGreen, TugColors.viceGreenLight]
+          : [TugColors.primaryPurple, TugColors.primaryPurpleLight],
+    ),
+    boxShadow: [
+      BoxShadow(
+        color: TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.4),
+        blurRadius: 16,
+        offset: const Offset(0, 4),
+      ),
+    ],
+  );
+
+  // Enhanced badge decoration with gradient and glow
+  static BoxDecoration enhancedBadgeDecoration({
+    Color color = TugColors.success,
+    double radius = 16,
+  }) => BoxDecoration(
+    gradient: LinearGradient(
+      colors: [color, Color.lerp(color, Colors.white, 0.2) ?? color],
+    ),
+    shape: radius > 0 ? BoxShape.rectangle : BoxShape.circle,
+    borderRadius: radius > 0 ? BorderRadius.circular(radius) : null,
+    border: Border.all(color: Colors.white, width: 1),
+    boxShadow: [
+      BoxShadow(
+        color: color.withValues(alpha: 0.4),
+        blurRadius: 6,
+        offset: const Offset(0, 2),
+      ),
+    ],
+  );
+
+  // Legacy decorations for backward compatibility
+  
   // Premium card with glass effect and subtle border
   static BoxDecoration cardDecoration({bool isDark = false, bool elevated = false}) => BoxDecoration(
     gradient: LinearGradient(
@@ -18,8 +186,8 @@ class TugDecorations {
         : [
             BoxShadow(
               color: isDark
-                  ? Colors.black.withOpacity(0.2)
-                  : const Color(0xFF9CADF3).withOpacity(0.08),
+                  ? Colors.black.withValues(alpha: 0.2)
+                  : const Color(0xFF9CADF3).withValues(alpha: 0.08),
               offset: const Offset(0, 2),
               blurRadius: 8,
               spreadRadius: 0,
@@ -27,8 +195,8 @@ class TugDecorations {
           ],
     border: Border.all(
       color: isDark
-          ? Colors.white.withOpacity(0.04)
-          : Colors.black.withOpacity(0.03),
+          ? Colors.white.withValues(alpha: 0.04)
+          : Colors.black.withValues(alpha: 0.03),
       width: 0.5,
     ),
   );
@@ -40,11 +208,11 @@ class TugDecorations {
       end: Alignment.bottomRight,
       colors: isDark
           ? [
-              TugColors.primaryPurple.withOpacity(0.15),
+              TugColors.primaryPurple.withValues(alpha: 0.15),
               TugColors.darkSurface,
             ]
           : [
-              TugColors.primaryPurpleLight.withOpacity(0.05),
+              TugColors.primaryPurpleLight.withValues(alpha: 0.05),
               Colors.white,
             ],
     ),
@@ -52,8 +220,8 @@ class TugDecorations {
     boxShadow: TugColors.getShadow(isDark),
     border: Border.all(
       color: isDark
-          ? TugColors.primaryPurple.withOpacity(0.2)
-          : TugColors.primaryPurple.withOpacity(0.1),
+          ? TugColors.primaryPurple.withValues(alpha: 0.2)
+          : TugColors.primaryPurple.withValues(alpha: 0.1),
       width: isDark ? 1 : 0.5,
     ),
   );
@@ -65,13 +233,13 @@ class TugDecorations {
     double radius = 12,
   }) => BoxDecoration(
     color: (isDark
-        ? color.withOpacity(0.15)
-        : color.withOpacity(0.08)),
+        ? color.withValues(alpha: 0.15)
+        : color.withValues(alpha: 0.08)),
     borderRadius: BorderRadius.circular(radius),
     border: Border.all(
       color: (isDark
-          ? color.withOpacity(0.3)
-          : color.withOpacity(0.2)),
+          ? color.withValues(alpha: 0.3)
+          : color.withValues(alpha: 0.2)),
       width: 1,
     ),
   );
@@ -98,8 +266,8 @@ class TugDecorations {
     border: Border(
       bottom: BorderSide(
         color: isDark
-            ? TugColors.primaryPurple.withOpacity(0.3)
-            : TugColors.primaryPurple.withOpacity(0.2),
+            ? TugColors.primaryPurple.withValues(alpha: 0.3)
+            : TugColors.primaryPurple.withValues(alpha: 0.2),
         width: 1,
       ),
     ),
@@ -112,16 +280,16 @@ class TugDecorations {
     double size = 40,
   }) => BoxDecoration(
     color: isDark
-        ? color.withOpacity(0.1)
-        : color.withOpacity(0.07),
+        ? color.withValues(alpha: 0.1)
+        : color.withValues(alpha: 0.07),
     shape: BoxShape.circle,
     border: Border.all(
-      color: color.withOpacity(isDark ? 0.3 : 0.2),
+      color: color.withValues(alpha: isDark ? 0.3 : 0.2),
       width: 1.5,
     ),
     boxShadow: [
       BoxShadow(
-        color: color.withOpacity(0.15),
+        color: color.withValues(alpha: 0.15),
         blurRadius: 8,
         offset: const Offset(0, 2),
       ),
@@ -138,7 +306,7 @@ class TugDecorations {
     borderRadius: radius > 0 ? BorderRadius.circular(radius) : null,
     boxShadow: [
       BoxShadow(
-        color: color.withOpacity(0.3),
+        color: color.withValues(alpha: 0.3),
         blurRadius: 4,
         offset: const Offset(0, 1),
       ),
@@ -158,7 +326,7 @@ class TugDecorations {
     shape: BoxShape.circle,
     boxShadow: [
       BoxShadow(
-        color: TugColors.primaryPurple.withOpacity(0.3),
+        color: TugColors.primaryPurple.withValues(alpha: 0.3),
         blurRadius: 12,
         offset: const Offset(0, 3),
       ),
@@ -173,8 +341,8 @@ class TugDecorations {
     borderRadius: BorderRadius.circular(12),
     border: Border.all(
       color: isDark
-          ? Colors.white.withOpacity(0.05)
-          : Colors.black.withOpacity(0.03),
+          ? Colors.white.withValues(alpha: 0.05)
+          : Colors.black.withValues(alpha: 0.03),
       width: 0.5,
     ),
   );

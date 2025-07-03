@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import '../utils/theme/colors.dart';
+import '../utils/theme/decorations.dart';
+import '../utils/quantum_effects.dart';
 import '../services/app_mode_service.dart';
 
 class MainLayout extends StatefulWidget {
@@ -95,44 +97,62 @@ class _MainLayoutState extends State<MainLayout> {
       child: Scaffold(
         extendBody: true, // Important for the transparent bottom nav effect
         resizeToAvoidBottomInset: true, // Allow resizing when keyboard appears
-        body: Stack(
-          children: [
-            // Main content
-            widget.child,
-
-            // Bottom navigation overlay - allows for glass effect
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: _buildImmersiveBottomNav(
-                  context, navItems, isDarkMode, bottomPadding, isViceMode),
-            ),
-          ],
-        ),
-        floatingActionButton: Container(
-          height: 54,
-          width: 54,
+        body: Container(
           decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: TugColors.getPrimaryColor(isViceMode),
-            boxShadow: [
-              BoxShadow(
-                color: TugColors.getPrimaryColor(isViceMode).withOpacity(0.3),
-                blurRadius: 8,
-                spreadRadius: 1,
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                TugColors.getBackgroundColor(isDarkMode, isViceMode),
+                TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.02),
+                TugColors.getBackgroundColor(isDarkMode, isViceMode),
+              ],
+              stops: const [0.0, 0.3, 1.0],
+            ),
+          ),
+          child: Stack(
+            children: [
+              // Main content
+              widget.child,
+
+              // Bottom navigation overlay - allows for glass effect
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: _buildImmersiveBottomNav(
+                    context, navItems, isDarkMode, bottomPadding, isViceMode),
               ),
             ],
           ),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () => _showAddActionSheet(context, isViceMode),
-              borderRadius: BorderRadius.circular(27),
-              child: const Icon(
-                Icons.add_rounded,
-                color: Colors.white,
-                size: 28,
+        ),
+        floatingActionButton: QuantumEffects.floating(
+          offset: 8,
+          child: QuantumEffects.quantumBorder(
+            glowColor: TugColors.getPrimaryColor(isViceMode),
+            intensity: 0.8,
+            child: Container(
+              height: 56,
+              width: 56,
+              decoration: TugDecorations.premiumButtonDecoration(
+                isDark: isDarkMode,
+                isViceMode: isViceMode,
+              ),
+              child: Material(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(28),
+                child: InkWell(
+                  onTap: () => _showAddActionSheet(context, isViceMode),
+                  borderRadius: BorderRadius.circular(28),
+                  child: QuantumEffects.cosmicBreath(
+                    intensity: 0.05,
+                    child: const Icon(
+                      Icons.add_rounded,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                  ),
+                ),
               ),
             ),
           ),
@@ -149,13 +169,30 @@ class _MainLayoutState extends State<MainLayout> {
       bool isDarkMode,
       double bottomPadding,
       bool isViceMode) {
-    return Material(
-      elevation: 4,
-      color: TugColors.getSurfaceColor(isDarkMode, isViceMode),
+    return QuantumEffects.glassContainer(
+      isDark: isDarkMode,
+      blur: 20,
+      opacity: 0.8,
+      borderRadius: BorderRadius.zero,
       child: Container(
-        height:
-            40 + bottomPadding, // Further reduced height to prevent overflow
-        padding: EdgeInsets.only(bottom: bottomPadding),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              TugColors.getSurfaceColor(isDarkMode, isViceMode),
+              TugColors.getSurfaceColor(isDarkMode, isViceMode).withValues(alpha: 0.9),
+            ],
+          ),
+          border: Border(
+            top: BorderSide(
+              color: TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.1),
+              width: 1,
+            ),
+          ),
+        ),
+        height: 44 + bottomPadding,
+        padding: EdgeInsets.only(bottom: bottomPadding, top: 4),
         child: Row(
           children: [
             // Create equal width nav items with flexible spacing
@@ -299,7 +336,7 @@ class _MainLayoutState extends State<MainLayout> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: TugColors.getPrimaryColor(isViceMode).withAlpha(50),
+          color: TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.2),
           width: 1,
         ),
       ),
@@ -385,8 +422,8 @@ class _MainLayoutState extends State<MainLayout> {
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
           color: isDarkMode
-              ? Colors.white.withOpacity(0.1)
-              : Colors.black.withOpacity(0.05),
+              ? Colors.white.withValues(alpha: 0.1)
+              : Colors.black.withValues(alpha: 0.05),
           width: 1,
         ),
       ),
@@ -480,31 +517,61 @@ class _MainLayoutState extends State<MainLayout> {
           context.go(path);
         }
       },
-      child: SizedBox(
-        height: 40, // Match container height
-        width: double.infinity,
-        child: Row(
-          // Changed to Row instead of Column to avoid overflow
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Simple icon with no special effects
-            Icon(
-              isSelected ? selectedIcon : icon,
-              color: isSelected ? activeColor : inactiveColor,
-              size: 20, // Reduced size
-            ),
-            const SizedBox(width: 4),
-            // Simple text beside icon
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11, // Smaller font
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                color: isSelected ? activeColor : inactiveColor,
+      child: QuantumEffects.floating(
+        offset: isSelected ? 3 : 1,
+        child: Container(
+          height: 40,
+          constraints: const BoxConstraints(minWidth: 0),
+          decoration: isSelected
+              ? TugDecorations.iconContainerDecoration(
+                  isDark: isDarkMode,
+                  isViceMode: isViceMode,
+                )
+              : null,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Enhanced icon with quantum effects for selected state
+              isSelected
+                  ? QuantumEffects.cosmicBreath(
+                      intensity: 0.05,
+                      child: Icon(
+                        selectedIcon,
+                        color: activeColor,
+                        size: 20,
+                        shadows: TugColors.getNeonGlow(
+                          activeColor,
+                          intensity: 0.3,
+                        ).map((s) => Shadow(
+                          color: s.color,
+                          blurRadius: s.blurRadius / 2,
+                          offset: Offset(s.offset.dx, s.offset.dy),
+                        )).toList(),
+                      ),
+                    )
+                  : Icon(
+                      icon,
+                      color: inactiveColor,
+                      size: 18,
+                    ),
+              const SizedBox(width: 3),
+              // Enhanced text with flexible layout
+              Flexible(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: isSelected ? 11 : 10,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                    color: isSelected ? activeColor : inactiveColor,
+                    letterSpacing: isSelected ? 0.2 : 0,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                ),
               ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

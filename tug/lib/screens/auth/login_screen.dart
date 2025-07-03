@@ -6,6 +6,8 @@ import 'package:go_router/go_router.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../utils/theme/colors.dart';
 import '../../utils/theme/buttons.dart';
+import '../../utils/theme/decorations.dart';
+import '../../utils/quantum_effects.dart';
 import '../../utils/loading_messages.dart';
 import '../../widgets/common/tug_text_field.dart';
 
@@ -76,52 +78,108 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       },
       child: Scaffold(
-        body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Form(
+        body: QuantumEffects.quantumParticleField(
+          isDark: Theme.of(context).brightness == Brightness.dark,
+          particleCount: 15,
+          child: Container(
+            decoration: TugDecorations.appBackground(
+              isDark: Theme.of(context).brightness == Brightness.dark,
+            ),
+            child: SafeArea(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Form(
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 32),
-                  Text(
-                    'welcome back',
-                    style: Theme.of(context).textTheme.displayLarge,
+                  
+                  // Enhanced welcome header with quantum effects
+                  QuantumEffects.cosmicBreath(
+                    intensity: 0.08,
+                    child: QuantumEffects.gradientText(
+                      'welcome back',
+                      style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2,
+                      ) ?? const TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 1.2,
+                      ),
+                      colors: [TugColors.primaryPurple, TugColors.primaryPurpleLight, TugColors.primaryPurpleDark],
+                    ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'sign in to continue',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: TugColors.lightTextSecondary,
-                        ),
+                  const SizedBox(height: 12),
+                  QuantumEffects.floating(
+                    offset: 3,
+                    child: Text(
+                      'sign in to continue',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? TugColors.darkTextSecondary
+                            : TugColors.lightTextSecondary,
+                        fontSize: 16,
+                      ),
+                    ),
                   ),
 
-                  // Error message display
+                  // Enhanced error message display
                   if (_errorMessage != null) ...[
                     const SizedBox(height: 24),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: TugColors.error.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.error_outline,
-                            color: TugColors.error,
+                    QuantumEffects.quantumBorder(
+                      glowColor: TugColors.error,
+                      intensity: 0.6,
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              TugColors.error.withValues(alpha: 0.1),
+                              TugColors.error.withValues(alpha: 0.05),
+                            ],
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              _errorMessage!,
-                              style: TextStyle(
-                                color: TugColors.error,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: TugColors.error.withValues(alpha: 0.3),
+                            width: 1,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            QuantumEffects.cosmicBreath(
+                              intensity: 0.1,
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: RadialGradient(
+                                    colors: [
+                                      TugColors.error.withValues(alpha: 0.3),
+                                      TugColors.error.withValues(alpha: 0.1),
+                                    ],
+                                  ),
+                                ),
+                                child: const Icon(
+                                  Icons.error_outline,
+                                  color: TugColors.error,
+                                  size: 20,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Text(
+                                _errorMessage!,
+                                style: TextStyle(
+                                  color: TugColors.error,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ],
@@ -169,37 +227,65 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: const Text('forgot password?'),
                     ),
                   ),
-                  const SizedBox(height: 24),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      style: TugButtons.primaryButtonStyle(isDark: Theme.of(context).brightness == Brightness.dark),
-                      onPressed: _isLoading ? null : _handleLogin,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4),
+                  const SizedBox(height: 32),
+                  
+                  // Enhanced login button with premium styling
+                  QuantumEffects.floating(
+                    offset: 2,
+                    child: Container(
+                      width: double.infinity,
+                      decoration: TugDecorations.premiumButtonDecoration(
+                        isDark: Theme.of(context).brightness == Brightness.dark,
+                        isViceMode: false,
+                      ),
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          foregroundColor: Colors.white,
+                          shadowColor: Colors.transparent,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        onPressed: _isLoading ? null : _handleLogin,
                         child: _isLoading
                             ? Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                      color: Colors.white,
+                                  QuantumEffects.holographicShimmer(
+                                    child: const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
                                     ),
                                   ),
                                   const SizedBox(width: 12),
                                   Flexible(
                                     child: Text(
                                       _loadingMessage,
-                                      style: const TextStyle(color: Colors.white),
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
                                 ],
                               )
-                            : const Text('sign in'),
+                            : const Text(
+                                'sign in',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
                       ),
                     ),
                   ),
@@ -237,6 +323,8 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ),
+      ),
+    ),
       ),
     );
   }

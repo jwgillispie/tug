@@ -13,6 +13,8 @@ import 'package:tug/widgets/values/first_value_celebration.dart';
 import '../../models/value_model.dart';
 import '../../utils/theme/colors.dart';
 import '../../utils/theme/buttons.dart';
+import '../../utils/theme/decorations.dart';
+import '../../services/app_mode_service.dart';
 import '../../widgets/common/tug_text_field.dart';
 
 class ValuesInputScreen extends StatefulWidget {

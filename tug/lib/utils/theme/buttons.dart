@@ -5,12 +5,12 @@ import 'text_styles.dart';
 
 class TugButtons {
   // Primary Button - bold design with gradient and elevation effects
-  static ButtonStyle primaryButtonStyle({bool isDark = false}) => ElevatedButton.styleFrom(
+  static ButtonStyle primaryButtonStyle({bool isDark = false, bool isViceMode = false}) => ElevatedButton.styleFrom(
     foregroundColor: Colors.white,
     textStyle: TugTextStyles.button,
     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
     elevation: 4,
-    shadowColor: TugColors.primaryPurple.withOpacity(0.4),
+    shadowColor: TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.4),
     minimumSize: const Size(88, 48), // Ensure touch-friendly size
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(14),
@@ -22,13 +22,16 @@ class TugButtons {
             ? TugColors.darkSurfaceVariant.withOpacity(0.6)
             : TugColors.lightSurfaceVariant.withOpacity(0.7);
       }
+      final primaryColor = TugColors.getPrimaryColor(isViceMode);
+      final primaryDarkColor = isViceMode ? TugColors.viceGreenDark : TugColors.primaryPurpleDark;
+      
       if (states.contains(WidgetState.pressed)) {
-        return TugColors.primaryPurpleDark;
+        return primaryDarkColor;
       }
       if (states.contains(WidgetState.hovered)) {
-        return Color.lerp(TugColors.primaryPurple, TugColors.primaryPurpleDark, 0.3) ?? TugColors.primaryPurple;
+        return Color.lerp(primaryColor, primaryDarkColor, 0.3) ?? primaryColor;
       }
-      return TugColors.primaryPurple;
+      return primaryColor;
     }),
     overlayColor: WidgetStateProperty.resolveWith<Color>((states) {
       return Colors.white.withOpacity(0.12);
@@ -63,8 +66,10 @@ class TugButtons {
   );
 
   // Secondary Button - refined outline with improved hover and focus states
-  static ButtonStyle secondaryButtonStyle({bool isDark = false}) => OutlinedButton.styleFrom(
-    foregroundColor: isDark ? TugColors.primaryPurpleLight : TugColors.primaryPurple,
+  static ButtonStyle secondaryButtonStyle({bool isDark = false, bool isViceMode = false}) => OutlinedButton.styleFrom(
+    foregroundColor: isDark 
+        ? (isViceMode ? TugColors.viceGreen : TugColors.primaryPurpleLight)
+        : TugColors.getPrimaryColor(isViceMode),
     textStyle: TugTextStyles.button,
     padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
     minimumSize: const Size(88, 48), // Ensure touch-friendly size
@@ -72,27 +77,37 @@ class TugButtons {
       borderRadius: BorderRadius.circular(14),
     ),
     side: BorderSide(
-      color: isDark ? TugColors.primaryPurpleLight : TugColors.primaryPurple,
+      color: isDark 
+          ? (isViceMode ? TugColors.viceGreen : TugColors.primaryPurpleLight)
+          : TugColors.getPrimaryColor(isViceMode),
       width: 1.5
     ),
     backgroundColor: Colors.transparent,
   ).copyWith(
     overlayColor: WidgetStateProperty.resolveWith<Color>((states) {
-      final baseColor = isDark ? TugColors.primaryPurpleLight : TugColors.primaryPurple;
+      final baseColor = isDark 
+          ? (isViceMode ? TugColors.viceGreen : TugColors.primaryPurpleLight)
+          : TugColors.getPrimaryColor(isViceMode);
       if (states.contains(WidgetState.pressed)) {
-        return baseColor.withOpacity(0.12);
+        return baseColor.withValues(alpha: 0.12);
       }
-      return baseColor.withOpacity(0.08);
+      return baseColor.withValues(alpha: 0.08);
     }),
     backgroundColor: WidgetStateProperty.resolveWith<Color>((states) {
       if (states.contains(WidgetState.disabled)) {
         return Colors.transparent;
       }
       if (states.contains(WidgetState.hovered)) {
-        return (isDark ? TugColors.primaryPurpleLight : TugColors.primaryPurple).withOpacity(0.05);
+        final baseColor = isDark 
+            ? (isViceMode ? TugColors.viceGreen : TugColors.primaryPurpleLight)
+            : TugColors.getPrimaryColor(isViceMode);
+        return baseColor.withValues(alpha: 0.05);
       }
       if (states.contains(WidgetState.pressed)) {
-        return (isDark ? TugColors.primaryPurpleLight : TugColors.primaryPurple).withOpacity(0.1);
+        final baseColor = isDark 
+            ? (isViceMode ? TugColors.viceGreen : TugColors.primaryPurpleLight)
+            : TugColors.getPrimaryColor(isViceMode);
+        return baseColor.withValues(alpha: 0.1);
       }
       return Colors.transparent;
     }),
@@ -105,7 +120,9 @@ class TugButtons {
           width: 1.5,
         );
       }
-      final baseColor = isDark ? TugColors.primaryPurpleLight : TugColors.primaryPurple;
+      final baseColor = isDark 
+          ? (isViceMode ? TugColors.viceGreen : TugColors.primaryPurpleLight)
+          : TugColors.getPrimaryColor(isViceMode);
       if (states.contains(WidgetState.pressed)) {
         return BorderSide(color: baseColor, width: 2.0);
       }
@@ -120,9 +137,11 @@ class TugButtons {
             ? TugColors.darkTextSecondary.withOpacity(0.5)
             : TugColors.lightTextSecondary.withOpacity(0.5);
       }
-      final baseColor = isDark ? TugColors.primaryPurpleLight : TugColors.primaryPurple;
+      final baseColor = isDark 
+          ? (isViceMode ? TugColors.viceGreen : TugColors.primaryPurpleLight)
+          : TugColors.getPrimaryColor(isViceMode);
       if (states.contains(WidgetState.pressed)) {
-        return baseColor.withOpacity(0.9);
+        return baseColor.withValues(alpha: 0.9);
       }
       return baseColor;
     }),

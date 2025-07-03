@@ -8,6 +8,7 @@ import 'package:tug/services/app_mode_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:tug/services/user_service.dart';
 import 'package:tug/widgets/common/tug_text_field.dart';
+import 'package:tug/utils/quantum_effects.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'dart:convert';
@@ -246,11 +247,48 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Profile'),
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: isViceMode
+                  ? [TugColors.viceGreen.withValues(alpha: 0.1), TugColors.viceGreenLight.withValues(alpha: 0.05)]
+                  : [TugColors.primaryPurple.withValues(alpha: 0.1), TugColors.primaryPurpleLight.withValues(alpha: 0.05)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        title: QuantumEffects.gradientText(
+          'edit profile',
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.5,
+          ),
+          colors: isViceMode
+              ? [TugColors.viceGreen, TugColors.viceGreenLight]
+              : [TugColors.primaryPurple, TugColors.primaryPurpleLight],
+        ),
+        iconTheme: IconThemeData(
+          color: TugColors.getPrimaryColor(isViceMode),
+        ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Form(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Colors.transparent,
+              TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.02),
+            ],
+          ),
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -260,7 +298,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: TugColors.error.withOpacity(0.1),
+                    color: TugColors.error.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -289,7 +327,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: TugColors.success.withOpacity(0.1),
+                    color: TugColors.success.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Row(
@@ -313,63 +351,146 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 const SizedBox(height: 24),
               ],
 
-              // Profile picture with upload functionality
+              // Enhanced profile picture with upload functionality
               Center(
                 child: BlocBuilder<AuthBloc, AuthState>(
                   builder: (context, state) {
-                    return Column(
-                      children: [
-                        Stack(
-                          children: [
-                            Container(
-                              width: 100,
-                              height: 100,
-                              decoration: BoxDecoration(
-                                color: TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.2),
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: TugColors.getPrimaryColor(isViceMode),
-                                  width: 2,
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(20),
+                        gradient: LinearGradient(
+                          colors: [
+                            TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.05),
+                            TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.02),
+                          ],
+                        ),
+                        border: Border.all(
+                          color: TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.2),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Stack(
+                            children: [
+                              // Glow effect
+                              Container(
+                                width: 120,
+                                height: 120,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: RadialGradient(
+                                    colors: [
+                                      TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.2),
+                                      Colors.transparent,
+                                    ],
+                                  ),
                                 ),
                               ),
-                              child: CircleAvatar(
-                                radius: 48,
-                                backgroundColor: TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.2),
-                                backgroundImage: state is Authenticated && state.user.photoURL != null 
-                                    ? NetworkImage(state.user.photoURL!) 
-                                    : null,
-                                child: !(state is Authenticated && state.user.photoURL != null)
-                                    ? Icon(
-                                        Icons.person,
-                                        size: 50,
-                                        color: TugColors.getPrimaryColor(isViceMode),
-                                      )
-                                    : null,
-                              ),
-                            ),
-                            if (_isUploadingProfilePicture)
-                              Positioned.fill(
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.5),
-                                    shape: BoxShape.circle,
+                              // Main avatar
+                              Container(
+                                width: 120,
+                                height: 120,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: LinearGradient(
+                                    colors: isViceMode
+                                        ? [TugColors.viceGreen, TugColors.viceGreenLight]
+                                        : [TugColors.primaryPurple, TugColors.primaryPurpleLight],
                                   ),
-                                  child: const Center(
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.3),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                padding: const EdgeInsets.all(3),
+                                child: CircleAvatar(
+                                  radius: 57,
+                                  backgroundColor: Colors.white,
+                                  child: CircleAvatar(
+                                    radius: 55,
+                                    backgroundColor: TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.2),
+                                    backgroundImage: state is Authenticated && state.user.photoURL != null 
+                                        ? NetworkImage(state.user.photoURL!) 
+                                        : null,
+                                    child: !(state is Authenticated && state.user.photoURL != null)
+                                        ? Icon(
+                                            Icons.person,
+                                            size: 50,
+                                            color: TugColors.getPrimaryColor(isViceMode),
+                                          )
+                                        : null,
+                                  ),
+                                ),
+                              ),
+                              if (_isUploadingProfilePicture)
+                                Positioned.fill(
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withValues(alpha: 0.5),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Center(
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const CircularProgressIndicator(
+                                            color: Colors.white,
+                                            strokeWidth: 3,
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            'uploading...',
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Container(
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              gradient: LinearGradient(
+                                colors: [
+                                  TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.1),
+                                  TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.05),
+                                ],
                               ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        TextButton(
-                          onPressed: _isUploadingProfilePicture ? null : _showImageSourceDialog,
-                          child: Text(_isUploadingProfilePicture ? 'uploading...' : 'change profile picture'),
-                        ),
-                      ],
+                            ),
+                            child: TextButton.icon(
+                              onPressed: _isUploadingProfilePicture ? null : _showImageSourceDialog,
+                              icon: Icon(
+                                Icons.camera_alt_outlined,
+                                color: TugColors.getPrimaryColor(isViceMode),
+                                size: 20,
+                              ),
+                              label: Text(
+                                _isUploadingProfilePicture ? 'uploading...' : 'change profile picture',
+                                style: TextStyle(
+                                  color: TugColors.getPrimaryColor(isViceMode),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                                backgroundColor: Colors.transparent,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     );
                   },
                 ),
@@ -415,28 +536,61 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               const SizedBox(height: 32),
 
-              // Save Button
-              SizedBox(
+              // Enhanced Save Button
+              Container(
                 width: double.infinity,
-                child: ElevatedButton(
-                  style: TugButtons.primaryButtonStyle(isDark: Theme.of(context).brightness == Brightness.dark),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(16),
+                  gradient: LinearGradient(
+                    colors: isViceMode
+                        ? [TugColors.viceGreen, TugColors.viceGreenDark]
+                        : [TugColors.primaryPurple, TugColors.primaryPurpleDark],
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    foregroundColor: Colors.white,
+                    shadowColor: Colors.transparent,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
                   onPressed: _isLoading ? null : _handleSave,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: _isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text('Save Changes'),
+                  icon: _isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Icon(
+                          Icons.save_outlined,
+                          color: Colors.white,
+                        ),
+                  label: Text(
+                    _isLoading ? 'saving...' : 'save changes',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ),
             ],
+            ),
           ),
         ),
       ),
