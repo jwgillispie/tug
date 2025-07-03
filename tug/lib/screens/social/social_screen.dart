@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../utils/theme/colors.dart';
+import '../../utils/quantum_effects.dart';
 import '../../services/app_mode_service.dart';
 import '../../services/social_service.dart';
 import '../../models/social_models.dart';
@@ -241,13 +242,74 @@ class _SocialScreenState extends State<SocialScreen> {
 
     return Scaffold(
       backgroundColor: TugColors.getBackgroundColor(isDarkMode, isViceMode),
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: isViceMode
+                  ? (isDarkMode 
+                      ? [TugColors.darkBackground, TugColors.viceGreenDark, TugColors.viceGreen]
+                      : [TugColors.lightBackground, TugColors.viceGreen.withAlpha(20)])
+                  : (isDarkMode 
+                      ? [TugColors.darkBackground, TugColors.primaryPurpleDark, TugColors.primaryPurple]
+                      : [TugColors.lightBackground, TugColors.primaryPurple.withAlpha(20)]),
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        title: QuantumEffects.holographicShimmer(
+          child: QuantumEffects.gradientText(
+            'social',
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.2,
+            ),
+            colors: isViceMode
+                ? (isDarkMode ? [TugColors.viceGreen, TugColors.viceGreenLight, TugColors.viceGreenDark] : [TugColors.viceGreen, TugColors.viceGreenLight])
+                : (isDarkMode ? [TugColors.primaryPurple, TugColors.primaryPurpleLight, TugColors.primaryPurpleDark] : [TugColors.primaryPurple, TugColors.primaryPurpleLight]),
+          ),
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(
+              Icons.people,
+              color: isViceMode
+                  ? (isDarkMode ? TugColors.viceGreenLight : TugColors.viceGreen)
+                  : (isDarkMode ? TugColors.primaryPurpleLight : TugColors.primaryPurple),
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const FriendsScreen()),
+              );
+            },
+          ),
+          IconButton(
+            icon: Icon(
+              Icons.person_add,
+              color: isViceMode
+                  ? (isDarkMode ? TugColors.viceGreenLight : TugColors.viceGreen)
+                  : (isDarkMode ? TugColors.primaryPurpleLight : TugColors.primaryPurple),
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const UserSearchScreen()),
+              );
+            },
+          ),
+        ],
+      ),
       body: RefreshIndicator(
         onRefresh: _refreshSocialFeed,
         color: TugColors.getPrimaryColor(isViceMode),
-        child: CustomScrollView(
+        child: ListView(
           controller: _scrollController,
-          slivers: [
-            _buildAppBar(isDarkMode, isViceMode),
+          children: [
             _buildModeInfoSection(isDarkMode, isViceMode),
             _buildFeedContent(isDarkMode, isViceMode),
           ],
@@ -256,90 +318,9 @@ class _SocialScreenState extends State<SocialScreen> {
     );
   }
 
-  Widget _buildAppBar(bool isDarkMode, bool isViceMode) {
-    return SliverAppBar(
-      expandedHeight: 120,
-      floating: false,
-      pinned: true,
-      backgroundColor: TugColors.getBackgroundColor(isDarkMode, isViceMode),
-      elevation: 0,
-      flexibleSpace: FlexibleSpaceBar(
-        background: Container(
-          decoration: BoxDecoration(
-            gradient: TugColors.getModeGradient(isViceMode),
-          ),
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Text(
-                    'social feed',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'connect with your community',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white.withValues(alpha: 0.9),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-              ),
-            ),
-          ),
-        ),
-
-        centerTitle: false,
-        titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
-      ),
-      actions: [
-        IconButton(
-          icon: Icon(
-            Icons.people,
-            color: TugColors.getTextColor(isDarkMode, isViceMode),
-          ),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const FriendsScreen()),
-            );
-          },
-        ),
-        IconButton(
-          icon: Icon(
-            Icons.person_add,
-            color: TugColors.getTextColor(isDarkMode, isViceMode),
-          ),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const UserSearchScreen()),
-            );
-          },
-        ),
-        IconButton(
-          icon: Icon(
-            Icons.refresh,
-            color: TugColors.getTextColor(isDarkMode, isViceMode),
-          ),
-          onPressed: _loadSocialFeed,
-        ),
-      ],
-    );
-  }
 
   Widget _buildModeInfoSection(bool isDarkMode, bool isViceMode) {
-    return SliverToBoxAdapter(
-      child: Container(
+    return Container(
         margin: const EdgeInsets.all(16),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -407,27 +388,23 @@ class _SocialScreenState extends State<SocialScreen> {
             ),
           ],
         ),
-      ),
     );
   }
 
   Widget _buildFeedContent(bool isDarkMode, bool isViceMode) {
     if (_isLoading && _posts.isEmpty) {
-      return SliverToBoxAdapter(
-        child: Container(
-          height: 200,
-          child: Center(
-            child: CircularProgressIndicator(
-              color: TugColors.getPrimaryColor(isViceMode),
-            ),
+      return SizedBox(
+        height: 200,
+        child: Center(
+          child: CircularProgressIndicator(
+            color: TugColors.getPrimaryColor(isViceMode),
           ),
         ),
       );
     }
 
     if (_posts.isEmpty) {
-      return SliverToBoxAdapter(
-        child: Container(
+      return Container(
           margin: const EdgeInsets.all(16),
           padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
@@ -475,18 +452,11 @@ class _SocialScreenState extends State<SocialScreen> {
               ),
             ],
           ),
-        ),
       );
     }
 
-    return SliverList(
-      delegate: SliverChildBuilderDelegate(
-        (context, index) {
-          final post = _posts[index];
-          return _buildFeedItem(post, isDarkMode, isViceMode);
-        },
-        childCount: _posts.length,
-      ),
+    return Column(
+      children: _posts.map((post) => _buildFeedItem(post, isDarkMode, isViceMode)).toList(),
     );
   }
 
