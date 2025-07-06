@@ -35,10 +35,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _loadingAchievements = false;
   int _unlockedAchievements = 0;
   bool _isUploadingProfilePicture = false;
+  String? _userBio;
   final AchievementService _achievementService = AchievementService();
   final NotificationService _notificationService = NotificationService();
   final ImagePicker _imagePicker = ImagePicker();
   final AppModeService _appModeService = AppModeService();
+  final UserService _userService = UserService();
   
   AppMode _currentMode = AppMode.valuesMode;
   StreamSubscription<AppMode>? _modeSubscription;
@@ -58,6 +60,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     // Load notification preferences
     _loadNotificationPreferences();
+
+    // Load user bio
+    _loadUserBio();
   }
 
   void _initializeMode() async {
@@ -84,6 +89,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _notificationsEnabled = enabled;
         _notificationTime = time;
       });
+    }
+  }
+
+  Future<void> _loadUserBio() async {
+    try {
+      final userData = await _userService.getCurrentUserProfile();
+      if (mounted) {
+        setState(() {
+          _userBio = userData.bio;
+        });
+      }
+    } catch (e) {
+      debugPrint('Failed to load user bio: $e');
     }
   }
 
@@ -659,7 +677,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             const Padding(
               padding: EdgeInsets.only(bottom: 24.0),
               child: Text(
-                'tug v2.0.2',
+                'tug v3.0.0',
                 style: TextStyle(
                   color: Colors.grey,
                   fontSize: 12,
@@ -950,6 +968,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                   ),
                 ),
+                
+                // Bio section
+                if (_userBio != null && _userBio!.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: isDarkMode
+                          ? TugColors.darkSurfaceVariant.withValues(alpha: 0.3)
+                          : TugColors.lightSurfaceVariant.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.15),
+                      ),
+                    ),
+                    child: Text(
+                      _userBio!,
+                      style: TextStyle(
+                        fontSize: 14,
+                        height: 1.4,
+                        color: isDarkMode
+                            ? TugColors.darkTextPrimary
+                            : TugColors.lightTextPrimary,
+                        fontWeight: FontWeight.w400,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
                 const SizedBox(height: 24),
                 
                 // Premium edit profile button

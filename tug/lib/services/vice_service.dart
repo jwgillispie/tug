@@ -38,15 +38,38 @@ class ViceService {
 
   // Vice Management
 
-  Future<List<ViceModel>> getVices() async {
+  Future<List<ViceModel>> getVices({bool forceRefresh = false, bool useCache = true}) async {
     try {
-      _logger.i('ViceService: Getting vices');
+      // Check cache first if not forcing refresh and cache is enabled
+      if (!forceRefresh && useCache) {
+        final cachedVices = await _getCachedVices();
+        final cacheAge = await _getCacheAge('vices');
+        
+        // Use cache if it's less than 5 minutes old and not empty
+        if (cachedVices.isNotEmpty && cacheAge != null && cacheAge.inMinutes < 5) {
+          _logger.i('ViceService: Returning cached vices (age: ${cacheAge.inMinutes} minutes)');
+          
+          // Refresh in background if cache is getting old (>2 minutes)
+          if (cacheAge.inMinutes > 2) {
+            _backgroundRefreshVices();
+          }
+          
+          return cachedVices;
+        }
+      }
+      
+      _logger.i('ViceService: Fetching vices from server (forceRefresh: $forceRefresh)');
       
       final response = await _dio.get('/api/v1/vices/');
       
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data['vices'] ?? [];
-        return data.map((json) => ViceModel.fromJson(json)).toList();
+        final vices = data.map((json) => ViceModel.fromJson(json)).toList();
+        
+        // Cache the fresh data
+        await _cacheVices(vices);
+        
+        return vices;
       } else {
         throw Exception('Failed to load vices: ${response.statusCode}');
       }
@@ -297,6 +320,76 @@ class ViceService {
       await prefs.setString('cached_vices', cachedVicesJson);
     } catch (e) {
       _logger.e('ViceService: Error removing vice from cache: $e');
+    }
+  }
+
+  // Enhanced cache methods for better performance
+
+  Future<void> _cacheVices(List<ViceModel> vices) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final vicesJson = json.encode(vices.map((v) => v.toJson()).toList());
+      await prefs.setString('cached_vices', vicesJson);
+      
+      // Store cache timestamp
+      await prefs.setInt('cached_vices_timestamp', DateTime.now().millisecondsSinceEpoch);
+      
+      _logger.i('ViceService: Cached ${vices.length} vices');
+    } catch (e) {
+      _logger.e('ViceService: Error caching vices: $e');
+    }
+  }
+
+  Future<Duration?> _getCacheAge(String key) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final timestamp = prefs.getInt('cached_${key}_timestamp');
+      
+      if (timestamp != null) {
+        final cacheTime = DateTime.fromMillisecondsSinceEpoch(timestamp);
+        return DateTime.now().difference(cacheTime);
+      }
+      
+      return null;
+    } catch (e) {
+      _logger.e('ViceService: Error getting cache age: $e');
+      return null;
+    }
+  }
+
+  // Background refresh to keep cache fresh without blocking UI
+  void _backgroundRefreshVices() {
+    Future.delayed(const Duration(milliseconds: 500), () async {
+      try {
+        _logger.i('ViceService: Background refresh of vices');
+        await getVices(forceRefresh: true, useCache: false);
+      } catch (e) {
+        _logger.w('ViceService: Background refresh failed: $e');
+        // Silent failure - this is just optimization
+      }
+    });
+  }
+
+  // Cache invalidation methods
+  Future<void> invalidateVicesCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('cached_vices');
+      await prefs.remove('cached_vices_timestamp');
+      _logger.i('ViceService: Vices cache invalidated');
+    } catch (e) {
+      _logger.e('ViceService: Error invalidating cache: $e');
+    }
+  }
+
+  // Pre-load vices data for performance
+  Future<void> preloadVicesData() async {
+    try {
+      _logger.i('ViceService: Preloading vices data');
+      await getVices(forceRefresh: false, useCache: true);
+    } catch (e) {
+      _logger.w('ViceService: Preload failed: $e');
+      // Silent failure - this is just optimization
     }
   }
 }

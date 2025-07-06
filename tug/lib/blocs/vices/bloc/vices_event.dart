@@ -11,7 +11,12 @@ abstract class VicesEvent extends Equatable {
 }
 
 class LoadVices extends VicesEvent {
-  const LoadVices();
+  final bool forceRefresh;
+  
+  const LoadVices({this.forceRefresh = false});
+  
+  @override
+  List<Object> get props => [forceRefresh];
 }
 
 class AddVice extends VicesEvent {

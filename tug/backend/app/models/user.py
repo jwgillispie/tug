@@ -17,6 +17,7 @@ class User(Document):
     username: Optional[Indexed(str, unique=True)] = None
     display_name: str
     profile_picture_url: Optional[str] = None
+    bio: Optional[str] = Field(default=None, max_length=300)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     last_login: datetime = Field(default_factory=datetime.utcnow)
     onboarding_completed: bool = False

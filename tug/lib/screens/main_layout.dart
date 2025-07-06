@@ -55,11 +55,11 @@ class _MainLayoutState extends State<MainLayout> {
     // Define the navigation data based on current mode
     final navItems = [
       {
-        'icon': Icons.home_outlined,
-        'selectedIcon': Icons.home_rounded,
+        'icon': Icons.people_outline,
+        'selectedIcon': Icons.people,
         'label': 'home',
         'index': 0,
-        'path': '/home',
+        'path': '/social',
       },
       {
         'icon': Icons.insights_outlined,
@@ -69,11 +69,11 @@ class _MainLayoutState extends State<MainLayout> {
         'path': '/progress',
       },
       {
-        'icon': Icons.people_outline,
-        'selectedIcon': Icons.people,
-        'label': 'social',
+        'icon': Icons.waving_hand_outlined,
+        'selectedIcon': Icons.waving_hand,
+        'label': 'hello',
         'index': 2,
-        'path': '/social',
+        'path': '/home',
       },
       {
         'icon': Icons.person_outline_rounded,

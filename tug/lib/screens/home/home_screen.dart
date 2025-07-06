@@ -11,6 +11,7 @@ import '../../blocs/vices/bloc/vices_event.dart';
 import '../../blocs/vices/bloc/vices_state.dart';
 import '../../services/cache_service.dart';
 import '../../services/activity_service.dart';
+import '../../services/vice_service.dart';
 import '../../services/app_mode_service.dart';
 import '../../utils/quantum_effects.dart';
 import '../../utils/loading_messages.dart';
@@ -35,6 +36,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   late Animation<double> _fadeAnimation;
   bool _isFirstLoad = true;
   final CacheService _cacheService = CacheService();
+  final ViceService _viceService = ViceService();
   final AppModeService _appModeService = AppModeService();
   AppMode _currentMode = AppMode.valuesMode;
   
@@ -56,13 +58,16 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         // Load activities for the chart
         context.read<ActivitiesBloc>().add(const LoadActivities(forceRefresh: false));
         
-        // Load vices for vice mode
+        // Load vices for vice mode with enhanced caching
         context.read<VicesBloc>().add(const LoadVices());
       }
     });
     
     // Preload progress screen data in background for faster navigation
     _preloadProgressData();
+    
+    // Preload vices data for faster mode switching
+    _preloadVicesData();
     
     // Setup animation
     _animationController = AnimationController(
@@ -140,6 +145,27 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       ]);
       
     } catch (e) {
+      // Silent failure for preload optimization
+    }
+  }
+
+  // Preload vices data for faster mode switching
+  Future<void> _preloadVicesData() async {
+    try {
+      // Preload vices in background for smoother experience
+      await _viceService.preloadVicesData();
+      
+      // Also preload vice-related statistics if in vices mode
+      if (_currentMode == AppMode.vicesMode) {
+        await _cacheService.set(
+          'vice_statistics_preloaded', 
+          true, 
+          memoryCacheDuration: const Duration(minutes: 5),
+        );
+      }
+      
+    } catch (e) {
+      // Silent failure for preload optimization
     }
   }
   
@@ -183,9 +209,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     
-    // Get current user from AuthBloc
+    // Get current user from AuthBloc for personalized greeting
     final authState = context.watch<AuthBloc>().state;
-    String greeting = 'welcome';
+    String greeting = 'hello';
     
     if (authState is Authenticated) {
       final displayName = authState.user.displayName;
@@ -362,287 +388,39 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         
                         const SizedBox(height: 24),
                         
-                        // Feature Cards Section
-                        const Text(
-                          'features',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        
-                        // Activity Tracking Card
-                        GestureDetector(
-                          onTap: () {
-                            context.go('/activities');
-                          },
-                          child: Container(
-                            margin: const EdgeInsets.only(bottom: 16),
-                            decoration: BoxDecoration(
-                              color: isDarkMode ? TugColors.darkSurface : Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: isDarkMode 
-                                      ? Colors.black.withOpacity(0.2) 
-                                      : Colors.black.withOpacity(0.05),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                              border: Border.all(
-                                color: isDarkMode 
-                                    ? Colors.white.withOpacity(0.05) 
-                                    : Colors.black.withOpacity(0.03),
-                                width: 0.5,
-                              ),
+                        // Feature Cards Section with Premium Styling
+                        _buildSettingsSection(
+                          title: 'features',
+                          items: [
+                            _buildFeatureSettingsItem(
+                              icon: Icons.history,
+                              title: 'activity tracking',
+                              subtitle: 'time spent on your values, don\'t be lying',
+                              onTap: () {
+                                context.go('/activities');
+                              },
                             ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: TugColors.primaryPurple.withOpacity(isDarkMode ? 0.2 : 0.1),
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: TugColors.primaryPurple.withOpacity(isDarkMode ? 0.3 : 0.2),
-                                        width: 1,
-                                      ),
-                                    ),
-                                    child: const Icon(
-                                      Icons.history,
-                                      color: TugColors.primaryPurple,
-                                      size: 28,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        const Text(
-                                          'activity tracking',
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          'time spent on your values, don\'t be lying',
-                                          style: TextStyle(
-                                            color: isDarkMode 
-                                                ? TugColors.darkTextSecondary 
-                                                : TugColors.lightTextSecondary,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Container(
-                                    width: 32,
-                                    height: 32,
-                                    decoration: BoxDecoration(
-                                      color: TugColors.primaryPurple.withOpacity(isDarkMode ? 0.1 : 0.05),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Center(
-                                      child: Icon(
-                                        Icons.chevron_right,
-                                        color: TugColors.primaryPurple,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                            _buildFeatureSettingsItem(
+                              icon: Icons.insights,
+                              title: 'progress',
+                              subtitle: 'see how you\'re doing',
+                              onTap: () {
+                                context.go('/progress');
+                              },
                             ),
-                          ),
+                            _buildFeatureSettingsItem(
+                              icon: Icons.leaderboard,
+                              title: 'leaderboard',
+                              subtitle: 'see who\'s most active',
+                              onTap: () {
+                                context.push('/rankings');
+                              },
+                            ),
+                          ],
                         ),
                         
-                        // Progress Tracking Card
-                        GestureDetector(
-                          onTap: () {
-                            context.go('/progress');
-                          },
-                          child: Container(
-                            margin: const EdgeInsets.only(bottom: 16),
-                            decoration: BoxDecoration(
-                              color: isDarkMode ? TugColors.darkSurface : Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: isDarkMode 
-                                      ? Colors.black.withOpacity(0.2) 
-                                      : Colors.black.withOpacity(0.05),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                              border: Border.all(
-                                color: isDarkMode 
-                                    ? Colors.white.withOpacity(0.05) 
-                                    : Colors.black.withOpacity(0.03),
-                                width: 0.5,
-                              ),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: TugColors.info.withOpacity(isDarkMode ? 0.2 : 0.1),
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: TugColors.info.withOpacity(isDarkMode ? 0.3 : 0.2),
-                                        width: 1,
-                                      ),
-                                    ),
-                                    child: const Icon(
-                                      Icons.insights,
-                                      color: TugColors.info,
-                                      size: 28,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        const Text(
-                                          'progress',
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          'see how you\'re doing',
-                                          style: TextStyle(
-                                            color: isDarkMode 
-                                                ? TugColors.darkTextSecondary 
-                                                : TugColors.lightTextSecondary,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Container(
-                                    width: 32,
-                                    height: 32,
-                                    decoration: BoxDecoration(
-                                      color: TugColors.info.withOpacity(isDarkMode ? 0.1 : 0.05),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Center(
-                                      child: Icon(
-                                        Icons.chevron_right,
-                                        color: TugColors.info,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-                        
-                        // Leaderboard Card
-                        GestureDetector(
-                          onTap: () {
-                            context.push('/rankings');
-                          },
-                          child: Container(
-                            key: const Key('leaderboardCard'),
-                            // Add large bottom margin to ensure visibility
-                            margin: const EdgeInsets.only(bottom: 80),
-                            decoration: BoxDecoration(
-                              color: isDarkMode ? TugColors.darkSurface : Colors.white,
-                              borderRadius: BorderRadius.circular(12),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: isDarkMode 
-                                      ? Colors.black.withOpacity(0.2) 
-                                      : Colors.black.withOpacity(0.05),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                              border: Border.all(
-                                color: isDarkMode 
-                                    ? Colors.white.withOpacity(0.05) 
-                                    : Colors.black.withOpacity(0.03),
-                                width: 0.5,
-                              ),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(16),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(12),
-                                    decoration: BoxDecoration(
-                                      color: TugColors.primaryPurple.withOpacity(isDarkMode ? 0.2 : 0.1),
-                                      borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(
-                                        color: TugColors.primaryPurple.withOpacity(isDarkMode ? 0.3 : 0.2),
-                                        width: 1,
-                                      ),
-                                    ),
-                                    child: const Icon(
-                                      Icons.leaderboard,
-                                      color: TugColors.primaryPurple,
-                                      size: 28,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 16),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        const Text(
-                                          'leaderboard',
-                                          style: TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          'see who\'s most active',
-                                          style: TextStyle(
-                                            color: isDarkMode 
-                                                ? TugColors.darkTextSecondary 
-                                                : TugColors.lightTextSecondary,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                  Container(
-                                    width: 32,
-                                    height: 32,
-                                    decoration: BoxDecoration(
-                                      color: TugColors.primaryPurple.withOpacity(isDarkMode ? 0.1 : 0.05),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Center(
-                                      child: Icon(
-                                        Icons.chevron_right,
-                                        color: TugColors.primaryPurple,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
+                        // Extra spacing for tab bar
+                        const SizedBox(height: 80),
                       ],
                     ),
                   ),
@@ -708,45 +486,31 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                           
                           const SizedBox(height: 24),
                           
-                          // Feature Cards Section
-                          const Text(
-                            'features',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          
-                          // Progress Tracking Card
-                          GestureDetector(
-                            onTap: () {
-                              context.go('/progress');
-                            },
-                            child: _buildFeatureCard(
-                              context,
-                              isDarkMode,
-                              icon: Icons.insights,
-                              iconColor: TugColors.info,
-                              title: 'progress',
-                              subtitle: 'see how you\'re doing',
-                            ),
+                          // Feature Cards Section with Premium Styling
+                          _buildSettingsSection(
+                            title: 'features',
+                            items: [
+                              _buildFeatureSettingsItem(
+                                icon: Icons.insights,
+                                title: 'progress',
+                                subtitle: 'see how you\'re doing',
+                                onTap: () {
+                                  context.go('/progress');
+                                },
+                              ),
+                              _buildFeatureSettingsItem(
+                                icon: Icons.groups,
+                                title: 'social',
+                                subtitle: 'connect with others on similar journeys',
+                                onTap: () {
+                                  context.go('/social');
+                                },
+                              ),
+                            ],
                           ),
                           
-                          // Social Card
-                          GestureDetector(
-                            onTap: () {
-                              context.go('/social');
-                            },
-                            child: _buildFeatureCard(
-                              context,
-                              isDarkMode,
-                              icon: Icons.groups,
-                              iconColor: TugColors.viceEmerald,
-                              title: 'social',
-                              subtitle: 'connect with others on similar journeys',
-                            ),
-                          ),
+                          // Extra spacing for tab bar
+                          const SizedBox(height: 80),
                         ],
                       ),
                     ),
@@ -1065,6 +829,181 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  // Helper methods for premium styling from profile screen
+  Widget _buildSettingsSection({
+    required String title,
+    required List<Widget> items,
+  }) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final isViceMode = _currentMode == AppMode.vicesMode;
+    
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(
+            left: 24,
+            right: 16,
+            top: 32,
+            bottom: 12,
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: isViceMode
+                        ? [TugColors.viceGreen.withValues(alpha: 0.2), TugColors.viceGreenLight.withValues(alpha: 0.1)]
+                        : [TugColors.primaryPurple.withValues(alpha: 0.2), TugColors.primaryPurpleLight.withValues(alpha: 0.1)],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  title.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: TugColors.getPrimaryColor(isViceMode),
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Theme.of(context).cardColor,
+                Theme.of(context).cardColor.withValues(alpha: 0.8),
+              ],
+            ),
+            border: Border.all(
+              color: isDarkMode
+                  ? TugColors.darkSurfaceVariant.withValues(alpha: 0.3)
+                  : TugColors.lightSurfaceVariant.withValues(alpha: 0.5),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.05),
+                blurRadius: 20,
+                offset: const Offset(0, 4),
+              ),
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDarkMode ? 0.2 : 0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Column(
+              children: items,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFeatureSettingsItem({
+    required IconData icon,
+    required String title,
+    String? subtitle,
+    required VoidCallback onTap,
+  }) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final isViceMode = _currentMode == AppMode.vicesMode;
+    
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          color: Colors.transparent,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            vertical: 18,
+            horizontal: 20,
+          ),
+          child: Row(
+            children: [
+              // Enhanced icon with background
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: isViceMode
+                        ? [TugColors.viceGreen.withValues(alpha: 0.15), TugColors.viceGreenLight.withValues(alpha: 0.05)]
+                        : [TugColors.primaryPurple.withValues(alpha: 0.15), TugColors.primaryPurpleLight.withValues(alpha: 0.05)],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  color: TugColors.getPrimaryColor(isViceMode),
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: isDarkMode ? TugColors.darkTextPrimary : TugColors.lightTextPrimary,
+                      ),
+                    ),
+                    if (subtitle != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+                          fontWeight: FontWeight.w400,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              // Enhanced chevron
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: isDarkMode
+                      ? TugColors.darkSurfaceVariant.withValues(alpha: 0.3)
+                      : TugColors.lightSurfaceVariant.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.chevron_right,
+                  color: TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.7),
+                  size: 20,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

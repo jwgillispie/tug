@@ -1,151 +1,149 @@
 // lib/services/user_service.dart
-import 'package:flutter/foundation.dart';
-import 'package:dio/dio.dart';
-import 'api_service.dart';
-import 'service_locator.dart';
-import '../utils/api_error.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:firebase_auth/firebase_auth.dart';
+import '../models/user_model.dart';
+import '../config/env_confg.dart';
 
 class UserService {
-  final ApiService _apiService;
+  String get baseUrl => '${EnvConfig.apiUrl}/api/v1';
+  
+  Future<String?> _getAuthToken() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      return await user.getIdToken();
+    }
+    return null;
+  }
 
-  UserService({ApiService? apiService})
-      : _apiService = apiService ?? ServiceLocator.apiService;
+  Future<Map<String, String>> _getHeaders() async {
+    final token = await _getAuthToken();
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    };
+  }
 
-  // Fetch current user profile from backend
-  Future<Map<String, dynamic>> getUserProfile() async {
+  Future<UserModel> getUserProfile(String userId) async {
     try {
-      final response = await _apiService.get('/api/v1/users/me');
-      
-      // Check if the response has a values field to determine if user has values
-      if (response is Map && !response.containsKey('has_values')) {
-        // Determine has_values based on values count from API
-        if (response.containsKey('values_count')) {
-          response['has_values'] = (response['values_count'] ?? 0) > 0;
-        } else {
-          // Try to fetch values specifically to determine if user has any
-          try {
-            final valuesResponse = await _apiService.get('/api/v1/values');
-            // Check if values exist
-            response['has_values'] = valuesResponse is List && valuesResponse.isNotEmpty;
-          } catch (e) {
-            response['has_values'] = false;
-          }
-        }
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse('$baseUrl/users/$userId'),
+        headers: headers,
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        return UserModel.fromJson(data);
+      } else if (response.statusCode == 404) {
+        throw Exception('User not found');
+      } else {
+        throw Exception('Failed to load user profile: ${response.statusCode}');
       }
+    } catch (e) {
+      throw Exception('Failed to load user profile: $e');
+    }
+  }
+
+  Future<UserModel> getCurrentUserProfile() async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse('$baseUrl/users/me'),
+        headers: headers,
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        return UserModel.fromJson(data);
+      } else {
+        throw Exception('Failed to load current user profile: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Failed to load current user profile: $e');
+    }
+  }
+
+  Future<UserModel> updateCurrentUserProfile({
+    String? displayName,
+    String? bio,
+    String? profilePictureUrl,
+  }) async {
+    try {
+      final headers = await _getHeaders();
+      final Map<String, dynamic> updateData = {};
       
-      return response;
+      if (displayName != null) updateData['display_name'] = displayName;
+      if (bio != null) updateData['bio'] = bio;
+      if (profilePictureUrl != null) updateData['profile_picture_url'] = profilePictureUrl;
+
+      final response = await http.patch(
+        Uri.parse('$baseUrl/users/me'),
+        headers: headers,
+        body: json.encode(updateData),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = json.decode(response.body);
+        return UserModel.fromJson(data);
+      } else {
+        throw Exception('Failed to update user profile: ${response.statusCode}');
+      }
     } catch (e) {
-      // Default profile with has_values set to false
-      return {'has_values': false};
+      throw Exception('Failed to update user profile: $e');
     }
   }
 
-  // Set user values completion status - call this after adding first value
-  Future<bool> setHasValues() async {
+  // Legacy method for backward compatibility
+  Future<Map<String, dynamic>> updateUserProfile(Map<String, dynamic> profileData) async {
     try {
-      await _apiService.patch('/api/v1/users/me', data: {'has_values': true});
-      return true;
+      final headers = await _getHeaders();
+      final response = await http.patch(
+        Uri.parse('$baseUrl/users/me'),
+        headers: headers,
+        body: json.encode(profileData),
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        throw Exception('Failed to update user profile: ${response.statusCode}');
+      }
     } catch (e) {
-      return false;
+      throw Exception('Failed to update user profile: $e');
     }
   }
 
-  // Update user profile
-  Future<Map<String, dynamic>> updateUserProfile(
-      Map<String, dynamic> data) async {
-    try {
-      final response = await _apiService.patch('/api/v1/users/me', data: data);
-      return response;
-    } catch (e) {
-      rethrow;
-    }
-  }
-
-  // Upload profile picture to backend
   Future<Map<String, dynamic>> uploadProfilePicture(String base64Image) async {
     try {
-      debugPrint('Uploading profile picture to backend...');
-      final response = await _apiService.post('/api/v1/users/me/profile-picture', 
-          data: {'image': base64Image});
-      debugPrint('Profile picture upload response: $response');
-      return response;
-    } catch (e) {
-      debugPrint('Profile picture upload error: $e');
-      rethrow;
-    }
-  }
+      final headers = await _getHeaders();
+      final response = await http.post(
+        Uri.parse('$baseUrl/users/me/profile-picture'),
+        headers: headers,
+        body: json.encode({'image': base64Image}),
+      );
 
-  // Sync profile picture URL with backend (fallback method)
-  Future<bool> syncProfilePictureUrl(String profilePictureUrl) async {
-    try {
-      await _apiService.patch('/api/v1/users/me', 
-          data: {'profile_picture_url': profilePictureUrl});
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  // Complete onboarding process
-  Future<bool> completeOnboarding() async {
-    try {
-      await _apiService
-          .patch('/api/v1/users/me', data: {'onboarding_completed': true});
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  // Check if user exists in backend
-  Future<bool> checkUserExists() async {
-    try {
-      final response = await _apiService.get('/api/v1/users/me');
-      return response != null;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  // Delete user account with all associated data
-  Future<bool> deleteAccount() async {
-    try {
-      
-      // This will trigger cascading deletion on the server (values, activities, etc.)
-      await _apiService.delete('/api/v1/users/me');
-      
-      return true;
-    } on DioException catch (e) {
-      final ApiError apiError = ApiError.fromException(e);
-      
-      // Log detailed error for debugging
-      
-      if (e.response?.statusCode == 401) {
-        // Handle authentication error
-        throw Exception('Authentication failed. Please sign in again before deleting your account.');
-      } else if (e.response?.statusCode == 404) {
-        // User not found - treat as success since we're trying to delete it anyway
-        return true;
-      } else if (e.type == DioExceptionType.connectionError) {
-        // Network error
-        throw Exception('Network error. Please check your internet connection and try again.');
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
       } else {
-        // Rethrow with more descriptive message
-        throw Exception('Error deleting account: ${apiError.message}');
+        throw Exception('Failed to upload profile picture: ${response.statusCode}');
       }
     } catch (e) {
-      // Generic error handling
-      throw Exception('An unexpected error occurred while deleting your account. Please try again.');
+      throw Exception('Failed to upload profile picture: $e');
     }
   }
-  
-  // Helper method to check if connection to backend is available
-  Future<bool> checkBackendConnection() async {
+
+  Future<bool> deleteAccount() async {
     try {
-      await _apiService.get('/health');
-      return true;
+      final headers = await _getHeaders();
+      final response = await http.delete(
+        Uri.parse('$baseUrl/users/me'),
+        headers: headers,
+      );
+
+      return response.statusCode == 200 || response.statusCode == 204;
     } catch (e) {
-      return false;
+      throw Exception('Failed to delete account: $e');
     }
   }
 }

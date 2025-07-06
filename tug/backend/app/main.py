@@ -70,7 +70,7 @@ async def shutdown_event():
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
-    return {"status": "healthy", "version": "2.0.2"}
+    return {"status": "healthy", "version": "3.0.0"}
 
 # Root endpoint for testing
 @app.get("/")
@@ -78,7 +78,7 @@ async def root():
     """Root endpoint for basic API testing"""
     return {
         "message": "tug API is running",
-        "version": "2.0.2",
+        "version": "3.0.0",
         "api_prefix": settings.API_V1_PREFIX,
         "endpoints": [
             f"{settings.API_V1_PREFIX}/users",

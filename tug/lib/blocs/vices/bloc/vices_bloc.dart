@@ -25,9 +25,17 @@ class VicesBloc extends Bloc<VicesEvent, VicesState> {
 
   Future<void> _onLoadVices(LoadVices event, Emitter<VicesState> emit) async {
     try {
-      emit(const VicesLoading());
+      // Don't show loading if we have cached data and it's not a force refresh
+      final shouldShowLoading = event.forceRefresh || state is! VicesLoaded;
       
-      final vices = await _viceService.getVices();
+      if (shouldShowLoading) {
+        emit(const VicesLoading());
+      }
+      
+      final vices = await _viceService.getVices(
+        forceRefresh: event.forceRefresh,
+        useCache: !event.forceRefresh,
+      );
       
       emit(VicesLoaded(vices: vices));
     } catch (e) {

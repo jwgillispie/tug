@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../utils/theme/colors.dart';
 import '../../services/app_mode_service.dart';
 import '../../services/social_service.dart';
@@ -269,12 +270,24 @@ class _CommentsScreenState extends State<CommentsScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            _currentPost.displayName,
-                            style: TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                              color: TugColors.getTextColor(isDarkMode, isViceMode),
+                          GestureDetector(
+                            onTap: () {
+                              if (_currentPost.userId != _currentUserId) {
+                                context.push('/user/${_currentPost.userId}');
+                              }
+                            },
+                            child: Text(
+                              _currentPost.displayName,
+                              style: TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                                color: _currentPost.userId != _currentUserId 
+                                    ? TugColors.getPrimaryColor(isViceMode)
+                                    : TugColors.getTextColor(isDarkMode, isViceMode),
+                                decoration: _currentPost.userId != _currentUserId 
+                                    ? TextDecoration.underline 
+                                    : null,
+                              ),
                             ),
                           ),
                           Text(
@@ -419,12 +432,24 @@ class _CommentsScreenState extends State<CommentsScreen> {
               children: [
                 Row(
                   children: [
-                    Text(
-                      comment.displayName,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                        color: TugColors.getTextColor(isDarkMode, isViceMode),
+                    GestureDetector(
+                      onTap: () {
+                        if (comment.userId != _currentUserId) {
+                          context.push('/user/${comment.userId}');
+                        }
+                      },
+                      child: Text(
+                        comment.displayName,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                          color: comment.userId != _currentUserId 
+                              ? TugColors.getPrimaryColor(isViceMode)
+                              : TugColors.getTextColor(isDarkMode, isViceMode),
+                          decoration: comment.userId != _currentUserId 
+                              ? TextDecoration.underline 
+                              : null,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 8),

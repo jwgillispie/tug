@@ -1,9 +1,9 @@
 // lib/screens/profile/edit_profile_screen.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tug/blocs/auth/auth_bloc.dart';
 import 'package:tug/utils/theme/colors.dart';
-import 'package:tug/utils/theme/buttons.dart';
 import 'package:tug/services/app_mode_service.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:tug/services/user_service.dart';
@@ -12,7 +12,6 @@ import 'package:tug/utils/quantum_effects.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'dart:convert';
-import 'dart:typed_data';
 import 'dart:async';
 
 class EditProfileScreen extends StatefulWidget {
@@ -25,6 +24,7 @@ class EditProfileScreen extends StatefulWidget {
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
   final _displayNameController = TextEditingController();
+  final _bioController = TextEditingController();
   final AppModeService _appModeService = AppModeService();
 
   bool _isLoading = false;
@@ -63,17 +63,31 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void dispose() {
     _modeSubscription?.cancel();
     _displayNameController.dispose();
+    _bioController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadUserData() {
+  Future<void> _loadUserData() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       setState(() {
         _displayNameController.text = user.displayName ?? '';
       });
+      
+      // Load additional user data from backend
+      try {
+        final userService = UserService();
+        final userData = await userService.getCurrentUserProfile();
+        if (mounted) {
+          setState(() {
+            _bioController.text = userData.bio ?? '';
+          });
+        }
+      } catch (e) {
+        // If we can't load the backend data, just continue with Firebase data
+        debugPrint('Failed to load user data from backend: $e');
+      }
     }
-    return Future.value();
   }
 
   Future<void> _handleSave() async {
@@ -98,6 +112,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         final userService = UserService();
         await userService.updateUserProfile({
           'display_name': _displayNameController.text.trim(),
+          'bio': _bioController.text.trim(),
         });
 
         if (mounted) {
@@ -106,9 +121,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             // Force reload to get the latest Firebase user data
             await user.reload();
             // Only update the state, don't check full auth status
-            context
-                .read<AuthBloc>()
-                .add(AuthStateChangedEvent(FirebaseAuth.instance.currentUser));
+            if (mounted) {
+              context
+                  .read<AuthBloc>()
+                  .add(AuthStateChangedEvent(FirebaseAuth.instance.currentUser));
+            }
           }
         }
 
@@ -512,6 +529,43 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   }
                   return null;
                 },
+              ),
+
+              const SizedBox(height: 16),
+
+              // Bio Field
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  TugTextField(
+                    label: 'Bio',
+                    hint: 'Tell us about yourself (optional)',
+                    controller: _bioController,
+                    maxLines: 3,
+                    inputFormatters: [
+                      LengthLimitingTextInputFormatter(300),
+                    ],
+                    validator: (value) {
+                      if (value != null && value.length > 300) {
+                        return 'Bio must be 300 characters or less';
+                      }
+                      return null;
+                    },
+                    onChanged: (value) {
+                      setState(() {}); // Refresh to update character count
+                    },
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${_bioController.text.length}/300',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: _bioController.text.length > 280 
+                          ? Colors.orange
+                          : Colors.grey,
+                    ),
+                  ),
+                ],
               ),
 
               const SizedBox(height: 16),

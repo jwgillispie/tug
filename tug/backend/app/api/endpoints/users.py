@@ -158,6 +158,7 @@ async def create_user(
             "email": user.email,
             "display_name": user.display_name,
             "profile_picture_url": user.profile_picture_url,
+            "bio": user.bio,
             "onboarding_completed": user.onboarding_completed
         }
         
@@ -196,6 +197,7 @@ async def get_current_user_profile(request: Request):
             "email": user.email,
             "display_name": user.display_name,
             "profile_picture_url": user.profile_picture_url,
+            "bio": user.bio,
             "onboarding_completed": user.onboarding_completed
         }
         
@@ -270,6 +272,7 @@ async def update_user_profile(
             "email": user.email,
             "display_name": user.display_name,
             "profile_picture_url": user.profile_picture_url,
+            "bio": user.bio,
             "onboarding_completed": user.onboarding_completed
         }
         
@@ -360,6 +363,46 @@ async def upload_profile_picture(request: Request):
     except Exception as e:
         logger.error(f"Upload profile picture error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Failed to upload profile picture: {e}")
+
+@router.get("/{user_id}")
+async def get_user_profile(user_id: str, request: Request):
+    """Get public user profile by user ID"""
+    try:
+        # Extract token manually for authentication
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Missing or invalid Authorization header"
+            )
+        
+        token = auth_header.split(' ')[1]
+        decoded_token = auth.verify_id_token(token)
+        current_user_firebase_uid = decoded_token.get('uid')
+        
+        # Get the target user
+        target_user = await User.get_by_id(user_id)
+        if not target_user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found"
+            )
+        
+        # Return public profile information
+        response = {
+            "id": str(target_user.id),
+            "display_name": target_user.display_name,
+            "username": target_user.username,
+            "profile_picture_url": target_user.profile_picture_url,
+            "bio": target_user.bio,
+        }
+        
+        return response
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Get user profile error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to get user profile: {e}")
 
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user_profile(request: Request):

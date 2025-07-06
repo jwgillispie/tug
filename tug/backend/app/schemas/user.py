@@ -8,6 +8,7 @@ class UserBase(BaseModel):
     email: EmailStr
     display_name: str = Field(..., min_length=2, max_length=50)
     profile_picture_url: Optional[str] = None
+    bio: Optional[str] = Field(None, max_length=300)
 
 class UserCreate(UserBase):
     """Schema for creating a new user"""
@@ -17,6 +18,7 @@ class UserUpdate(BaseModel):
     """Schema for updating user data"""
     display_name: Optional[str] = Field(None, min_length=2, max_length=50)
     profile_picture_url: Optional[str] = None
+    bio: Optional[str] = Field(None, max_length=300)
     onboarding_completed: Optional[bool] = None
 
 class UserInDB(UserBase):

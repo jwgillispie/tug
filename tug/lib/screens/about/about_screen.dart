@@ -53,7 +53,7 @@ class AboutScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'version 2.0.2',
+                    'version 3.0.0',
                     style: TextStyle(
                       color: isDarkMode 
                           ? TugColors.darkTextSecondary 
@@ -107,7 +107,7 @@ class AboutScreen extends StatelessWidget {
             // Recent Features
             _buildSection(
               context,
-              'new in v2.0.2',
+              'new in v3.0.0',
               '• dual mode system - Switch between Values and Vices tracking\n'
               '• vice tracking - Monitor destructive habits and build clean streaks\n'
               '• serious mode theme - Appropriate visual tone for vice recovery\n'
@@ -123,7 +123,7 @@ class AboutScreen extends StatelessWidget {
               'Built with Flutter\n'
               'Firebase Authentication\n'
               'MongoDB Backend\n'
-              'Version 2.0.2 (June 2025)'
+              'Version 3.0.0 (July 2025)'
             ),
             
             const SizedBox(height: 24),

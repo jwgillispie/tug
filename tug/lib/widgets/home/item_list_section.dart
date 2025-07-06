@@ -39,31 +39,102 @@ class ItemListSection<T> extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            OutlinedButton(
-              onPressed: onEditPressed,
-              style: OutlinedButton.styleFrom(
-                foregroundColor: isViceMode ? TugColors.viceGreen : TugColors.primaryPurple,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
+        // Enhanced section header with premium styling
+        Padding(
+          padding: const EdgeInsets.only(
+            left: 24,
+            right: 16,
+            top: 32,
+            bottom: 12,
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: isViceMode
+                        ? [TugColors.viceGreen.withValues(alpha: 0.2), TugColors.viceGreenLight.withValues(alpha: 0.1)]
+                        : [TugColors.primaryPurple.withValues(alpha: 0.2), TugColors.primaryPurpleLight.withValues(alpha: 0.1)],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  title.toUpperCase(),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: TugColors.getPrimaryColor(isViceMode),
+                    letterSpacing: 1.2,
+                  ),
                 ),
               ),
-              child: Text(editButtonText),
-            ),
-          ],
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: isViceMode
+                        ? [TugColors.viceGreen.withValues(alpha: 0.2), TugColors.viceGreenLight.withValues(alpha: 0.1)]
+                        : [TugColors.primaryPurple.withValues(alpha: 0.2), TugColors.primaryPurpleLight.withValues(alpha: 0.1)],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: InkWell(
+                  onTap: onEditPressed,
+                  borderRadius: BorderRadius.circular(12),
+                  child: Text(
+                    editButtonText.toUpperCase(),
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: TugColors.getPrimaryColor(isViceMode),
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 12),
-        ...items.map((item) => _buildItemCard(context, item, isDarkMode, isViceMode)),
+        // Enhanced container with premium styling
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Theme.of(context).cardColor,
+                Theme.of(context).cardColor.withValues(alpha: 0.8),
+              ],
+            ),
+            border: Border.all(
+              color: isDarkMode
+                  ? TugColors.darkSurfaceVariant.withValues(alpha: 0.3)
+                  : TugColors.lightSurfaceVariant.withValues(alpha: 0.5),
+              width: 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.05),
+                blurRadius: 20,
+                offset: const Offset(0, 4),
+              ),
+              BoxShadow(
+                color: Colors.black.withValues(alpha: isDarkMode ? 0.2 : 0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Column(
+              children: items.map((item) => _buildItemCard(context, item, isDarkMode, isViceMode)).toList(),
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -82,88 +153,100 @@ class ItemListSection<T> extends StatelessWidget {
       int.parse(value.color.substring(1), radix: 16) + 0xFF000000,
     );
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: isDarkMode ? TugColors.darkSurface : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: isDarkMode 
-                ? Colors.black.withOpacity(0.2) 
-                : Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-        border: Border.all(
-          color: isDarkMode 
-              ? Colors.white.withOpacity(0.05) 
-              : Colors.black.withOpacity(0.03),
-          width: 0.5,
+    return InkWell(
+      onTap: onItemTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          color: Colors.transparent,
         ),
-      ),
-      child: ListTile(
-        leading: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: valueColor.withOpacity(isDarkMode ? 0.15 : 0.1),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: valueColor.withOpacity(isDarkMode ? 0.3 : 0.2),
-              width: 1,
-            ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            vertical: 18,
+            horizontal: 20,
           ),
-          child: Center(
-            child: Container(
-              width: 16,
-              height: 16,
-              decoration: BoxDecoration(
-                color: valueColor,
-                shape: BoxShape.circle,
+          child: Row(
+            children: [
+              // Enhanced icon with gradient background
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [valueColor.withValues(alpha: 0.15), valueColor.withValues(alpha: 0.05)],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Container(
+                  width: 16,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    color: valueColor,
+                    shape: BoxShape.circle,
+                  ),
+                ),
               ),
-            ),
-          ),
-        ),
-        title: Text(
-          value.name,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        subtitle: Text(
-          'importance: ${value.importance}',
-          style: TextStyle(
-            color: isDarkMode 
-                ? TugColors.darkTextSecondary 
-                : TugColors.lightTextSecondary,
-            fontSize: 13,
-          ),
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Star Icons based on importance
-            ...List.generate(
-              value.importance,
-              (index) => Icon(
-                Icons.star,
-                size: 16,
-                color: valueColor,
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      value.name,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: isDarkMode ? TugColors.darkTextPrimary : TugColors.lightTextPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'importance: ${value.importance}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            ...List.generate(
-              5 - value.importance,
-              (index) => Icon(
-                Icons.star_border,
-                size: 16,
-                color: valueColor.withOpacity(0.3),
+              // Enhanced star rating display
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: isDarkMode
+                      ? TugColors.darkSurfaceVariant.withValues(alpha: 0.3)
+                      : TugColors.lightSurfaceVariant.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Star Icons based on importance
+                    ...List.generate(
+                      value.importance,
+                      (index) => Icon(
+                        Icons.star,
+                        size: 16,
+                        color: valueColor,
+                      ),
+                    ),
+                    ...List.generate(
+                      5 - value.importance,
+                      (index) => Icon(
+                        Icons.star_border,
+                        size: 16,
+                        color: valueColor.withValues(alpha: 0.3),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
-        onTap: onItemTap,
       ),
     );
   }
@@ -173,95 +256,107 @@ class ItemListSection<T> extends StatelessWidget {
       int.parse(vice.color.substring(1), radix: 16) + 0xFF000000,
     );
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: isDarkMode ? TugColors.darkSurface : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: isDarkMode 
-                ? Colors.black.withOpacity(0.2) 
-                : Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-        border: Border.all(
-          color: isDarkMode 
-              ? Colors.white.withOpacity(0.05) 
-              : Colors.black.withOpacity(0.03),
-          width: 0.5,
+    return InkWell(
+      onTap: onItemTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          color: Colors.transparent,
         ),
-      ),
-      child: ListTile(
-        leading: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: viceColor.withOpacity(isDarkMode ? 0.15 : 0.1),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: viceColor.withOpacity(isDarkMode ? 0.3 : 0.2),
-              width: 1,
-            ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(
+            vertical: 18,
+            horizontal: 20,
           ),
-          child: Center(
-            child: Icon(
-              Icons.block,
-              color: viceColor,
-              size: 20,
-            ),
-          ),
-        ),
-        title: Text(
-          vice.name,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        subtitle: Text(
-          'clean streak: ${vice.currentStreak} days',
-          style: TextStyle(
-            color: isDarkMode 
-                ? TugColors.darkTextSecondary 
-                : TugColors.lightTextSecondary,
-            fontSize: 13,
-          ),
-        ),
-        trailing: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  '${vice.currentStreak}',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: viceColor,
+          child: Row(
+            children: [
+              // Enhanced icon with gradient background
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [viceColor.withValues(alpha: 0.15), viceColor.withValues(alpha: 0.05)],
                   ),
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                Text(
-                  'days',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: viceColor.withOpacity(0.7),
-                  ),
+                child: Icon(
+                  Icons.block,
+                  color: viceColor,
+                  size: 20,
                 ),
-              ],
-            ),
-            const SizedBox(width: 8),
-            Icon(
-              Icons.trending_up,
-              color: viceColor.withOpacity(0.7),
-              size: 16,
-            ),
-          ],
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      vice.name,
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: isDarkMode ? TugColors.darkTextPrimary : TugColors.lightTextPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'clean streak: ${vice.currentStreak} days',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Enhanced streak display
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: isDarkMode
+                      ? TugColors.darkSurfaceVariant.withValues(alpha: 0.3)
+                      : TugColors.lightSurfaceVariant.withValues(alpha: 0.5),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          '${vice.currentStreak}',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: viceColor,
+                          ),
+                        ),
+                        Text(
+                          'days',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: viceColor.withValues(alpha: 0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(width: 6),
+                    Icon(
+                      Icons.trending_up,
+                      color: viceColor.withValues(alpha: 0.7),
+                      size: 16,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
-        onTap: onItemTap,
       ),
     );
   }

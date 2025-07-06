@@ -12,7 +12,7 @@ class LegalDocumentsManager {
   LegalDocumentsManager._internal();
 
   // App version
-  static const String appVersion = '2.0.0';
+  static const String appVersion = '3.0.0';
 
   // Document version dates
   static const String termsVersion = '2025-04-01';

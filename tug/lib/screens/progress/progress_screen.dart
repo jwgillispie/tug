@@ -9,6 +9,7 @@ import 'package:tug/blocs/vices/bloc/vices_event.dart';
 import 'package:tug/blocs/vices/bloc/vices_state.dart';
 import 'package:tug/services/app_mode_service.dart';
 import 'package:tug/services/activity_service.dart';
+import 'package:tug/services/vice_service.dart';
 import 'package:tug/services/cache_service.dart';
 import 'package:tug/utils/theme/colors.dart';
 import 'package:tug/utils/quantum_effects.dart';
@@ -35,6 +36,7 @@ class _ProgressScreenState extends State<ProgressScreen>
   Map<String, Map<String, dynamic>> _activityData = {};
 
   final ActivityService _activityService = ActivityService();
+  final ViceService _viceService = ViceService();
   final CacheService _cacheService = CacheService();
   final AppModeService _appModeService = AppModeService();
   AppMode _currentMode = AppMode.valuesMode;
@@ -57,6 +59,8 @@ class _ProgressScreenState extends State<ProgressScreen>
         context.read<ValuesBloc>().add(LoadValues(forceRefresh: false));
       } else {
         context.read<VicesBloc>().add(const LoadVices());
+        // Preload vices data for better performance in vices mode
+        _preloadVicesSpecificData();
       }
       // Load activity data immediately in parallel
       _fetchActivityData(forceRefresh: false);
@@ -80,6 +84,31 @@ class _ProgressScreenState extends State<ProgressScreen>
           // Ignore errors in background loading
         }
       }
+    }
+  }
+
+  // Preload vices-specific data for better performance
+  Future<void> _preloadVicesSpecificData() async {
+    try {
+      // Preload vices data
+      await _viceService.preloadVicesData();
+      
+      // Cache vice-specific progress data in background
+      Future.delayed(const Duration(milliseconds: 1000), () async {
+        try {
+          // Preload common vice progress metrics that will be needed
+          await _cacheService.set(
+            'vice_progress_cache_warmed',
+            DateTime.now().toIso8601String(),
+            memoryCacheDuration: const Duration(minutes: 10),
+          );
+        } catch (e) {
+          // Silent failure for optimization
+        }
+      });
+      
+    } catch (e) {
+      // Silent failure for preload optimization
     }
   }
 
@@ -767,117 +796,230 @@ class _ProgressScreenState extends State<ProgressScreen>
                           );
                         }
 
-                        return ListView(
-                          children: [
-                            const SizedBox(height: 40),
-                            Text(
-                              'vice progress',
-                              style: TextStyle(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: TugColors.viceGreen,
+                        return SingleChildScrollView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 88),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Enhanced section header with premium styling
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                  left: 24,
+                                  right: 16,
+                                  top: 32,
+                                  bottom: 12,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [TugColors.viceGreen.withValues(alpha: 0.2), TugColors.viceGreenLight.withValues(alpha: 0.1)],
+                                        ),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        'VICE PROGRESS',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                          color: TugColors.viceGreen,
+                                          letterSpacing: 1.2,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'track your clean streaks and progress',
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: isDarkMode 
-                                    ? TugColors.darkTextSecondary 
-                                    : TugColors.lightTextSecondary,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                            const SizedBox(height: 32),
-                            
-                            // Vice progress cards
-                            ...vices.map((vice) => Card(
-                              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              elevation: 2,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Container(
+                              
+                              // Enhanced container with premium styling
+                              Container(
                                 decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(20),
                                   gradient: LinearGradient(
                                     begin: Alignment.topLeft,
                                     end: Alignment.bottomRight,
                                     colors: [
-                                      Color(int.parse('0xFF${vice.color.substring(1)}')),
-                                      Color(int.parse('0xFF${vice.color.substring(1)}')).withValues(alpha: 0.7),
+                                      Theme.of(context).cardColor,
+                                      Theme.of(context).cardColor.withValues(alpha: 0.8),
                                     ],
                                   ),
+                                  border: Border.all(
+                                    color: isDarkMode
+                                        ? TugColors.darkSurfaceVariant.withValues(alpha: 0.3)
+                                        : TugColors.lightSurfaceVariant.withValues(alpha: 0.5),
+                                    width: 1,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: TugColors.viceGreen.withValues(alpha: 0.05),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: isDarkMode ? 0.2 : 0.1),
+                                      blurRadius: 10,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
                                 ),
-                                child: Padding(
-                                  padding: const EdgeInsets.all(20.0),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        vice.name,
-                                        style: const TextStyle(
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(20),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(20),
+                                    child: Column(
+                                      children: [
+                                        // Header text
+                                        Text(
+                                          'track your clean streaks and progress',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          textAlign: TextAlign.center,
                                         ),
-                                      ),
-                                      const SizedBox(height: 16),
-                                      Row(
-                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              const Text(
-                                                'current streak',
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  color: Colors.white70,
-                                                ),
-                                              ),
-                                              Text(
-                                                '${vice.currentStreak} days',
-                                                style: const TextStyle(
-                                                  fontSize: 24,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.white,
-                                                ),
+                                        const SizedBox(height: 24),
+                                        
+                                        // Vice progress cards with enhanced styling
+                                        ...vices.map((vice) => Container(
+                                          margin: const EdgeInsets.only(bottom: 16),
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(16),
+                                            gradient: LinearGradient(
+                                              begin: Alignment.topLeft,
+                                              end: Alignment.bottomRight,
+                                              colors: [
+                                                Color(int.parse('0xFF${vice.color.substring(1)}')),
+                                                Color(int.parse('0xFF${vice.color.substring(1)}')).withValues(alpha: 0.8),
+                                              ],
+                                            ),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Color(int.parse('0xFF${vice.color.substring(1)}')).withValues(alpha: 0.3),
+                                                blurRadius: 12,
+                                                offset: const Offset(0, 4),
                                               ),
                                             ],
                                           ),
-                                          Column(
-                                            crossAxisAlignment: CrossAxisAlignment.end,
-                                            children: [
-                                              const Text(
-                                                'best streak',
-                                                style: TextStyle(
-                                                  fontSize: 12,
-                                                  color: Colors.white70,
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(24.0),
+                                            child: Column(
+                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              children: [
+                                                // Enhanced header with icon
+                                                Row(
+                                                  children: [
+                                                    Container(
+                                                      padding: const EdgeInsets.all(8),
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.white.withValues(alpha: 0.2),
+                                                        borderRadius: BorderRadius.circular(10),
+                                                      ),
+                                                      child: const Icon(
+                                                        Icons.block,
+                                                        color: Colors.white,
+                                                        size: 20,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 12),
+                                                    Expanded(
+                                                      child: Text(
+                                                        vice.name,
+                                                        style: const TextStyle(
+                                                          fontSize: 20,
+                                                          fontWeight: FontWeight.bold,
+                                                          color: Colors.white,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
-                                              ),
-                                              Text(
-                                                '${vice.longestStreak} days',
-                                                style: const TextStyle(
-                                                  fontSize: 24,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.white,
+                                                const SizedBox(height: 20),
+                                                
+                                                // Enhanced streak display
+                                                Row(
+                                                  children: [
+                                                    Expanded(
+                                                      child: Container(
+                                                        padding: const EdgeInsets.all(16),
+                                                        decoration: BoxDecoration(
+                                                          color: Colors.white.withValues(alpha: 0.15),
+                                                          borderRadius: BorderRadius.circular(12),
+                                                        ),
+                                                        child: Column(
+                                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                                          children: [
+                                                            const Text(
+                                                              'current streak',
+                                                              style: TextStyle(
+                                                                fontSize: 12,
+                                                                color: Colors.white70,
+                                                                fontWeight: FontWeight.w500,
+                                                              ),
+                                                            ),
+                                                            const SizedBox(height: 4),
+                                                            Text(
+                                                              '${vice.currentStreak} days',
+                                                              style: const TextStyle(
+                                                                fontSize: 24,
+                                                                fontWeight: FontWeight.bold,
+                                                                color: Colors.white,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    const SizedBox(width: 12),
+                                                    Expanded(
+                                                      child: Container(
+                                                        padding: const EdgeInsets.all(16),
+                                                        decoration: BoxDecoration(
+                                                          color: Colors.white.withValues(alpha: 0.15),
+                                                          borderRadius: BorderRadius.circular(12),
+                                                        ),
+                                                        child: Column(
+                                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                                          children: [
+                                                            const Text(
+                                                              'best streak',
+                                                              style: TextStyle(
+                                                                fontSize: 12,
+                                                                color: Colors.white70,
+                                                                fontWeight: FontWeight.w500,
+                                                              ),
+                                                            ),
+                                                            const SizedBox(height: 4),
+                                                            Text(
+                                                              '${vice.longestStreak} days',
+                                                              style: const TextStyle(
+                                                                fontSize: 24,
+                                                                fontWeight: FontWeight.bold,
+                                                                color: Colors.white,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
-                                              ),
-                                            ],
+                                              ],
+                                            ),
                                           ),
-                                        ],
-                                      ),
-                                    ],
+                                        )),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ),
-                            )),
-                            
-                            const SizedBox(height: 32),
-                          ],
+                              
+                              const SizedBox(height: 32),
+                            ],
+                          ),
                         );
                       }
 

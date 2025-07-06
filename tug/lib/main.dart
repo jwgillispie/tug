@@ -48,6 +48,7 @@ import 'screens/profile/edit_profile_screen.dart';
 import 'screens/profile/change_password_screen.dart';
 import 'screens/achievements/achievements_screen.dart';
 import 'screens/rankings/rankings_screen.dart';
+import 'screens/user_profile/user_profile_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -257,7 +258,7 @@ class _TugAppState extends State<TugApp> {
         GoRoute(
           path: '/home',
           builder: (context, state) => const MainLayout(
-            currentIndex: 0,
+            currentIndex: 2,
             child: HomeScreen(),
           ),
         ),
@@ -271,7 +272,7 @@ class _TugAppState extends State<TugApp> {
         GoRoute(
           path: '/social',
           builder: (context, state) => const MainLayout(
-            currentIndex: 2,
+            currentIndex: 0,
             child: SocialScreen(),
           ),
         ),
@@ -311,6 +312,13 @@ class _TugAppState extends State<TugApp> {
             currentIndex: 3,
             child: ProfileScreen(),
           ),
+        ),
+        GoRoute(
+          path: '/user/:userId',
+          builder: (context, state) {
+            final userId = state.pathParameters['userId']!;
+            return UserProfileScreen(userId: userId);
+          },
         ),
         GoRoute(
           path: '/diagnostics',

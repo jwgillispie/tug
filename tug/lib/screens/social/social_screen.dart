@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../utils/theme/colors.dart';
 import '../../utils/quantum_effects.dart';
 import '../../services/app_mode_service.dart';
@@ -262,7 +263,7 @@ class _SocialScreenState extends State<SocialScreen> {
         ),
         title: QuantumEffects.holographicShimmer(
           child: QuantumEffects.gradientText(
-            'social',
+            'home',
             style: const TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
@@ -499,11 +500,23 @@ class _SocialScreenState extends State<SocialScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      post.displayName,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: TugColors.getTextColor(isDarkMode, isViceMode),
+                    GestureDetector(
+                      onTap: () {
+                        if (post.userId != _currentUserId) {
+                          context.push('/user/${post.userId}');
+                        }
+                      },
+                      child: Text(
+                        post.displayName,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: post.userId != _currentUserId 
+                              ? TugColors.getPrimaryColor(isViceMode)
+                              : TugColors.getTextColor(isDarkMode, isViceMode),
+                          decoration: post.userId != _currentUserId 
+                              ? TextDecoration.underline 
+                              : null,
+                        ),
                       ),
                     ),
                     Text(
