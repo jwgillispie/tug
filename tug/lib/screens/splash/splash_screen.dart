@@ -98,8 +98,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
         if (!_initialized) return;
         
         if (state is Authenticated) {
-          // User is authenticated, navigate to home
-          context.go('/home');
+          // User is authenticated, navigate to social
+          context.go('/social');
         } else if (state is Unauthenticated) {
           // User not authenticated, go to login
           context.go('/login');

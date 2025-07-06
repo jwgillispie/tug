@@ -68,7 +68,7 @@ class _VicesInputScreenState extends State<VicesInputScreen> {
     if (widget.fromHome) {
       context.pop();
     } else {
-      context.go('/home');
+      context.go('/social');
     }
   }
 

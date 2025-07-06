@@ -224,7 +224,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                     
                     // Navigate back to home after saving
                     Navigator.of(context).pop();
-                    context.go('/home');
+                    context.go('/social');
                   },
                 ),
               ),
@@ -485,7 +485,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                 : (isDarkMode ? TugColors.primaryPurpleLight : TugColors.primaryPurple),
           ),
           onPressed: () {
-            context.go('/home');
+            context.go('/social');
           },
         ),
         flexibleSpace: Container(

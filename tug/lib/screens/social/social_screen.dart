@@ -221,7 +221,7 @@ class _SocialScreenState extends State<SocialScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to toggle like: $e'),
+            content: Text('Couldn\'t give props: $e'),
             backgroundColor: TugColors.error,
           ),
         );
@@ -421,7 +421,7 @@ class _SocialScreenState extends State<SocialScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                'no posts yet',
+                'nobody\'s dropped anything yet',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w600,
@@ -430,7 +430,7 @@ class _SocialScreenState extends State<SocialScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'be the first to share an update with your community!',
+                'be the first to share what\'s working for you!',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
@@ -445,7 +445,7 @@ class _SocialScreenState extends State<SocialScreen> {
                   );
                 },
                 icon: const Icon(Icons.info_outline),
-                label: const Text('learn about social'),
+                label: const Text('see how it works'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: TugColors.getPrimaryColor(isViceMode),
                   foregroundColor: Colors.white,
@@ -565,17 +565,19 @@ class _SocialScreenState extends State<SocialScreen> {
           Row(
             children: [
               _buildActionButton(
-                icon: isLiked ? Icons.favorite : Icons.favorite_border,
-                iconColor: isLiked ? TugColors.error : null,
+                icon: isLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
+                iconColor: isLiked ? Colors.green : null,
                 count: post.likes.length,
+                label: 'props',
                 isDarkMode: isDarkMode,
                 isViceMode: isViceMode,
                 onTap: () => _toggleLike(post),
               ),
               const SizedBox(width: 24),
               _buildActionButton(
-                icon: Icons.comment_outlined,
+                icon: Icons.comment_bank_outlined,
                 count: post.commentsCount,
+                label: '2 cents',
                 isDarkMode: isDarkMode,
                 isViceMode: isViceMode,
                 onTap: () {
@@ -598,16 +600,16 @@ class _SocialScreenState extends State<SocialScreen> {
                 },
               ),
               const Spacer(),
-              IconButton(
-                icon: Icon(
-                  Icons.share_outlined,
-                  size: 18,
-                  color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
-                ),
-                onPressed: () {
-                  // TODO: Implement share functionality
+              _buildActionButton(
+                icon: Icons.campaign_outlined,
+                count: 0,
+                label: 'amplify',
+                hideCount: true,
+                isDarkMode: isDarkMode,
+                isViceMode: isViceMode,
+                onTap: () {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Share coming soon!')),
+                    const SnackBar(content: Text('Amplify feature launching soon! 📢')),
                   );
                 },
               ),
@@ -622,27 +624,48 @@ class _SocialScreenState extends State<SocialScreen> {
     required IconData icon,
     Color? iconColor,
     required int count,
+    String? label,
+    bool hideCount = false,
     required bool isDarkMode,
     required bool isViceMode,
     required VoidCallback onTap,
   }) {
     return GestureDetector(
       onTap: onTap,
-      child: Row(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            icon,
-            size: 18,
-            color: iconColor ?? TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                icon,
+                size: 18,
+                color: iconColor ?? TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
+              ),
+              if (!hideCount && count > 0) ...[
+                const SizedBox(width: 4),
+                Text(
+                  count.toString(),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
+                  ),
+                ),
+              ],
+            ],
           ),
-          const SizedBox(width: 4),
-          Text(
-            count.toString(),
-            style: TextStyle(
-              fontSize: 12,
-              color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
+          if (label != null) ...[
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
+                color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );

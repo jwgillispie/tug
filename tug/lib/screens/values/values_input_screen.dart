@@ -86,7 +86,7 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
     if (widget.fromHome) {
       context.pop(); // Go back to home if we came from there
     } else {
-      context.go('/home'); // Otherwise go to home
+      context.go('/social'); // Otherwise go to social
     }
   }
 

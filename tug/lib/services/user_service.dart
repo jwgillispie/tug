@@ -33,12 +33,16 @@ class UserService {
       );
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> data = json.decode(response.body);
-        return UserModel.fromJson(data);
+        try {
+          final Map<String, dynamic> data = json.decode(response.body);
+          return UserModel.fromJson(data);
+        } catch (e) {
+          throw Exception('Failed to parse user profile data: $e. Response: ${response.body}');
+        }
       } else if (response.statusCode == 404) {
         throw Exception('User not found');
       } else {
-        throw Exception('Failed to load user profile: ${response.statusCode}');
+        throw Exception('Failed to load user profile: ${response.statusCode}. Response: ${response.body}');
       }
     } catch (e) {
       throw Exception('Failed to load user profile: $e');
@@ -130,6 +134,28 @@ class UserService {
       }
     } catch (e) {
       throw Exception('Failed to upload profile picture: $e');
+    }
+  }
+
+  Future<Map<String, dynamic>> getUserStatistics(String userId) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse('$baseUrl/users/$userId/statistics'),
+        headers: headers,
+      );
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else if (response.statusCode == 404) {
+        // If endpoint doesn't exist, return empty stats
+        return {'total_activity_minutes': 0};
+      } else {
+        throw Exception('Failed to load user statistics: ${response.statusCode}');
+      }
+    } catch (e) {
+      // If there's any error, return default stats
+      return {'total_activity_minutes': 0};
     }
   }
 

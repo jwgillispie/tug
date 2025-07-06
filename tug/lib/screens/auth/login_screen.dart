@@ -67,8 +67,8 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             );
 
-            // Navigate directly to home page
-            context.go('/home');
+            // Navigate directly to social page
+            context.go('/social');
           } else if (state is AuthError) {
             // Handle authentication errors
             setState(() {

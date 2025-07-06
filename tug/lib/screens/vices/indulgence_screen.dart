@@ -158,7 +158,7 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
           if (context.canPop()) {
             context.pop();
           } else {
-            context.go('/home');
+            context.go('/social');
           }
         }
       },
@@ -192,7 +192,7 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
               if (context.canPop()) {
                 context.pop();
               } else {
-                context.go('/home');
+                context.go('/social');
               }
             },
           ),

@@ -489,11 +489,11 @@ class _CommentsScreenState extends State<CommentsScreen> {
                           children: [
                             Icon(
                               comment.likes.contains(_currentUserId) 
-                                  ? Icons.favorite 
-                                  : Icons.favorite_border,
+                                  ? Icons.thumb_up 
+                                  : Icons.thumb_up_outlined,
                               size: 14,
                               color: comment.likes.contains(_currentUserId)
-                                  ? TugColors.error
+                                  ? Colors.green
                                   : TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
                             ),
                             if (comment.likes.isNotEmpty) ...[
@@ -539,7 +539,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
               child: TextField(
                 controller: _commentController,
                 decoration: InputDecoration(
-                  hintText: 'Write a comment...',
+                  hintText: 'Add your 2 cents...',
                   hintStyle: TextStyle(
                     color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
                   ),

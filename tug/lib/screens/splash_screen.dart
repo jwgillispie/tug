@@ -93,8 +93,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is Authenticated) {
-          // User has been authenticated, navigate directly to home
-          context.go('/home');
+          // User has been authenticated, navigate directly to social
+          context.go('/social');
         } else if (state is Unauthenticated) {
           context.go('/login');
         }

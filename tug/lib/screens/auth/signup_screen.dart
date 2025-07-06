@@ -85,7 +85,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 backgroundColor: TugColors.success,
               ),
             );
-            context.go('/home');
+            context.go('/social');
           } else if (state is AuthError) {
             setState(() => _errorMessage = state.message);
           } else if (state is EmailVerificationSent) {

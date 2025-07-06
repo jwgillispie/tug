@@ -355,9 +355,9 @@ class _TugAppState extends State<TugApp> {
             return null;
           }
 
-          // Redirect from auth screens to home if already logged in
+          // Redirect from auth screens to social if already logged in
           if (isLoginScreen || isSignupScreen || isForgotPasswordScreen) {
-            return '/home';
+            return '/social';
           }
 
           // Allow all other screens

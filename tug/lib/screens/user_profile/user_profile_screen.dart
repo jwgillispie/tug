@@ -27,6 +27,8 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
   bool _isLoading = true;
   String? _error;
   AppMode _currentMode = AppMode.valuesMode;
+  int _totalActivityHours = 0;
+  bool _loadingStats = false;
 
   @override
   void initState() {
@@ -56,15 +58,46 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         _error = null;
       });
 
+      debugPrint('Loading user profile for userId: ${widget.userId}');
       final user = await _userService.getUserProfile(widget.userId);
+      debugPrint('Successfully loaded user profile: ${user.displayName}');
       setState(() {
         _user = user;
         _isLoading = false;
       });
+      
+      // Load user statistics
+      _loadUserStatistics();
     } catch (e) {
+      debugPrint('Error loading user profile: $e');
       setState(() {
         _error = e.toString();
         _isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _loadUserStatistics() async {
+    if (_loadingStats) return;
+    
+    setState(() {
+      _loadingStats = true;
+    });
+
+    try {
+      final stats = await _userService.getUserStatistics(widget.userId);
+      final totalMinutes = stats['total_activity_minutes'] ?? 0;
+      final totalHours = (totalMinutes / 60).round();
+      
+      setState(() {
+        _totalActivityHours = totalHours;
+        _loadingStats = false;
+      });
+    } catch (e) {
+      debugPrint('Error loading user statistics: $e');
+      setState(() {
+        _totalActivityHours = 0;
+        _loadingStats = false;
       });
     }
   }
@@ -374,28 +407,14 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildStatItem(
-                    'Posts',
-                    '0', // TODO: Implement actual stats
-                    Icons.post_add,
-                    isDarkMode,
-                    isViceMode,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildStatItem(
-                    'Friends',
-                    '0', // TODO: Implement actual stats
-                    Icons.people,
-                    isDarkMode,
-                    isViceMode,
-                  ),
-                ),
-              ],
+            Center(
+              child: _buildStatItem(
+                'Total Activity Hours',
+                _loadingStats ? '...' : '$_totalActivityHours',
+                Icons.schedule,
+                isDarkMode,
+                isViceMode,
+              ),
             ),
           ],
         ),
@@ -437,6 +456,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
               fontSize: 12,
               color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
             ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
