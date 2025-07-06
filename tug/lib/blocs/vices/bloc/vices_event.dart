@@ -83,3 +83,7 @@ class MarkCleanDay extends VicesEvent {
   @override
   List<Object> get props => [viceId, date];
 }
+
+class ClearVicesCache extends VicesEvent {
+  const ClearVicesCache();
+}

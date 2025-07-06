@@ -148,9 +148,15 @@ class _VicesInputScreenState extends State<VicesInputScreen> {
                     ],
             ),
           ),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
+          child: RefreshIndicator(
+            onRefresh: () async {
+              context.read<VicesBloc>().add(const LoadVices(forceRefresh: true));
+              await Future.delayed(const Duration(milliseconds: 500));
+            },
+            color: TugColors.viceGreen,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Warning notice
@@ -433,6 +439,7 @@ class _VicesInputScreenState extends State<VicesInputScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 }

@@ -21,6 +21,7 @@ class VicesBloc extends Bloc<VicesEvent, VicesState> {
     on<LoadIndulgences>(_onLoadIndulgences);
     on<UpdateViceStreak>(_onUpdateViceStreak);
     on<MarkCleanDay>(_onMarkCleanDay);
+    on<ClearVicesCache>(_onClearVicesCache);
   }
 
   Future<void> _onLoadVices(LoadVices event, Emitter<VicesState> emit) async {
@@ -164,6 +165,25 @@ class VicesBloc extends Bloc<VicesEvent, VicesState> {
     } catch (e) {
       _logger.e('Error marking clean day: $e');
       emit(VicesError('Failed to mark clean day: ${e.toString()}'));
+    }
+  }
+
+  Future<void> _onClearVicesCache(ClearVicesCache event, Emitter<VicesState> emit) async {
+    try {
+      _logger.i('Clearing vices cache...');
+      
+      // Clear all cache
+      await _viceService.clearAllCache();
+      
+      // Force reload vices with fresh data
+      final vices = await _viceService.getVices(forceRefresh: true, useCache: false);
+      
+      emit(VicesLoaded(vices: vices));
+      
+      _logger.i('Cache cleared and vices reloaded');
+    } catch (e) {
+      _logger.e('Error clearing cache: $e');
+      emit(VicesError('Failed to clear cache: ${e.toString()}'));
     }
   }
 }

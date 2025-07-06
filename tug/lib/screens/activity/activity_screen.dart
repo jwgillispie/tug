@@ -17,6 +17,7 @@ import 'package:tug/utils/time_utils.dart';
 import 'package:tug/widgets/activity/activity_form.dart';
 import 'package:tug/widgets/activity/edit_activity_dialog.dart';
 import 'package:tug/services/app_mode_service.dart';
+import 'package:tug/services/activity_service.dart';
 import 'package:tug/blocs/vices/bloc/vices_bloc.dart';
 import 'package:tug/blocs/vices/bloc/vices_event.dart';
 import 'package:tug/blocs/vices/bloc/vices_state.dart';
@@ -43,6 +44,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
   bool _isFirstLoad = true;
   bool _showSwipeHint = true;
   final AppModeService _appModeService = AppModeService();
+  final ActivityService _activityService = ActivityService();
   AppMode _currentMode = AppMode.valuesMode;
 
   @override
@@ -112,6 +114,13 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
   
   // Add a refresh method
   Future<void> _refreshActivities() async {
+    // Clear activity cache before refreshing
+    try {
+      await _activityService.clearCache();
+    } catch (e) {
+      // Cache clear failed - not critical, continue with refresh
+    }
+    
     context.read<ActivitiesBloc>().add(LoadActivities(
       valueId: _filterValueId,
       startDate: _startDate,

@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import '../models/vice_model.dart';
 import '../models/indulgence_model.dart';
 import '../config/env_confg.dart';
+import '../utils/streak_utils.dart';
 
 class ViceService {
   final Dio _dio;
@@ -64,9 +65,12 @@ class ViceService {
       
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data['vices'] ?? [];
-        final vices = data.map((json) => ViceModel.fromJson(json)).toList();
+        List<ViceModel> vices = data.map((json) => ViceModel.fromJson(json)).toList();
         
-        // Cache the fresh data
+        // Calculate updated streaks for all vices
+        vices = await _calculateViceStreaks(vices);
+        
+        // Cache the fresh data with calculated streaks
         await _cacheVices(vices);
         
         return vices;
@@ -188,6 +192,9 @@ class ViceService {
         final recordedIndulgence = IndulgenceModel.fromJson(response.data['indulgence']);
         _logger.i('ViceService: Indulgence recorded successfully');
         
+        // Invalidate cache to force recalculation of streaks on next load
+        await invalidateVicesCache();
+        
         return recordedIndulgence;
       } else {
         throw Exception('Failed to record indulgence: ${response.statusCode}');
@@ -219,6 +226,48 @@ class ViceService {
     } catch (e) {
       _logger.e('ViceService: Error getting indulgences: $e');
       throw Exception('Failed to load indulgences: $e');
+    }
+  }
+
+  /// Get all indulgences for the current user across all vices
+  Future<List<IndulgenceModel>> getAllIndulgences() async {
+    try {
+      _logger.i('ViceService: Getting all indulgences for user');
+      
+      final response = await _dio.get('/api/v1/indulgences/');
+      
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data['indulgences'] ?? [];
+        return data.map((json) => IndulgenceModel.fromJson(json)).toList();
+      } else {
+        throw Exception('Failed to load indulgences: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      _logger.e('ViceService: DioException getting all indulgences: ${e.message}');
+      throw Exception('Network error: ${e.message}');
+    } catch (e) {
+      _logger.e('ViceService: Error getting all indulgences: $e');
+      throw Exception('Failed to load all indulgences: $e');
+    }
+  }
+
+  /// Calculate updated streaks for all vices using the new StreakUtils system
+  Future<List<ViceModel>> _calculateViceStreaks(List<ViceModel> vices) async {
+    try {
+      _logger.i('ViceService: Calculating streaks for ${vices.length} vices');
+      
+      // Get all indulgences for the user
+      final allIndulgences = await getAllIndulgences();
+      
+      // Update each vice with calculated streak data
+      final updatedVices = StreakUtils.updateVicesWithStreaks(vices, allIndulgences);
+      
+      _logger.i('ViceService: Successfully calculated streaks for all vices');
+      return updatedVices;
+    } catch (e) {
+      _logger.w('ViceService: Error calculating streaks, returning original vices: $e');
+      // Return original vices if streak calculation fails
+      return vices;
     }
   }
 
@@ -379,6 +428,28 @@ class ViceService {
       _logger.i('ViceService: Vices cache invalidated');
     } catch (e) {
       _logger.e('ViceService: Error invalidating cache: $e');
+    }
+  }
+
+  /// Clear all vices and indulgences cache data - useful for debugging
+  Future<void> clearAllCache() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      
+      // Clear all vice-related cache keys
+      final keys = prefs.getKeys().where((key) => 
+        key.startsWith('cached_vices') || 
+        key.startsWith('vice_') ||
+        key.startsWith('indulgence_')
+      ).toList();
+      
+      for (final key in keys) {
+        await prefs.remove(key);
+      }
+      
+      _logger.i('ViceService: All cache cleared (${keys.length} keys removed)');
+    } catch (e) {
+      _logger.e('ViceService: Error clearing all cache: $e');
     }
   }
 

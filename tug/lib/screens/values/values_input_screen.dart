@@ -224,314 +224,321 @@ class _ValuesInputScreenState extends State<ValuesInputScreen> {
                           ],
                   ),
                 ),
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      QuantumEffects.cosmicBreath(
-                        intensity: 0.05,
-                        child: QuantumEffects.gradientText(
-                          widget.fromHome
-                              ? 'edit your values'
-                              : 'what do you care about more than anything?',
-                          style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
-                          ) ?? TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.2,
-                          ),
-                          colors: [TugColors.primaryPurple, TugColors.primaryPurpleLight, TugColors.primaryPurpleDark],
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      QuantumEffects.floating(
-                        offset: 5,
-                        child: Text(
-                          'put up to 5 valuable values',
-                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            color: Theme.of(context).brightness == Brightness.dark 
-                                ? TugColors.darkTextSecondary 
-                                : TugColors.lightTextSecondary,
-                            fontSize: 16,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      ),
-                  const SizedBox(height: 32),
-                  Form(
-                    key: _formKey,
+                child: RefreshIndicator(
+                  onRefresh: () async {
+                    context.read<ValuesBloc>().add(const LoadValues(forceRefresh: true));
+                    await Future.delayed(const Duration(milliseconds: 500));
+                  },
+                  color: TugColors.primaryPurple,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(24),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        TugTextField(
-                          label: 'value',
-                          hint: 'ex health, family, creativity, learning ',
-                          controller: _valueController,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'please enter a value';
-                            }
-                            if (value.length < 2) {
-                              return 'value gotta be longer than that';
-                            }
-                            if (value.length > 30) {
-                              return 'okay that\'s awesome but can you make it a little shorter?';
-                            }
-                            return null;
-                          },
+                        QuantumEffects.cosmicBreath(
+                          intensity: 0.05,
+                          child: QuantumEffects.gradientText(
+                            widget.fromHome
+                                ? 'edit your values'
+                                : 'what do you care about more than anything?',
+                            style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.2,
+                            ) ?? TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.2,
+                            ),
+                            colors: [TugColors.primaryPurple, TugColors.primaryPurpleLight, TugColors.primaryPurpleDark],
+                          ),
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'how important is this value? (meh - everything)',
-                          style: Theme.of(context).textTheme.bodyMedium,
+                        const SizedBox(height: 12),
+                        QuantumEffects.floating(
+                          offset: 5,
+                          child: Text(
+                            'put up to 5 valuable values',
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              color: Theme.of(context).brightness == Brightness.dark 
+                                  ? TugColors.darkTextSecondary 
+                                  : TugColors.lightTextSecondary,
+                              fontSize: 16,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
                         ),
-                        Slider(
-                          value: _currentImportance,
-                          min: 1,
-                          max: 5,
-                          divisions: 4,
-                          label: _currentImportance.round().toString(),
-                          activeColor: TugColors.primaryPurple,
-                          onChanged: (value) {
-                            setState(() {
-                              _currentImportance = value;
-                            });
-                          },
+                        const SizedBox(height: 32),
+                        Form(
+                          key: _formKey,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              TugTextField(
+                                label: 'value',
+                                hint: 'ex health, family, creativity, learning ',
+                                controller: _valueController,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'please enter a value';
+                                  }
+                                  if (value.length < 2) {
+                                    return 'value gotta be longer than that';
+                                  }
+                                  if (value.length > 30) {
+                                    return 'okay that\'s awesome but can you make it a little shorter?';
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'how important is this value? (meh - everything)',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                              Slider(
+                                value: _currentImportance,
+                                min: 1,
+                                max: 5,
+                                divisions: 4,
+                                label: _currentImportance.round().toString(),
+                                activeColor: TugColors.primaryPurple,
+                                onChanged: (value) {
+                                  setState(() {
+                                    _currentImportance = value;
+                                  });
+                                },
+                              ),
+                              const SizedBox(height: 16),
+                              TugTextField(
+                                label: 'description (only if you want)',
+                                hint: 'why?',
+                                controller: _descriptionController,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'pick a color',
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                              const SizedBox(height: 8),
+                              ColorPicker(
+                                selectedColor: _selectedColor,
+                                onColorSelected: (color) {
+                                  setState(() {
+                                    _selectedColor = color;
+                                  });
+                                },
+                              ),
+                              const SizedBox(height: 24),
+                              BlocBuilder<ValuesBloc, ValuesState>(
+                                builder: (context, state) {
+                                  // Disable add button if we already have 5 values
+                                  final maxValuesReached = state is ValuesLoaded && 
+                                      state.values.where((v) => v.active).length >= 5;
+                                  
+                                  return SizedBox(
+                                    width: double.infinity,
+                                    child: ElevatedButton(
+                                      style: TugButtons.secondaryButtonStyle(isDark: Theme.of(context).brightness == Brightness.dark),
+                                      onPressed: (_isLoading || maxValuesReached) 
+                                          ? null 
+                                          : _addValue,
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(vertical: 4),
+                                        child: _isLoading
+                                            ? const SizedBox(
+                                                height: 20,
+                                                width: 20,
+                                                child: CircularProgressIndicator(
+                                                  strokeWidth: 2,
+                                                  color: TugColors.primaryPurple,
+                                                ),
+                                              )
+                                            : Text(maxValuesReached 
+                                                ? 'okay! 5 values! AWESOME' 
+                                                : 'add'),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
                         ),
-                        const SizedBox(height: 16),
-                        TugTextField(
-                          label: 'description (only if you want)',
-                          hint: 'why?',
-                          controller: _descriptionController,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'pick a color',
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                        const SizedBox(height: 8),
-                        ColorPicker(
-                          selectedColor: _selectedColor,
-                          onColorSelected: (color) {
-                            setState(() {
-                              _selectedColor = color;
-                            });
-                          },
-                        ),
-                        const SizedBox(height: 24),
+                        const SizedBox(height: 32),
                         BlocBuilder<ValuesBloc, ValuesState>(
                           builder: (context, state) {
-                            // Disable add button if we already have 5 values
-                            final maxValuesReached = state is ValuesLoaded && 
-                                state.values.where((v) => v.active).length >= 5;
-                            
-                            return SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                style: TugButtons.secondaryButtonStyle(isDark: Theme.of(context).brightness == Brightness.dark),
-                                onPressed: (_isLoading || maxValuesReached) 
-                                    ? null 
-                                    : _addValue,
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(vertical: 4),
-                                  child: _isLoading
-                                      ? const SizedBox(
-                                          height: 20,
-                                          width: 20,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 2,
+                            if (state is ValuesLoaded) {
+                              final activeValues = state.values.where((v) => v.active).toList();
+                              
+                              if (activeValues.isEmpty) {
+                                return const Center(
+                                  child: Text('gotta have at least one value :)'),
+                                );
+                              }
+                              
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'your values',
+                                    style: Theme.of(context).textTheme.titleLarge,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  // Add guidance text for new users
+                                  if (activeValues.length == 1 && !widget.fromHome)
+                                    Container(
+                                      padding: const EdgeInsets.all(12),
+                                      margin: const EdgeInsets.only(bottom: 16),
+                                      decoration: BoxDecoration(
+                                        color: TugColors.primaryPurple.withValues(alpha: 0.08),
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: TugColors.primaryPurple.withValues(alpha: 0.2),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(
+                                            Icons.lightbulb_outline,
                                             color: TugColors.primaryPurple,
+                                            size: 20,
                                           ),
-                                        )
-                                      : Text(maxValuesReached 
-                                          ? 'okay! 5 values! AWESOME' 
-                                          : 'add'),
-                                ),
-                              ),
-                            );
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              'Great! Add 2-4 more values, then hit GO to start tracking activities.',
+                                              style: TextStyle(
+                                                color: TugColors.primaryPurple,
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  // Swipe hint
+                                  if (activeValues.isNotEmpty && _showSwipeHint)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                                      margin: const EdgeInsets.only(bottom: 16),
+                                      decoration: BoxDecoration(
+                                        color: TugColors.primaryPurple.withValues(alpha: 0.08),
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(
+                                          color: TugColors.primaryPurple.withValues(alpha: 0.2),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.swipe_left,
+                                                color: TugColors.primaryPurple,
+                                                size: 18,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Text(
+                                                'swipe left on values to edit or delete',
+                                                style: TextStyle(
+                                                  color: TugColors.primaryPurple,
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          IconButton(
+                                            padding: EdgeInsets.zero,
+                                            constraints: const BoxConstraints(),
+                                            icon: Icon(
+                                              Icons.close,
+                                              color: TugColors.primaryPurple,
+                                              size: 16,
+                                            ),
+                                            onPressed: () {
+                                              setState(() {
+                                                _showSwipeHint = false;
+                                              });
+                                            },
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ...activeValues.map((value) => Padding(
+                                    padding: const EdgeInsets.only(bottom: 12),
+                                    child: ValueCard(
+                                      value: value,
+                                      onDelete: () {
+                                        if (_showSwipeHint) {
+                                          setState(() {
+                                            _showSwipeHint = false;
+                                          });
+                                        }
+                                        context.read<ValuesBloc>().add(
+                                          DeleteValue(value.id!),
+                                        );
+                                      },
+                                      onEdit: () {
+                                        if (_showSwipeHint) {
+                                          setState(() {
+                                            _showSwipeHint = false;
+                                          });
+                                        }
+                                        _showEditDialog(context, value);
+                                      },
+                                    ),
+                                  )),
+                                  const SizedBox(height: 32),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: ElevatedButton(
+                                      style: TugButtons.primaryButtonStyle(isDark: Theme.of(context).brightness == Brightness.dark),
+                                      onPressed: _isLoading 
+                                          ? null 
+                                          : (activeValues.isNotEmpty 
+                                              ? _handleContinue 
+                                              : null),
+                                      child: _isLoading
+                                          ? const SizedBox(
+                                              height: 20,
+                                              width: 20,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                color: Colors.white,
+                                              ),
+                                            )
+                                          : Text(widget.fromHome ? 'done' : 'go!'),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            }
+                            
+                            if (state is ValuesLoading) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            }
+                            
+                            return const SizedBox.shrink();
                           },
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 32),
-                  BlocBuilder<ValuesBloc, ValuesState>(
-                    builder: (context, state) {
-                      if (state is ValuesLoaded) {
-                        final activeValues = state.values.where((v) => v.active).toList();
-                        
-                        if (activeValues.isEmpty) {
-                          return const Center(
-                            child: Text('gotta have at least one value :)'),
-                          );
-                        }
-                        
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'your values',
-                              style: Theme.of(context).textTheme.titleLarge,
-                            ),
-                            const SizedBox(height: 8),
-                            // Add guidance text for new users
-                            if (activeValues.length == 1 && !widget.fromHome)
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                margin: const EdgeInsets.only(bottom: 16),
-                                decoration: BoxDecoration(
-                                  color: TugColors.primaryPurple.withValues(alpha: 0.08),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: TugColors.primaryPurple.withValues(alpha: 0.2),
-                                  ),
-                                ),
-                                child: Row(
-                                  children: [
-                                    Icon(
-                                      Icons.lightbulb_outline,
-                                      color: TugColors.primaryPurple,
-                                      size: 20,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        'Great! Add 2-4 more values, then hit GO to start tracking activities.',
-                                        style: TextStyle(
-                                          color: TugColors.primaryPurple,
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w500,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            // Swipe hint
-                            if (activeValues.isNotEmpty && _showSwipeHint)
-                              Container(
-                                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                                margin: const EdgeInsets.only(bottom: 16),
-                                decoration: BoxDecoration(
-                                  color: TugColors.primaryPurple.withValues(alpha: 0.08),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: TugColors.primaryPurple.withValues(alpha: 0.2),
-                                  ),
-                                ),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Icon(
-                                          Icons.swipe_left,
-                                          color: TugColors.primaryPurple,
-                                          size: 18,
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          'swipe left on values to edit or delete',
-                                          style: TextStyle(
-                                            color: TugColors.primaryPurple,
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    IconButton(
-                                      padding: EdgeInsets.zero,
-                                      constraints: const BoxConstraints(),
-                                      icon: Icon(
-                                        Icons.close,
-                                        color: TugColors.primaryPurple,
-                                        size: 16,
-                                      ),
-                                      onPressed: () {
-                                        setState(() {
-                                          _showSwipeHint = false;
-                                        });
-                                      },
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ...activeValues.map((value) => Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: ValueCard(
-                                value: value,
-                                onDelete: () {
-                                  if (_showSwipeHint) {
-                                    setState(() {
-                                      _showSwipeHint = false;
-                                    });
-                                  }
-                                  context.read<ValuesBloc>().add(
-                                    DeleteValue(value.id!),
-                                  );
-                                },
-                                onEdit: () {
-                                  if (_showSwipeHint) {
-                                    setState(() {
-                                      _showSwipeHint = false;
-                                    });
-                                  }
-                                  _showEditDialog(context, value);
-                                },
-                              ),
-                            )),
-                            const SizedBox(height: 32),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                style: TugButtons.primaryButtonStyle(isDark: Theme.of(context).brightness == Brightness.dark),
-                                onPressed: _isLoading 
-                                    ? null 
-                                    : (activeValues.isNotEmpty 
-                                        ? _handleContinue 
-                                        : null),
-                                child: _isLoading
-                                    ? const SizedBox(
-                                        height: 20,
-                                        width: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Colors.white,
-                                        ),
-                                      )
-                                    : Text(widget.fromHome ? 'done' : 'go!'),
-                              ),
-                            ),
-                          ],
-                        );
-                      }
-                      
-                      if (state is ValuesLoading) {
-                        return const Center(
-                          child: CircularProgressIndicator(),
-                        );
-                      }
-                      
-                      return const SizedBox.shrink();
-                    },
-                  ),
-                ],
+                ),
               ),
             ),
           ),
-            ),
-          ), 
-          
           // Show the celebration overlay if we just added the first value
-          if (_showCelebration)
-            FirstValueCelebration(
-              valueName: _newValueName,
-              onDismiss: _dismissCelebration,
-            ),
+          // FIXME: Temporarily commented out due to structural issue
+          // if (_showCelebration)
+          //   FirstValueCelebration(
+          //     valueName: _newValueName,
+          //     onDismiss: _dismissCelebration,
+          //   ),
         ],
       ),
     );
@@ -617,158 +624,160 @@ class ValueCard extends StatelessWidget {
                   ),
                 ),
                 child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  QuantumEffects.cosmicBreath(
-                    intensity: 0.08,
-                    child: Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        gradient: RadialGradient(
-                          colors: [
-                            valueColor,
-                            valueColor.withAlpha(180),
-                          ],
-                        ),
-                        shape: BoxShape.circle,
-                        boxShadow: TugColors.getNeonGlow(
-                          valueColor,
-                          intensity: 0.6,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       children: [
-                        QuantumEffects.gradientText(
-                          value.name,
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
-                          ) ?? TextStyle(
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.5,
+                        QuantumEffects.cosmicBreath(
+                          intensity: 0.08,
+                          child: Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              gradient: RadialGradient(
+                                colors: [
+                                  valueColor,
+                                  valueColor.withAlpha(180),
+                                ],
+                              ),
+                              shape: BoxShape.circle,
+                              boxShadow: TugColors.getNeonGlow(
+                                valueColor,
+                                intensity: 0.6,
+                              ),
+                            ),
                           ),
-                          colors: [valueColor, valueColor.withAlpha(200)],
                         ),
-                        const SizedBox(height: 6),
-                        QuantumEffects.floating(
-                          offset: 2,
-                          child: Row(
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                'importance: ',
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
-                                  fontWeight: FontWeight.w500,
+                              QuantumEffects.gradientText(
+                                value.name,
+                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.5,
+                                ) ?? TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.5,
                                 ),
+                                colors: [valueColor, valueColor.withAlpha(200)],
                               ),
-                              ...List.generate(
-                                value.importance,
-                                (index) => QuantumEffects.cosmicBreath(
-                                  intensity: 0.05,
-                                  child: Container(
-                                    margin: const EdgeInsets.only(right: 2),
-                                    child: Icon(
-                                      Icons.star,
-                                      size: 16,
-                                      color: valueColor,
-                                      shadows: TugColors.getNeonGlow(
-                                        valueColor,
-                                        intensity: 0.3,
-                                      ).map((s) => Shadow(
-                                        color: s.color,
-                                        blurRadius: s.blurRadius,
-                                        offset: Offset(s.offset.dx, s.offset.dy),
-                                      )).toList(),
+                              const SizedBox(height: 6),
+                              QuantumEffects.floating(
+                                offset: 2,
+                                child: Row(
+                                  children: [
+                                    Text(
+                                      'importance: ',
+                                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                        color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                     ),
-                                  ),
+                                    ...List.generate(
+                                      value.importance,
+                                      (index) => QuantumEffects.cosmicBreath(
+                                        intensity: 0.05,
+                                        child: Container(
+                                          margin: const EdgeInsets.only(right: 2),
+                                          child: Icon(
+                                            Icons.star,
+                                            size: 16,
+                                            color: valueColor,
+                                            shadows: TugColors.getNeonGlow(
+                                              valueColor,
+                                              intensity: 0.3,
+                                            ).map((s) => Shadow(
+                                              color: s.color,
+                                              blurRadius: s.blurRadius,
+                                              offset: Offset(s.offset.dx, s.offset.dy),
+                                            )).toList(),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    ...List.generate(
+                                      5 - value.importance,
+                                      (index) => Container(
+                                        margin: const EdgeInsets.only(right: 2),
+                                        child: Icon(
+                                          Icons.star_border,
+                                          size: 16,
+                                          color: valueColor.withValues(alpha: 0.3),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              ...List.generate(
-                                5 - value.importance,
-                                (index) => Container(
-                                  margin: const EdgeInsets.only(right: 2),
-                                  child: Icon(
-                                    Icons.star_border,
-                                    size: 16,
-                                    color: valueColor.withValues(alpha: 0.3),
+                              if (value.description.isNotEmpty) ...[
+                                const SizedBox(height: 6),
+                                QuantumEffects.floating(
+                                  offset: 1,
+                                  child: Text(
+                                    value.description,
+                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                      color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+                                      fontStyle: FontStyle.italic,
+                                      letterSpacing: 0.3,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (value.currentStreak > 0 || value.longestStreak > 0) ...[
+                      const SizedBox(height: 16),
+                      QuantumEffects.glassContainer(
+                        isDark: isDarkMode,
+                        blur: 8,
+                        opacity: 0.05,
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              QuantumEffects.floating(
+                                offset: 2,
+                                child: _buildStreakIndicator(
+                                  context: context,
+                                  icon: Icons.local_fire_department,
+                                  color: Color(0xFFF57C00), // Orange
+                                  label: 'current streak',
+                                  value: '${value.currentStreak} day${value.currentStreak != 1 ? 's' : ''}',
+                                ),
+                              ),
+                              QuantumEffects.floating(
+                                offset: 3,
+                                child: _buildStreakIndicator(
+                                  context: context,
+                                  icon: Icons.emoji_events,
+                                  color: Color(0xFFFFD700), // Gold
+                                  label: 'top streak',
+                                  value: '${value.longestStreak} day${value.longestStreak != 1 ? 's' : ''}',
                                 ),
                               ),
                             ],
                           ),
                         ),
-                        if (value.description.isNotEmpty) ...[
-                          const SizedBox(height: 6),
-                          QuantumEffects.floating(
-                            offset: 1,
-                            child: Text(
-                              value.description,
-                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
-                                fontStyle: FontStyle.italic,
-                                letterSpacing: 0.3,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              if (value.currentStreak > 0 || value.longestStreak > 0) ...[
-                const SizedBox(height: 16),
-                QuantumEffects.glassContainer(
-                  isDark: isDarkMode,
-                  blur: 8,
-                  opacity: 0.05,
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        QuantumEffects.floating(
-                          offset: 2,
-                          child: _buildStreakIndicator(
-                            context: context,
-                            icon: Icons.local_fire_department,
-                            color: Color(0xFFF57C00), // Orange
-                            label: 'current streak',
-                            value: '${value.currentStreak} day${value.currentStreak != 1 ? 's' : ''}',
-                          ),
-                        ),
-                        QuantumEffects.floating(
-                          offset: 3,
-                          child: _buildStreakIndicator(
-                            context: context,
-                            icon: Icons.emoji_events,
-                            color: Color(0xFFFFD700), // Gold
-                            label: 'top streak',
-                            value: '${value.longestStreak} day${value.longestStreak != 1 ? 's' : ''}',
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                      ),
+                    ],
+                  ],
                 ),
-              ],
-            ]),
               ),
+            ),
           ),
         ),
       ),
-    ));
+    );
   }
   
   void _showDeleteConfirmation(BuildContext context) {

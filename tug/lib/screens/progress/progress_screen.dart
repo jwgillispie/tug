@@ -292,19 +292,22 @@ class _ProgressScreenState extends State<ProgressScreen>
         // Cache clear failed - not critical
       }
       
-      // Load data based on current mode and activity data in parallel for faster refresh
-      await Future.wait([
-        Future(() {
-          if (mounted) {
-            if (_currentMode == AppMode.valuesMode) {
-              context.read<ValuesBloc>().add(LoadValues(forceRefresh: true));
-            } else {
-              context.read<VicesBloc>().add(const LoadVices());
-            }
-          }
-        }),
-        _fetchActivityData(forceRefresh: true),
-      ]);
+      // Clear mode-specific caches
+      if (_currentMode == AppMode.vicesMode) {
+        // Clear vices cache and force fresh data
+        await _viceService.clearAllCache();
+        if (mounted) {
+          context.read<VicesBloc>().add(const LoadVices(forceRefresh: true));
+        }
+      } else {
+        // Clear values cache for values mode
+        if (mounted) {
+          context.read<ValuesBloc>().add(LoadValues(forceRefresh: true));
+        }
+      }
+      
+      // Load activity data with force refresh
+      await _fetchActivityData(forceRefresh: true);
       
       // Load streak stats in background (non-blocking) - only for values mode
       if (mounted && _currentMode == AppMode.valuesMode) {
@@ -381,6 +384,16 @@ class _ProgressScreenState extends State<ProgressScreen>
                 : (isDarkMode ? [TugColors.primaryPurple, TugColors.primaryPurpleLight, TugColors.primaryPurpleDark] : [TugColors.primaryPurple, TugColors.primaryPurpleLight]),
           ),
         ),
+        actions: _currentMode == AppMode.vicesMode ? [
+          IconButton(
+            icon: Icon(Icons.refresh, color: TugColors.viceGreen),
+            onPressed: () {
+              // Clear cache and force refresh
+              context.read<VicesBloc>().add(const ClearVicesCache());
+            },
+            tooltip: 'Clear cache & refresh',
+          ),
+        ] : null,
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

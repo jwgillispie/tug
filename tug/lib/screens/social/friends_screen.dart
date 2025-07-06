@@ -70,6 +70,7 @@ class _FriendsScreenState extends State<FriendsScreen> with SingleTickerProvider
     });
 
     try {
+      // Force refresh by clearing any potential cache in the future
       final friends = await _socialService.getFriends();
       setState(() {
         _friends = friends;

@@ -392,13 +392,17 @@ class _CommentsScreenState extends State<CommentsScreen> {
       );
     }
 
-    return ListView.builder(
-      controller: _scrollController,
-      itemCount: _comments.length,
-      itemBuilder: (context, index) {
-        final comment = _comments[index];
-        return _buildCommentItem(comment, isDarkMode, isViceMode);
-      },
+    return RefreshIndicator(
+      onRefresh: _loadComments,
+      color: TugColors.getPrimaryColor(isViceMode),
+      child: ListView.builder(
+        controller: _scrollController,
+        itemCount: _comments.length,
+        itemBuilder: (context, index) {
+          final comment = _comments[index];
+          return _buildCommentItem(comment, isDarkMode, isViceMode);
+        },
+      ),
     );
   }
 

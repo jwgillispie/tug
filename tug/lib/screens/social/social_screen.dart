@@ -108,6 +108,7 @@ class _SocialScreenState extends State<SocialScreen> {
   }
 
   Future<void> _refreshSocialFeed() async {
+    // Force refresh social feed (SocialService doesn't use caching yet)
     await _loadSocialFeed(forceRefresh: true);
   }
 
@@ -596,20 +597,6 @@ class _SocialScreenState extends State<SocialScreen> {
                         },
                       ),
                     ),
-                  );
-                },
-              ),
-              const Spacer(),
-              _buildActionButton(
-                icon: Icons.campaign_outlined,
-                count: 0,
-                label: 'amplify',
-                hideCount: true,
-                isDarkMode: isDarkMode,
-                isViceMode: isViceMode,
-                onTap: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Amplify feature launching soon! 📢')),
                   );
                 },
               ),

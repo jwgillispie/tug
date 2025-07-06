@@ -454,6 +454,11 @@ class ActivityService {
     await _cacheService.clearByPrefix('progress');
   }
 
+  /// Public method to clear all activity-related caches
+  Future<void> clearCache() async {
+    await _invalidateActivityCaches();
+  }
+
   // Helper method to format dates consistently for API
   String _formatDateForApi(DateTime date) {
     // Format the date as YYYY-MM-DD to avoid timezone issues

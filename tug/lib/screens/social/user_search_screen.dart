@@ -415,12 +415,16 @@ class _UserSearchScreenState extends State<UserSearchScreen> {
       );
     }
 
-    return ListView.builder(
-      itemCount: _searchResults.length,
-      itemBuilder: (context, index) {
-        final user = _searchResults[index];
-        return _buildUserItem(user, isDarkMode, isViceMode);
-      },
+    return RefreshIndicator(
+      onRefresh: _loadFriendRequests,
+      color: TugColors.getPrimaryColor(isViceMode),
+      child: ListView.builder(
+        itemCount: _searchResults.length,
+        itemBuilder: (context, index) {
+          final user = _searchResults[index];
+          return _buildUserItem(user, isDarkMode, isViceMode);
+        },
+      ),
     );
   }
 

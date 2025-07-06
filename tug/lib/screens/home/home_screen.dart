@@ -193,9 +193,18 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
   
   Future<void> _refreshData() async {
+    // Clear all caches before refreshing
+    try {
+      await _cacheService.clearByPrefix('activities');
+      await _cacheService.clearByPrefix('values');
+      await _viceService.clearAllCache();
+    } catch (e) {
+      // Cache clear failed - not critical, continue with refresh
+    }
+    
     // Force a fresh load from the server for values, vices, and activities
     context.read<ValuesBloc>().add(const LoadValues(forceRefresh: true));
-    context.read<VicesBloc>().add(const LoadVices());
+    context.read<VicesBloc>().add(const LoadVices(forceRefresh: true));
     context.read<ActivitiesBloc>().add(const LoadActivities(forceRefresh: true));
     
     // Add a small delay to ensure the refresh indicator shows
