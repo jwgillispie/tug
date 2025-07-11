@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import '../../utils/theme/colors.dart';
 import '../../utils/quantum_effects.dart';
 import '../../services/app_mode_service.dart';
+import '../../widgets/notifications/notification_bell.dart';
 import '../../services/social_service.dart';
 import '../../models/social_models.dart';
 import '../../blocs/auth/auth_bloc.dart';
@@ -162,6 +163,7 @@ class _SocialScreenState extends State<SocialScreen> {
           ),
         ),
         actions: [
+          const NotificationBell(),
           IconButton(
             icon: Icon(
               Icons.people,

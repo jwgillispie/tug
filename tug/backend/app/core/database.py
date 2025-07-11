@@ -11,6 +11,7 @@ from ..models.indulgence import Indulgence
 from ..models.friendship import Friendship
 from ..models.social_post import SocialPost
 from ..models.post_comment import PostComment
+from ..models.notification import Notification
 import logging
 
 logger = logging.getLogger(__name__)
@@ -45,6 +46,7 @@ async def init_db():
             Friendship,
             SocialPost,
             PostComment,
+            Notification,
         ]
     )
     

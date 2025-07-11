@@ -1,6 +1,6 @@
 # app/api/routes.py
 from fastapi import APIRouter
-from .endpoints import users, values, activities, achievements, rankings, vices, social
+from .endpoints import users, values, activities, achievements, rankings, vices, social, notifications
 
 api_router = APIRouter()
 
@@ -11,3 +11,4 @@ api_router.include_router(achievements.router, prefix="/achievements", tags=["ac
 api_router.include_router(rankings.router, prefix="/rankings", tags=["rankings"])
 api_router.include_router(vices.router, prefix="/vices", tags=["vices"])
 api_router.include_router(social.router, prefix="/social", tags=["social"])
+api_router.include_router(notifications.router, prefix="/notifications", tags=["notifications"])

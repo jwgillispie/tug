@@ -14,6 +14,7 @@ from ..schemas.social import (
     CommentCreate, CommentUpdate, UserSearchResult, SocialPostData, CommentData,
     SocialStatisticsResponse, PostTypeStats, FriendshipData
 )
+from .notification_service import NotificationService
 
 logger = logging.getLogger(__name__)
 
@@ -74,6 +75,14 @@ class SocialService:
             await friendship.save()
             logger.info(f"Friend request sent from {current_user.id} to {request.addressee_id}")
             
+            # Create notification for the addressee
+            await NotificationService.create_friend_request_notification(
+                addressee_id=request.addressee_id,
+                requester_id=str(current_user.id),
+                requester_name=current_user.display_name or current_user.username or current_user.effective_username,
+                friendship_id=str(friendship.id)
+            )
+            
             return friendship
             
         except HTTPException:
@@ -122,6 +131,16 @@ class SocialService:
             
             friendship.update_timestamp()
             await friendship.save()
+            
+            # Create notification for the requester that their request was accepted
+            requester = await User.get(friendship.requester_id)
+            if requester:
+                await NotificationService.create_friend_accepted_notification(
+                    requester_id=friendship.requester_id,
+                    accepter_id=str(current_user.id),
+                    accepter_name=current_user.display_name or current_user.username or current_user.effective_username,
+                    friendship_id=str(friendship.id)
+                )
             
             return friendship
             
@@ -451,6 +470,16 @@ class SocialService:
             # Update post comment count
             post.increment_comments()
             await post.save()
+            
+            # Create notification for post owner
+            if post.user_id != str(current_user.id):
+                await NotificationService.create_comment_notification(
+                    post_owner_id=post.user_id,
+                    commenter_id=str(current_user.id),
+                    commenter_name=current_user.display_name or current_user.username or current_user.effective_username,
+                    post_id=post_id,
+                    post_content=post.content
+                )
             
             logger.info(f"Comment added by user {current_user.id} to post {post_id}")
             

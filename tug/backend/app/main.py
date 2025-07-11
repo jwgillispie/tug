@@ -85,6 +85,7 @@ async def root():
             f"{settings.API_V1_PREFIX}/values",
             f"{settings.API_V1_PREFIX}/activities",
             f"{settings.API_V1_PREFIX}/vices",
-            f"{settings.API_V1_PREFIX}/social"
+            f"{settings.API_V1_PREFIX}/social",
+            f"{settings.API_V1_PREFIX}/notifications"
         ]
     }
