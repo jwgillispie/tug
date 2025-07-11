@@ -53,14 +53,11 @@ class _SocialStatisticsState extends State<SocialStatistics> {
         setState(() {
           _socialStats = {
             'total_posts': 0,
-            'total_likes': 0,
             'total_comments': 0,
             'friends_count': 0,
             'pending_requests': 0,
-            'avg_likes_per_post': 0.0,
             'avg_comments_per_post': 0.0,
             'most_popular_post_id': null,
-            'most_popular_post_likes': 0,
             'post_type_breakdown': {
               'activity_update': 0,
               'vice_progress': 0,
@@ -177,7 +174,6 @@ class _SocialStatisticsState extends State<SocialStatistics> {
   Widget _buildSocialStatisticsGrid() {
     final totalPosts = _socialStats['total_posts'] ?? 0;
     final friendsCount = _socialStats['friends_count'] ?? 0;
-    final totalLikes = _socialStats['total_likes'] ?? 0;
     final totalComments = _socialStats['total_comments'] ?? 0;
 
     return Column(
@@ -208,15 +204,6 @@ class _SocialStatisticsState extends State<SocialStatistics> {
           children: [
             Expanded(
               child: _buildStatCard(
-                icon: Icons.local_fire_department,
-                label: 'total fire',
-                value: '$totalLikes',
-                subtitle: 'received',
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildStatCard(
                 icon: Icons.record_voice_over,
                 label: 'two cents',
                 value: '$totalComments',
@@ -230,7 +217,6 @@ class _SocialStatisticsState extends State<SocialStatistics> {
   }
 
   Widget _buildEngagementMetrics() {
-    final avgLikes = _socialStats['avg_likes_per_post'] ?? 0;
     final avgComments = _socialStats['avg_comments_per_post'] ?? 0;
     final pendingRequests = _socialStats['pending_requests'] ?? 0;
 
@@ -269,10 +255,6 @@ class _SocialStatisticsState extends State<SocialStatistics> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildMetricItem(
-                label: 'avg likes/post',
-                value: '$avgLikes',
-              ),
               _buildMetricItem(
                 label: 'avg comments/post',
                 value: '$avgComments',

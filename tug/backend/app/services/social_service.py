@@ -408,7 +408,6 @@ class SocialService:
                     activity_id=post.activity_id,
                     vice_id=post.vice_id,
                     achievement_id=post.achievement_id,
-                    likes=post.likes,
                     comments_count=post.comments_count,
                     is_public=post.is_public,
                     created_at=post.created_at,
@@ -427,38 +426,6 @@ class SocialService:
                 detail="Failed to get social feed"
             )
     
-    @staticmethod
-    async def like_post(current_user: User, post_id: str) -> SocialPost:
-        """Like or unlike a post"""
-        try:
-            post = await SocialPost.get(post_id)
-            if not post:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Post not found"
-                )
-            
-            # Toggle like
-            if str(current_user.id) in post.likes:
-                post.remove_like(str(current_user.id))
-                action = "unliked"
-            else:
-                post.add_like(str(current_user.id))
-                action = "liked"
-            
-            await post.save()
-            logger.info(f"User {current_user.id} {action} post {post_id}")
-            
-            return post
-            
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.error(f"Error liking post: {e}", exc_info=True)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to like post"
-            )
     
     @staticmethod
     async def add_comment(current_user: User, post_id: str, comment_data: CommentCreate) -> PostComment:
@@ -521,7 +488,6 @@ class SocialService:
                     post_id=comment.post_id,
                     user_id=comment.user_id,
                     content=comment.content,
-                    likes=comment.likes,
                     created_at=comment.created_at,
                     updated_at=comment.updated_at,
                     username=user.username if user else "Unknown",
@@ -538,38 +504,6 @@ class SocialService:
                 detail="Failed to get post comments"
             )
     
-    @staticmethod
-    async def like_comment(current_user: User, comment_id: str) -> PostComment:
-        """Like or unlike a comment"""
-        try:
-            comment = await PostComment.get(comment_id)
-            if not comment:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail="Comment not found"
-                )
-            
-            # Toggle like
-            if str(current_user.id) in comment.likes:
-                comment.remove_like(str(current_user.id))
-                action = "unliked"
-            else:
-                comment.add_like(str(current_user.id))
-                action = "liked"
-            
-            await comment.save()
-            logger.info(f"User {current_user.id} {action} comment {comment_id}")
-            
-            return comment
-            
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.error(f"Error liking comment: {e}", exc_info=True)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to like comment"
-            )
     
     @staticmethod
     async def get_social_statistics(current_user: User) -> SocialStatisticsResponse:
@@ -594,22 +528,20 @@ class SocialService:
             
             # Calculate basic stats
             total_posts = len(user_posts)
-            total_likes = sum(len(post.likes) for post in user_posts)
             total_comments = sum(post.comments_count for post in user_posts)
             friends_count = len(friends)
             pending_requests_count = len(pending_requests)
             
             # Calculate averages
-            avg_likes_per_post = total_likes / total_posts if total_posts > 0 else 0.0
             avg_comments_per_post = total_comments / total_posts if total_posts > 0 else 0.0
             
-            # Find most popular post
+            # Find most popular post (by comments)
             most_popular_post = None
-            most_popular_likes = 0
+            most_popular_comments = 0
             for post in user_posts:
-                if len(post.likes) > most_popular_likes:
+                if post.comments_count > most_popular_comments:
                     most_popular_post = post
-                    most_popular_likes = len(post.likes)
+                    most_popular_comments = post.comments_count
             
             # Calculate post type breakdown
             post_type_counts = {
@@ -632,15 +564,12 @@ class SocialService:
             
             return SocialStatisticsResponse(
                 total_posts=total_posts,
-                total_likes=total_likes,
                 total_comments=total_comments,
                 friends_count=friends_count,
                 pending_requests=pending_requests_count,
-                avg_likes_per_post=round(avg_likes_per_post, 2),
                 avg_comments_per_post=round(avg_comments_per_post, 2),
                 post_type_breakdown=post_type_breakdown,
-                most_popular_post_id=str(most_popular_post.id) if most_popular_post else None,
-                most_popular_post_likes=most_popular_likes
+                most_popular_post_id=str(most_popular_post.id) if most_popular_post else None
             )
             
         except Exception as e:

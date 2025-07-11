@@ -46,7 +46,6 @@ class SocialPostData(BaseModel):
     activity_id: Optional[str] = None
     vice_id: Optional[str] = None
     achievement_id: Optional[str] = None
-    likes: List[str]
     comments_count: int
     is_public: bool
     created_at: datetime
@@ -68,7 +67,6 @@ class CommentData(BaseModel):
     post_id: str
     user_id: str
     content: str
-    likes: List[str]
     created_at: datetime
     updated_at: datetime
     
@@ -97,12 +95,9 @@ class PostTypeStats(BaseModel):
 
 class SocialStatisticsResponse(BaseModel):
     total_posts: int
-    total_likes: int
     total_comments: int
     friends_count: int
     pending_requests: int
-    avg_likes_per_post: float
     avg_comments_per_post: float
     post_type_breakdown: PostTypeStats
     most_popular_post_id: Optional[str] = None
-    most_popular_post_likes: int = 0

@@ -98,80 +98,6 @@ class _CommentsScreenState extends State<CommentsScreen> {
     }
   }
 
-  Future<void> _toggleCommentLike(CommentModel comment) async {
-    final commentIndex = _comments.indexWhere((c) => c.id == comment.id);
-    if (commentIndex == -1) return;
-
-    // Optimistic update
-    final updatedLikes = List<String>.from(comment.likes);
-    final isCurrentlyLiked = updatedLikes.contains(_currentUserId!);
-    
-    if (isCurrentlyLiked) {
-      updatedLikes.remove(_currentUserId!);
-    } else {
-      updatedLikes.add(_currentUserId!);
-    }
-
-    final updatedComment = CommentModel(
-      id: comment.id,
-      postId: comment.postId,
-      userId: comment.userId,
-      content: comment.content,
-      likes: updatedLikes,
-      createdAt: comment.createdAt,
-      updatedAt: comment.updatedAt,
-      username: comment.username,
-      userDisplayName: comment.userDisplayName,
-    );
-
-    setState(() {
-      _comments[commentIndex] = updatedComment;
-    });
-
-    try {
-      final result = await _socialService.likeComment(comment.id);
-      
-      // Update with server response
-      setState(() {
-        final updatedLikes = List<String>.from(_comments[commentIndex].likes);
-        final isLiked = result['liked'] ?? false;
-        
-        if (isLiked) {
-          if (!updatedLikes.contains(_currentUserId!)) {
-            updatedLikes.add(_currentUserId!);
-          }
-        } else {
-          updatedLikes.remove(_currentUserId!);
-        }
-        
-        _comments[commentIndex] = CommentModel(
-          id: comment.id,
-          postId: comment.postId,
-          userId: comment.userId,
-          content: comment.content,
-          likes: updatedLikes,
-          createdAt: comment.createdAt,
-          updatedAt: comment.updatedAt,
-          username: comment.username,
-          userDisplayName: comment.userDisplayName,
-        );
-      });
-    } catch (e) {
-      // Rollback on error
-      setState(() {
-        _comments[commentIndex] = comment;
-      });
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('failed to update fire: $e'),
-            backgroundColor: TugColors.error,
-          ),
-        );
-      }
-    }
-  }
 
   Future<void> _postComment() async {
     final content = _commentController.text.trim();
@@ -199,7 +125,6 @@ class _CommentsScreenState extends State<CommentsScreen> {
           activityId: _currentPost.activityId,
           viceId: _currentPost.viceId,
           achievementId: _currentPost.achievementId,
-          likes: _currentPost.likes,
           commentsCount: _currentPost.commentsCount + 1,
           isPublic: _currentPost.isPublic,
           createdAt: _currentPost.createdAt,
@@ -402,14 +327,6 @@ class _CommentsScreenState extends State<CommentsScreen> {
                 Row(
                   children: [
                     Text(
-                      '${_currentPost.totalLikes} fires',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Text(
                       '${_currentPost.commentsCount} comments',
                       style: TextStyle(
                         fontSize: 12,
@@ -560,45 +477,6 @@ class _CommentsScreenState extends State<CommentsScreen> {
                 ),
                 const SizedBox(height: 8),
                 
-                // Comment actions
-                Row(
-                  children: [
-                    InkWell(
-                      onTap: () => _toggleCommentLike(comment),
-                      borderRadius: BorderRadius.circular(12),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              comment.likes.contains(_currentUserId)
-                                  ? Icons.local_fire_department 
-                                  : Icons.local_fire_department_outlined,
-                              size: 14,
-                              color: comment.likes.contains(_currentUserId)
-                                  ? Colors.deepOrange
-                                  : TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
-                            ),
-                            if (comment.likes.isNotEmpty) ...[
-                              const SizedBox(width: 4),
-                              Text(
-                                comment.likes.length.toString(),
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
               ],
             ),
           ),

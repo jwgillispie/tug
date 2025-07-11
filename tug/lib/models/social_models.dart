@@ -96,8 +96,6 @@ class SocialPostModel {
   final String? viceId;
   @JsonKey(name: 'achievement_id')
   final String? achievementId;
-  @JsonKey(name: 'likes', fromJson: _likesFromJson)
-  final List<String> likes;
   @JsonKey(name: 'comments_count')
   final int commentsCount;
   @JsonKey(name: 'is_public')
@@ -124,29 +122,6 @@ class SocialPostModel {
   @JsonKey(name: 'activity_notes')
   final String? activityNotes;
 
-  // Helper method to convert both old List<String> and new Map<String, int> formats to List<String>
-  static List<String> _likesFromJson(dynamic json) {
-    if (json == null) return <String>[];
-    
-    // Handle old format: List<String> - use directly
-    if (json is List) {
-      return json.cast<String>();
-    }
-    
-    // Handle Map format: Map<String, int> - convert to List<String> of users who liked
-    if (json is Map) {
-      final List<String> result = <String>[];
-      for (final entry in json.entries) {
-        if (entry.key is String && entry.value is int && entry.value > 0) {
-          result.add(entry.key as String);
-        }
-      }
-      return result;
-    }
-    
-    return <String>[];
-  }
-
   SocialPostModel({
     required this.id,
     required this.userId,
@@ -155,7 +130,6 @@ class SocialPostModel {
     this.activityId,
     this.viceId,
     this.achievementId,
-    required this.likes,
     required this.commentsCount,
     required this.isPublic,
     required this.createdAt,
@@ -175,10 +149,6 @@ class SocialPostModel {
   Map<String, dynamic> toJson() => _$SocialPostModelToJson(this);
 
   // Helper methods
-  bool isLikedBy(String userId) => likes.contains(userId);
-  
-  int get totalLikes => likes.length;
-  
   String get displayName => userDisplayName ?? username ?? 'Unknown User';
   
   String get formattedDuration {
@@ -229,8 +199,6 @@ class CommentModel {
   @JsonKey(name: 'user_id')
   final String userId;
   final String content;
-  @JsonKey(name: 'likes', fromJson: _likesFromJson)
-  final List<String> likes;
   @JsonKey(name: 'created_at')
   final DateTime createdAt;
   @JsonKey(name: 'updated_at')
@@ -241,35 +209,11 @@ class CommentModel {
   @JsonKey(name: 'user_display_name')
   final String? userDisplayName;
 
-  // Helper method to convert both old List<String> and new Map<String, int> formats to List<String>
-  static List<String> _likesFromJson(dynamic json) {
-    if (json == null) return <String>[];
-    
-    // Handle old format: List<String> - use directly
-    if (json is List) {
-      return json.cast<String>();
-    }
-    
-    // Handle Map format: Map<String, int> - convert to List<String> of users who liked
-    if (json is Map) {
-      final List<String> result = <String>[];
-      for (final entry in json.entries) {
-        if (entry.key is String && entry.value is int && entry.value > 0) {
-          result.add(entry.key as String);
-        }
-      }
-      return result;
-    }
-    
-    return <String>[];
-  }
-
   CommentModel({
     required this.id,
     required this.postId,
     required this.userId,
     required this.content,
-    required this.likes,
     required this.createdAt,
     required this.updatedAt,
     this.username,

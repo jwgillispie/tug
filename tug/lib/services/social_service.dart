@@ -257,30 +257,6 @@ class SocialService {
     }
   }
 
-  Future<Map<String, dynamic>> likePost(String postId) async {
-    try {
-      _logger.i('SocialService: Adding fire to post: $postId');
-      
-      final response = await _dio.post('/api/v1/social/posts/$postId/like');
-      
-      if (response.statusCode == 200) {
-        _logger.i('SocialService: Post fire added successfully');
-        
-        return {
-          'liked': response.data['liked'] ?? false,
-          'total_likes': response.data['likes_count'] ?? 0,
-        };
-      } else {
-        throw Exception('Failed to fire post: ${response.statusCode}');
-      }
-    } on DioException catch (e) {
-      _logger.e('SocialService: DioException firing post: ${e.message}');
-      throw Exception('Network error: ${e.message}');
-    } catch (e) {
-      _logger.e('SocialService: Error firing post: $e');
-      throw Exception('Failed to fire post: $e');
-    }
-  }
 
   Future<CommentModel> addComment(String postId, String content) async {
     try {
@@ -309,30 +285,6 @@ class SocialService {
     }
   }
 
-  Future<Map<String, dynamic>> likeComment(String commentId) async {
-    try {
-      _logger.i('SocialService: Adding fire to comment: $commentId');
-      
-      final response = await _dio.post('/api/v1/social/comments/$commentId/like');
-      
-      if (response.statusCode == 200) {
-        _logger.i('SocialService: Comment fire added successfully');
-        
-        return {
-          'liked': response.data['liked'] ?? false,
-          'total_likes': response.data['likes_count'] ?? 0,
-        };
-      } else {
-        throw Exception('Failed to fire comment: ${response.statusCode}');
-      }
-    } on DioException catch (e) {
-      _logger.e('SocialService: DioException firing comment: ${e.message}');
-      throw Exception('Network error: ${e.message}');
-    } catch (e) {
-      _logger.e('SocialService: Error firing comment: $e');
-      throw Exception('Failed to fire comment: $e');
-    }
-  }
 
   Future<List<CommentModel>> getPostComments(String postId, {int limit = 50, int skip = 0, bool forceRefresh = false}) async {
     try {
