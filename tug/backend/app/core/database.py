@@ -11,7 +11,7 @@ from ..models.indulgence import Indulgence
 from ..models.friendship import Friendship
 from ..models.social_post import SocialPost
 from ..models.post_comment import PostComment
-from ..models.notification import Notification
+from ..models.notification import Notification, NotificationBatch
 import logging
 
 logger = logging.getLogger(__name__)
@@ -47,6 +47,7 @@ async def init_db():
             SocialPost,
             PostComment,
             Notification,
+            NotificationBatch,
         ]
     )
     
