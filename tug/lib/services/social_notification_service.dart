@@ -7,6 +7,9 @@ import '../models/notification_models.dart';
 import '../config/env_confg.dart';
 
 class SocialNotificationService {
+  static final SocialNotificationService _instance = SocialNotificationService._internal();
+  factory SocialNotificationService() => _instance;
+  
   final Dio _dio;
   final Logger _logger = Logger();
   
@@ -20,7 +23,7 @@ class SocialNotificationService {
   NotificationSummary? _cachedSummary;
   Timer? _pollTimer;
   
-  SocialNotificationService() : _dio = Dio() {
+  SocialNotificationService._internal() : _dio = Dio() {
     _dio.options.baseUrl = EnvConfig.apiUrl;
     _dio.options.connectTimeout = const Duration(seconds: 30);
     _dio.options.receiveTimeout = const Duration(seconds: 30);
@@ -48,7 +51,13 @@ class SocialNotificationService {
 
   void startPolling({Duration interval = const Duration(minutes: 1)}) {
     _pollTimer?.cancel();
-    _pollTimer = Timer.periodic(interval, (_) => getNotificationSummary());
+    _pollTimer = Timer.periodic(interval, (_) async {
+      try {
+        await getNotificationSummary();
+      } catch (e) {
+        _logger.w('Polling error (will retry): $e');
+      }
+    });
   }
 
   void stopPolling() {
@@ -57,15 +66,18 @@ class SocialNotificationService {
 
   void dispose() {
     _pollTimer?.cancel();
-    _notificationController.close();
+    _pollTimer = null;
+    _cachedSummary = null;
+    // Don't close the stream controller for singleton as it might be used elsewhere
   }
 
-  Future<NotificationSummary> getNotificationSummary({bool forceRefresh = false}) async {
+  Future<NotificationSummary> getNotificationSummary({bool forceRefresh = false, bool useBatched = true}) async {
     try {
-      _logger.i('SocialNotificationService: Getting notification summary');
+      _logger.i('SocialNotificationService: Getting notification summary (batched: $useBatched)');
       
+      final endpoint = useBatched ? '/api/v1/notifications/batched/summary' : '/api/v1/notifications/summary';
       final response = await _dio.get(
-        '/api/v1/notifications/summary',
+        endpoint,
         queryParameters: forceRefresh ? {'timestamp': DateTime.now().millisecondsSinceEpoch} : null,
       );
       
@@ -74,7 +86,9 @@ class SocialNotificationService {
         _cachedSummary = summary;
         
         // Emit to stream for real-time updates
-        _notificationController.add(summary);
+        if (!_notificationController.isClosed) {
+          _notificationController.add(summary);
+        }
         
         return summary;
       } else {
@@ -94,7 +108,9 @@ class SocialNotificationService {
         totalCount: 0,
         latestNotifications: [],
       );
-      _notificationController.add(emptySummary);
+      if (!_notificationController.isClosed) {
+        _notificationController.add(emptySummary);
+      }
       return emptySummary;
     } catch (e) {
       _logger.e('SocialNotificationService: Error getting notification summary: $e');
@@ -110,7 +126,9 @@ class SocialNotificationService {
         totalCount: 0,
         latestNotifications: [],
       );
-      _notificationController.add(emptySummary);
+      if (!_notificationController.isClosed) {
+        _notificationController.add(emptySummary);
+      }
       return emptySummary;
     }
   }
@@ -119,12 +137,14 @@ class SocialNotificationService {
     int limit = 20,
     int skip = 0,
     bool unreadOnly = false,
+    bool useBatched = true,
   }) async {
     try {
-      _logger.i('SocialNotificationService: Getting notifications (limit: $limit, skip: $skip, unreadOnly: $unreadOnly)');
+      _logger.i('SocialNotificationService: Getting notifications (limit: $limit, skip: $skip, unreadOnly: $unreadOnly, batched: $useBatched)');
       
+      final endpoint = useBatched ? '/api/v1/notifications/batched' : '/api/v1/notifications';
       final response = await _dio.get(
-        '/api/v1/notifications',
+        endpoint,
         queryParameters: {
           'limit': limit,
           'skip': skip,
@@ -145,6 +165,32 @@ class SocialNotificationService {
       _logger.e('SocialNotificationService: Error getting notifications: $e');
       throw Exception('Failed to get notifications: $e');
     }
+  }
+
+  Future<List<NotificationModel>> getBatchedNotifications({
+    int limit = 20,
+    int skip = 0,
+    bool unreadOnly = false,
+  }) async {
+    return getNotifications(
+      limit: limit,
+      skip: skip,
+      unreadOnly: unreadOnly,
+      useBatched: true,
+    );
+  }
+
+  Future<List<NotificationModel>> getIndividualNotifications({
+    int limit = 20,
+    int skip = 0,
+    bool unreadOnly = false,
+  }) async {
+    return getNotifications(
+      limit: limit,
+      skip: skip,
+      unreadOnly: unreadOnly,
+      useBatched: false,
+    );
   }
 
   Future<void> markNotificationsAsRead(List<String> notificationIds) async {

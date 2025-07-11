@@ -6,7 +6,7 @@ from fastapi import HTTPException, status
 from bson import ObjectId
 
 from ..models.user import User
-from ..models.notification import Notification, NotificationType
+from ..models.notification import Notification, NotificationBatch, NotificationType
 from ..schemas.notification import (
     NotificationData, NotificationSummary, 
     MarkNotificationReadRequest, NotificationResponse
@@ -209,16 +209,28 @@ class NotificationService:
         post_id: str,
         post_content: str
     ):
-        """Create a notification when someone comments on a post"""
+        """Create a batched notification when someone comments on a post"""
         try:
             if post_owner_id != commenter_id:  # Don't notify about own comments
-                await Notification.create_comment_notification(
+                # Create the individual notification first
+                notification = await Notification.create_comment_notification(
                     user_id=post_owner_id,
                     commenter_id=commenter_id,
                     commenter_name=commenter_name,
                     post_id=post_id,
                     post_content_preview=post_content
                 )
+                
+                # Add to batch
+                if notification:
+                    await NotificationService._add_to_batch(
+                        user_id=post_owner_id,
+                        notification_type=NotificationType.COMMENT,
+                        notification_id=str(notification.id),
+                        related_user_id=commenter_id,
+                        related_user_name=commenter_name,
+                        related_id=post_id
+                    )
         except Exception as e:
             logger.error(f"Error creating comment notification: {e}", exc_info=True)
             # Don't raise exception to avoid breaking comment creation
@@ -230,14 +242,26 @@ class NotificationService:
         requester_name: str,
         friendship_id: str
     ):
-        """Create a notification when someone sends a friend request"""
+        """Create a batched notification when someone sends a friend request"""
         try:
-            await Notification.create_friend_request_notification(
+            # Create the individual notification first
+            notification = await Notification.create_friend_request_notification(
                 user_id=addressee_id,
                 requester_id=requester_id,
                 requester_name=requester_name,
                 friendship_id=friendship_id
             )
+            
+            # Add to batch
+            if notification:
+                await NotificationService._add_to_batch(
+                    user_id=addressee_id,
+                    notification_type=NotificationType.FRIEND_REQUEST,
+                    notification_id=str(notification.id),
+                    related_user_id=requester_id,
+                    related_user_name=requester_name,
+                    related_id=friendship_id
+                )
         except Exception as e:
             logger.error(f"Error creating friend request notification: {e}", exc_info=True)
             # Don't raise exception to avoid breaking friend request
@@ -249,14 +273,170 @@ class NotificationService:
         accepter_name: str,
         friendship_id: str
     ):
-        """Create a notification when someone accepts a friend request"""
+        """Create a batched notification when someone accepts a friend request"""
         try:
-            await Notification.create_friend_accepted_notification(
+            # Create the individual notification first
+            notification = await Notification.create_friend_accepted_notification(
                 user_id=requester_id,
                 accepter_id=accepter_id,
                 accepter_name=accepter_name,
                 friendship_id=friendship_id
             )
+            
+            # Add to batch
+            if notification:
+                await NotificationService._add_to_batch(
+                    user_id=requester_id,
+                    notification_type=NotificationType.FRIEND_ACCEPTED,
+                    notification_id=str(notification.id),
+                    related_user_id=accepter_id,
+                    related_user_name=accepter_name,
+                    related_id=friendship_id
+                )
         except Exception as e:
             logger.error(f"Error creating friend accepted notification: {e}", exc_info=True)
             # Don't raise exception to avoid breaking friend acceptance
+    
+    @staticmethod
+    async def _add_to_batch(
+        user_id: str,
+        notification_type: NotificationType,
+        notification_id: str,
+        related_user_id: str,
+        related_user_name: str,
+        related_id: Optional[str] = None,
+        window_minutes: int = 5
+    ):
+        """Add a notification to a batch"""
+        try:
+            # Find or create batch
+            batch = await NotificationBatch.find_or_create_batch(
+                user_id=user_id,
+                batch_type=notification_type,
+                related_id=related_id,
+                window_minutes=window_minutes
+            )
+            
+            # Add notification to batch
+            batch.add_notification(
+                notification_id=notification_id,
+                user_id=related_user_id,
+                user_name=related_user_name
+            )
+            
+            # Save the updated batch
+            await batch.save()
+            
+            logger.info(f"Added notification {notification_id} to batch {batch.id} for user {user_id}")
+            
+        except Exception as e:
+            logger.error(f"Error adding notification to batch: {e}", exc_info=True)
+            # Don't raise exception to avoid breaking notification creation
+    
+    @staticmethod
+    async def get_batched_notifications(
+        current_user: User,
+        limit: int = 20,
+        skip: int = 0,
+        unread_only: bool = False
+    ) -> NotificationResponse:
+        """Get batched notifications for the current user"""
+        try:
+            # Build filter for batches
+            filter_dict = {"user_id": str(current_user.id)}
+            if unread_only:
+                filter_dict["is_read"] = False
+            
+            # Get batched notifications
+            batches = await NotificationBatch.find(filter_dict)\
+                .sort([("updated_at", -1)])\
+                .skip(skip)\
+                .limit(limit)\
+                .to_list()
+            
+            # Get total count
+            total_count = await NotificationBatch.find(filter_dict).count()
+            
+            # Convert batches to notification data format
+            notification_data_list = []
+            for batch in batches:
+                notification_data = NotificationData(
+                    id=str(batch.id),
+                    user_id=batch.user_id,
+                    type=batch.batch_type,
+                    title=batch.title,
+                    message=batch.message,
+                    related_id=batch.related_id,
+                    related_user_id=batch.user_ids[0] if batch.user_ids else None,
+                    is_read=batch.is_read,
+                    created_at=batch.created_at,
+                    updated_at=batch.updated_at,
+                    related_username=batch.user_names[0] if batch.user_names else None,
+                    related_display_name=batch.user_names[0] if batch.user_names else None
+                )
+                notification_data_list.append(notification_data)
+            
+            return NotificationResponse(
+                notifications=notification_data_list,
+                has_more=len(notification_data_list) == limit,
+                total_count=total_count
+            )
+            
+        except Exception as e:
+            logger.error(f"Error getting batched notifications: {e}", exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to get batched notifications"
+            )
+    
+    @staticmethod
+    async def get_batched_notification_summary(current_user: User) -> NotificationSummary:
+        """Get batched notification summary for the current user"""
+        try:
+            # Get unread count from batches
+            unread_count = await NotificationBatch.find({
+                "user_id": str(current_user.id),
+                "is_read": False
+            }).count()
+            
+            # Get total count from batches
+            total_count = await NotificationBatch.find({
+                "user_id": str(current_user.id)
+            }).count()
+            
+            # Get latest 3 batched notifications
+            latest_batches = await NotificationBatch.find({
+                "user_id": str(current_user.id)
+            }).sort([("updated_at", -1)]).limit(3).to_list()
+            
+            # Convert to notification data format
+            latest_data = []
+            for batch in latest_batches:
+                notification_data = NotificationData(
+                    id=str(batch.id),
+                    user_id=batch.user_id,
+                    type=batch.batch_type,
+                    title=batch.title,
+                    message=batch.message,
+                    related_id=batch.related_id,
+                    related_user_id=batch.user_ids[0] if batch.user_ids else None,
+                    is_read=batch.is_read,
+                    created_at=batch.created_at,
+                    updated_at=batch.updated_at,
+                    related_username=batch.user_names[0] if batch.user_names else None,
+                    related_display_name=batch.user_names[0] if batch.user_names else None
+                )
+                latest_data.append(notification_data)
+            
+            return NotificationSummary(
+                unread_count=unread_count,
+                total_count=total_count,
+                latest_notifications=latest_data
+            )
+            
+        except Exception as e:
+            logger.error(f"Error getting batched notification summary: {e}", exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to get batched notification summary"
+            )

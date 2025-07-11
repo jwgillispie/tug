@@ -1,4 +1,5 @@
 // lib/widgets/notifications/notification_bell.dart
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../services/social_notification_service.dart';
 import '../../models/notification_models.dart';
@@ -18,6 +19,7 @@ class _NotificationBellState extends State<NotificationBell> {
   final AppModeService _appModeService = AppModeService();
   NotificationSummary? _notificationSummary;
   AppMode _currentMode = AppMode.valuesMode;
+  StreamSubscription<NotificationSummary>? _notificationSubscription;
 
   @override
   void initState() {
@@ -38,7 +40,7 @@ class _NotificationBellState extends State<NotificationBell> {
 
   void _startListening() {
     // Listen to notification stream for real-time updates
-    _notificationService.notificationStream.listen((summary) {
+    _notificationSubscription = _notificationService.notificationStream.listen((summary) {
       if (mounted) {
         setState(() {
           _notificationSummary = summary;
@@ -74,6 +76,7 @@ class _NotificationBellState extends State<NotificationBell> {
 
   @override
   void dispose() {
+    _notificationSubscription?.cancel();
     _notificationService.stopPolling();
     super.dispose();
   }

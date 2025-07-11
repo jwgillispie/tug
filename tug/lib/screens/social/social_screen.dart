@@ -64,7 +64,7 @@ class _SocialScreenState extends State<SocialScreen> {
   }
 
   Future<void> _loadSocialFeed({bool forceRefresh = false}) async {
-    if (_isLoading) return;
+    if (_isLoading || !mounted) return;
     
     setState(() {
       _isLoading = true;
@@ -89,14 +89,18 @@ class _SocialScreenState extends State<SocialScreen> {
         }
       }).toList();
       
-      setState(() {
-        _posts = filteredPosts;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _posts = filteredPosts;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
