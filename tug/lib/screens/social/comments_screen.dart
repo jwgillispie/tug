@@ -11,11 +11,13 @@ import '../../blocs/auth/auth_bloc.dart';
 class CommentsScreen extends StatefulWidget {
   final SocialPostModel post;
   final Function(SocialPostModel)? onPostUpdated;
+  final bool autoFocusInput;
   
   const CommentsScreen({
     super.key,
     required this.post,
     this.onPostUpdated,
+    this.autoFocusInput = false,
   });
 
   @override
@@ -101,11 +103,11 @@ class _CommentsScreenState extends State<CommentsScreen> {
     if (commentIndex == -1) return;
 
     // Optimistic update
-    final wasLiked = comment.likes.contains(_currentUserId);
     final updatedLikes = List<String>.from(comment.likes);
+    final isCurrentlyLiked = updatedLikes.contains(_currentUserId!);
     
-    if (wasLiked) {
-      updatedLikes.remove(_currentUserId);
+    if (isCurrentlyLiked) {
+      updatedLikes.remove(_currentUserId!);
     } else {
       updatedLikes.add(_currentUserId!);
     }
@@ -127,7 +129,33 @@ class _CommentsScreenState extends State<CommentsScreen> {
     });
 
     try {
-      await _socialService.likeComment(comment.id);
+      final result = await _socialService.likeComment(comment.id);
+      
+      // Update with server response
+      setState(() {
+        final updatedLikes = List<String>.from(_comments[commentIndex].likes);
+        final isLiked = result['liked'] ?? false;
+        
+        if (isLiked) {
+          if (!updatedLikes.contains(_currentUserId!)) {
+            updatedLikes.add(_currentUserId!);
+          }
+        } else {
+          updatedLikes.remove(_currentUserId!);
+        }
+        
+        _comments[commentIndex] = CommentModel(
+          id: comment.id,
+          postId: comment.postId,
+          userId: comment.userId,
+          content: comment.content,
+          likes: updatedLikes,
+          createdAt: comment.createdAt,
+          updatedAt: comment.updatedAt,
+          username: comment.username,
+          userDisplayName: comment.userDisplayName,
+        );
+      });
     } catch (e) {
       // Rollback on error
       setState(() {
@@ -137,7 +165,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to update like: $e'),
+            content: Text('failed to update fire: $e'),
             backgroundColor: TugColors.error,
           ),
         );
@@ -178,6 +206,11 @@ class _CommentsScreenState extends State<CommentsScreen> {
           updatedAt: _currentPost.updatedAt,
           username: _currentPost.username,
           userDisplayName: _currentPost.userDisplayName,
+          valueName: _currentPost.valueName,
+          valueColor: _currentPost.valueColor,
+          activityName: _currentPost.activityName,
+          activityDuration: _currentPost.activityDuration,
+          activityNotes: _currentPost.activityNotes,
         );
       });
       
@@ -315,11 +348,61 @@ class _CommentsScreenState extends State<CommentsScreen> {
                 ),
                 const SizedBox(height: 8),
                 
+                // Value badge with color and time
+                if (_currentPost.hasValueInfo) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: (_currentPost.valueColorObject ?? TugColors.getPrimaryColor(isViceMode)).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(
+                        color: _currentPost.valueColorObject ?? TugColors.getPrimaryColor(isViceMode),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: _currentPost.valueColorObject ?? TugColors.getPrimaryColor(isViceMode),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          _currentPost.valueName!,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: _currentPost.valueColorObject ?? TugColors.getPrimaryColor(isViceMode),
+                          ),
+                        ),
+                        if (_currentPost.formattedDuration.isNotEmpty) ...[
+                          const SizedBox(width: 6),
+                          Text(
+                            _currentPost.formattedDuration,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: _currentPost.valueColorObject ?? TugColors.getPrimaryColor(isViceMode),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 8),
+                
                 // Post stats
                 Row(
                   children: [
                     Text(
-                      '${_currentPost.likes.length} likes',
+                      '${_currentPost.totalLikes} fires',
                       style: TextStyle(
                         fontSize: 12,
                         color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
@@ -372,7 +455,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
             ),
             const SizedBox(height: 16),
             Text(
-              'No comments yet',
+              'ainno comments yet',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w600,
@@ -381,7 +464,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Be the first to comment!',
+              'say something sweet!',
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
@@ -492,12 +575,12 @@ class _CommentsScreenState extends State<CommentsScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              comment.likes.contains(_currentUserId) 
-                                  ? Icons.thumb_up 
-                                  : Icons.thumb_up_outlined,
+                              comment.likes.contains(_currentUserId)
+                                  ? Icons.local_fire_department 
+                                  : Icons.local_fire_department_outlined,
                               size: 14,
                               color: comment.likes.contains(_currentUserId)
-                                  ? Colors.green
+                                  ? Colors.deepOrange
                                   : TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
                             ),
                             if (comment.likes.isNotEmpty) ...[
@@ -542,8 +625,9 @@ class _CommentsScreenState extends State<CommentsScreen> {
             Expanded(
               child: TextField(
                 controller: _commentController,
+                autofocus: widget.autoFocusInput,
                 decoration: InputDecoration(
-                  hintText: 'Add your 2 cents...',
+                  hintText: 'share your two cents...',
                   hintStyle: TextStyle(
                     color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
                   ),

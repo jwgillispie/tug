@@ -1,4 +1,5 @@
 // lib/models/social_models.dart
+import 'package:flutter/material.dart';
 import 'package:json_annotation/json_annotation.dart';
 
 part 'social_models.g.dart';
@@ -95,6 +96,7 @@ class SocialPostModel {
   final String? viceId;
   @JsonKey(name: 'achievement_id')
   final String? achievementId;
+  @JsonKey(name: 'likes', fromJson: _likesFromJson)
   final List<String> likes;
   @JsonKey(name: 'comments_count')
   final int commentsCount;
@@ -109,6 +111,41 @@ class SocialPostModel {
   final String? username;
   @JsonKey(name: 'user_display_name')
   final String? userDisplayName;
+  
+  // Value info for activity posts
+  @JsonKey(name: 'value_name')
+  final String? valueName;
+  @JsonKey(name: 'value_color')
+  final String? valueColor;
+  @JsonKey(name: 'activity_name')
+  final String? activityName;
+  @JsonKey(name: 'activity_duration')
+  final int? activityDuration;
+  @JsonKey(name: 'activity_notes')
+  final String? activityNotes;
+
+  // Helper method to convert both old List<String> and new Map<String, int> formats to List<String>
+  static List<String> _likesFromJson(dynamic json) {
+    if (json == null) return <String>[];
+    
+    // Handle old format: List<String> - use directly
+    if (json is List) {
+      return json.cast<String>();
+    }
+    
+    // Handle Map format: Map<String, int> - convert to List<String> of users who liked
+    if (json is Map) {
+      final List<String> result = <String>[];
+      for (final entry in json.entries) {
+        if (entry.key is String && entry.value is int && entry.value > 0) {
+          result.add(entry.key as String);
+        }
+      }
+      return result;
+    }
+    
+    return <String>[];
+  }
 
   SocialPostModel({
     required this.id,
@@ -125,6 +162,11 @@ class SocialPostModel {
     required this.updatedAt,
     this.username,
     this.userDisplayName,
+    this.valueName,
+    this.valueColor,
+    this.activityName,
+    this.activityDuration,
+    this.activityNotes,
   });
 
   factory SocialPostModel.fromJson(Map<String, dynamic> json) =>
@@ -135,7 +177,31 @@ class SocialPostModel {
   // Helper methods
   bool isLikedBy(String userId) => likes.contains(userId);
   
+  int get totalLikes => likes.length;
+  
   String get displayName => userDisplayName ?? username ?? 'Unknown User';
+  
+  String get formattedDuration {
+    if (activityDuration == null || activityDuration == 0) return '';
+    final hours = activityDuration! ~/ 60;
+    final minutes = activityDuration! % 60;
+    if (hours > 0) {
+      return minutes > 0 ? '+${hours}h ${minutes}m' : '+${hours}h';
+    } else {
+      return '+${minutes}m';
+    }
+  }
+  
+  bool get hasValueInfo => valueName != null && valueColor != null;
+  
+  Color? get valueColorObject {
+    if (valueColor == null) return null;
+    try {
+      return Color(int.parse(valueColor!.substring(1), radix: 16) + 0xFF000000);
+    } catch (e) {
+      return null;
+    }
+  }
   
   String get timeAgoText {
     final now = DateTime.now();
@@ -163,6 +229,7 @@ class CommentModel {
   @JsonKey(name: 'user_id')
   final String userId;
   final String content;
+  @JsonKey(name: 'likes', fromJson: _likesFromJson)
   final List<String> likes;
   @JsonKey(name: 'created_at')
   final DateTime createdAt;
@@ -173,6 +240,29 @@ class CommentModel {
   final String? username;
   @JsonKey(name: 'user_display_name')
   final String? userDisplayName;
+
+  // Helper method to convert both old List<String> and new Map<String, int> formats to List<String>
+  static List<String> _likesFromJson(dynamic json) {
+    if (json == null) return <String>[];
+    
+    // Handle old format: List<String> - use directly
+    if (json is List) {
+      return json.cast<String>();
+    }
+    
+    // Handle Map format: Map<String, int> - convert to List<String> of users who liked
+    if (json is Map) {
+      final List<String> result = <String>[];
+      for (final entry in json.entries) {
+        if (entry.key is String && entry.value is int && entry.value > 0) {
+          result.add(entry.key as String);
+        }
+      }
+      return result;
+    }
+    
+    return <String>[];
+  }
 
   CommentModel({
     required this.id,

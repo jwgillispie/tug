@@ -169,68 +169,71 @@ class _MainLayoutState extends State<MainLayout> {
       bool isDarkMode,
       double bottomPadding,
       bool isViceMode) {
-    return QuantumEffects.glassContainer(
-      isDark: isDarkMode,
-      blur: 20,
-      opacity: 0.8,
-      borderRadius: BorderRadius.zero,
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              TugColors.getSurfaceColor(isDarkMode, isViceMode),
-              TugColors.getSurfaceColor(isDarkMode, isViceMode).withValues(alpha: 0.9),
-            ],
-          ),
-          border: Border(
-            top: BorderSide(
-              color: TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.1),
-              width: 1,
-            ),
-          ),
-        ),
-        height: 44 + bottomPadding,
-        padding: EdgeInsets.only(bottom: bottomPadding, top: 4),
-        child: Row(
-          children: [
-            // Create equal width nav items with flexible spacing
-            for (int i = 0; i < 2; i++)
-              Expanded(
-                child: _buildNavItem(
-                  context: context,
-                  icon: navItems[i]['icon'],
-                  selectedIcon: navItems[i]['selectedIcon'],
-                  label: navItems[i]['label'],
-                  index: navItems[i]['index'],
-                  path: navItems[i]['path'],
-                  isDarkMode: isDarkMode,
-                  isViceMode: isViceMode,
-                ),
-              ),
-
-            // Center space for FAB that adapts with screen size
-            Expanded(
-              child: Container(), // Responsive space that grows/shrinks
-            ),
-
-            // Last two nav items
-            for (int i = 2; i < 4; i++)
-              Expanded(
-                child: _buildNavItem(
-                  context: context,
-                  icon: navItems[i]['icon'],
-                  selectedIcon: navItems[i]['selectedIcon'],
-                  label: navItems[i]['label'],
-                  index: navItems[i]['index'],
-                  path: navItems[i]['path'],
-                  isDarkMode: isDarkMode,
-                  isViceMode: isViceMode,
-                ),
-              ),
+    return Container(
+      width: double.infinity, // Ensure full width
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            TugColors.getSurfaceColor(isDarkMode, isViceMode).withValues(alpha: 0.9),
+            TugColors.getSurfaceColor(isDarkMode, isViceMode).withValues(alpha: 0.8),
           ],
         ),
+        border: Border(
+          top: BorderSide(
+            color: TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.1),
+            width: 1,
+          ),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: (isDarkMode ? Colors.black : TugColors.primaryPurple).withValues(alpha: 0.1),
+            blurRadius: 20,
+            spreadRadius: -2,
+            offset: const Offset(0, -8),
+          ),
+        ],
+      ),
+      height: 44 + bottomPadding,
+      padding: EdgeInsets.only(bottom: bottomPadding, top: 4),
+      child: Row(
+        children: [
+          // Create equal width nav items with flexible spacing
+          for (int i = 0; i < 2; i++)
+            Expanded(
+              child: _buildNavItem(
+                context: context,
+                icon: navItems[i]['icon'],
+                selectedIcon: navItems[i]['selectedIcon'],
+                label: navItems[i]['label'],
+                index: navItems[i]['index'],
+                path: navItems[i]['path'],
+                isDarkMode: isDarkMode,
+                isViceMode: isViceMode,
+              ),
+            ),
+
+          // Center space for FAB that adapts with screen size
+          Expanded(
+            child: Container(), // Responsive space that grows/shrinks
+          ),
+
+          // Last two nav items
+          for (int i = 2; i < 4; i++)
+            Expanded(
+              child: _buildNavItem(
+                context: context,
+                icon: navItems[i]['icon'],
+                selectedIcon: navItems[i]['selectedIcon'],
+                label: navItems[i]['label'],
+                index: navItems[i]['index'],
+                path: navItems[i]['path'],
+                isDarkMode: isDarkMode,
+                isViceMode: isViceMode,
+              ),
+            ),
+        ],
       ),
     );
   }

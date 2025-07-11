@@ -208,8 +208,8 @@ class _SocialStatisticsState extends State<SocialStatistics> {
           children: [
             Expanded(
               child: _buildStatCard(
-                icon: Icons.favorite,
-                label: 'total likes',
+                icon: Icons.local_fire_department,
+                label: 'total fire',
                 value: '$totalLikes',
                 subtitle: 'received',
               ),
@@ -217,8 +217,8 @@ class _SocialStatisticsState extends State<SocialStatistics> {
             const SizedBox(width: 12),
             Expanded(
               child: _buildStatCard(
-                icon: Icons.comment,
-                label: 'comments',
+                icon: Icons.record_voice_over,
+                label: 'two cents',
                 value: '$totalComments',
                 subtitle: 'received',
               ),

@@ -215,29 +215,6 @@ class StreakOverviewWidget extends StatelessWidget {
                   ),
                 ),
               ),
-              if (onRefresh != null)
-                Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [TugColors.primaryPurple.withValues(alpha: 0.1), TugColors.primaryPurpleLight.withValues(alpha: 0.05)],
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: IconButton(
-                    icon: Icon(
-                      Icons.refresh,
-                      color: TugColors.primaryPurple,
-                      size: 20,
-                    ),
-                    onPressed: () {
-                      onRefresh!();
-                      context.read<ValuesBloc>().add(
-                        const LoadStreakStats(forceRefresh: true),
-                      );
-                    },
-                    tooltip: 'refresh streak data',
-                  ),
-                ),
             ],
           ),
         ),

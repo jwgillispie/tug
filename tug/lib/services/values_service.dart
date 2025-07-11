@@ -30,12 +30,16 @@ class ValuesService {
   // Create a new value
   Future<ValueModel> createValue(ValueModel value) async {
     try {
+      debugPrint('Creating value with data: ${value.toJson()}');
       final response = await _apiService.post(
         '/api/v1/values',
         data: value.toJson(),
       );
+      debugPrint('API response: $response');
+      debugPrint('Response type: ${response.runtimeType}');
       return ValueModel.fromJson(response);
     } catch (e) {
+      debugPrint('Error in createValue: $e');
       rethrow;
     }
   }

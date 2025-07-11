@@ -18,8 +18,25 @@ class ApiError implements Exception {
       final statusCode = response?.statusCode;
       
       if (response?.data is Map && response?.data['detail'] != null) {
+        // Safely handle the detail field
+        final detail = response!.data['detail'];
+        String message;
+        if (detail is String) {
+          message = detail;
+        } else if (detail is List) {
+          // Extract the error messages from validation errors
+          message = detail.map((error) {
+            if (error is Map && error['msg'] != null) {
+              return error['msg'].toString();
+            }
+            return error.toString();
+          }).join(', ');
+        } else {
+          message = detail.toString();
+        }
+        
         return ApiError(
-          message: response!.data['detail'],
+          message: message,
           code: 'api_error',
           statusCode: statusCode,
         );

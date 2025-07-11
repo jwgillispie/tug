@@ -13,11 +13,21 @@ import 'package:tug/utils/quantum_effects.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:tug/services/user_service.dart';
 import 'package:tug/services/notification_service.dart';
+import 'package:tug/services/values_service.dart';
+import 'package:tug/services/vice_service.dart';
+import 'package:tug/services/activity_service.dart';
+import 'package:tug/services/social_service.dart';
+import 'package:tug/services/api_service.dart';
+import 'package:tug/models/value_model.dart';
+import 'package:tug/models/vice_model.dart';
+import 'package:tug/models/activity_model.dart';
+import 'package:tug/models/indulgence_model.dart';
+import 'package:tug/models/social_models.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import 'dart:convert';
-import 'dart:typed_data';
 import 'dart:async';
+import 'dart:math';
 import '../../widgets/profile/social_statistics.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -41,9 +51,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final ImagePicker _imagePicker = ImagePicker();
   final AppModeService _appModeService = AppModeService();
   final UserService _userService = UserService();
+  final ValuesService _valuesService = ValuesService();
+  final ViceService _viceService = ViceService();
+  final ActivityService _activityService = ActivityService();
+  final SocialService _socialService = SocialService();
+  final ApiService _apiService = ApiService();
   
   AppMode _currentMode = AppMode.valuesMode;
   StreamSubscription<AppMode>? _modeSubscription;
+  
+  // Debug state
+  bool _isGeneratingMockData = false;
+  bool _isClearingData = false;
 
   @override
   void initState() {
@@ -295,6 +314,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 : (isDarkMode ? [TugColors.primaryPurple, TugColors.primaryPurpleLight, TugColors.primaryPurpleDark] : [TugColors.primaryPurple, TugColors.primaryPurpleLight]),
           ),
         ),
+        actions: [
+          QuantumEffects.floating(
+            offset: 5,
+            child: QuantumEffects.quantumBorder(
+              glowColor: TugColors.error,
+              intensity: 0.8,
+              child: Container(
+                margin: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: RadialGradient(
+                    colors: [
+                      TugColors.error.withValues(alpha: 0.15),
+                      TugColors.error.withValues(alpha: 0.05),
+                    ],
+                  ),
+                ),
+                child: IconButton(
+                  icon: Icon(Icons.logout, color: TugColors.error),
+                  onPressed: _showLogoutConfirmation,
+                  tooltip: 'logout',
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         child: Column(
@@ -618,6 +663,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ],
             ),
+
+            // Debug section (only in debug mode)
+            if (kDebugMode) _buildDebugSection(),
 
             // Add the danger zone section
             _buildDangerSection(),
@@ -1737,6 +1785,231 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           TextButton(
             style: TextButton.styleFrom(foregroundColor: Colors.red),
+            onPressed: () {
+              Navigator.pop(context);
+              context.read<AuthBloc>().add(LogoutEvent());
+            },
+            child: const Text('log out'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDebugSection() {
+    return _buildSettingsSection(
+      title: '🛠️ debug tools',
+      items: [
+        _buildSettingsItem(
+          icon: Icons.public,
+          title: 'make indulgences public',
+          subtitle: 'set all current indulgences to public',
+          onTap: _isGeneratingMockData ? () {} : () {
+            _generateMockData();
+          },
+        ),
+        _buildSettingsItem(
+          icon: Icons.clear_all,
+          title: 'clear all data',
+          subtitle: 'remove all values, vices, activities & posts',
+          onTap: _isClearingData ? () {} : () {
+            _clearAllData();
+          },
+        ),
+      ],
+    );
+  }
+
+  Future<void> _generateMockData() async {
+    if (_isGeneratingMockData) return;
+
+    setState(() {
+      _isGeneratingMockData = true;
+    });
+
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        throw Exception('No user logged in');
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Making indulgences public...')),
+        );
+      }
+
+      debugPrint('Making current user\'s indulgences public...');
+      
+      // Get all current user's vices
+      final vices = await _viceService.getVices();
+      int totalUpdated = 0;
+
+      // For each vice, get indulgences and make them public
+      for (final vice in vices) {
+        if (vice.id != null) {
+          try {
+            final indulgences = await _viceService.getIndulgences(vice.id!);
+            for (final indulgence in indulgences) {
+              if (indulgence.id != null && !indulgence.isPublic) {
+                // Update indulgence to be public using direct API call
+                try {
+                  await _apiService.patch(
+                    '/api/v1/indulgences/${indulgence.id}',
+                    data: {
+                      'is_public': true,
+                      'notes_public': true,
+                    },
+                  );
+                  totalUpdated++;
+                } catch (e) {
+                  debugPrint('Error updating indulgence ${indulgence.id}: $e');
+                }
+              }
+            }
+          } catch (e) {
+            debugPrint('Error updating indulgences for vice ${vice.name}: $e');
+          }
+        }
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Made $totalUpdated indulgences public! 🎉'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+
+    } catch (e) {
+      debugPrint('Error making indulgences public: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error making indulgences public: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isGeneratingMockData = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _clearAllData() async {
+    if (_isClearingData) return;
+
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Clear All Data'),
+        content: const Text(
+          'Are you sure you want to delete ALL values, vices, activities, and social posts? This cannot be undone.'
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete All'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    setState(() {
+      _isClearingData = true;
+    });
+
+    try {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Clearing all data...')),
+        );
+      }
+
+      // Get all data first
+      final values = await _valuesService.getValues();
+      final vices = await _viceService.getVices();
+
+      // Delete all activities (assuming there's a method to get all activities)
+      try {
+        final activities = await _activityService.getActivities();
+        for (final activity in activities) {
+          if (activity.id != null) {
+            await _activityService.deleteActivity(activity.id!);
+          }
+        }
+      } catch (e) {
+        debugPrint('Error deleting activities: $e');
+      }
+
+      // Delete all indulgences (we'll delete vices which should cascade)
+      // Individual indulgence deletion may not be available
+
+      // Delete all values
+      for (final value in values) {
+        if (value.id != null) {
+          await _valuesService.deleteValue(value.id!);
+        }
+      }
+
+      // Delete all vices
+      for (final vice in vices) {
+        if (vice.id != null) {
+          await _viceService.deleteVice(vice.id!);
+        }
+      }
+
+      // Note: Social posts are typically cascaded deleted with activities,
+      // but if there are standalone posts, you might need to delete them separately
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('All data cleared successfully! 🗑️'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
+
+    } catch (e) {
+      debugPrint('Error clearing data: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error clearing data: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isClearingData = false;
+        });
+      }
+    }
+  }
+
+  void _showLogoutConfirmation() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('logout'),
+        content: const Text('deadass?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('cancel'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: TugColors.error),
             onPressed: () {
               Navigator.pop(context);
               context.read<AuthBloc>().add(LogoutEvent());

@@ -234,11 +234,16 @@ class SocialService {
       
       final response = await _dio.get(
         '/api/v1/social/feed',
-        queryParameters: {'limit': limit, 'skip': skip},
+        queryParameters: {
+          'limit': limit, 
+          'skip': skip,
+          'timestamp': DateTime.now().millisecondsSinceEpoch, // Cache buster
+        },
       );
       
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data['posts'] ?? [];
+        print('🔥 Feed API returned ${data.length} posts');
         final posts = data.map((json) => SocialPostModel.fromJson(json)).toList();
         return posts;
       } else {
@@ -255,26 +260,26 @@ class SocialService {
 
   Future<Map<String, dynamic>> likePost(String postId) async {
     try {
-      _logger.i('SocialService: Toggling like for post: $postId');
+      _logger.i('SocialService: Adding fire to post: $postId');
       
       final response = await _dio.post('/api/v1/social/posts/$postId/like');
       
       if (response.statusCode == 200) {
-        _logger.i('SocialService: Post like toggled successfully');
+        _logger.i('SocialService: Post fire added successfully');
         
         return {
-          'liked': response.data['liked'],
-          'likes_count': response.data['likes_count'],
+          'liked': response.data['liked'] ?? false,
+          'total_likes': response.data['likes_count'] ?? 0,
         };
       } else {
-        throw Exception('Failed to like post: ${response.statusCode}');
+        throw Exception('Failed to fire post: ${response.statusCode}');
       }
     } on DioException catch (e) {
-      _logger.e('SocialService: DioException liking post: ${e.message}');
+      _logger.e('SocialService: DioException firing post: ${e.message}');
       throw Exception('Network error: ${e.message}');
     } catch (e) {
-      _logger.e('SocialService: Error liking post: $e');
-      throw Exception('Failed to like post: $e');
+      _logger.e('SocialService: Error firing post: $e');
+      throw Exception('Failed to fire post: $e');
     }
   }
 
@@ -307,26 +312,26 @@ class SocialService {
 
   Future<Map<String, dynamic>> likeComment(String commentId) async {
     try {
-      _logger.i('SocialService: Toggling like for comment: $commentId');
+      _logger.i('SocialService: Adding fire to comment: $commentId');
       
       final response = await _dio.post('/api/v1/social/comments/$commentId/like');
       
       if (response.statusCode == 200) {
-        _logger.i('SocialService: Comment like toggled successfully');
+        _logger.i('SocialService: Comment fire added successfully');
         
         return {
-          'liked': response.data['liked'],
-          'likes_count': response.data['likes_count'],
+          'liked': response.data['liked'] ?? false,
+          'total_likes': response.data['likes_count'] ?? 0,
         };
       } else {
-        throw Exception('Failed to like comment: ${response.statusCode}');
+        throw Exception('Failed to fire comment: ${response.statusCode}');
       }
     } on DioException catch (e) {
-      _logger.e('SocialService: DioException liking comment: ${e.message}');
+      _logger.e('SocialService: DioException firing comment: ${e.message}');
       throw Exception('Network error: ${e.message}');
     } catch (e) {
-      _logger.e('SocialService: Error liking comment: $e');
-      throw Exception('Failed to like comment: $e');
+      _logger.e('SocialService: Error firing comment: $e');
+      throw Exception('Failed to fire comment: $e');
     }
   }
 

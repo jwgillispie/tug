@@ -72,25 +72,29 @@ class ValueModel extends Equatable {
 
   factory ValueModel.fromJson(Map<String, dynamic> json) {
     return ValueModel(
-      id: json['id'],
-      name: json['name'],
-      importance: json['importance'],
-      description: json['description'] ?? '',
-      color: json['color'],
-      active: json['active'] ?? true,
+      id: json['id']?.toString(),
+      name: json['name']?.toString() ?? '',
+      importance: json['importance'] is int ? json['importance'] : int.tryParse(json['importance']?.toString() ?? '0') ?? 0,
+      description: json['description']?.toString() ?? '',
+      color: json['color']?.toString() ?? '#000000',
+      active: json['active'] == true || json['active']?.toString().toLowerCase() == 'true',
       createdAt: json['created_at'] != null 
-          ? DateTime.parse(json['created_at']) 
+          ? DateTime.tryParse(json['created_at'].toString()) 
           : null,
       updatedAt: json['updated_at'] != null 
-          ? DateTime.parse(json['updated_at']) 
+          ? DateTime.tryParse(json['updated_at'].toString()) 
           : null,
-      currentStreak: json['current_streak'] ?? 0,
-      longestStreak: json['longest_streak'] ?? 0,
+      currentStreak: json['current_streak'] is int ? json['current_streak'] : int.tryParse(json['current_streak']?.toString() ?? '0') ?? 0,
+      longestStreak: json['longest_streak'] is int ? json['longest_streak'] : int.tryParse(json['longest_streak']?.toString() ?? '0') ?? 0,
       lastActivityDate: json['last_activity_date'] != null
-          ? DateTime.parse(json['last_activity_date'])
+          ? DateTime.tryParse(json['last_activity_date'].toString())
           : null,
-      streakDates: json['streak_dates'] != null
-          ? (json['streak_dates'] as List).map((date) => DateTime.parse(date)).toList()
+      streakDates: json['streak_dates'] != null && json['streak_dates'] is List
+          ? (json['streak_dates'] as List)
+              .map((date) => DateTime.tryParse(date.toString()))
+              .where((date) => date != null)
+              .cast<DateTime>()
+              .toList()
           : const [],
     );
   }

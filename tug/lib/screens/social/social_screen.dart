@@ -113,6 +113,96 @@ class _SocialScreenState extends State<SocialScreen> {
   }
 
 
+  void _handleFireTap(SocialPostModel post) async {
+    final isLiked = post.isLikedBy(_currentUserId ?? '');
+    
+    // First toggle the fire
+    await _toggleLike(post);
+    
+    // If they just fired it up and haven't commented, encourage them to share their thoughts
+    if (!isLiked && post.commentsCount == 0) {
+      _showTwoCentsEncouragement(post);
+    }
+  }
+
+  void _showTwoCentsEncouragement(SocialPostModel post) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final isViceMode = _currentMode == AppMode.vicesMode;
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: isDarkMode ? TugColors.darkSurface : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(
+              Icons.local_fire_department,
+              color: Colors.deepOrange,
+              size: 28,
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'thanks for the fire!',
+              style: TextStyle(
+                color: TugColors.getTextColor(isDarkMode, isViceMode),
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'that post was fire! want to share your two cents? your thoughts and encouragement can really make someone\'s day! 🌟',
+          style: TextStyle(
+            color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
+            fontSize: 16,
+            height: 1.4,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              'maybe later',
+              style: TextStyle(
+                color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
+              ),
+            ),
+          ),
+          ElevatedButton.icon(
+            onPressed: () {
+              Navigator.of(context).pop();
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => CommentsScreen(
+                    post: post,
+                    onPostUpdated: (updatedPost) {
+                      setState(() {
+                        final index = _posts.indexWhere((p) => p.id == updatedPost.id);
+                        if (index != -1) {
+                          _posts[index] = updatedPost;
+                        }
+                      });
+                    },
+                    autoFocusInput: true, // New parameter to auto-focus comment input
+                  ),
+                ),
+              );
+            },
+            icon: const Icon(Icons.record_voice_over, color: Colors.white),
+            label: const Text('share my thoughts', style: TextStyle(color: Colors.white)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: TugColors.getPrimaryColor(isViceMode),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _toggleLike(SocialPostModel post) async {
     // Prevent multiple rapid taps
     if (_currentUserId == null) return;
@@ -145,6 +235,11 @@ class _SocialScreenState extends State<SocialScreen> {
           updatedAt: _posts[index].updatedAt,
           username: _posts[index].username,
           userDisplayName: _posts[index].userDisplayName,
+          valueName: _posts[index].valueName,
+          valueColor: _posts[index].valueColor,
+          activityName: _posts[index].activityName,
+          activityDuration: _posts[index].activityDuration,
+          activityNotes: _posts[index].activityNotes,
         );
       }
     });
@@ -152,20 +247,27 @@ class _SocialScreenState extends State<SocialScreen> {
     try {
       final result = await _socialService.likePost(post.id);
       
+      print('🔥 Server response: $result');
+      
       // Sync with server response
       setState(() {
         final index = _posts.indexWhere((p) => p.id == post.id);
         if (index != -1) {
           final updatedLikes = List<String>.from(_posts[index].likes);
+          final isLiked = result['liked'] ?? false;
           
-          // Ensure state matches server response
-          if (result['liked']) {
+          print('🔥 Server says liked: $isLiked');
+          print('🔥 Before server sync: $updatedLikes');
+          
+          if (isLiked) {
             if (!updatedLikes.contains(_currentUserId!)) {
               updatedLikes.add(_currentUserId!);
             }
           } else {
             updatedLikes.remove(_currentUserId!);
           }
+          
+          print('🔥 After server sync: $updatedLikes');
           
           _posts[index] = SocialPostModel(
             id: _posts[index].id,
@@ -182,6 +284,11 @@ class _SocialScreenState extends State<SocialScreen> {
             updatedAt: _posts[index].updatedAt,
             username: _posts[index].username,
             userDisplayName: _posts[index].userDisplayName,
+            valueName: _posts[index].valueName,
+            valueColor: _posts[index].valueColor,
+            activityName: _posts[index].activityName,
+            activityDuration: _posts[index].activityDuration,
+            activityNotes: _posts[index].activityNotes,
           );
         }
       });
@@ -190,32 +297,7 @@ class _SocialScreenState extends State<SocialScreen> {
       setState(() {
         final index = _posts.indexWhere((p) => p.id == post.id);
         if (index != -1) {
-          final updatedLikes = List<String>.from(_posts[index].likes);
-          final isCurrentlyLiked = updatedLikes.contains(_currentUserId!);
-          
-          // Revert the optimistic change
-          if (isCurrentlyLiked) {
-            updatedLikes.remove(_currentUserId!);
-          } else {
-            updatedLikes.add(_currentUserId!);
-          }
-          
-          _posts[index] = SocialPostModel(
-            id: _posts[index].id,
-            userId: _posts[index].userId,
-            content: _posts[index].content,
-            postType: _posts[index].postType,
-            activityId: _posts[index].activityId,
-            viceId: _posts[index].viceId,
-            achievementId: _posts[index].achievementId,
-            likes: updatedLikes,
-            commentsCount: _posts[index].commentsCount,
-            isPublic: _posts[index].isPublic,
-            createdAt: _posts[index].createdAt,
-            updatedAt: _posts[index].updatedAt,
-            username: _posts[index].username,
-            userDisplayName: _posts[index].userDisplayName,
-          );
+          _posts[index] = post; // Revert to original post
         }
       });
       
@@ -465,6 +547,8 @@ class _SocialScreenState extends State<SocialScreen> {
   Widget _buildFeedItem(SocialPostModel post, bool isDarkMode, bool isViceMode) {
     final isLiked = _currentUserId != null && post.isLikedBy(_currentUserId!);
     
+    print('🔥 Post ${post.id} - Likes: ${post.likes}, Current user: $_currentUserId, Is liked: $isLiked');
+    
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(16),
@@ -560,25 +644,110 @@ class _SocialScreenState extends State<SocialScreen> {
               height: 1.4,
             ),
           ),
+          const SizedBox(height: 8),
+          
+          // Value badge with color and time
+          if (post.hasValueInfo) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: (post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode)).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    post.valueName!,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode),
+                    ),
+                  ),
+                  if (post.formattedDuration.isNotEmpty) ...[
+                    const SizedBox(width: 6),
+                    Text(
+                      post.formattedDuration,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            if (post.activityNotes != null && post.activityNotes!.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true).withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true).withValues(alpha: 0.2),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.note_outlined,
+                      size: 16,
+                      color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        post.activityNotes!,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontStyle: FontStyle.italic,
+                          color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
+                          height: 1.3,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
           const SizedBox(height: 12),
           
           // Actions row
           Row(
             children: [
               _buildActionButton(
-                icon: isLiked ? Icons.thumb_up : Icons.thumb_up_outlined,
-                iconColor: isLiked ? Colors.green : null,
-                count: post.likes.length,
-                label: 'props',
+                icon: isLiked ? Icons.local_fire_department : Icons.local_fire_department_outlined,
+                iconColor: isLiked ? Colors.deepOrange : null,
+                count: post.totalLikes,
+                label: 'fire',
                 isDarkMode: isDarkMode,
                 isViceMode: isViceMode,
-                onTap: () => _toggleLike(post),
+                onTap: () => _handleFireTap(post),
               ),
               const SizedBox(width: 24),
               _buildActionButton(
-                icon: Icons.comment_bank_outlined,
+                icon: Icons.record_voice_over,
                 count: post.commentsCount,
-                label: '2 cents',
+                label: 'two cents',
                 isDarkMode: isDarkMode,
                 isViceMode: isViceMode,
                 onTap: () {
@@ -615,7 +784,8 @@ class _SocialScreenState extends State<SocialScreen> {
     bool hideCount = false,
     required bool isDarkMode,
     required bool isViceMode,
-    required VoidCallback onTap,
+    required VoidCallback? onTap,
+    int? userCount,
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -637,6 +807,17 @@ class _SocialScreenState extends State<SocialScreen> {
                   style: TextStyle(
                     fontSize: 12,
                     color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
+                  ),
+                ),
+              ],
+              if (userCount != null && userCount > 0) ...[
+                const SizedBox(width: 2),
+                Text(
+                  '($userCount)',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.deepOrange,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ],

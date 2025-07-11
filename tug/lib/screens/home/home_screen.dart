@@ -266,32 +266,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                 : (isDarkMode ? [TugColors.primaryPurple, TugColors.primaryPurpleLight, TugColors.primaryPurpleDark] : [TugColors.primaryPurple, TugColors.primaryPurpleLight]),
           ),
         ),
-        actions: [
-          QuantumEffects.floating(
-            offset: 5,
-            child: QuantumEffects.quantumBorder(
-              glowColor: TugColors.error,
-              intensity: 0.8,
-              child: Container(
-                margin: const EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      TugColors.error.withAlpha(40),
-                      TugColors.error.withAlpha(10),
-                    ],
-                  ),
-                ),
-                child: IconButton(
-                  icon: Icon(Icons.logout, color: TugColors.error),
-                  onPressed: _showLogoutConfirmation,
-                  tooltip: 'logout',
-                ),
-              ),
-            ),
-          ),
-        ],
       ),
       body: Container(
         decoration: BoxDecoration(
@@ -538,29 +512,6 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     );
   }
   
-  void _showLogoutConfirmation() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('logout'),
-        content: const Text('deadass?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('cancel'),
-          ),
-          TextButton(
-            style: TextButton.styleFrom(foregroundColor: TugColors.error),
-            onPressed: () {
-              Navigator.pop(context);
-              context.read<AuthBloc>().add(LogoutEvent());
-            },
-            child: const Text('log out'),
-          ),
-        ],
-      ),
-    );
-  }
   
   // Helper methods for the activity chart states
   Widget _buildLoadingChart(BuildContext context) {
