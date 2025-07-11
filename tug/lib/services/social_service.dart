@@ -243,7 +243,6 @@ class SocialService {
       
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data['posts'] ?? [];
-        print('🔥 Feed API returned ${data.length} posts');
         final posts = data.map((json) => SocialPostModel.fromJson(json)).toList();
         return posts;
       } else {

@@ -207,16 +207,20 @@ class _SocialScreenState extends State<SocialScreen> {
     // Prevent multiple rapid taps
     if (_currentUserId == null) return;
     
-    // Optimistic UI update
+    final originalPost = post; // Store original state for rollback
+    final isCurrentlyLiked = post.isLikedBy(_currentUserId!);
+    
+    // Optimistic UI update - toggle the like state immediately
     setState(() {
       final index = _posts.indexWhere((p) => p.id == post.id);
       if (index != -1) {
         final updatedLikes = List<String>.from(_posts[index].likes);
-        final isCurrentlyLiked = updatedLikes.contains(_currentUserId!);
         
         if (isCurrentlyLiked) {
+          // User is removing their like
           updatedLikes.remove(_currentUserId!);
         } else {
+          // User is adding their like
           updatedLikes.add(_currentUserId!);
         }
         
@@ -245,29 +249,26 @@ class _SocialScreenState extends State<SocialScreen> {
     });
     
     try {
+      // Call the server API
       final result = await _socialService.likePost(post.id);
       
-      print('🔥 Server response: $result');
-      
-      // Sync with server response
+      // Update state to match server response (this ensures consistency)
       setState(() {
         final index = _posts.indexWhere((p) => p.id == post.id);
         if (index != -1) {
           final updatedLikes = List<String>.from(_posts[index].likes);
-          final isLiked = result['liked'] ?? false;
+          final serverSaysLiked = result['liked'] ?? false;
           
-          print('🔥 Server says liked: $isLiked');
-          print('🔥 Before server sync: $updatedLikes');
-          
-          if (isLiked) {
+          // Sync with server state
+          if (serverSaysLiked) {
+            // Server says we liked it - ensure our ID is in the list
             if (!updatedLikes.contains(_currentUserId!)) {
               updatedLikes.add(_currentUserId!);
             }
           } else {
+            // Server says we didn't like it - ensure our ID is not in the list
             updatedLikes.remove(_currentUserId!);
           }
-          
-          print('🔥 After server sync: $updatedLikes');
           
           _posts[index] = SocialPostModel(
             id: _posts[index].id,
@@ -297,14 +298,14 @@ class _SocialScreenState extends State<SocialScreen> {
       setState(() {
         final index = _posts.indexWhere((p) => p.id == post.id);
         if (index != -1) {
-          _posts[index] = post; // Revert to original post
+          _posts[index] = originalPost; // Revert to original state
         }
       });
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Couldn\'t give props: $e'),
+            content: Text('Couldn\'t update fire: $e'),
             backgroundColor: TugColors.error,
           ),
         );
@@ -546,8 +547,6 @@ class _SocialScreenState extends State<SocialScreen> {
 
   Widget _buildFeedItem(SocialPostModel post, bool isDarkMode, bool isViceMode) {
     final isLiked = _currentUserId != null && post.isLikedBy(_currentUserId!);
-    
-    print('🔥 Post ${post.id} - Likes: ${post.likes}, Current user: $_currentUserId, Is liked: $isLiked');
     
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
