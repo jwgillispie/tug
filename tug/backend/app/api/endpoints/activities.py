@@ -63,7 +63,7 @@ async def get_activities(
     value_id: Optional[str] = None,
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
-    limit: int = Query(50, ge=1, le=100),
+    limit: int = Query(1000, ge=1, le=5000),
     skip: int = Query(0, ge=0)
 ):
     """Get activities for the current user with optional filtering"""

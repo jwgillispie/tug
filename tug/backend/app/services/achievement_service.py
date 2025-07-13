@@ -25,32 +25,32 @@ class AchievementService:
             PredefinedAchievement(
                 achievement_id="streak_3",
                 type=AchievementType.streak,
-                title="3-Day Streak",
-                description="Complete activities for the same value 3 days in a row",
+                title="3-day streak",
+                description="complete activities for the same value 3 days in a row",
                 icon="🔥",
                 required_value=3,
             ),
             PredefinedAchievement(
                 achievement_id="streak_7",
                 type=AchievementType.streak,
-                title="Week Warrior",
-                description="Complete activities for the same value 7 days in a row",
+                title="week warrior",
+                description="complete activities for the same value 7 days in a row",
                 icon="📅",
                 required_value=7,
             ),
             PredefinedAchievement(
                 achievement_id="streak_14",
                 type=AchievementType.streak,
-                title="Fortnight Force",
-                description="Complete activities for the same value 14 days in a row",
+                title="fortnight force",
+                description="complete activities for the same value 14 days in a row",
                 icon="🧠",
                 required_value=14,
             ),
             PredefinedAchievement(
                 achievement_id="streak_30",
                 type=AchievementType.streak,
-                title="Monthly Master",
-                description="Complete activities for the same value 30 days in a row",
+                title="monthly master",
+                description="complete activities for the same value 30 days in a row",
                 icon="🏆",
                 required_value=30,
             ),
@@ -59,24 +59,24 @@ class AchievementService:
             PredefinedAchievement(
                 achievement_id="balance_3",
                 type=AchievementType.balance,
-                title="Balanced Beginner",
-                description="Maintain a balanced distribution across your values for 3 days",
+                title="balanced beginner",
+                description="maintain a balanced distribution across your values for 3 days",
                 icon="⚖️",
                 required_value=3,
             ),
             PredefinedAchievement(
                 achievement_id="balance_7",
                 type=AchievementType.balance,
-                title="Harmony Keeper",
-                description="Maintain a balanced distribution across your values for 7 days",
+                title="harmony keeper",
+                description="maintain a balanced distribution across your values for 7 days",
                 icon="☯️",
                 required_value=7,
             ),
             PredefinedAchievement(
                 achievement_id="balance_30",
                 type=AchievementType.balance,
-                title="Life Balancer",
-                description="Maintain a balanced distribution across your values for 30 days",
+                title="life balancer",
+                description="maintain a balanced distribution across your values for 30 days",
                 icon="🧘",
                 required_value=30,
             ),
@@ -85,32 +85,32 @@ class AchievementService:
             PredefinedAchievement(
                 achievement_id="frequency_10",
                 type=AchievementType.frequency,
-                title="Getting Started",
-                description="Log 10 activities",
+                title="getting started",
+                description="log 10 activities",
                 icon="🏁",
                 required_value=10,
             ),
             PredefinedAchievement(
                 achievement_id="frequency_50",
                 type=AchievementType.frequency,
-                title="Regular Tracker",
-                description="Log 50 activities",
+                title="regular tracker",
+                description="log 50 activities",
                 icon="📝",
                 required_value=50,
             ),
             PredefinedAchievement(
                 achievement_id="frequency_100",
                 type=AchievementType.frequency,
-                title="Century Club",
-                description="Log 100 activities",
+                title="century club",
+                description="log 100 activities",
                 icon="💯",
                 required_value=100,
             ),
             PredefinedAchievement(
                 achievement_id="frequency_365",
                 type=AchievementType.frequency,
-                title="Year of Growth",
-                description="Log 365 activities",
+                title="year of growth",
+                description="log 365 activities",
                 icon="📊",
                 required_value=365,
             ),
@@ -119,24 +119,24 @@ class AchievementService:
             PredefinedAchievement(
                 achievement_id="milestone_300",
                 type=AchievementType.milestone,
-                title="Time Investment",
-                description="Spend 5 hours on value-aligned activities",
+                title="time investment",
+                description="spend 5 hours on value-aligned activities",
                 icon="⏱️",
                 required_value=300,  # minutes
             ),
             PredefinedAchievement(
                 achievement_id="milestone_1200",
                 type=AchievementType.milestone,
-                title="Dedicated Day",
-                description="Spend 20 hours on value-aligned activities",
+                title="dedicated day",
+                description="spend 20 hours on value-aligned activities",
                 icon="⌛",
                 required_value=1200,  # minutes
             ),
             PredefinedAchievement(
                 achievement_id="milestone_3000",
                 type=AchievementType.milestone,
-                title="Value Maven",
-                description="Spend 50 hours on value-aligned activities",
+                title="value maven",
+                description="spend 50 hours on value-aligned activities",
                 icon="🕰️",
                 required_value=3000,  # minutes
             ),
@@ -145,16 +145,16 @@ class AchievementService:
             PredefinedAchievement(
                 achievement_id="special_balanced_all",
                 type=AchievementType.special,
-                title="Perfect Harmony",
-                description="Log at least one activity for each of your values",
+                title="perfect harmony",
+                description="log at least one activity for each of your values",
                 icon="🌈",
                 required_value=1,
             ),
             PredefinedAchievement(
                 achievement_id="special_comeback",
                 type=AchievementType.special,
-                title="Comeback Kid",
-                description="Return to logging activities after a 2-week break",
+                title="comeback kid",
+                description="return to logging activities after a 2-week break",
                 icon="🔄",
                 required_value=1,
             ),
@@ -384,18 +384,19 @@ class AchievementService:
         values: List[Value]
     ) -> Achievement:
         """Calculate progress for streak-based achievements"""
-        # Find the maximum streak among all values
+        # Find the maximum streak among all values (considering both current and historical)
         max_streak = 0
         for value in values:
-            if value.current_streak and value.current_streak > max_streak:
-                max_streak = value.current_streak
-            
-            # Also check the longest streak
-            if value.longest_streak and value.longest_streak > max_streak:
-                max_streak = value.longest_streak
+            # Use the highest streak ever achieved for this value
+            value_best_streak = max(
+                value.current_streak or 0,
+                value.longest_streak or 0
+            )
+            if value_best_streak > max_streak:
+                max_streak = value_best_streak
         
-        # Check if we've achieved the required streak
-        is_unlocked = max_streak >= achievement.required_value
+        # Check if we've achieved the required streak (once achieved, stays unlocked)
+        is_unlocked = achievement.is_unlocked or max_streak >= achievement.required_value
         
         # Calculate progress - cap at 1.0
         progress = min(1.0, max_streak / achievement.required_value) if achievement.required_value > 0 else 0.0
@@ -464,7 +465,7 @@ class AchievementService:
         balance_days = int(days_with_activities * balance_score)
         
         # Check if the achievement is unlocked
-        is_unlocked = balance_days >= achievement.required_value
+        is_unlocked = achievement.is_unlocked or balance_days >= achievement.required_value
         
         # Calculate progress
         progress = min(1.0, balance_days / achievement.required_value) if achievement.required_value > 0 else 0.0
@@ -492,7 +493,7 @@ class AchievementService:
         activity_count = len(activities)
         
         # Check if the achievement is unlocked
-        is_unlocked = activity_count >= achievement.required_value
+        is_unlocked = achievement.is_unlocked or activity_count >= achievement.required_value
         
         # Calculate progress
         progress = min(1.0, activity_count / achievement.required_value) if achievement.required_value > 0 else 0.0
@@ -520,7 +521,7 @@ class AchievementService:
         total_minutes = sum(a.duration for a in activities)
         
         # Check if the achievement is unlocked
-        is_unlocked = total_minutes >= achievement.required_value
+        is_unlocked = achievement.is_unlocked or total_minutes >= achievement.required_value
         
         # Calculate progress
         progress = min(1.0, total_minutes / achievement.required_value) if achievement.required_value > 0 else 0.0
@@ -579,7 +580,7 @@ class AchievementService:
             return achievement
         
         # Perfect harmony achieved when all active values have activities
-        is_unlocked = values_with_activities == total_active_values and total_active_values >= 3
+        is_unlocked = achievement.is_unlocked or (values_with_activities == total_active_values and total_active_values >= 3)
         
         # Calculate progress
         progress = values_with_activities / total_active_values if total_active_values > 0 else 0.0
@@ -635,7 +636,7 @@ class AchievementService:
         updated = Achievement(
             **achievement.model_dump(),
             progress=longest_break_progress,
-            is_unlocked=found_comeback,
+            is_unlocked=achievement.is_unlocked or found_comeback,
             unlocked_at=datetime.utcnow() if found_comeback and not achievement.unlocked_at else achievement.unlocked_at
         )
         

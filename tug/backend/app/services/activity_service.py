@@ -67,7 +67,7 @@ class ActivityService:
         value_id: Optional[str] = None,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
-        limit: int = 50,
+        limit: int = 1000,
         skip: int = 0
     ) -> List[Activity]:
         """Get activities for a user with optional filtering"""
