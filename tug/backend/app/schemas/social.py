@@ -90,6 +90,7 @@ class SocialFeedResponse(BaseModel):
 class PostTypeStats(BaseModel):
     activity_update: int = 0
     vice_progress: int = 0
+    vice_indulgence: int = 0
     achievement: int = 0
     general: int = 0
 

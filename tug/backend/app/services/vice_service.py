@@ -264,7 +264,7 @@ class ViceService:
             social_post = SocialPost(
                 user_id=str(user.id),
                 content=content,
-                post_type=PostType.VICE_PROGRESS,
+                post_type=PostType.VICE_INDULGENCE,
                 vice_id=str(vice.id),
                 is_public=True
             )

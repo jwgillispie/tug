@@ -8,6 +8,7 @@ from enum import Enum
 class PostType(str, Enum):
     ACTIVITY_UPDATE = "activity_update"
     VICE_PROGRESS = "vice_progress"
+    VICE_INDULGENCE = "vice_indulgence"
     ACHIEVEMENT = "achievement"
     GENERAL = "general"
 

@@ -649,6 +649,7 @@ class SocialService:
             post_type_counts = {
                 PostType.ACTIVITY_UPDATE: 0,
                 PostType.VICE_PROGRESS: 0,
+                PostType.VICE_INDULGENCE: 0,
                 PostType.ACHIEVEMENT: 0,
                 PostType.GENERAL: 0
             }
@@ -660,6 +661,7 @@ class SocialService:
             post_type_breakdown = PostTypeStats(
                 activity_update=post_type_counts[PostType.ACTIVITY_UPDATE],
                 vice_progress=post_type_counts[PostType.VICE_PROGRESS],
+                vice_indulgence=post_type_counts[PostType.VICE_INDULGENCE],
                 achievement=post_type_counts[PostType.ACHIEVEMENT],
                 general=post_type_counts[PostType.GENERAL]
             )
