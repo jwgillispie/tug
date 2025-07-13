@@ -9,6 +9,7 @@ import '../../widgets/notifications/notification_bell.dart';
 import '../../services/social_service.dart';
 import '../../models/social_models.dart';
 import '../../blocs/auth/auth_bloc.dart';
+import '../../services/user_service.dart';
 import 'user_search_screen.dart';
 import 'friends_screen.dart';
 import 'comments_screen.dart';
@@ -24,6 +25,7 @@ class SocialScreen extends StatefulWidget {
 class _SocialScreenState extends State<SocialScreen> {
   final AppModeService _appModeService = AppModeService();
   final SocialService _socialService = SocialService();
+  final UserService _userService = UserService();
   final ScrollController _scrollController = ScrollController();
   
   AppMode _currentMode = AppMode.valuesMode;
@@ -56,10 +58,21 @@ class _SocialScreenState extends State<SocialScreen> {
     }
   }
 
-  void _getCurrentUser() {
-    final authState = context.read<AuthBloc>().state;
-    if (authState is Authenticated) {
-      _currentUserId = authState.user.uid;
+  void _getCurrentUser() async {
+    try {
+      final userData = await _userService.getCurrentUserProfile();
+      _currentUserId = userData.id;
+      debugPrint('SocialScreen: Current user ID (backend): $_currentUserId');
+    } catch (e) {
+      debugPrint('SocialScreen: Failed to get backend user ID: $e');
+      // Fallback to Firebase UID
+      if (mounted) {
+        final authState = context.read<AuthBloc>().state;
+        if (authState is Authenticated) {
+          _currentUserId = authState.user.uid;
+          debugPrint('SocialScreen: Using Firebase UID as fallback: $_currentUserId');
+        }
+      }
     }
   }
 
@@ -94,6 +107,11 @@ class _SocialScreenState extends State<SocialScreen> {
           _posts = filteredPosts;
           _isLoading = false;
         });
+        
+        // Debug: Log posts and ownership
+        for (final post in filteredPosts) {
+          debugPrint('SocialScreen: Post ${post.id} by ${post.userId} (${post.displayName}) - isOwned: ${post.userId == _currentUserId}');
+        }
       }
     } catch (e) {
       if (mounted) {
@@ -437,6 +455,68 @@ class _SocialScreenState extends State<SocialScreen> {
                     ),
                   ),
                 ),
+              // Edit/Delete menu for user's own posts
+              if (post.userId == _currentUserId) ...[
+                const SizedBox(width: 8),
+                PopupMenuButton<String>(
+                  icon: Icon(
+                    Icons.more_vert,
+                    color: TugColors.getPrimaryColor(isViceMode),
+                    size: 20,
+                  ),
+                  onSelected: (value) {
+                    if (value == 'hide') {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('Post hidden from your feed'),
+                          backgroundColor: TugColors.getPrimaryColor(isViceMode),
+                          action: SnackBarAction(
+                            label: 'Undo',
+                            textColor: Colors.white,
+                            onPressed: () {
+                              // Could implement unhide functionality
+                            },
+                          ),
+                        ),
+                      );
+                      // Remove post from local list (hide it)
+                      setState(() {
+                        _posts.removeWhere((p) => p.id == post.id);
+                      });
+                    } else if (value == 'info') {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('This post was automatically created from your activity. To modify it, edit the original activity or achievement.'),
+                          backgroundColor: TugColors.getPrimaryColor(isViceMode),
+                          duration: const Duration(seconds: 5),
+                        ),
+                      );
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    PopupMenuItem<String>(
+                      value: 'hide',
+                      child: Row(
+                        children: [
+                          Icon(Icons.visibility_off, size: 18, color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true)),
+                          const SizedBox(width: 12),
+                          const Text('Hide post'),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem<String>(
+                      value: 'info',
+                      child: Row(
+                        children: [
+                          Icon(Icons.info_outline, size: 18, color: TugColors.getPrimaryColor(isViceMode)),
+                          const SizedBox(width: 12),
+                          const Text('About this post'),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
           const SizedBox(height: 12),
@@ -647,4 +727,5 @@ class _SocialScreenState extends State<SocialScreen> {
         return 'general';
     }
   }
+
 }

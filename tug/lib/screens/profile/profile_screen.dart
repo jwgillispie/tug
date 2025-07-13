@@ -1969,8 +1969,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
         }
       }
 
-      // Note: Social posts are typically cascaded deleted with activities,
-      // but if there are standalone posts, you might need to delete them separately
+      // Clear all social data (posts, comments, friendships)
+      try {
+        await _socialService.clearAllUserSocialData();
+      } catch (e) {
+        debugPrint('Error clearing social data: $e');
+        // Continue with other deletions even if social cleanup fails
+      }
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

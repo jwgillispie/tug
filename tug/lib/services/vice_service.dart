@@ -19,6 +19,9 @@ class ViceService {
     _dio.options.receiveTimeout = const Duration(seconds: 30);
     _dio.options.followRedirects = true;
     _dio.options.maxRedirects = 3;
+    _dio.options.validateStatus = (status) {
+      return status != null && status >= 200 && status < 400;
+    };
     
     // Add auth interceptor
     _dio.interceptors.add(InterceptorsWrapper(
@@ -160,14 +163,11 @@ class ViceService {
       
       final response = await _dio.delete('/api/v1/vices/$viceId/');
       
-      if (response.statusCode == 200) {
-        _logger.i('ViceService: Vice deleted successfully');
-        
-        // Remove from cache
-        await _removeViceFromCache(viceId);
-      } else {
-        throw Exception('Failed to delete vice: ${response.statusCode}');
-      }
+      // If we get here, the request was successful (validateStatus handled the status codes)
+      _logger.i('ViceService: Vice deleted successfully (status: ${response.statusCode})');
+      
+      // Remove from cache
+      await _removeViceFromCache(viceId);
     } on DioException catch (e) {
       _logger.e('ViceService: DioException deleting vice: ${e.message}');
       throw Exception('Network error: ${e.message}');

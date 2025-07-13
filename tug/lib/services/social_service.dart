@@ -15,6 +15,9 @@ class SocialService {
     _dio.options.receiveTimeout = const Duration(seconds: 30);
     _dio.options.followRedirects = true;
     _dio.options.maxRedirects = 3;
+    _dio.options.validateStatus = (status) {
+      return status != null && status >= 200 && status < 400;
+    };
     
     // Add auth interceptor
     _dio.interceptors.add(InterceptorsWrapper(
@@ -228,6 +231,32 @@ class SocialService {
     }
   }
 
+  Future<SocialPostModel> updatePost(String postId, String newContent) async {
+    try {
+      _logger.i('SocialService: Updating post: $postId');
+      
+      final response = await _dio.put(
+        '/api/v1/social/posts/$postId',
+        data: {'content': newContent},
+      );
+      
+      if (response.statusCode == 200) {
+        final post = SocialPostModel.fromJson(response.data['post']);
+        _logger.i('SocialService: Post updated successfully');
+        
+        return post;
+      } else {
+        throw Exception('Failed to update post: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      _logger.e('SocialService: DioException updating post: ${e.message}');
+      throw Exception('Network error: ${e.message}');
+    } catch (e) {
+      _logger.e('SocialService: Error updating post: $e');
+      throw Exception('Failed to update post: $e');
+    }
+  }
+
   Future<List<SocialPostModel>> getSocialFeed({int limit = 20, int skip = 0, bool forceRefresh = false}) async {
     try {
       _logger.i('SocialService: Getting social feed (limit: $limit, skip: $skip)');
@@ -329,6 +358,78 @@ class SocialService {
     } catch (e) {
       _logger.e('SocialService: Error getting social statistics: $e');
       throw Exception('Failed to get social statistics: $e');
+    }
+  }
+
+  // Social Data Cleanup Methods
+
+  // Note: Post deletion is not supported by the backend since posts are auto-generated
+  // from activities and achievements. To remove a post, delete the underlying activity.
+
+  Future<void> removeFriend(String friendshipId) async {
+    try {
+      _logger.i('SocialService: Removing friend: $friendshipId');
+      
+      final response = await _dio.delete('/api/v1/social/friends/$friendshipId');
+      
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        _logger.i('SocialService: Friend removed successfully');
+      } else {
+        throw Exception('Failed to remove friend: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      _logger.e('SocialService: DioException removing friend: ${e.message}');
+      throw Exception('Network error: ${e.message}');
+    } catch (e) {
+      _logger.e('SocialService: Error removing friend: $e');
+      throw Exception('Failed to remove friend: $e');
+    }
+  }
+
+  Future<void> clearAllUserSocialData() async {
+    try {
+      _logger.i('SocialService: Clearing all user social data');
+      
+      // Try the bulk endpoint first
+      try {
+        await _dio.delete('/api/v1/social/user/all-data');
+        _logger.i('SocialService: All user social data cleared successfully via bulk endpoint');
+        return;
+      } on DioException catch (bulkError) {
+        if (bulkError.response?.statusCode == 404) {
+          _logger.i('SocialService: Bulk endpoint not available, falling back to individual deletions');
+        } else {
+          rethrow;
+        }
+      }
+      
+      // Fallback: Delete individual social data
+      _logger.i('SocialService: Performing individual social data cleanup');
+      
+      // Note: Posts are auto-generated from activities and cannot be deleted directly
+      // They will be cleaned up when the underlying activities/achievements are deleted
+      _logger.i('SocialService: Skipping post deletion - posts are auto-generated from activities');
+      
+      // Get and remove all friendships
+      try {
+        final friends = await getFriends();
+        for (final friendship in friends) {
+          try {
+            await removeFriend(friendship.id);
+          } catch (e) {
+            _logger.w('SocialService: Failed to remove friend ${friendship.id}: $e');
+          }
+        }
+        _logger.i('SocialService: Removed ${friends.length} friendships');
+      } catch (e) {
+        _logger.w('SocialService: Error during friendship cleanup: $e');
+      }
+      
+      _logger.i('SocialService: Individual social data cleanup completed');
+      
+    } catch (e) {
+      _logger.e('SocialService: Error clearing social data: $e');
+      throw Exception('Failed to clear social data: $e');
     }
   }
 

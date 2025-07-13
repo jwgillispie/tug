@@ -88,7 +88,14 @@ class _LoginScreenState extends State<LoginScreen> {
             child: SafeArea(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(24),
-                child: Form(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    minHeight: MediaQuery.of(context).size.height - 
+                              MediaQuery.of(context).padding.top - 
+                              MediaQuery.of(context).padding.bottom - 48,
+                  ),
+                  child: IntrinsicHeight(
+                    child: Form(
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -320,11 +327,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   //   ),
                 ],
               ),
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
         ),
-      ),
-    ),
       ),
     );
   }
