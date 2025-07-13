@@ -50,8 +50,8 @@ class AchievementResponse(AchievementBase):
                 "user_id": "60d21b4667d0d8992e610c85",
                 "achievement_id": "streak_7",
                 "type": "streak",
-                "title": "Week Warrior",
-                "description": "Complete activities for the same value 7 days in a row",
+                "title": "week warrior",
+                "description": "complete activities for the same value 7 days in a row",
                 "icon": "📅",
                 "required_value": 7,
                 "progress": 0.75,
@@ -76,8 +76,8 @@ class PredefinedAchievement(BaseModel):
             "example": {
                 "achievement_id": "streak_7",
                 "type": "streak",
-                "title": "Week Warrior",
-                "description": "Complete activities for the same value 7 days in a row",
+                "title": "week warrior",
+                "description": "complete activities for the same value 7 days in a row",
                 "icon": "📅",
                 "required_value": 7
             }

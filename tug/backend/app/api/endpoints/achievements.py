@@ -145,3 +145,35 @@ async def update_achievement(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update achievement: {str(e)}"
         )
+
+@router.post("/reinitialize")
+async def reinitialize_achievements(
+    current_user: User = Depends(get_current_user)
+):
+    """Reinitialize user achievements with latest definitions (fixes lowercase text)"""
+    try:
+        logger.info(f"Reinitializing achievements for user: {current_user.id}")
+        
+        # Delete existing achievements for the user
+        await Achievement.find(Achievement.user_id == str(current_user.id)).delete()
+        logger.info(f"Deleted existing achievements for user {current_user.id}")
+        
+        # Initialize with latest definitions
+        await AchievementService.initialize_user_achievements(str(current_user.id))
+        logger.info(f"Reinitialized achievements for user {current_user.id}")
+        
+        # Get the new achievements
+        achievements = await AchievementService.get_user_achievements(current_user)
+        
+        return {
+            "message": "Achievements reinitialized successfully",
+            "count": len(achievements)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error reinitializing achievements: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to reinitialize achievements: {str(e)}"
+        )
+

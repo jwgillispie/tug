@@ -515,88 +515,72 @@ class _SocialScreenState extends State<SocialScreen> {
           ),
           const SizedBox(height: 8),
           
-          // Value badge with color and time
+          // Enhanced Value badge - main focus for public posts
           if (post.hasValueInfo) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
-                color: (post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode)).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(16),
+                color: (post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode)).withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode),
-                  width: 1,
+                  width: 2,
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: (post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode)).withValues(alpha: 0.2),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Container(
-                    width: 10,
-                    height: 10,
+                    width: 14,
+                    height: 14,
                     decoration: BoxDecoration(
                       color: post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode),
                       shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: (post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode)).withValues(alpha: 0.4),
+                          blurRadius: 4,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    post.valueName!,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode),
-                    ),
-                  ),
-                  if (post.formattedDuration.isNotEmpty) ...[
-                    const SizedBox(width: 6),
-                    Text(
-                      post.formattedDuration,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        post.valueName!,
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode),
+                        ),
                       ),
-                    ),
-                  ],
+                      if (post.formattedDuration.isNotEmpty) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          post.formattedDuration,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            color: (post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode)).withValues(alpha: 0.8),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ],
               ),
             ),
-            if (post.activityNotes != null && post.activityNotes!.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true).withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true).withValues(alpha: 0.2),
-                    width: 1,
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.note_outlined,
-                      size: 16,
-                      color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        post.activityNotes!,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontStyle: FontStyle.italic,
-                          color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
-                          height: 1.3,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
           ],
           const SizedBox(height: 12),
           
