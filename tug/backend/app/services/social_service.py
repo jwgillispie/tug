@@ -342,6 +342,79 @@ class SocialService:
             )
     
     @staticmethod
+    async def update_post(current_user: User, post_id: str, post_data: SocialPostUpdate) -> SocialPost:
+        """Update a social post (only content can be updated)"""
+        try:
+            post = await SocialPost.get(post_id)
+            if not post:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Post not found"
+                )
+            
+            # Check if current user owns the post
+            if post.user_id != str(current_user.id):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Not authorized to update this post"
+                )
+            
+            # Update post content
+            post.content = post_data.content
+            post.update_timestamp()
+            await post.save()
+            
+            logger.info(f"Social post updated by user {current_user.id}: {post.id}")
+            
+            return post
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error updating social post: {e}", exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to update post"
+            )
+    
+    @staticmethod
+    async def delete_post(current_user: User, post_id: str) -> bool:
+        """Delete a social post"""
+        try:
+            post = await SocialPost.get(post_id)
+            if not post:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Post not found"
+                )
+            
+            # Check if current user owns the post
+            if post.user_id != str(current_user.id):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Not authorized to delete this post"
+                )
+            
+            # Delete all comments for this post first
+            await PostComment.find({"post_id": post_id}).delete()
+            
+            # Delete the post
+            await post.delete()
+            
+            logger.info(f"Social post deleted by user {current_user.id}: {post_id}")
+            
+            return True
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error(f"Error deleting social post: {e}", exc_info=True)
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to delete post"
+            )
+    
+    @staticmethod
     async def create_vice_milestone_post(user: User, vice, milestone: int) -> SocialPost:
         """Create an automatic social post for vice milestone achievements"""
         try:

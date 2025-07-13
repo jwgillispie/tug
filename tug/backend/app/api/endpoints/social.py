@@ -157,6 +157,47 @@ async def create_post(
             detail="Failed to create post"
         )
 
+@router.put("/posts/{post_id}")
+async def update_post(
+    post_id: str,
+    post: SocialPostUpdate,
+    current_user: User = Depends(get_current_user)
+):
+    """Update a social post"""
+    try:
+        updated_post = await SocialService.update_post(current_user, post_id, post)
+        
+        post_dict = updated_post.dict()
+        post_dict = MongoJSONEncoder.encode_mongo_data(post_dict)
+        
+        return {"post": post_dict}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in update_post endpoint: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update post"
+        )
+
+@router.delete("/posts/{post_id}")
+async def delete_post(
+    post_id: str,
+    current_user: User = Depends(get_current_user)
+):
+    """Delete a social post"""
+    try:
+        await SocialService.delete_post(current_user, post_id)
+        return {"message": "Post deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in delete_post endpoint: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete post"
+        )
+
 @router.get("/feed")
 async def get_social_feed(
     limit: int = Query(20, ge=1, le=50, description="Number of posts to return"),
