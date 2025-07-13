@@ -363,8 +363,22 @@ class SocialService {
 
   // Social Data Cleanup Methods
 
-  // Note: Post deletion is not supported by the backend since posts are auto-generated
-  // from activities and achievements. To remove a post, delete the underlying activity.
+  Future<void> deletePost(String postId) async {
+    try {
+      _logger.i('SocialService: Deleting post: $postId');
+      
+      await _dio.delete('/api/v1/social/posts/$postId');
+      
+      // If we get here, the request was successful (validateStatus handled the status codes)
+      _logger.i('SocialService: Post deleted successfully');
+    } on DioException catch (e) {
+      _logger.e('SocialService: DioException deleting post: ${e.message}');
+      throw Exception('Network error: ${e.message}');
+    } catch (e) {
+      _logger.e('SocialService: Error deleting post: $e');
+      throw Exception('Failed to delete post: $e');
+    }
+  }
 
   Future<void> removeFriend(String friendshipId) async {
     try {

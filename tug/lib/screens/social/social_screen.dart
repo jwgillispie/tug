@@ -465,52 +465,42 @@ class _SocialScreenState extends State<SocialScreen> {
                     size: 20,
                   ),
                   onSelected: (value) {
-                    if (value == 'hide') {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: const Text('Post hidden from your feed'),
-                          backgroundColor: TugColors.getPrimaryColor(isViceMode),
-                          action: SnackBarAction(
-                            label: 'Undo',
-                            textColor: Colors.white,
-                            onPressed: () {
-                              // Could implement unhide functionality
-                            },
-                          ),
-                        ),
-                      );
-                      // Remove post from local list (hide it)
-                      setState(() {
-                        _posts.removeWhere((p) => p.id == post.id);
-                      });
-                    } else if (value == 'info') {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: const Text('This post was automatically created from your activity. To modify it, edit the original activity or achievement.'),
-                          backgroundColor: TugColors.getPrimaryColor(isViceMode),
-                          duration: const Duration(seconds: 5),
-                        ),
-                      );
+                    if (value == 'edit') {
+                      _showEditPostDialog(post, isDarkMode, isViceMode);
+                    } else if (value == 'delete') {
+                      _showDeletePostDialog(post, isDarkMode, isViceMode);
+                    } else if (value == 'hide') {
+                      _hidePost(post, isViceMode);
                     }
                   },
                   itemBuilder: (context) => [
+                    PopupMenuItem<String>(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit, size: 18, color: TugColors.getPrimaryColor(isViceMode)),
+                          const SizedBox(width: 12),
+                          const Text('Edit'),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem<String>(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          const Icon(Icons.delete, size: 18, color: Colors.red),
+                          const SizedBox(width: 12),
+                          const Text('Delete'),
+                        ],
+                      ),
+                    ),
                     PopupMenuItem<String>(
                       value: 'hide',
                       child: Row(
                         children: [
                           Icon(Icons.visibility_off, size: 18, color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true)),
                           const SizedBox(width: 12),
-                          const Text('Hide post'),
-                        ],
-                      ),
-                    ),
-                    PopupMenuItem<String>(
-                      value: 'info',
-                      child: Row(
-                        children: [
-                          Icon(Icons.info_outline, size: 18, color: TugColors.getPrimaryColor(isViceMode)),
-                          const SizedBox(width: 12),
-                          const Text('About this post'),
+                          const Text('Hide'),
                         ],
                       ),
                     ),
@@ -726,6 +716,249 @@ class _SocialScreenState extends State<SocialScreen> {
       case PostType.general:
         return 'general';
     }
+  }
+
+  void _hidePost(SocialPostModel post, bool isViceMode) {
+    final messenger = ScaffoldMessenger.of(context);
+    
+    messenger.showSnackBar(
+      SnackBar(
+        content: const Text('Post hidden from your feed'),
+        backgroundColor: TugColors.getPrimaryColor(isViceMode),
+        action: SnackBarAction(
+          label: 'Undo',
+          textColor: Colors.white,
+          onPressed: () {
+            // Restore the post to the feed
+            _loadSocialFeed();
+          },
+        ),
+      ),
+    );
+    
+    // Remove post from local list (hide it)
+    setState(() {
+      _posts.removeWhere((p) => p.id == post.id);
+    });
+  }
+
+  void _showEditPostDialog(SocialPostModel post, bool isDarkMode, bool isViceMode) {
+    final TextEditingController controller = TextEditingController(text: post.content);
+    final messenger = ScaffoldMessenger.of(context);
+    
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: isDarkMode ? TugColors.darkSurface : Colors.white,
+        title: Text(
+          'Edit Post',
+          style: TextStyle(
+            color: TugColors.getTextColor(isDarkMode, isViceMode),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: TextField(
+          controller: controller,
+          maxLines: 4,
+          maxLength: 500,
+          decoration: InputDecoration(
+            hintText: 'What\'s on your mind?',
+            hintStyle: TextStyle(
+              color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: TugColors.getPrimaryColor(isViceMode),
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(
+                color: TugColors.getPrimaryColor(isViceMode),
+                width: 2,
+              ),
+            ),
+          ),
+          style: TextStyle(
+            color: TugColors.getTextColor(isDarkMode, isViceMode),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (controller.text.trim().isEmpty) {
+                messenger.showSnackBar(
+                  const SnackBar(content: Text('Post content cannot be empty')),
+                );
+                return;
+              }
+              
+              try {
+                Navigator.pop(dialogContext);
+                
+                // Show loading
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Row(
+                      children: [
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Text('Updating post...'),
+                      ],
+                    ),
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+                
+                final updatedPost = await _socialService.updatePost(post.id, controller.text.trim());
+                
+                if (!mounted) return;
+                
+                // Update the post in the list
+                setState(() {
+                  final index = _posts.indexWhere((p) => p.id == post.id);
+                  if (index != -1) {
+                    _posts[index] = updatedPost;
+                  }
+                });
+                
+                messenger.showSnackBar(
+                  const SnackBar(
+                    content: Text('Post updated successfully!'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              } catch (e) {
+                if (mounted) {
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to update post: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: TugColors.getPrimaryColor(isViceMode),
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Update'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeletePostDialog(SocialPostModel post, bool isDarkMode, bool isViceMode) {
+    final messenger = ScaffoldMessenger.of(context);
+    
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: isDarkMode ? TugColors.darkSurface : Colors.white,
+        title: Text(
+          'Delete Post',
+          style: TextStyle(
+            color: TugColors.getTextColor(isDarkMode, isViceMode),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Text(
+          'Are you sure you want to delete this post? This action cannot be undone.',
+          style: TextStyle(
+            color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
+            height: 1.4,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(
+              'Cancel',
+              style: TextStyle(
+                color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              try {
+                Navigator.pop(dialogContext);
+                
+                // Show loading
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Row(
+                      children: [
+                        SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Text('Deleting post...'),
+                      ],
+                    ),
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+                
+                await _socialService.deletePost(post.id);
+                
+                if (!mounted) return;
+                
+                // Remove the post from the list
+                setState(() {
+                  _posts.removeWhere((p) => p.id == post.id);
+                });
+                
+                messenger.showSnackBar(
+                  const SnackBar(
+                    content: Text('Post deleted successfully!'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              } catch (e) {
+                if (mounted) {
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: Text('Failed to delete post: $e'),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
   }
 
 }
