@@ -76,6 +76,8 @@ enum PostType {
   activityUpdate,
   @JsonValue('vice_progress')
   viceProgress,
+  @JsonValue('vice_indulgence')
+  viceIndulgence,
   @JsonValue('achievement')
   achievement,
   @JsonValue('general')

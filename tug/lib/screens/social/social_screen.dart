@@ -93,8 +93,8 @@ class _SocialScreenState extends State<SocialScreen> {
       // Filter posts based on current mode
       final filteredPosts = allPosts.where((post) {
         if (_currentMode == AppMode.vicesMode) {
-          // In vices mode, show only vice progress posts
-          return post.postType == PostType.viceProgress;
+          // In vices mode, show only vice indulgence posts
+          return post.postType == PostType.viceIndulgence;
         } else {
           // In values mode, show activity updates and achievements
           return post.postType == PostType.activityUpdate || 
@@ -256,7 +256,7 @@ class _SocialScreenState extends State<SocialScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    isViceMode ? 'vice progress feed' : 'activity feed',
+                    isViceMode ? 'indulgence feed' : 'activity feed',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -269,7 +269,7 @@ class _SocialScreenState extends State<SocialScreen> {
             const SizedBox(height: 12),
             Text(
               isViceMode 
-                  ? 'see your friends\' progress overcoming vices. posts are automatically created when they hit milestones like 7, 30, or 100 days clean!'
+                  ? 'see when your friends are being honest about their struggles. posts are automatically created when they log indulgences.'
                   : 'your friends\' activities automatically appear here when they log workouts, complete goals, or hit achievements. just like strava!',
               style: TextStyle(
                 fontSize: 14,
@@ -711,6 +711,8 @@ class _SocialScreenState extends State<SocialScreen> {
         return 'activity';
       case PostType.viceProgress:
         return 'progress';
+      case PostType.viceIndulgence:
+        return 'indulgence';
       case PostType.achievement:
         return 'achievement';
       case PostType.general:
