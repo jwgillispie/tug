@@ -46,7 +46,6 @@ class _AchievementsScreenState extends State<AchievementsScreen> with SingleTick
         });
       }
     } catch (e) {
-      debugPrint('Error loading achievements: $e');
 
       if (mounted) {
         setState(() {
@@ -85,7 +84,6 @@ class _AchievementsScreenState extends State<AchievementsScreen> with SingleTick
         );
       }
     } catch (e) {
-      debugPrint('Error refreshing achievements: $e');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -120,7 +118,6 @@ class _AchievementsScreenState extends State<AchievementsScreen> with SingleTick
         });
       }
     } catch (e) {
-      debugPrint('Error checking for new achievements: $e');
 
       if (mounted) {
         setState(() {

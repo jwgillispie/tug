@@ -1,7 +1,6 @@
 // lib/blocs/subscription/subscription_bloc.dart
 import 'dart:async';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
@@ -274,7 +273,6 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     // This will check the current user's subscription status
     add(LoadSubscriptions());
     
-    debugPrint('Subscription data cleared - reset to initial state');
   }
 
   @override

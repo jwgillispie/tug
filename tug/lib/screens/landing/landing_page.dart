@@ -72,13 +72,11 @@ class _TugLandingPageState extends State<TugLandingPage>
         _emailController.clear();
       });
 
-      debugPrint('Successfully added to waitlist: $email');
     } catch (e) {
       setState(() {
         _isSubmitting = false;
         _errorMessage = 'Failed to join waitlist. Please try again.';
       });
-      debugPrint('Error adding to waitlist: $e');
     }
   }
 

@@ -27,7 +27,6 @@ class NotificationService {
 
   // Notification response callback
   static void _onDidReceiveNotificationResponse(NotificationResponse notificationResponse) async {
-    debugPrint('Notification tapped: ${notificationResponse.payload}');
     // Handle notification tap here if needed
     // For basic implementation, we just log it
   }
@@ -112,7 +111,6 @@ class NotificationService {
   }
 
   Future<void> setNotificationTime(TimeOfDay time) async {
-    debugPrint('Setting notification time - hour: ${time.hour}, minute: ${time.minute}');
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(_notificationHourKey, time.hour);
     await prefs.setInt(_notificationMinuteKey, time.minute);
@@ -160,7 +158,6 @@ class NotificationService {
 
   Future<tz.TZDateTime> _nextInstanceOfNotificationTime() async {
     final notificationTime = await getNotificationTime();
-    debugPrint('Retrieved notification time - hour: ${notificationTime.hour}, minute: ${notificationTime.minute}');
     final now = tz.TZDateTime.now(tz.local);
     var scheduledDate = tz.TZDateTime(
       tz.local, 
@@ -171,11 +168,9 @@ class NotificationService {
       notificationTime.minute,
     );
     
-    debugPrint('Scheduled date created: $scheduledDate (current time: $now)');
     
     if (scheduledDate.isBefore(now)) {
       scheduledDate = scheduledDate.add(const Duration(days: 1));
-      debugPrint('Date was in past, rescheduled for tomorrow: $scheduledDate');
     }
     
     return scheduledDate;
@@ -201,7 +196,6 @@ class NotificationService {
       // Don't show notification if user has already logged activities today
       return activities.isEmpty;
     } catch (e) {
-      debugPrint('Error checking activities for notification: $e');
       // Show notification by default if we can't check
       return true;
     }
@@ -252,7 +246,6 @@ class NotificationService {
 
     final scheduledTime = tz.TZDateTime.now(tz.local).add(delay);
     
-    debugPrint('Scheduling one-time notification for: $scheduledTime (in ${delay.inMinutes} minutes)');
 
     await _notifications.zonedSchedule(
       _testNotificationId,
@@ -287,9 +280,7 @@ class NotificationService {
     // Check if notifications are enabled
     if (!(await getNotificationsEnabled())) return;
 
-    debugPrint('Input TimeOfDay - hour: ${time.hour}, minute: ${time.minute}');
     final now = tz.TZDateTime.now(tz.local);
-    debugPrint('Current time: $now');
     
     var scheduledTime = tz.TZDateTime(
       tz.local,
@@ -300,7 +291,6 @@ class NotificationService {
       time.minute,
     );
 
-    debugPrint('Created scheduled time: $scheduledTime');
 
     // If the time is in the past, schedule for today if less than 24 hours ago, otherwise tomorrow
     if (scheduledTime.isBefore(now)) {
@@ -308,14 +298,11 @@ class NotificationService {
       final diffInMinutes = now.difference(scheduledTime).inMinutes;
       if (diffInMinutes < 60) {
         scheduledTime = now.add(const Duration(minutes: 1));
-        debugPrint('Time was in the past by $diffInMinutes minutes, scheduling for 1 minute from now');
       } else {
         scheduledTime = scheduledTime.add(const Duration(days: 1));
-        debugPrint('Time was more than 1 hour ago, scheduling for tomorrow');
       }
     }
 
-    debugPrint('Final scheduled time: $scheduledTime');
 
     await _notifications.zonedSchedule(
       _testNotificationId,
@@ -341,28 +328,5 @@ class NotificationService {
     );
   }
 
-  // Debug method to test time conversion
-  Future<void> debugTimeConversion(TimeOfDay time) async {
-    debugPrint('=== DEBUG TIME CONVERSION ===');
-    debugPrint('Input TimeOfDay: ${time.hour}:${time.minute}');
-    debugPrint('TimeOfDay.hour (24-hour format): ${time.hour}');
-    
-    final now = tz.TZDateTime.now(tz.local);
-    debugPrint('Current timezone: ${now.timeZoneName}');
-    debugPrint('Current time: $now');
-    
-    final scheduledTime = tz.TZDateTime(
-      tz.local,
-      now.year,
-      now.month,
-      now.day,
-      time.hour,
-      time.minute,
-    );
-    debugPrint('Scheduled time created: $scheduledTime');
-    debugPrint('Scheduled hour: ${scheduledTime.hour}');
-    debugPrint('Scheduled minute: ${scheduledTime.minute}');
-    debugPrint('===============================');
-  }
 
 }

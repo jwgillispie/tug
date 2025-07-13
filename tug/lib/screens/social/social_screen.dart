@@ -62,15 +62,12 @@ class _SocialScreenState extends State<SocialScreen> {
     try {
       final userData = await _userService.getCurrentUserProfile();
       _currentUserId = userData.id;
-      debugPrint('SocialScreen: Current user ID (backend): $_currentUserId');
     } catch (e) {
-      debugPrint('SocialScreen: Failed to get backend user ID: $e');
       // Fallback to Firebase UID
       if (mounted) {
         final authState = context.read<AuthBloc>().state;
         if (authState is Authenticated) {
           _currentUserId = authState.user.uid;
-          debugPrint('SocialScreen: Using Firebase UID as fallback: $_currentUserId');
         }
       }
     }
@@ -108,10 +105,6 @@ class _SocialScreenState extends State<SocialScreen> {
           _isLoading = false;
         });
         
-        // Debug: Log posts and ownership
-        for (final post in filteredPosts) {
-          debugPrint('SocialScreen: Post ${post.id} by ${post.userId} (${post.displayName}) - isOwned: ${post.userId == _currentUserId}');
-        }
       }
     } catch (e) {
       if (mounted) {

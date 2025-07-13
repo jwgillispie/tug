@@ -115,7 +115,7 @@ class _DiagnosticScreenState extends State<DiagnosticScreen> {
       try {
         await auth.signOut();
       } catch (e) {
-        debugPrint('Error signing out: $e');
+        // Ignore sign out errors during testing
       }
       
       try {

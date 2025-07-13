@@ -45,7 +45,7 @@ class _ActivitySuccessScreenState extends State<ActivitySuccessScreen> {
         await _notificationService.checkForAchievements(context);
       }
     } catch (e) {
-      debugPrint('Error checking for achievements: $e');
+      // Handle error silently
     } finally {
       if (mounted) {
         setState(() {

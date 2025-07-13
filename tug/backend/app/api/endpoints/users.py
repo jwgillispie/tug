@@ -12,6 +12,13 @@ from bson import ObjectId
 from ...models.user import User
 from ...models.value import Value
 from ...models.activity import Activity
+from ...models.vice import Vice
+from ...models.indulgence import Indulgence
+from ...models.social_post import SocialPost
+from ...models.post_comment import PostComment
+from ...models.friendship import Friendship
+from ...models.notification import Notification, NotificationBatch
+from ...models.achievement import Achievement
 from ...schemas.user import UserCreate, UserUpdate, UserResponse
 from ...utils.json_utils import MongoJSONEncoder
 
@@ -441,9 +448,46 @@ async def delete_user_profile(request: Request):
         activities_result = await Activity.find(Activity.user_id == user_id_str).delete()
         logger.info(f"Deleted {activities_result.deleted_count} activities for user {user_id_str}")
         
+        # Delete all user vices
+        vices_result = await Vice.find(Vice.user_id == user_id_str).delete()
+        logger.info(f"Deleted {vices_result.deleted_count} vices for user {user_id_str}")
+        
+        # Delete all user indulgences
+        indulgences_result = await Indulgence.find(Indulgence.user_id == user_id_str).delete()
+        logger.info(f"Deleted {indulgences_result.deleted_count} indulgences for user {user_id_str}")
+        
+        # Delete all social posts by the user
+        posts_result = await SocialPost.find(SocialPost.user_id == user_id_str).delete()
+        logger.info(f"Deleted {posts_result.deleted_count} social posts for user {user_id_str}")
+        
+        # Delete all comments by the user
+        comments_result = await PostComment.find(PostComment.user_id == user_id_str).delete()
+        logger.info(f"Deleted {comments_result.deleted_count} comments for user {user_id_str}")
+        
+        # Delete all friendships involving the user (both as requester and addressee)
+        friendships_requester_result = await Friendship.find(Friendship.requester_id == user_id_str).delete()
+        friendships_addressee_result = await Friendship.find(Friendship.addressee_id == user_id_str).delete()
+        total_friendships = friendships_requester_result.deleted_count + friendships_addressee_result.deleted_count
+        logger.info(f"Deleted {total_friendships} friendships for user {user_id_str}")
+        
+        # Delete all notifications for the user (both received and sent)
+        notifications_received_result = await Notification.find(Notification.user_id == user_id_str).delete()
+        notifications_sent_result = await Notification.find(Notification.related_user_id == user_id_str).delete()
+        total_notifications = notifications_received_result.deleted_count + notifications_sent_result.deleted_count
+        logger.info(f"Deleted {total_notifications} notifications for user {user_id_str}")
+        
+        # Delete all notification batches for the user
+        notification_batches_result = await NotificationBatch.find(NotificationBatch.user_id == user_id_str).delete()
+        logger.info(f"Deleted {notification_batches_result.deleted_count} notification batches for user {user_id_str}")
+        
+        # Delete all achievements for the user
+        achievements_result = await Achievement.find(Achievement.user_id == user_id_str).delete()
+        logger.info(f"Deleted {achievements_result.deleted_count} achievements for user {user_id_str}")
+        
         # Finally delete the user
         await user.delete()
-        logger.info(f"User {user_id_str} successfully deleted")
+        logger.info(f"User {user_id_str} and all associated data successfully deleted")
+        logger.info(f"Summary - Values: {values_result.deleted_count}, Activities: {activities_result.deleted_count}, Vices: {vices_result.deleted_count}, Indulgences: {indulgences_result.deleted_count}, Posts: {posts_result.deleted_count}, Comments: {comments_result.deleted_count}, Friendships: {total_friendships}, Notifications: {total_notifications}, Notification Batches: {notification_batches_result.deleted_count}, Achievements: {achievements_result.deleted_count}")
         
         return None
     except Exception as e:

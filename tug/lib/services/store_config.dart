@@ -44,13 +44,11 @@ class StoreConfig {
   /// Initialize the store configuration
   static void initialize() {
     if (kIsWeb) {
-      debugPrint('RevenueCat is not supported on web');
       return;
     }
     
     final apiKey = EnvConfig.revenueCatApiKey;
     if (apiKey.isEmpty) {
-      debugPrint('RevenueCat API key is not configured');
       return;
     }
     
@@ -66,10 +64,6 @@ class StoreConfig {
         store: Store.playStore,
         apiKey: apiKey,
       );
-    }
-    
-    if (kDebugMode) {
-      debugPrint('StoreConfig initialized for ${_instance?.store}');
     }
   }
 }

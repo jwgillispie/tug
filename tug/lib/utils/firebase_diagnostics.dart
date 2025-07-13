@@ -186,7 +186,7 @@ class FirebaseDiagnostics {
       
       debugPrint('\n------ END FIREBASE DIAGNOSTICS ------\n');
     } catch (e) {
-      debugPrint('Error running diagnostics: $e');
+      // Failed to run diagnostics - handle silently
     }
   }
 }

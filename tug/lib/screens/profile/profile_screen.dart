@@ -120,7 +120,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         });
       }
     } catch (e) {
-      debugPrint('Failed to load user bio: $e');
+      // Failed to load user bio, continue without it
     }
   }
 
@@ -142,7 +142,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         });
       }
     } catch (e) {
-      debugPrint('Error loading achievements count: $e');
       if (mounted) {
         setState(() {
           _loadingAchievements = false;
@@ -194,7 +193,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         await _uploadProfilePicture(File(image.path));
       }
     } catch (e) {
-      debugPrint('Error picking image: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('error selecting image: $e')),
@@ -245,7 +243,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         throw Exception('no profile picture URL returned from server');
       }
     } catch (e) {
-      debugPrint('Error uploading profile picture: $e');
       if (mounted) {
         String errorMessage = 'error uploading picture';
         if (e.toString().contains('413')) {
@@ -1424,9 +1421,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         content: Text(
           'you deadass want to delete your account? this will permanently delete ALL your data including:\n\n'
           '• your profile information\n'
-          '• all your values\n'
-          '• all your activities\n'
-          '• all your settings\n\n'
+          '• all your values and activities\n'
+          '• all your vices and indulgences\n'
+          '• all your social posts and comments\n'
+          '• all your friendships and achievements\n'
+          '• all your settings and notifications\n\n'
           'this action cannot be undone.',
           style: TextStyle(
             height: 1.5,
@@ -1680,7 +1679,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
 
       // Update loading message
-      _showLoadingDialog('deleting account data (values, activities, etc.)...');
+      _showLoadingDialog('deleting all account data (values, activities, vices, posts, comments, etc.)...');
 
       // 2. Delete account from your backend
       final userService = UserService();
@@ -1839,7 +1838,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         );
       }
 
-      debugPrint('Making current user\'s indulgences public...');
       
       // Get all current user's vices
       final vices = await _viceService.getVices();
@@ -1863,12 +1861,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   );
                   totalUpdated++;
                 } catch (e) {
-                  debugPrint('Error updating indulgence ${indulgence.id}: $e');
+                  // Failed to update indulgence, continue with others
                 }
               }
             }
           } catch (e) {
-            debugPrint('Error updating indulgences for vice ${vice.name}: $e');
+            // Failed to update indulgences for this vice, continue with others
           }
         }
       }
@@ -1883,7 +1881,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
 
     } catch (e) {
-      debugPrint('Error making indulgences public: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error making indulgences public: $e')),
@@ -1949,7 +1946,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           }
         }
       } catch (e) {
-        debugPrint('Error deleting activities: $e');
+        // Failed to delete activities, continue with other cleanup
       }
 
       // Delete all indulgences (we'll delete vices which should cascade)
@@ -1973,7 +1970,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       try {
         await _socialService.clearAllUserSocialData();
       } catch (e) {
-        debugPrint('Error clearing social data: $e');
         // Continue with other deletions even if social cleanup fails
       }
 
@@ -1987,7 +1983,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
 
     } catch (e) {
-      debugPrint('Error clearing data: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Error clearing data: $e')),

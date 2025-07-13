@@ -20,7 +20,6 @@ class AchievementNotificationService {
     if (achievementService != null) {
       // We can't modify the final field directly, so we'll have to ignore
       // any passed service in a singleton pattern
-      debugPrint('Note: Singleton pattern prevents changing achievement service');
     }
     return _instance;
   }
@@ -52,7 +51,6 @@ class AchievementNotificationService {
       final newAchievements = await _achievementService.checkForNewAchievements();
       
       if (newAchievements.isNotEmpty) {
-        debugPrint('New achievements unlocked: ${newAchievements.length}');
         
         // Add to queue
         _achievementQueue.addAll(newAchievements);
@@ -65,7 +63,6 @@ class AchievementNotificationService {
       
       _checkCompleter?.complete();
     } catch (e) {
-      debugPrint('Error checking for achievements: $e');
       _checkCompleter?.completeError(e);
     }
     

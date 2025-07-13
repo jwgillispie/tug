@@ -10,7 +10,7 @@ class HelpSupportScreen extends StatelessWidget {
   Future<void> _launchUrl(String urlString) async {
     final Uri url = Uri.parse(urlString);
     if (!await launchUrl(url)) {
-      debugPrint('Could not launch $url');
+      // URL launch failed - handle silently
     }
   }
 

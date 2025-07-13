@@ -58,9 +58,7 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         _error = null;
       });
 
-      debugPrint('Loading user profile for userId: ${widget.userId}');
       final user = await _userService.getUserProfile(widget.userId);
-      debugPrint('Successfully loaded user profile: ${user.displayName}');
       setState(() {
         _user = user;
         _isLoading = false;
@@ -69,7 +67,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
       // Load user statistics
       _loadUserStatistics();
     } catch (e) {
-      debugPrint('Error loading user profile: $e');
       setState(() {
         _error = e.toString();
         _isLoading = false;
@@ -94,7 +91,6 @@ class _UserProfileScreenState extends State<UserProfileScreen> {
         _loadingStats = false;
       });
     } catch (e) {
-      debugPrint('Error loading user statistics: $e');
       setState(() {
         _totalActivityHours = 0;
         _loadingStats = false;

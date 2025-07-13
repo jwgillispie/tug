@@ -1,5 +1,4 @@
 // lib/services/rankings_service.dart
-import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:tug/services/api_service.dart';
 import 'package:tug/services/cache_service.dart';
@@ -40,7 +39,6 @@ class RankingsService {
     if (!forceRefresh) {
       final cachedData = await _cacheService.get<Map<String, dynamic>>(cacheKey);
       if (cachedData != null) {
-        debugPrint('Using cached rankings data');
         final currentUserId = _auth.currentUser?.uid;
         return RankingsListModel.fromJson(cachedData, currentUserId: currentUserId);
       }
@@ -68,10 +66,8 @@ class RankingsService {
       final currentUserId = _auth.currentUser?.uid;
       return RankingsListModel.fromJson(response, currentUserId: currentUserId);
     } on ApiError catch (e) {
-      debugPrint('Error getting rankings: ${e.message}');
       rethrow;
     } catch (e) {
-      debugPrint('Unexpected error getting rankings: $e');
       throw ApiError(
         statusCode: 500,
         message: 'Failed to load rankings: $e',
@@ -96,7 +92,6 @@ class RankingsService {
     if (!forceRefresh) {
       final cachedData = await _cacheService.get<Map<String, dynamic>>(cacheKey);
       if (cachedData != null) {
-        debugPrint('Using cached user rank data');
         return UserRankingModel.fromJson(cachedData, currentUserId: currentUserId);
       }
     }
@@ -119,10 +114,8 @@ class RankingsService {
       
       return UserRankingModel.fromJson(response, currentUserId: currentUserId);
     } on ApiError catch (e) {
-      debugPrint('Error getting user rank: ${e.message}');
       rethrow;
     } catch (e) {
-      debugPrint('Unexpected error getting user rank: $e');
       throw ApiError(
         statusCode: 500,
         message: 'Failed to load user rank: $e',
@@ -135,6 +128,5 @@ class RankingsService {
   Future<void> clearCache() async {
     await _cacheService.clearByPrefix(_rankingsCacheKeyPrefix);
     await _cacheService.clearByPrefix(_userRankCacheKeyPrefix);
-    debugPrint('Rankings cache cleared');
   }
 }

@@ -85,7 +85,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         }
       } catch (e) {
         // If we can't load the backend data, just continue with Firebase data
-        debugPrint('Failed to load user data from backend: $e');
       }
     }
   }

@@ -362,7 +362,7 @@ class _SubscriptionContent extends StatelessWidget {
                       return;
                     }
                   } catch (e) {
-                    debugPrint('Error getting customer info: $e');
+                    // Failed to get customer info - continue with fallback
                   }
                 }
                 

@@ -78,7 +78,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
       setState(() {
         _statusMessage = 'Error: $e';
       });
-      debugPrint('Initialization error: $e');
     }
   }
   
