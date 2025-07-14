@@ -6,14 +6,16 @@ import 'package:tug/blocs/values/bloc/values_event.dart';
 import 'package:tug/blocs/values/bloc/values_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:tug/models/value_model.dart';
+import 'package:tug/models/mood_model.dart';
 import 'package:tug/utils/theme/buttons.dart';
 import 'package:tug/utils/theme/colors.dart';
 import 'package:tug/utils/time_utils.dart';
 import 'package:tug/widgets/values/streak_celebration.dart';
+import 'package:tug/widgets/mood/mood_selector.dart';
 
 class ActivityFormWidget extends StatefulWidget {
   final Function(String name, String valueId, int duration, DateTime date,
-      String? notes, bool isPublic, bool notesPublic) onSave;
+      String? notes, bool isPublic, bool notesPublic, MoodType? mood) onSave;
   final bool isLoading;
 
   const ActivityFormWidget({
@@ -42,6 +44,7 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
   bool _isSaving = false;
   bool _isPublic = true; // Default to public for social sharing
   bool _notesPublic = false; // Default notes to private for privacy
+  MoodType? _selectedMood; // User's current mood
 
   @override
   void initState() {
@@ -121,7 +124,7 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
         }
       });
 
-      widget.onSave(name, _selectedValueId!, duration, _selectedDate, notes, _isPublic, _notesPublic);
+      widget.onSave(name, _selectedValueId!, duration, _selectedDate, notes, _isPublic, _notesPublic, _selectedMood);
     }
   }
   
@@ -521,6 +524,19 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
                       border: OutlineInputBorder(),
                     ),
                     maxLines: 3,
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Mood Selection
+                  MoodSelector(
+                    selectedMood: _selectedMood,
+                    onMoodSelected: (mood) {
+                      setState(() {
+                        _selectedMood = mood;
+                      });
+                    },
+                    isDarkMode: Theme.of(context).brightness == Brightness.dark,
                   ),
 
                   const SizedBox(height: 16),

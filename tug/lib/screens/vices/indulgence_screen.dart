@@ -7,8 +7,11 @@ import '../../blocs/vices/bloc/vices_event.dart';
 import '../../blocs/vices/bloc/vices_state.dart';
 import '../../models/vice_model.dart';
 import '../../models/indulgence_model.dart';
+import '../../models/mood_model.dart';
 import '../../utils/theme/colors.dart';
 import '../../widgets/common/tug_text_field.dart';
+import '../../widgets/mood/mood_selector.dart';
+import '../../services/mood_service.dart';
 
 class IndulgenceScreen extends StatefulWidget {
   const IndulgenceScreen({super.key});
@@ -30,6 +33,8 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
   bool _isLoading = false;
   bool _isPublic = false; // Default indulgences to private for sensitivity
   bool _notesPublic = false; // Default notes to private for privacy
+  MoodType? _selectedMood; // User's current mood
+  final MoodService _moodService = MoodService();
 
   final List<String> _commonTriggers = [
     'stress',
@@ -100,6 +105,11 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
       );
 
       context.read<VicesBloc>().add(RecordIndulgence(indulgence));
+      
+      // Create mood entry if mood was selected
+      if (_selectedMood != null) {
+        _createMoodEntry(_selectedMood!, indulgenceDateTime);
+      }
     }
   }
 
@@ -128,6 +138,62 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
       setState(() {
         _selectedTime = time;
       });
+    }
+  }
+
+  int _getMoodPositivityScore(MoodType mood) {
+    switch (mood) {
+      case MoodType.ecstatic:
+        return 10;
+      case MoodType.joyful:
+        return 9;
+      case MoodType.confident:
+        return 8;
+      case MoodType.content:
+        return 7;
+      case MoodType.focused:
+        return 6;
+      case MoodType.neutral:
+        return 5;
+      case MoodType.restless:
+        return 4;
+      case MoodType.tired:
+        return 3;
+      case MoodType.frustrated:
+        return 2;
+      case MoodType.anxious:
+        return 2;
+      case MoodType.sad:
+        return 1;
+      case MoodType.overwhelmed:
+        return 1;
+      case MoodType.angry:
+        return 1;
+      case MoodType.defeated:
+        return 0;
+      case MoodType.depressed:
+        return 0;
+    }
+  }
+
+  void _createMoodEntry(MoodType mood, DateTime date) async {
+    try {
+      final moodEntry = MoodEntry(
+        moodType: mood,
+        positivityScore: _getMoodPositivityScore(mood),
+        recordedAt: date,
+      );
+      await _moodService.createMoodEntry(moodEntry);
+    } catch (e) {
+      // Don't fail indulgence creation if mood creation fails
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Indulgence saved, but mood tracking failed: $e'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
     }
   }
 
@@ -549,6 +615,19 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
                             ),
                           );
                         }).toList(),
+                      ),
+                      
+                      const SizedBox(height: 24),
+                      
+                      // Mood Selection
+                      MoodSelector(
+                        selectedMood: _selectedMood,
+                        onMoodSelected: (mood) {
+                          setState(() {
+                            _selectedMood = mood;
+                          });
+                        },
+                        isDarkMode: isDarkMode,
                       ),
                       
                       const SizedBox(height: 24),

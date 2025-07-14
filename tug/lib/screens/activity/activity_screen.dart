@@ -21,6 +21,8 @@ import 'package:tug/services/activity_service.dart';
 import 'package:tug/blocs/vices/bloc/vices_bloc.dart';
 import 'package:tug/blocs/vices/bloc/vices_event.dart';
 import 'package:tug/blocs/vices/bloc/vices_state.dart';
+import 'package:tug/models/mood_model.dart';
+import 'package:tug/services/mood_service.dart';
 
 class ActivityScreen extends StatefulWidget {
   final bool showAddForm;
@@ -45,6 +47,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
   bool _showSwipeHint = true;
   final AppModeService _appModeService = AppModeService();
   final ActivityService _activityService = ActivityService();
+  final MoodService _moodService = MoodService();
   AppMode _currentMode = AppMode.valuesMode;
 
   @override
@@ -202,7 +205,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                 child: ActivityFormWidget(
                   isLoading: context.watch<ActivitiesBloc>().state
                       is ActivitiesLoading,
-                  onSave: (name, valueId, duration, date, notes, isPublic, notesPublic) {
+                  onSave: (name, valueId, duration, date, notes, isPublic, notesPublic, mood) {
                     final activity = ActivityModel(
                       name: name,
                       valueId: valueId,
@@ -230,6 +233,11 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                       activity: activity,
                       valueModel: selectedValue,
                     ));
+                    
+                    // Create mood entry if mood was selected
+                    if (mood != null) {
+                      _createMoodEntry(mood, date);
+                    }
                     
                     // Navigate back to home after saving
                     Navigator.of(context).pop();
@@ -447,6 +455,62 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
       return '${difference.inDays}d ago';
     } else {
       return DateFormat('MMM d').format(date);
+    }
+  }
+
+  int _getMoodPositivityScore(MoodType mood) {
+    switch (mood) {
+      case MoodType.ecstatic:
+        return 10;
+      case MoodType.joyful:
+        return 9;
+      case MoodType.confident:
+        return 8;
+      case MoodType.content:
+        return 7;
+      case MoodType.focused:
+        return 6;
+      case MoodType.neutral:
+        return 5;
+      case MoodType.restless:
+        return 4;
+      case MoodType.tired:
+        return 3;
+      case MoodType.frustrated:
+        return 2;
+      case MoodType.anxious:
+        return 2;
+      case MoodType.sad:
+        return 1;
+      case MoodType.overwhelmed:
+        return 1;
+      case MoodType.angry:
+        return 1;
+      case MoodType.defeated:
+        return 0;
+      case MoodType.depressed:
+        return 0;
+    }
+  }
+
+  void _createMoodEntry(MoodType mood, DateTime date) async {
+    try {
+      final moodEntry = MoodEntry(
+        moodType: mood,
+        positivityScore: _getMoodPositivityScore(mood),
+        recordedAt: date,
+      );
+      await _moodService.createMoodEntry(moodEntry);
+    } catch (e) {
+      // Don't fail activity creation if mood creation fails
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Activity saved, but mood tracking failed: $e'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      }
     }
   }
 
