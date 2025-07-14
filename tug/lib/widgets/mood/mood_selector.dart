@@ -108,38 +108,66 @@ class _MoodSelectorState extends State<MoodSelector> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: TugColors.error.withValues(alpha: 0.1),
+              color: Colors.orange.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: TugColors.error.withValues(alpha: 0.3),
+                color: Colors.orange.withValues(alpha: 0.3),
               ),
             ),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(
-                  Icons.error_outline,
-                  color: TugColors.error,
-                  size: 16,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    _error!,
-                    style: TextStyle(
-                      color: TugColors.error,
-                      fontSize: 12,
+                Row(
+                  children: [
+                    Icon(
+                      Icons.warning_outlined,
+                      color: Colors.orange,
+                      size: 16,
                     ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Mood tracking temporarily unavailable',
+                        style: TextStyle(
+                          color: Colors.orange,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'The mood tracking feature is still being deployed. You can continue logging your activity without selecting a mood for now.',
+                  style: TextStyle(
+                    color: widget.isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+                    fontSize: 12,
                   ),
                 ),
-                TextButton(
-                  onPressed: _loadMoodOptions,
-                  child: Text(
-                    'retry',
-                    style: TextStyle(
-                      color: TugColors.error,
-                      fontSize: 12,
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Skip mood selection and continue →',
+                      style: TextStyle(
+                        color: widget.isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+                        fontSize: 11,
+                        fontStyle: FontStyle.italic,
+                      ),
                     ),
-                  ),
+                    TextButton(
+                      onPressed: _loadMoodOptions,
+                      child: Text(
+                        'retry',
+                        style: TextStyle(
+                          color: Colors.orange,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

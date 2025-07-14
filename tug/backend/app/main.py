@@ -18,7 +18,9 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title=settings.APP_NAME,
     debug=settings.DEBUG,
-    redirect_slashes= True
+    redirect_slashes=True,
+    docs_url="/docs",
+    redoc_url="/redoc"
 )
 
 # Add CORS middleware
@@ -86,6 +88,7 @@ async def root():
             f"{settings.API_V1_PREFIX}/activities",
             f"{settings.API_V1_PREFIX}/vices",
             f"{settings.API_V1_PREFIX}/social",
-            f"{settings.API_V1_PREFIX}/notifications"
+            f"{settings.API_V1_PREFIX}/notifications",
+            f"{settings.API_V1_PREFIX}/mood"
         ]
     }

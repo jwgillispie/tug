@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: tug-backend
+    env: python
+    plan: free
+    region: oregon
+    buildCommand: |
+      cd backend
+      pip install -r requirements.txt
+    startCommand: |
+      cd backend
+      python run.py
+    envVars:
+      - key: MONGODB_URL
+        sync: false
+      - key: MONGODB_DB_NAME
+        value: tug
+      - key: FIREBASE_CREDENTIALS_PATH
+        sync: false
+      - key: DEBUG
+        value: "false"
+    healthCheckPath: /health
