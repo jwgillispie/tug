@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../utils/theme/colors.dart';
@@ -373,270 +375,347 @@ class _SocialScreenState extends State<SocialScreen> {
   }
 
   Widget _buildFeedItem(SocialPostModel post, bool isDarkMode, bool isViceMode) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: TugColors.getSurfaceColor(isDarkMode, isViceMode),
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: isDarkMode ? 0.3 : 0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // User info
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 20,
-                backgroundColor: TugColors.getPrimaryColor(isViceMode),
-                child: Text(
-                  post.displayName[0].toUpperCase(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+    final primaryColor = TugColors.getPrimaryColor(isViceMode);
+    
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: isDarkMode
+                    ? [
+                        primaryColor.withValues(alpha: 0.08),
+                        TugColors.getSurfaceColor(isDarkMode, isViceMode).withValues(alpha: 0.95),
+                        primaryColor.withValues(alpha: 0.05),
+                      ]
+                    : [
+                        Colors.white.withValues(alpha: 0.9),
+                        TugColors.getSurfaceColor(isDarkMode, isViceMode).withValues(alpha: 0.85),
+                        primaryColor.withValues(alpha: 0.03),
+                      ],
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    GestureDetector(
-                      onTap: () {
-                        if (post.userId != _currentUserId) {
-                          context.push('/user/${post.userId}');
-                        }
-                      },
-                      child: Text(
-                        post.displayName,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: post.userId != _currentUserId 
-                              ? TugColors.getPrimaryColor(isViceMode)
-                              : TugColors.getTextColor(isDarkMode, isViceMode),
-                          decoration: post.userId != _currentUserId 
-                              ? TextDecoration.underline 
-                              : null,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(
+                width: 1.5,
+                color: primaryColor.withValues(alpha: isDarkMode ? 0.3 : 0.2),
+              ),
+              boxShadow: [
+                // Primary glow shadow
+                BoxShadow(
+                  color: primaryColor.withValues(alpha: isDarkMode ? 0.25 : 0.15),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
+                  spreadRadius: 0,
+                ),
+                // Depth shadow
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isDarkMode ? 0.4 : 0.08),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                  spreadRadius: -2,
+                ),
+                // Subtle ambient light
+                if (isDarkMode)
+                  BoxShadow(
+                    color: primaryColor.withValues(alpha: 0.1),
+                    blurRadius: 8,
+                    offset: const Offset(0, -1),
+                    spreadRadius: -4,
+                  ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(24),
+                splashColor: primaryColor.withValues(alpha: 0.1),
+                highlightColor: primaryColor.withValues(alpha: 0.05),
+                onTap: () {
+                  HapticFeedback.lightImpact();
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // User info
+                      Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 20,
+                            backgroundColor: TugColors.getPrimaryColor(isViceMode),
+                            child: Text(
+                              post.displayName[0].toUpperCase(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                GestureDetector(
+                                  onTap: () {
+                                    if (post.userId != _currentUserId) {
+                                      context.push('/user/${post.userId}');
+                                    }
+                                  },
+                                  child: Text(
+                                    post.displayName,
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color: post.userId != _currentUserId 
+                                          ? TugColors.getPrimaryColor(isViceMode)
+                                          : TugColors.getTextColor(isDarkMode, isViceMode),
+                                      decoration: post.userId != _currentUserId 
+                                          ? TextDecoration.underline 
+                                          : null,
+                                    ),
+                                  ),
+                                ),
+                                Text(
+                                  post.timeAgoText,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          // Post type indicator - show value name for activity posts
+                          if (post.postType == PostType.activityUpdate && post.hasValueInfo)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: (post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode)).withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                post.valueName!,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w500,
+                                  color: post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode),
+                                ),
+                              ),
+                            )
+                          else if (post.postType != PostType.general && post.postType != PostType.activityUpdate)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                _getPostTypeLabel(post.postType),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w500,
+                                  color: TugColors.getPrimaryColor(isViceMode),
+                                ),
+                              ),
+                            ),
+                          // Edit/Delete menu for user's own posts
+                          if (post.userId == _currentUserId) ...[
+                            const SizedBox(width: 8),
+                            PopupMenuButton<String>(
+                              icon: Icon(
+                                Icons.more_vert,
+                                color: TugColors.getPrimaryColor(isViceMode),
+                                size: 20,
+                              ),
+                              onSelected: (value) {
+                                if (value == 'edit') {
+                                  _showEditPostDialog(post, isDarkMode, isViceMode);
+                                } else if (value == 'delete') {
+                                  _showDeletePostDialog(post, isDarkMode, isViceMode);
+                                } else if (value == 'hide') {
+                                  _hidePost(post, isViceMode);
+                                }
+                              },
+                              itemBuilder: (context) => [
+                                PopupMenuItem<String>(
+                                  value: 'edit',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.edit, size: 18, color: TugColors.getPrimaryColor(isViceMode)),
+                                      const SizedBox(width: 12),
+                                      const Text('Edit'),
+                                    ],
+                                  ),
+                                ),
+                                PopupMenuItem<String>(
+                                  value: 'delete',
+                                  child: Row(
+                                    children: [
+                                      const Icon(Icons.delete, size: 18, color: Colors.red),
+                                      const SizedBox(width: 12),
+                                      const Text('Delete'),
+                                    ],
+                                  ),
+                                ),
+                                PopupMenuItem<String>(
+                                  value: 'hide',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.visibility_off, size: 18, color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true)),
+                                      const SizedBox(width: 12),
+                                      const Text('Hide'),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      
+                      // Enhanced Value badge - main focus for public posts
+                      if (post.hasValueInfo) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                (post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode)).withValues(alpha: 0.12),
+                                (post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode)).withValues(alpha: 0.06),
+                              ],
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: (post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode)).withValues(alpha: 0.3),
+                              width: 1.5,
+                            ),
+                          ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 16,
+                    height: 16,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode),
+                          (post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode)).withValues(alpha: 0.8),
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: (post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode)).withValues(alpha: 0.4),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
                         ),
-                      ),
+                      ],
                     ),
-                    Text(
-                      post.timeAgoText,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              // Post type indicator - show value name for activity posts
-              if (post.postType == PostType.activityUpdate && post.hasValueInfo)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: (post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode)).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Text(
+                  const SizedBox(width: 14),
+                  Text(
                     post.valueName!,
                     style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w500,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
                       color: post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode),
+                      letterSpacing: 0.5,
                     ),
                   ),
-                )
-              else if (post.postType != PostType.general && post.postType != PostType.activityUpdate)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    _getPostTypeLabel(post.postType),
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w500,
-                      color: TugColors.getPrimaryColor(isViceMode),
-                    ),
-                  ),
-                ),
-              // Edit/Delete menu for user's own posts
-              if (post.userId == _currentUserId) ...[
-                const SizedBox(width: 8),
-                PopupMenuButton<String>(
-                  icon: Icon(
-                    Icons.more_vert,
-                    color: TugColors.getPrimaryColor(isViceMode),
-                    size: 20,
-                  ),
-                  onSelected: (value) {
-                    if (value == 'edit') {
-                      _showEditPostDialog(post, isDarkMode, isViceMode);
-                    } else if (value == 'delete') {
-                      _showDeletePostDialog(post, isDarkMode, isViceMode);
-                    } else if (value == 'hide') {
-                      _hidePost(post, isViceMode);
-                    }
-                  },
-                  itemBuilder: (context) => [
-                    PopupMenuItem<String>(
-                      value: 'edit',
-                      child: Row(
-                        children: [
-                          Icon(Icons.edit, size: 18, color: TugColors.getPrimaryColor(isViceMode)),
-                          const SizedBox(width: 12),
-                          const Text('Edit'),
-                        ],
-                      ),
-                    ),
-                    PopupMenuItem<String>(
-                      value: 'delete',
-                      child: Row(
-                        children: [
-                          const Icon(Icons.delete, size: 18, color: Colors.red),
-                          const SizedBox(width: 12),
-                          const Text('Delete'),
-                        ],
-                      ),
-                    ),
-                    PopupMenuItem<String>(
-                      value: 'hide',
-                      child: Row(
-                        children: [
-                          Icon(Icons.visibility_off, size: 18, color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true)),
-                          const SizedBox(width: 12),
-                          const Text('Hide'),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ],
-          ),
-          const SizedBox(height: 12),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
           
-          // Activity Title
+          // Activity Title with improved design
           if (post.activityName != null && post.activityName!.isNotEmpty) ...[
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true).withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
+                color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true).withValues(alpha: 0.04),
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(
-                  color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true).withValues(alpha: 0.2),
+                  color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true).withValues(alpha: 0.12),
                   width: 1,
                 ),
               ),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.fitness_center,
-                    size: 18,
-                    color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      post.activityName!,
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                        color: TugColors.getTextColor(isDarkMode, isViceMode),
-                      ),
-                    ),
-                  ),
-                  if (post.formattedDuration.isNotEmpty) ...[
-                    const SizedBox(width: 8),
-                    Text(
-                      post.formattedDuration,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-          ],
-          
-          // Enhanced Value badge - main focus for public posts
-          if (post.hasValueInfo) ...[
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              decoration: BoxDecoration(
-                color: (post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode)).withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode),
-                  width: 2,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: (post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode)).withValues(alpha: 0.2),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
                   Container(
-                    width: 14,
-                    height: 14,
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: (post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode)).withValues(alpha: 0.4),
-                          blurRadius: 4,
-                          offset: const Offset(0, 1),
+                      color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      Icons.fitness_center,
+                      size: 20,
+                      color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          post.activityName!,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: TugColors.getTextColor(isDarkMode, isViceMode),
+                            height: 1.2,
+                          ),
                         ),
+                        if (post.formattedDuration.isNotEmpty) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            post.formattedDuration,
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                              color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
                   ),
-                  const SizedBox(width: 12),
-                  Text(
-                    'contributing to ${post.valueName!}',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode),
-                    ),
-                  ),
                 ],
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
           ],
           
-          // Post content/notes
+          // Post content/notes with improved typography
           if (post.content.isNotEmpty) ...[
-            Text(
-              post.content,
-              style: TextStyle(
-                fontSize: 14,
-                color: TugColors.getTextColor(isDarkMode, isViceMode),
-                height: 1.4,
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Text(
+                post.content,
+                style: TextStyle(
+                  fontSize: 15,
+                  color: TugColors.getTextColor(isDarkMode, isViceMode),
+                  height: 1.5,
+                  fontWeight: FontWeight.w400,
+                ),
               ),
             ),
-            const SizedBox(height: 8),
           ],
           const SizedBox(height: 12),
           
@@ -671,6 +750,12 @@ class _SocialScreenState extends State<SocialScreen> {
             ],
           ),
         ],
+      ),
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
