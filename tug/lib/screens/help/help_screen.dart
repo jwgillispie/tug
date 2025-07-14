@@ -1,8 +1,10 @@
 // lib/screens/help/help_support_screen.dart
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:tug/utils/theme/colors.dart';
 import 'package:tug/utils/theme/buttons.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:tug/screens/mood/mood_info_screen.dart';
 
 class HelpSupportScreen extends StatelessWidget {
   const HelpSupportScreen({super.key});
@@ -87,6 +89,82 @@ class HelpSupportScreen extends StatelessWidget {
               'The community average is simply the rating of importance (1 - 5) assigned to a value multiplied It provides a benchmark to help you understand how your behavior compares.'
             ),
             
+            _buildFaqItem(
+              context,
+              'how does mood tracking work?',
+              'When logging activities or indulgences, you can select your current mood. Each mood has a positivity score from 0-10 to help you understand which activities correlate with positive emotions. This helps you make informed decisions about your daily habits.'
+            ),
+            
+            _buildFaqItem(
+              context,
+              'what are the different mood categories?',
+              'Moods are grouped by positivity: Very Positive (8-10), Positive (6-7), Neutral (4-5), Challenging (2-3), and Very Challenging (0-1). Each category is color-coded to make tracking easier.'
+            ),
+            
+            const SizedBox(height: 32),
+            
+            // Helpful Resources Section
+            const Text(
+              'helpful resources',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: isDarkMode ? TugColors.darkSurface : Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: TugColors.primaryPurple.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.psychology,
+                        color: TugColors.primaryPurple,
+                        size: 24,
+                      ),
+                    ),
+                    title: const Text(
+                      'Mood Tracking Guide',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    subtitle: const Text(
+                      'Learn about all available moods and how to use mood tracking effectively.',
+                    ),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const MoodInfoScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+            
             const SizedBox(height: 32),
             
             // Contact Support Section
@@ -106,7 +184,7 @@ class HelpSupportScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -157,7 +235,7 @@ class HelpSupportScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 6,
             offset: const Offset(0, 2),
           ),

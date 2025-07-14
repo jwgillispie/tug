@@ -286,34 +286,109 @@ class _MoodSelectorState extends State<MoodSelector> {
                   },
                 ),
                 
-                // Optional text
-                if (widget.selectedMood == null)
+                // Info section
+                if (widget.selectedMood == null) ...[
                   Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Text(
-                      'tap to select your current mood (optional)',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: widget.isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: (widget.isDarkMode ? TugColors.darkSurfaceVariant : TugColors.lightSurfaceVariant).withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: widget.isDarkMode 
+                              ? Colors.white.withValues(alpha: 0.1)
+                              : Colors.black.withValues(alpha: 0.1),
+                        ),
                       ),
-                      textAlign: TextAlign.center,
-                    ),
-                  )
-                else
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Text(
-                      _moodOptions
-                          .firstWhere((m) => m.moodType == widget.selectedMood)
-                          .description,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontStyle: FontStyle.italic,
-                        color: widget.isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.info_outline,
+                                size: 16,
+                                color: widget.isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'How are you feeling right now?',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: widget.isDarkMode ? TugColors.darkTextPrimary : TugColors.lightTextPrimary,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Select your current emotional state to track how your mood correlates with your activities. This helps you understand what makes you feel good and what might be challenging.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: widget.isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '💡 Tip: Higher numbers (green) = more positive moods, lower numbers (red) = more challenging moods',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontStyle: FontStyle.italic,
+                              color: widget.isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+                            ),
+                          ),
+                        ],
                       ),
-                      textAlign: TextAlign.center,
                     ),
                   ),
+                ] else ...[
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: _getMoodColor(_moodOptions
+                            .firstWhere((m) => m.moodType == widget.selectedMood)
+                            .positivityScore).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: _getMoodColor(_moodOptions
+                              .firstWhere((m) => m.moodType == widget.selectedMood)
+                              .positivityScore).withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            _moodOptions
+                                .firstWhere((m) => m.moodType == widget.selectedMood)
+                                .description,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: widget.isDarkMode ? TugColors.darkTextPrimary : TugColors.lightTextPrimary,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Positivity score: ${_moodOptions.firstWhere((m) => m.moodType == widget.selectedMood).positivityScore}/10',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: _getMoodColor(_moodOptions
+                                  .firstWhere((m) => m.moodType == widget.selectedMood)
+                                  .positivityScore),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),

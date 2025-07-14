@@ -15,7 +15,9 @@ import '../../services/vice_service.dart';
 import '../../services/app_mode_service.dart';
 import '../../utils/quantum_effects.dart';
 import '../../utils/loading_messages.dart';
-import '../../widgets/home/activity_chart.dart';
+import '../../widgets/home/swipeable_charts.dart';
+import '../../services/mood_service.dart';
+import '../../models/mood_model.dart';
 import '../../widgets/home/item_list_section.dart';
 import '../../widgets/home/empty_state.dart';
 import '../../widgets/vices/vice_statistics.dart';
@@ -38,7 +40,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   final CacheService _cacheService = CacheService();
   final ViceService _viceService = ViceService();
   final AppModeService _appModeService = AppModeService();
+  final MoodService _moodService = MoodService();
   AppMode _currentMode = AppMode.valuesMode;
+  List<MoodEntry> _moodEntries = [];
   
   @override
   void initState() {
@@ -60,6 +64,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         
         // Load vices for vice mode with enhanced caching
         context.read<VicesBloc>().add(const LoadVices());
+        
+        // Load mood entries for mood chart
+        _loadMoodEntries();
       }
     });
     
@@ -166,6 +173,20 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       
     } catch (e) {
       // Silent failure for preload optimization
+    }
+  }
+
+  // Load mood entries for chart
+  Future<void> _loadMoodEntries() async {
+    try {
+      final moodEntries = await _moodService.getMoodEntries();
+      if (mounted) {
+        setState(() {
+          _moodEntries = moodEntries;
+        });
+      }
+    } catch (e) {
+      // Silent failure - mood chart will show empty state
     }
   }
   
@@ -338,13 +359,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Activity Chart
+                        // Swipeable Charts (Activity & Mood)
                         BlocBuilder<ActivitiesBloc, ActivitiesState>(
                           builder: (context, activityState) {
                             if (activityState is ActivitiesLoaded) {
-                              return ActivityChart(
+                              return SwipeableCharts(
                                 activities: activityState.activities,
-                                values: values, // Pass the current values
+                                values: values,
+                                moodEntries: _moodEntries,
                               );
                             } else if (activityState is ActivitiesLoading) {
                               return _buildLoadingChart(context);

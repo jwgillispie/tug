@@ -81,6 +81,7 @@ class AboutScreen extends StatelessWidget {
               'how it works',
               '• Values Mode: Define your personal values and track aligned activities\n'
               '• Vices Mode: Identify destructive habits and track clean streaks\n'
+              '• Mood Tracking: Monitor emotional patterns with 15 moods (0-10 positivity scale)\n'
               '• Build positive streaks and break negative patterns\n'
               '• Visualize your progress with charts and rankings\n'
               '• Switch modes to focus on growth or recovery\n'
@@ -110,6 +111,7 @@ class AboutScreen extends StatelessWidget {
               'new in v3.0.0',
               '• dual mode system - Switch between Values and Vices tracking\n'
               '• vice tracking - Monitor destructive habits and build clean streaks\n'
+              '• mood tracking - Track your emotional state with activities and indulgences\n'
               '• serious mode theme - Appropriate visual tone for vice recovery\n'
               '• enhanced support - Crisis resources and coping strategies\n'
               '• improved analytics - Better insights for both modes\n'
