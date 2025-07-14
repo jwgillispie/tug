@@ -84,7 +84,8 @@ class MoodEntry(Document):
     class Settings:
         name = "mood_entries"
         indexes = [
-            [("user_id", 1), ("recorded_at", -1)],  # For user mood history
-            [("user_id", 1), ("activity_id", 1)],   # For activity-mood correlations
+            [("user_id", 1), ("recorded_at", -1)],  # For user mood history queries
+            [("user_id", 1), ("activity_id", 1)],   # For activity-mood correlations  
             [("user_id", 1), ("indulgence_id", 1)], # For indulgence-mood correlations
+            [("recorded_at", 1)],                   # For date range queries
         ]
