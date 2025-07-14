@@ -9,6 +9,8 @@ from ..models.user import User
 from ..models.friendship import Friendship, FriendshipStatus
 from ..models.social_post import SocialPost, PostType
 from ..models.post_comment import PostComment
+from ..models.activity import Activity
+from ..models.value import Value
 from ..schemas.social import (
     FriendRequestCreate, SocialPostCreate, SocialPostUpdate,
     CommentCreate, CommentUpdate, UserSearchResult, SocialPostData, CommentData,
@@ -488,10 +490,23 @@ class SocialService:
             users = await User.find({"_id": {"$in": [ObjectId(uid) for uid in post_user_ids]}}).to_list()
             user_map = {str(user.id): user for user in users}
             
-            # Build post data with user info
+            # Get activity and value info for posts
+            activity_ids = [post.activity_id for post in posts if post.activity_id]
+            activities = await Activity.find({"_id": {"$in": [ObjectId(aid) for aid in activity_ids]}}).to_list()
+            activity_map = {str(activity.id): activity for activity in activities}
+            
+            # Get value info for activities
+            value_ids = [activity.value_id for activity in activities if activity.value_id]
+            values = await Value.find({"_id": {"$in": [ObjectId(vid) for vid in value_ids]}}).to_list()
+            value_map = {str(value.id): value for value in values}
+            
+            # Build post data with user, activity, and value info
             feed_posts = []
             for post in posts:
                 user = user_map.get(post.user_id)
+                activity = activity_map.get(post.activity_id) if post.activity_id else None
+                value = value_map.get(activity.value_id) if activity and activity.value_id else None
+                
                 post_data = SocialPostData(
                     id=str(post.id),
                     user_id=post.user_id,
@@ -505,7 +520,13 @@ class SocialService:
                     created_at=post.created_at,
                     updated_at=post.updated_at,
                     username=user.username if user else "Unknown",
-                    user_display_name=user.display_name if user else None
+                    user_display_name=user.display_name if user else None,
+                    # Activity and value info
+                    value_name=value.name if value else None,
+                    value_color=value.color if value else None,
+                    activity_name=activity.name if activity else None,
+                    activity_duration=activity.duration if activity else None,
+                    activity_notes=activity.notes if activity and activity.notes_public else None
                 )
                 feed_posts.append(post_data)
             

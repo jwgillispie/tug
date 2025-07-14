@@ -54,6 +54,13 @@ class SocialPostData(BaseModel):
     # Additional user info for display
     username: Optional[str] = None
     user_display_name: Optional[str] = None
+    
+    # Activity and value info for display
+    value_name: Optional[str] = None
+    value_color: Optional[str] = None
+    activity_name: Optional[str] = None
+    activity_duration: Optional[int] = None
+    activity_notes: Optional[str] = None
 
 # Comment schemas
 class CommentCreate(BaseModel):

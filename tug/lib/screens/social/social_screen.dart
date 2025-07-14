@@ -124,7 +124,13 @@ class _SocialScreenState extends State<SocialScreen> {
   }
 
   Future<void> _refreshSocialFeed() async {
-    // Force refresh social feed (SocialService doesn't use caching yet)
+    // Force refresh social feed - clear current posts and reload
+    if (!mounted) return;
+    
+    setState(() {
+      _posts.clear();
+    });
+    
     await _loadSocialFeed(forceRefresh: true);
   }
 
@@ -214,6 +220,7 @@ class _SocialScreenState extends State<SocialScreen> {
         color: TugColors.getPrimaryColor(isViceMode),
         child: ListView(
           controller: _scrollController,
+          physics: const AlwaysScrollableScrollPhysics(),
           children: [
             _buildModeInfoSection(isDarkMode, isViceMode),
             _buildFeedContent(isDarkMode, isViceMode),
@@ -431,8 +438,24 @@ class _SocialScreenState extends State<SocialScreen> {
                   ],
                 ),
               ),
-              // Post type indicator
-              if (post.postType != PostType.general)
+              // Post type indicator - show value name for activity posts
+              if (post.postType == PostType.activityUpdate && post.hasValueInfo)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: (post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode)).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    post.valueName!,
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                      color: post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode),
+                    ),
+                  ),
+                )
+              else if (post.postType != PostType.general && post.postType != PostType.activityUpdate)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
@@ -504,20 +527,55 @@ class _SocialScreenState extends State<SocialScreen> {
           ),
           const SizedBox(height: 12),
           
-          // Post content
-          Text(
-            post.content,
-            style: TextStyle(
-              fontSize: 14,
-              color: TugColors.getTextColor(isDarkMode, isViceMode),
-              height: 1.4,
+          // Activity Title
+          if (post.activityName != null && post.activityName!.isNotEmpty) ...[
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true).withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true).withValues(alpha: 0.2),
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.fitness_center,
+                    size: 18,
+                    color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      post.activityName!,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: TugColors.getTextColor(isDarkMode, isViceMode),
+                      ),
+                    ),
+                  ),
+                  if (post.formattedDuration.isNotEmpty) ...[
+                    const SizedBox(width: 8),
+                    Text(
+                      post.formattedDuration,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
+            const SizedBox(height: 12),
+          ],
           
           // Enhanced Value badge - main focus for public posts
           if (post.hasValueInfo) ...[
-            const SizedBox(height: 12),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               decoration: BoxDecoration(
@@ -554,33 +612,31 @@ class _SocialScreenState extends State<SocialScreen> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        post.valueName!,
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          color: post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode),
-                        ),
-                      ),
-                      if (post.formattedDuration.isNotEmpty) ...[
-                        const SizedBox(height: 2),
-                        Text(
-                          post.formattedDuration,
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: (post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode)).withValues(alpha: 0.8),
-                          ),
-                        ),
-                      ],
-                    ],
+                  Text(
+                    'contributing to ${post.valueName!}',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode),
+                    ),
                   ),
                 ],
               ),
             ),
+            const SizedBox(height: 12),
+          ],
+          
+          // Post content/notes
+          if (post.content.isNotEmpty) ...[
+            Text(
+              post.content,
+              style: TextStyle(
+                fontSize: 14,
+                color: TugColors.getTextColor(isDarkMode, isViceMode),
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 8),
           ],
           const SizedBox(height: 12),
           
