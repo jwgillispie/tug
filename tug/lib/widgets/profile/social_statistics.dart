@@ -205,7 +205,7 @@ class _SocialStatisticsState extends State<SocialStatistics> {
             Expanded(
               child: _buildStatCard(
                 icon: Icons.record_voice_over,
-                label: 'two cents',
+                label: 'comments',
                 value: '$totalComments',
                 subtitle: 'received',
               ),

@@ -184,7 +184,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
     return Scaffold(
       backgroundColor: TugColors.getBackgroundColor(isDarkMode, isViceMode),
       appBar: AppBar(
-        title: const Text('Comments'),
+        title: const Text('comments'),
         backgroundColor: TugColors.getBackgroundColor(isDarkMode, isViceMode),
         elevation: 0,
       ),
@@ -505,7 +505,7 @@ class _CommentsScreenState extends State<CommentsScreen> {
                 controller: _commentController,
                 autofocus: widget.autoFocusInput,
                 decoration: InputDecoration(
-                  hintText: 'share your two cents...',
+                  hintText: 'share your thoughts...',
                   hintStyle: TextStyle(
                     color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
                   ),

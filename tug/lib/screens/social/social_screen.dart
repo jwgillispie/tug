@@ -370,7 +370,10 @@ class _SocialScreenState extends State<SocialScreen> {
     }
 
     return Column(
-      children: _posts.map((post) => _buildFeedItem(post, isDarkMode, isViceMode)).toList(),
+      children: [
+        ..._posts.map((post) => _buildFeedItem(post, isDarkMode, isViceMode)),
+        const SizedBox(height: 100), // Space at bottom for navigation bar
+      ],
     );
   }
 
@@ -580,152 +583,110 @@ class _SocialScreenState extends State<SocialScreen> {
                           ],
                         ],
                       ),
-                      const SizedBox(height: 12),
-                      
-                      // Enhanced Value badge - main focus for public posts
-                      if (post.hasValueInfo) ...[
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: [
-                                (post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode)).withValues(alpha: 0.12),
-                                (post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode)).withValues(alpha: 0.06),
-                              ],
-                              begin: Alignment.centerLeft,
-                              end: Alignment.centerRight,
-                            ),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: (post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode)).withValues(alpha: 0.3),
-                              width: 1.5,
-                            ),
-                          ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
+                      const SizedBox(height: 16),
+          
+          // 1. Value section
+          if (post.hasValueInfo) ...[
+            Text(
+              'Value',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Text(
+                  post.valueName!,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode),
+                    height: 1.3,
+                  ),
+                ),
+                if (post.formattedDuration.isNotEmpty) ...[
+                  const SizedBox(width: 12),
                   Container(
-                    width: 16,
-                    height: 16,
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode),
-                          (post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode)).withValues(alpha: 0.8),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
+                      color: TugColors.success.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '+${post.formattedDuration}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: TugColors.success,
                       ),
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: (post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode)).withValues(alpha: 0.4),
-                          blurRadius: 6,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Text(
-                    post.valueName!,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: post.valueColorObject ?? TugColors.getPrimaryColor(isViceMode),
-                      letterSpacing: 0.5,
                     ),
                   ),
                 ],
-              ),
+              ],
             ),
             const SizedBox(height: 16),
           ],
           
-          // Activity Title with improved design
+          // 2. Activity section
           if (post.activityName != null && post.activityName!.isNotEmpty) ...[
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true).withValues(alpha: 0.04),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true).withValues(alpha: 0.12),
-                  width: 1,
-                ),
+            Text(
+              'Activity',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
+                letterSpacing: 0.5,
               ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      Icons.fitness_center,
-                      size: 20,
-                      color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          post.activityName!,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: TugColors.getTextColor(isDarkMode, isViceMode),
-                            height: 1.2,
-                          ),
-                        ),
-                        if (post.formattedDuration.isNotEmpty) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            post.formattedDuration,
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                              color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              post.activityName!,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: TugColors.getTextColor(isDarkMode, isViceMode),
+                height: 1.3,
               ),
             ),
             const SizedBox(height: 16),
           ],
           
-          // Post content/notes with improved typography
+          // 3. Notes section
           if (post.content.isNotEmpty) ...[
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: Text(
-                post.content,
-                style: TextStyle(
-                  fontSize: 15,
-                  color: TugColors.getTextColor(isDarkMode, isViceMode),
-                  height: 1.5,
-                  fontWeight: FontWeight.w400,
-                ),
+            Text(
+              'Notes',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
+                letterSpacing: 0.5,
               ),
             ),
+            const SizedBox(height: 8),
+            // Notes content
+            Text(
+              post.content,
+              style: TextStyle(
+                fontSize: 15,
+                color: TugColors.getTextColor(isDarkMode, isViceMode),
+                height: 1.5,
+                fontWeight: FontWeight.w400,
+              ),
+            ),
+            const SizedBox(height: 4),
           ],
           const SizedBox(height: 12),
           
           // Actions row
-          Row(
-            children: [
-              _buildActionButton(
+          Center(
+            child: _buildActionButton(
                 icon: Icons.record_voice_over,
                 count: post.commentsCount,
-                label: 'two cents',
+                label: 'comments',
                 isDarkMode: isDarkMode,
                 isViceMode: isViceMode,
                 onTap: () {
@@ -747,8 +708,7 @@ class _SocialScreenState extends State<SocialScreen> {
                   );
                 },
               ),
-            ],
-          ),
+            ),
         ],
       ),
                 ),

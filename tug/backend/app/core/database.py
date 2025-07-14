@@ -12,6 +12,7 @@ from ..models.friendship import Friendship
 from ..models.social_post import SocialPost
 from ..models.post_comment import PostComment
 from ..models.notification import Notification, NotificationBatch
+from ..models.mood import MoodEntry
 import logging
 
 logger = logging.getLogger(__name__)
@@ -48,6 +49,7 @@ async def init_db():
             PostComment,
             Notification,
             NotificationBatch,
+            MoodEntry,
         ]
     )
     
