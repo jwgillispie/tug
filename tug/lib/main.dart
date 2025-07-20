@@ -11,6 +11,7 @@ import 'package:tug/blocs/values/bloc/values_bloc.dart';
 import 'package:tug/blocs/values/bloc/values_event.dart';
 import 'package:tug/blocs/vices/bloc/vices_bloc.dart';
 import 'package:tug/services/vice_service.dart';
+import 'package:tug/services/mood_service.dart';
 import 'package:tug/config/env_confg.dart';
 import 'package:tug/repositories/activity_repository.dart';
 import 'package:tug/repositories/values_repository.dart';
@@ -169,8 +170,10 @@ class _TugAppState extends State<TugApp> {
     super.initState();
     _authBloc = AuthBloc(authRepository: widget.authRepository);
     _valuesBloc = ValuesBloc(valuesRepository: widget.valuesRepository);
-    _activitiesBloc =
-        ActivitiesBloc(activityRepository: widget.activityRepository);
+    _activitiesBloc = ActivitiesBloc(
+      activityRepository: widget.activityRepository,
+      moodService: MoodService(),
+    );
     _themeBloc = ThemeBloc();
     _subscriptionBloc = SubscriptionBloc(
       subscriptionService: widget.subscriptionService,

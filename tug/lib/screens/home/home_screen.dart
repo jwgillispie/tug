@@ -189,8 +189,17 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         setState(() {
           _moodEntries = moodEntries;
         });
+        // Debug: Print mood entries count and recent entries
+        print('DEBUG: Loaded ${moodEntries.length} mood entries');
+        if (moodEntries.isNotEmpty) {
+          final recent = moodEntries.take(3);
+          for (final entry in recent) {
+            print('  - ${entry.moodType.name}: ${entry.positivityScore} (activityId: ${entry.activityId})');
+          }
+        }
       }
     } catch (e) {
+      print('DEBUG: Error loading mood entries: $e');
       // Silent failure - mood chart will show empty state
     }
   }
@@ -246,6 +255,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     context.read<ValuesBloc>().add(const LoadValues(forceRefresh: true));
     context.read<VicesBloc>().add(const LoadVices(forceRefresh: true));
     context.read<ActivitiesBloc>().add(const LoadActivities(forceRefresh: true));
+    
+    // Refresh mood entries for mood chart
+    _loadMoodEntries();
     
     // Refresh weekly indulgences for vices chart
     _loadWeeklyIndulgences();
@@ -382,22 +394,30 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Swipeable Charts (Activity & Mood)
-                        BlocBuilder<ActivitiesBloc, ActivitiesState>(
-                          builder: (context, activityState) {
-                            if (activityState is ActivitiesLoaded) {
-                              return SwipeableCharts(
-                                activities: activityState.activities,
-                                values: values,
-                                moodEntries: _moodEntries,
-                              );
-                            } else if (activityState is ActivitiesLoading) {
-                              return _buildLoadingChart(context);
-                            } else if (activityState is ActivitiesError) {
-                              return _buildErrorChart(context, activityState.message);
-                            } else {
-                              return _buildEmptyChart(context);
+                        BlocListener<ActivitiesBloc, ActivitiesState>(
+                          listener: (context, state) {
+                            // Refresh mood entries when activities are updated
+                            if (state is ActivityOperationSuccess) {
+                              _loadMoodEntries();
                             }
                           },
+                          child: BlocBuilder<ActivitiesBloc, ActivitiesState>(
+                            builder: (context, activityState) {
+                              if (activityState is ActivitiesLoaded) {
+                                return SwipeableCharts(
+                                  activities: activityState.activities,
+                                  values: values,
+                                  moodEntries: _moodEntries,
+                                );
+                              } else if (activityState is ActivitiesLoading) {
+                                return _buildLoadingChart(context);
+                              } else if (activityState is ActivitiesError) {
+                                return _buildErrorChart(context, activityState.message);
+                              } else {
+                                return _buildEmptyChart(context);
+                              }
+                            },
+                          ),
                         ),
                         
                         // Values List

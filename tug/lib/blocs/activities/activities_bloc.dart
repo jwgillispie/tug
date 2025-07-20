@@ -3,7 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../models/activity_model.dart';
 import '../../models/value_model.dart';
+import '../../models/mood_model.dart';
 import '../../repositories/activity_repository.dart';
+import '../../services/mood_service.dart';
 
 // Events
 abstract class ActivitiesEvent extends Equatable {
@@ -43,15 +45,17 @@ class AddActivityWithSocial extends ActivitiesEvent {
   final ActivityModel activity;
   final ValueModel? valueModel;
   final bool shareToSocial;
+  final MoodType? mood;
 
   const AddActivityWithSocial({
     required this.activity,
     this.valueModel,
     this.shareToSocial = true,
+    this.mood,
   });
 
   @override
-  List<Object?> get props => [activity, valueModel, shareToSocial];
+  List<Object?> get props => [activity, valueModel, shareToSocial, mood];
 }
 
 class UpdateActivity extends ActivitiesEvent {
@@ -121,6 +125,7 @@ class ActivitiesError extends ActivitiesState {
 // BLoC
 class ActivitiesBloc extends Bloc<ActivitiesEvent, ActivitiesState> {
   final ActivityRepository activityRepository;
+  final MoodService moodService;
   
   // Track if we've loaded activities at least once
   bool _initialLoadComplete = false;
@@ -130,7 +135,10 @@ class ActivitiesBloc extends Bloc<ActivitiesEvent, ActivitiesState> {
   DateTime? _lastStartDate;
   DateTime? _lastEndDate;
 
-  ActivitiesBloc({required this.activityRepository}) : super(ActivitiesInitial()) {
+  ActivitiesBloc({
+    required this.activityRepository,
+    required this.moodService,
+  }) : super(ActivitiesInitial()) {
     on<LoadActivities>(_onLoadActivities);
     on<AddActivity>(_onAddActivity);
     on<AddActivityWithSocial>(_onAddActivityWithSocial);
@@ -219,11 +227,33 @@ class ActivitiesBloc extends Bloc<ActivitiesEvent, ActivitiesState> {
     
     emit(ActivitiesLoading());
     try {
-      await activityRepository.addActivity(
+      // Create the activity and capture the returned activity with its ID
+      final createdActivity = await activityRepository.addActivity(
         event.activity,
         shareToSocial: event.shareToSocial,
         valueModel: event.valueModel,
       );
+      
+      // Create mood entry if mood was provided and activity was successfully created
+      if (event.mood != null && createdActivity.id != null) {
+        try {
+          print('DEBUG: Creating mood entry for mood: ${event.mood!.name}, activity: ${createdActivity.id}');
+          final moodEntry = MoodEntry(
+            moodType: event.mood!,
+            positivityScore: _getMoodPositivityScore(event.mood!),
+            recordedAt: event.activity.date,
+            activityId: createdActivity.id,
+          );
+          await moodService.createMoodEntry(moodEntry);
+          print('DEBUG: Mood entry created successfully');
+        } catch (moodError) {
+          // Don't fail the entire operation if mood creation fails
+          // The activity was already created successfully
+          print('DEBUG: Mood entry creation failed: $moodError');
+        }
+      } else {
+        print('DEBUG: No mood entry created - mood: ${event.mood}, activityId: ${createdActivity.id}');
+      }
       
       // Get updated list of activities
       final activities = await activityRepository.getActivities(
@@ -245,6 +275,41 @@ class ActivitiesBloc extends Bloc<ActivitiesEvent, ActivitiesState> {
       if (currentState is ActivitiesLoaded) {
         emit(currentState);
       }
+    }
+  }
+
+  int _getMoodPositivityScore(MoodType mood) {
+    switch (mood) {
+      case MoodType.ecstatic:
+        return 10;
+      case MoodType.joyful:
+        return 9;
+      case MoodType.confident:
+        return 8;
+      case MoodType.content:
+        return 7;
+      case MoodType.focused:
+        return 6;
+      case MoodType.neutral:
+        return 5;
+      case MoodType.restless:
+        return 4;
+      case MoodType.tired:
+        return 3;
+      case MoodType.frustrated:
+        return 2;
+      case MoodType.anxious:
+        return 2;
+      case MoodType.sad:
+        return 1;
+      case MoodType.overwhelmed:
+        return 1;
+      case MoodType.angry:
+        return 1;
+      case MoodType.defeated:
+        return 0;
+      case MoodType.depressed:
+        return 0;
     }
   }
 

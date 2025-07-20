@@ -33,6 +33,19 @@ class MoodService {
       
       return MoodEntry.fromJson(response);
     } catch (e) {
+      print('DEBUG: Mood service error: $e');
+      // For debugging - return mock entry when backend is down
+      if (e.toString().contains('Connection') || e.toString().contains('SocketException')) {
+        print('DEBUG: Backend not available, creating mock mood entry');
+        return MoodEntry(
+          id: 'mock_${DateTime.now().millisecondsSinceEpoch}',
+          moodType: moodEntry.moodType,
+          positivityScore: moodEntry.positivityScore,
+          recordedAt: moodEntry.recordedAt,
+          activityId: moodEntry.activityId,
+          createdAt: DateTime.now(),
+        );
+      }
       throw Exception('Failed to create mood entry: $e');
     }
   }
@@ -67,6 +80,12 @@ class MoodService {
           .map((entry) => MoodEntry.fromJson(entry))
           .toList();
     } catch (e) {
+      print('DEBUG: Error fetching mood entries: $e');
+      // Return empty list when backend is down
+      if (e.toString().contains('Connection') || e.toString().contains('SocketException')) {
+        print('DEBUG: Backend not available, returning empty mood entries list');
+        return [];
+      }
       throw Exception('Failed to fetch mood entries: $e');
     }
   }

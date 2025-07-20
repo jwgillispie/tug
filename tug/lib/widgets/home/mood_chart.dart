@@ -106,6 +106,10 @@ class _MoodChartState extends State<MoodChart> {
     final startDate = DateTime(now.year, now.month, now.day)
         .subtract(Duration(days: effectiveDays - 1));
     
+    // Debug mood data
+    print('DEBUG MoodChart: Processing ${widget.moodEntries.length} mood entries');
+    print('DEBUG MoodChart: Date range: $startDate to $now');
+    
     // Get aggregation level based on time range
     final aggregation = widget.daysToShow != null 
         ? DataAggregation.daily 
@@ -115,6 +119,13 @@ class _MoodChartState extends State<MoodChart> {
       _prepareDailyData(startDate, effectiveDays);
     } else {
       _prepareWeeklyData(startDate, effectiveDays);
+    }
+    
+    print('DEBUG MoodChart: Generated ${_spots.length} chart spots');
+    if (_spots.isNotEmpty) {
+      for (int i = 0; i < _spots.length && i < 3; i++) {
+        print('  - Spot $i: x=${_spots[i].x}, y=${_spots[i].y}');
+      }
     }
     
     _updateMaxY();
@@ -151,20 +162,25 @@ class _MoodChartState extends State<MoodChart> {
       }
     }
     
-    // Create spots for the line chart (average mood score per day)
-    _spots = _dateLabels.asMap().entries.map((entry) {
-      final index = entry.key;
-      final date = entry.value;
-      final dateKey = '${date.year}-${date.month}-${date.day}';
-      final moodScores = dailyMoodScores[dateKey] ?? [];
-      
-      // Calculate average mood score for the day, default to 5 if no entries
-      final avgScore = moodScores.isEmpty 
-          ? 5.0 
-          : moodScores.reduce((a, b) => a + b) / moodScores.length;
-      
-      return FlSpot(index.toDouble(), avgScore);
-    }).toList();
+    // Create spots for the line chart (only include days with mood entries)
+    _spots = _dateLabels.asMap().entries
+        .where((entry) {
+          final date = entry.value;
+          final dateKey = '${date.year}-${date.month}-${date.day}';
+          final moodScores = dailyMoodScores[dateKey] ?? [];
+          return moodScores.isNotEmpty; // Only include days with actual mood data
+        })
+        .map((entry) {
+          final index = entry.key;
+          final date = entry.value;
+          final dateKey = '${date.year}-${date.month}-${date.day}';
+          final moodScores = dailyMoodScores[dateKey]!; // Safe because we filtered above
+          
+          // Calculate average mood score for the day
+          final avgScore = moodScores.reduce((a, b) => a + b) / moodScores.length.toDouble();
+          
+          return FlSpot(index.toDouble(), avgScore);
+        }).toList();
   }
 
   void _prepareWeeklyData(DateTime startDate, int days) {
@@ -220,19 +236,23 @@ class _MoodChartState extends State<MoodChart> {
       }
     }
     
-    // Create spots for weekly data (average mood scores)
-    _spots = _dateLabels.asMap().entries.map((entry) {
-      final index = entry.key;
-      final weekStart = entry.value;
-      final moodScores = weeklyMoodScores[weekStart] ?? [];
-      
-      // Calculate average mood score for the week, default to 5 if no entries
-      final avgScore = moodScores.isEmpty 
-          ? 5.0 
-          : moodScores.reduce((a, b) => a + b) / moodScores.length;
-      
-      return FlSpot(index.toDouble(), avgScore);
-    }).toList();
+    // Create spots for weekly data (only include weeks with mood entries)
+    _spots = _dateLabels.asMap().entries
+        .where((entry) {
+          final weekStart = entry.value;
+          final moodScores = weeklyMoodScores[weekStart] ?? [];
+          return moodScores.isNotEmpty; // Only include weeks with actual mood data
+        })
+        .map((entry) {
+          final index = entry.key;
+          final weekStart = entry.value;
+          final moodScores = weeklyMoodScores[weekStart]!; // Safe because we filtered above
+          
+          // Calculate average mood score for the week
+          final avgScore = moodScores.reduce((a, b) => a + b) / moodScores.length.toDouble();
+          
+          return FlSpot(index.toDouble(), avgScore);
+        }).toList();
   }
 
   // Smart X-axis interval calculation for cleaner labels
@@ -558,7 +578,37 @@ class _MoodChartState extends State<MoodChart> {
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.only(right: 8, top: 8),
-                  child: LineChart(
+                  child: _spots.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.psychology_outlined,
+                                size: 40,
+                                color: Colors.white.withValues(alpha: 0.5),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'No mood data yet',
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.8),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Log activities with moods to see trends',
+                                style: TextStyle(
+                                  color: Colors.white.withValues(alpha: 0.6),
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : LineChart(
                     LineChartData(
                       gridData: FlGridData(
                         show: true,
