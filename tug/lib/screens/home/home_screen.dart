@@ -204,6 +204,44 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     }
   }
 
+  // Quick helper to add sample mood entries for existing activities
+  Future<void> _addSampleMoodEntries() async {
+    print('DEBUG: Adding sample mood entries for existing activities');
+    
+    // Get recent activities from the bloc
+    final activitiesState = context.read<ActivitiesBloc>().state;
+    if (activitiesState is ActivitiesLoaded) {
+      final recentActivities = activitiesState.activities.take(5).toList();
+      
+      final sampleMoods = [
+        MoodType.confident,
+        MoodType.joyful,
+        MoodType.content,
+        MoodType.frustrated,
+        MoodType.focused,
+      ];
+      
+      final moodPairs = <Map<String, dynamic>>[];
+      
+      for (int i = 0; i < recentActivities.length && i < sampleMoods.length; i++) {
+        final activity = recentActivities[i];
+        if (activity.id != null) {
+          moodPairs.add({
+            'activityId': activity.id!,
+            'moodType': sampleMoods[i],
+            'recordedAt': activity.date,
+          });
+        }
+      }
+      
+      if (moodPairs.isNotEmpty) {
+        await _moodService.createRetroactiveMoodEntries(moodPairs);
+        // Refresh mood entries after adding
+        _loadMoodEntries();
+      }
+    }
+  }
+
   // Load weekly indulgences for vices chart
   Future<void> _loadWeeklyIndulgences() async {
     try {
@@ -465,6 +503,32 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                             ),
                           ],
                         ),
+                        
+                        // Debug: Temporary button to add sample moods to existing activities
+                        if (_moodEntries.isEmpty) ...[
+                          const SizedBox(height: 24),
+                          Center(
+                            child: ElevatedButton.icon(
+                              onPressed: _addSampleMoodEntries,
+                              icon: const Icon(Icons.psychology),
+                              label: const Text('Add Sample Moods to Recent Activities'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.deepPurple,
+                                foregroundColor: Colors.white,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'This will add sample moods to your last 5 activities for testing',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600,
+                              fontStyle: FontStyle.italic,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
                         
                         // Extra spacing for tab bar
                         const SizedBox(height: 80),

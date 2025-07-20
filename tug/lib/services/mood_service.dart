@@ -33,19 +33,6 @@ class MoodService {
       
       return MoodEntry.fromJson(response);
     } catch (e) {
-      print('DEBUG: Mood service error: $e');
-      // For debugging - return mock entry when backend is down
-      if (e.toString().contains('Connection') || e.toString().contains('SocketException')) {
-        print('DEBUG: Backend not available, creating mock mood entry');
-        return MoodEntry(
-          id: 'mock_${DateTime.now().millisecondsSinceEpoch}',
-          moodType: moodEntry.moodType,
-          positivityScore: moodEntry.positivityScore,
-          recordedAt: moodEntry.recordedAt,
-          activityId: moodEntry.activityId,
-          createdAt: DateTime.now(),
-        );
-      }
       throw Exception('Failed to create mood entry: $e');
     }
   }
@@ -80,13 +67,52 @@ class MoodService {
           .map((entry) => MoodEntry.fromJson(entry))
           .toList();
     } catch (e) {
-      print('DEBUG: Error fetching mood entries: $e');
-      // Return empty list when backend is down
-      if (e.toString().contains('Connection') || e.toString().contains('SocketException')) {
-        print('DEBUG: Backend not available, returning empty mood entries list');
-        return [];
-      }
       throw Exception('Failed to fetch mood entries: $e');
+    }
+  }
+
+  /// Create mood entries for existing activities (retroactive mood assignment)
+  Future<void> createRetroactiveMoodEntries(List<Map<String, dynamic>> activityMoodPairs) async {
+    print('DEBUG: Creating ${activityMoodPairs.length} retroactive mood entries');
+    
+    for (final pair in activityMoodPairs) {
+      try {
+        final activityId = pair['activityId'] as String;
+        final moodType = pair['moodType'] as MoodType;
+        final recordedAt = pair['recordedAt'] as DateTime;
+        
+        final moodEntry = MoodEntry(
+          moodType: moodType,
+          positivityScore: _getMoodPositivityScore(moodType),
+          recordedAt: recordedAt,
+          activityId: activityId,
+        );
+        
+        await createMoodEntry(moodEntry);
+        print('DEBUG: Created mood entry for activity $activityId: ${moodType.name}');
+      } catch (e) {
+        print('DEBUG: Failed to create mood entry for ${pair['activityId']}: $e');
+      }
+    }
+  }
+  
+  int _getMoodPositivityScore(MoodType mood) {
+    switch (mood) {
+      case MoodType.ecstatic: return 10;
+      case MoodType.joyful: return 9;
+      case MoodType.confident: return 8;
+      case MoodType.content: return 7;
+      case MoodType.focused: return 6;
+      case MoodType.neutral: return 5;
+      case MoodType.restless: return 4;
+      case MoodType.tired: return 3;
+      case MoodType.frustrated: return 2;
+      case MoodType.anxious: return 2;
+      case MoodType.sad: return 1;
+      case MoodType.overwhelmed: return 1;
+      case MoodType.angry: return 1;
+      case MoodType.defeated: return 0;
+      case MoodType.depressed: return 0;
     }
   }
 
