@@ -41,6 +41,9 @@ import 'screens/auth/signup_screen.dart';
 import 'screens/values/values_input_screen.dart';
 import 'screens/vices/vices_input_screen.dart';
 import 'screens/vices/indulgence_screen.dart';
+import 'screens/vices/vices_list_screen.dart';
+import 'screens/vices/vices_calendar_screen.dart';
+import 'screens/vices/indulgence_tracking_screen.dart';
 
 // Import new screens
 import 'screens/about/about_screen.dart';
@@ -304,6 +307,28 @@ class _TugAppState extends State<TugApp> {
           builder: (context, state) => const MainLayout(
             currentIndex: 2,
             child: IndulgenceScreen(),
+          ),
+        ),
+        // New vices screens
+        GoRoute(
+          path: '/vices-list',
+          builder: (context, state) => const MainLayout(
+            currentIndex: 1,
+            child: VicesListScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/vices-calendar',
+          builder: (context, state) => const MainLayout(
+            currentIndex: 3,
+            child: VicesCalendarScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/indulgence-tracking',
+          builder: (context, state) => const MainLayout(
+            currentIndex: 1,
+            child: IndulgenceTrackingScreen(),
           ),
         ),
         GoRoute(

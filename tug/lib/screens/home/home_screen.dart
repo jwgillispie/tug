@@ -20,11 +20,12 @@ import '../../services/mood_service.dart';
 import '../../models/mood_model.dart';
 import '../../widgets/home/item_list_section.dart';
 import '../../widgets/home/empty_state.dart';
-import '../../widgets/vices/vice_statistics.dart';
 import '../../models/value_model.dart';
 import '../../models/vice_model.dart';
+import '../../models/indulgence_model.dart';
 import '../../blocs/auth/auth_bloc.dart';
 import '../../utils/theme/colors.dart';
+import '../../widgets/vices/weekly_vices_chart.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -43,6 +44,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   final MoodService _moodService = MoodService();
   AppMode _currentMode = AppMode.valuesMode;
   List<MoodEntry> _moodEntries = [];
+  List<IndulgenceModel> _weeklyIndulgences = [];
   
   @override
   void initState() {
@@ -67,6 +69,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
         
         // Load mood entries for mood chart
         _loadMoodEntries();
+        
+        // Load weekly indulgences for vices chart
+        _loadWeeklyIndulgences();
       }
     });
     
@@ -189,6 +194,20 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
       // Silent failure - mood chart will show empty state
     }
   }
+
+  // Load weekly indulgences for vices chart
+  Future<void> _loadWeeklyIndulgences() async {
+    try {
+      final weeklyIndulgences = await _viceService.getWeeklyIndulgences();
+      if (mounted) {
+        setState(() {
+          _weeklyIndulgences = weeklyIndulgences;
+        });
+      }
+    } catch (e) {
+      // Silent failure - chart will show empty state
+    }
+  }
   
   @override
   void dispose() {
@@ -227,6 +246,9 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
     context.read<ValuesBloc>().add(const LoadValues(forceRefresh: true));
     context.read<VicesBloc>().add(const LoadVices(forceRefresh: true));
     context.read<ActivitiesBloc>().add(const LoadActivities(forceRefresh: true));
+    
+    // Refresh weekly indulgences for vices chart
+    _loadWeeklyIndulgences();
     
     // Add a small delay to ensure the refresh indicator shows
     await Future.delayed(const Duration(milliseconds: 500));
@@ -472,8 +494,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // Vice Statistics instead of activity chart
-                          ViceStatistics(vices: vices),
+                          // Weekly Vices Bar Chart
+                          WeeklyVicesChart(
+                            vices: vices,
+                            weeklyIndulgences: _weeklyIndulgences,
+                          ),
                           
                           const SizedBox(height: 24),
                           
@@ -495,6 +520,14 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                           _buildSettingsSection(
                             title: 'features',
                             items: [
+                              _buildFeatureSettingsItem(
+                                icon: Icons.spa_rounded,
+                                title: 'indulgences',
+                                subtitle: 'track your vices and monitor clean streaks',
+                                onTap: () {
+                                  context.go('/indulgence-tracking');
+                                },
+                              ),
                               _buildFeatureSettingsItem(
                                 icon: Icons.insights,
                                 title: 'progress',

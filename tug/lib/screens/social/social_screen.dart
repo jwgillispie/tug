@@ -496,7 +496,7 @@ class _SocialScreenState extends State<SocialScreen> {
                               ],
                             ),
                           ),
-                          // Post type indicator - show value name for activity posts
+                          // Post type indicator - show value name for activity posts or vice name for indulgence posts
                           if (post.postType == PostType.activityUpdate && post.hasValueInfo)
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -513,7 +513,24 @@ class _SocialScreenState extends State<SocialScreen> {
                                 ),
                               ),
                             )
-                          else if (post.postType != PostType.general && post.postType != PostType.activityUpdate)
+                          // Post type indicator - show vice name for indulgence posts
+                          else if (post.postType == PostType.viceIndulgence && post.hasViceInfo)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: (post.viceColorObject ?? TugColors.indulgenceGreen).withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                post.viceName!,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w500,
+                                  color: post.viceColorObject ?? TugColors.indulgenceGreen,
+                                ),
+                              ),
+                            )
+                          else if (post.postType != PostType.general && post.postType != PostType.activityUpdate && post.postType != PostType.viceIndulgence)
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
@@ -585,7 +602,7 @@ class _SocialScreenState extends State<SocialScreen> {
                       ),
                       const SizedBox(height: 16),
           
-          // 1. Value section
+          // 1. Value section (for activity posts)
           if (post.hasValueInfo) ...[
             Text(
               'Value',
@@ -626,6 +643,59 @@ class _SocialScreenState extends State<SocialScreen> {
                     ),
                   ),
                 ],
+              ],
+            ),
+            const SizedBox(height: 16),
+          ],
+          
+          // 1b. Vice section (for indulgence posts)
+          if (post.hasViceInfo) ...[
+            Text(
+              'Vice',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
+                letterSpacing: 0.5,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: post.viceColorObject ?? TugColors.indulgenceGreen,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  post.viceName!,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: post.viceColorObject ?? TugColors.indulgenceGreen,
+                    height: 1.3,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: TugColors.indulgenceGreen.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    'indulgence',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: TugColors.indulgenceGreen,
+                    ),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 16),

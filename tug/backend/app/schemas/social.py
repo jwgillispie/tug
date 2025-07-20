@@ -61,6 +61,10 @@ class SocialPostData(BaseModel):
     activity_name: Optional[str] = None
     activity_duration: Optional[int] = None
     activity_notes: Optional[str] = None
+    
+    # Vice info for display (for indulgence posts)
+    vice_name: Optional[str] = None
+    vice_color: Optional[str] = None
 
 # Comment schemas
 class CommentCreate(BaseModel):

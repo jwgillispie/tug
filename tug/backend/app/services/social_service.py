@@ -500,12 +500,18 @@ class SocialService:
             values = await Value.find({"_id": {"$in": [ObjectId(vid) for vid in value_ids]}}).to_list()
             value_map = {str(value.id): value for value in values}
             
-            # Build post data with user, activity, and value info
+            # Get vice info for indulgence posts
+            vice_ids = [post.vice_id for post in posts if post.vice_id]
+            vices = await Vice.find({"_id": {"$in": [ObjectId(vid) for vid in vice_ids]}}).to_list()
+            vice_map = {str(vice.id): vice for vice in vices}
+            
+            # Build post data with user, activity, value, and vice info
             feed_posts = []
             for post in posts:
                 user = user_map.get(post.user_id)
                 activity = activity_map.get(post.activity_id) if post.activity_id else None
                 value = value_map.get(activity.value_id) if activity and activity.value_id else None
+                vice = vice_map.get(post.vice_id) if post.vice_id else None
                 
                 post_data = SocialPostData(
                     id=str(post.id),
@@ -526,7 +532,10 @@ class SocialService:
                     value_color=value.color if value else None,
                     activity_name=activity.name if activity else None,
                     activity_duration=activity.duration if activity else None,
-                    activity_notes=activity.notes if activity and activity.notes_public else None
+                    activity_notes=activity.notes if activity and activity.notes_public else None,
+                    # Vice info for indulgence posts
+                    vice_name=vice.name if vice else None,
+                    vice_color=vice.color if vice else None
                 )
                 feed_posts.append(post_data)
             

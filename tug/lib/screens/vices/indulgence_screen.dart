@@ -12,6 +12,7 @@ import '../../utils/theme/colors.dart';
 import '../../widgets/common/tug_text_field.dart';
 import '../../widgets/mood/mood_selector.dart';
 import '../../services/mood_service.dart';
+import '../../services/vice_service.dart';
 
 class IndulgenceScreen extends StatefulWidget {
   const IndulgenceScreen({super.key});
@@ -35,6 +36,11 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
   bool _notesPublic = false; // Default notes to private for privacy
   MoodType? _selectedMood; // User's current mood
   final MoodService _moodService = MoodService();
+  final ViceService _viceService = ViceService();
+  
+  // Fallback vice list for when bloc fails
+  List<ViceModel> _fallbackVices = [];
+  bool _usesFallback = false;
 
   final List<String> _commonTriggers = [
     'stress',
@@ -52,7 +58,9 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<VicesBloc>().add(const LoadVices());
+    
+    // Load vices with more aggressive retry logic
+    _loadVicesWithRetry();
     
     // Listen to notes changes to show/hide notes privacy toggle
     _notesController.addListener(() {
@@ -60,6 +68,97 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
         // Force rebuild to show/hide notes privacy toggle
       });
     });
+  }
+
+  Future<void> _loadVicesWithRetry() async {
+    print('DEBUG: Loading vices with force refresh by default (using the working method)');
+    
+    // Use the working method immediately: bloc force refresh
+    // This bypasses the potentially corrupted cache that causes the "missing IDs" issue
+    context.read<VicesBloc>().add(const LoadVices(forceRefresh: true));
+    
+    // Give it time to load since this approach works reliably
+    await Future.delayed(const Duration(seconds: 2));
+    
+    // Only use fallback if the proven method somehow fails
+    if (mounted) {
+      final state = context.read<VicesBloc>().state;
+      if (state is VicesError || 
+          (state is VicesLoaded && state.vices.isEmpty)) {
+        print('DEBUG: Force refresh failed, trying direct service as fallback');
+        await _loadVicesDirectly();
+      } else if (state is VicesLoaded) {
+        print('DEBUG: Successfully loaded ${state.vices.length} vices with force refresh');
+      }
+    }
+  }
+
+  Future<void> _loadVicesDirectly() async {
+    try {
+      print('DEBUG: Attempting direct vice service call as fallback');
+      final vices = await _viceService.getVices(forceRefresh: false, useCache: true);
+      final activeVices = vices.where((v) => v.active && v.id != null).toList();
+      
+      print('DEBUG: Direct service loaded ${activeVices.length} vices');
+      
+      if (activeVices.isNotEmpty) {
+        setState(() {
+          _fallbackVices = activeVices;
+          _usesFallback = true;
+        });
+      }
+    } catch (e) {
+      print('DEBUG: Direct service call failed: $e');
+    }
+  }
+
+  Future<void> _performDataCleanup() async {
+    try {
+      print('DEBUG: Starting comprehensive data cleanup...');
+      
+      // Clear all caches completely
+      await _viceService.clearAllCache();
+      print('DEBUG: Cleared all vice service caches');
+      
+      // Clear local state
+      if (mounted) {
+        setState(() {
+          _fallbackVices.clear();
+          _usesFallback = false;
+          _selectedVice = null;
+        });
+      }
+      print('DEBUG: Cleared local state');
+      
+      // Force a fresh load using the working method (bloc refresh)
+      context.read<VicesBloc>().add(const ClearVicesCache());
+      await Future.delayed(const Duration(milliseconds: 500));
+      
+      if (mounted) {
+        context.read<VicesBloc>().add(const LoadVices(forceRefresh: true));
+        print('DEBUG: Triggered fresh data load via bloc refresh (the working method)');
+      }
+      
+      // Show user feedback
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Deep cleanup completed. Fresh data loaded!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      print('DEBUG: Data cleanup failed: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Cleanup failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -70,17 +169,35 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
   }
 
   void _recordIndulgence() async {
-    if (_formKey.currentState?.validate() ?? false) {
-      if (_selectedVice == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Please select a vice'),
-            backgroundColor: TugColors.indulgenceGreen,
-          ),
-        );
-        return;
-      }
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      return;
+    }
 
+    if (_selectedVice == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select a vice'),
+          backgroundColor: TugColors.indulgenceGreen,
+        ),
+      );
+      return;
+    }
+
+    if (_selectedVice!.id == null || _selectedVice!.id!.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Selected vice has no ID. Please refresh and try again.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
       final indulgenceDateTime = DateTime(
         _selectedDate.year,
         _selectedDate.month,
@@ -104,11 +221,30 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
         notesPublic: _notesPublic,
       );
 
+      print('DEBUG: Recording indulgence for vice ${_selectedVice!.name} (ID: ${_selectedVice!.id})');
+      print('DEBUG: Social sharing settings - isPublic: $_isPublic, notesPublic: $_notesPublic');
+      print('DEBUG: Notes content: "${_notesController.text.trim()}"');
+      print('DEBUG: Will create social post: ${_isPublic && _notesPublic && _notesController.text.trim().isNotEmpty}');
+      print('DEBUG: Indulgence details: ${indulgence.toString()}');
+      
       context.read<VicesBloc>().add(RecordIndulgence(indulgence));
       
       // Create mood entry if mood was selected
       if (_selectedMood != null) {
         _createMoodEntry(_selectedMood!, indulgenceDateTime);
+      }
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error recording indulgence: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }
@@ -203,6 +339,14 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
     
     return BlocListener<VicesBloc, VicesState>(
       listener: (context, state) {
+        print('DEBUG: BlocListener received state: ${state.runtimeType}');
+        if (state is VicesLoaded) {
+          print('DEBUG: VicesLoaded with ${state.vices.length} vices');
+        }
+        if (state is VicesError) {
+          print('DEBUG: VicesError: ${state.message}');
+        }
+        
         setState(() => _isLoading = state is VicesLoading);
         
         if (state is VicesError) {
@@ -285,11 +429,80 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
                 return Center(child: CircularProgressIndicator(color: TugColors.indulgenceGreen));
               }
               
-              final vices = state is VicesLoaded 
-                  ? state.vices.where((v) => v.active).toList()
-                  : <ViceModel>[];
+              // Handle error state gracefully
+              if (state is VicesError) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.error_outline,
+                        size: 64,
+                        color: Colors.orange,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Error loading vices',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: isDarkMode ? TugColors.viceModeTextPrimary : TugColors.lightTextPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 32),
+                        child: Text(
+                          'Unable to load vices due to authentication issues. Please try again or check your connection.',
+                          style: TextStyle(
+                            color: isDarkMode ? TugColors.viceModeTextSecondary : TugColors.lightTextSecondary,
+                            fontSize: 14,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      ElevatedButton(
+                        onPressed: () {
+                          context.read<VicesBloc>().add(const LoadVices(forceRefresh: true));
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: TugColors.indulgenceGreen,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text('retry'),
+                      ),
+                    ],
+                  ),
+                );
+              }
               
-              if (vices.isEmpty) {
+              // Use fallback vices if bloc fails but we have cached vices
+              final allVices = _usesFallback && _fallbackVices.isNotEmpty
+                  ? _fallbackVices
+                  : (state is VicesLoaded ? state.vices : <ViceModel>[]);
+              
+              // Filter for active vices - be very lenient for now
+              final vices = allVices.where((v) => v.active).toList();
+              
+              // Debug info
+              print('DEBUG: BlocBuilder - State: ${state.runtimeType}, All vices: ${allVices.length}, Active vices: ${vices.length}, Uses fallback: $_usesFallback');
+              if (allVices.isNotEmpty) {
+                print('DEBUG: First vice - Name: ${allVices.first.name}, Active: ${allVices.first.active}, ID: ${allVices.first.id}');
+                print('DEBUG: All vices details:');
+                for (var i = 0; i < allVices.length; i++) {
+                  final vice = allVices[i];
+                  print('  Vice $i: ${vice.name}, Active: ${vice.active}, ID: ${vice.id}');
+                }
+              } else {
+                print('DEBUG: No vices found at all');
+              }
+              
+              // Check dropdown filtering
+              final dropdownVices = vices.where((v) => v.id != null && v.id!.isNotEmpty).toList();
+              print('DEBUG: Dropdown will show ${dropdownVices.length} vices (filtered for valid IDs)');
+              
+              if (vices.isEmpty && (state is VicesLoaded || _usesFallback)) {
                 return Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -331,7 +544,36 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
               
               return SingleChildScrollView(
                 padding: const EdgeInsets.all(24),
-                child: Form(
+                child: Column(
+                  children: [
+                    // Show fallback indicator if using cached data
+                    if (_usesFallback) ...[
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.info_outline, color: Colors.blue, size: 20),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'Using cached vices data due to connectivity issues',
+                                style: TextStyle(
+                                  color: Colors.blue,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    Form(
                   key: _formKey,
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -386,18 +628,73 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
                             color: TugColors.indulgenceGreen.withAlpha(50),
                           ),
                         ),
-                        child: DropdownButton<ViceModel>(
-                          value: _selectedVice,
-                          hint: Text(
-                            'select a vice',
-                            style: TextStyle(
-                              color: isDarkMode ? TugColors.viceModeTextSecondary : TugColors.lightTextSecondary,
-                            ),
-                          ),
-                          isExpanded: true,
-                          underline: const SizedBox(),
-                          dropdownColor: isDarkMode ? TugColors.viceModeDarkSurface : Colors.white,
-                          items: vices.toSet().map((vice) {
+                        child: Builder(
+                          builder: (context) {
+                            final validVices = vices.where((v) => v.id != null && v.id!.isNotEmpty).toList();
+                            print('DEBUG: DropdownButton validVices count: ${validVices.length}');
+                            
+                            if (validVices.isEmpty) {
+                              return Container(
+                                padding: const EdgeInsets.all(16),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      vices.isNotEmpty 
+                                          ? 'Vices found but missing IDs. Please refresh or contact support.'
+                                          : 'No vices available. Please add vices first.',
+                                      style: TextStyle(
+                                        color: Colors.orange,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Row(
+                                      children: [
+                                        ElevatedButton(
+                                          onPressed: () {
+                                            // This is the method that works!
+                                            context.read<VicesBloc>().add(const LoadVices(forceRefresh: true));
+                                          },
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: TugColors.indulgenceGreen,
+                                            foregroundColor: Colors.white,
+                                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                          ),
+                                          child: const Text(
+                                            'Fix & Reload Vices',
+                                            style: TextStyle(fontSize: 12),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        TextButton(
+                                          onPressed: () async {
+                                            await _performDataCleanup();
+                                          },
+                                          child: Text(
+                                            'Deep Clean',
+                                            style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }
+                            
+                            return DropdownButton<ViceModel>(
+                              value: _selectedVice,
+                              hint: Text(
+                                'select a vice',
+                                style: TextStyle(
+                                  color: isDarkMode ? TugColors.viceModeTextSecondary : TugColors.lightTextSecondary,
+                                ),
+                              ),
+                              isExpanded: true,
+                              underline: const SizedBox(),
+                              dropdownColor: isDarkMode ? TugColors.viceModeDarkSurface : Colors.white,
+                              items: validVices.map((vice) {
                             final color = Color(int.parse(vice.color.substring(1), radix: 16) + 0xFF000000);
                             return DropdownMenuItem<ViceModel>(
                               value: vice,
@@ -438,12 +735,14 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
                                 ],
                               ),
                             );
-                          }).toList(),
-                          onChanged: (vice) {
-                            setState(() {
-                              _selectedVice = vice;
-                            });
-                          },
+                              }).toList(),
+                              onChanged: (vice) {
+                                setState(() {
+                                  _selectedVice = vice;
+                                });
+                              },
+                            );
+                          }
                         ),
                       ),
                       
@@ -796,6 +1095,8 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
                       SizedBox(height: 100,)
                     ],
                   ),
+                ),
+                  ],
                 ),
               );
             },

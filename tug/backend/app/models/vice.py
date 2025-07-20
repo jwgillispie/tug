@@ -1,7 +1,7 @@
 # app/models/vice.py
 from beanie import Document, Indexed
 from typing import Optional, Any, Dict, List
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from pydantic import Field
 
 class Vice(Document):
@@ -100,15 +100,63 @@ class Vice(Document):
         
         await self.save()
 
-    def calculate_current_streak(self) -> int:
-        """Calculate current streak based on last indulgence date"""
-        if self.last_indulgence_date is None:
-            # If no indulgences recorded, streak is days since creation
-            days_since_creation = (datetime.utcnow() - self.created_at).days
-            return days_since_creation
+    def _calendar_days_between(self, start_date: datetime, end_date: datetime) -> int:
+        """
+        Calculate calendar days between two dates (midnight to midnight).
+        This ensures consistent streak calculation regardless of time of day.
         
-        days_since_last_indulgence = (datetime.utcnow() - self.last_indulgence_date).days
-        return days_since_last_indulgence
+        Examples:
+        - 2024-01-01 23:59 to 2024-01-02 00:01 = 1 day
+        - 2024-01-01 12:00 to 2024-01-03 12:00 = 2 days
+        
+        Note: Both dates are assumed to be in UTC for consistency.
+        For future enhancement, consider user timezone handling.
+        """
+        # Ensure dates are timezone-aware (assume UTC if naive)
+        if start_date.tzinfo is None:
+            start_date = start_date.replace(tzinfo=timezone.utc)
+        if end_date.tzinfo is None:
+            end_date = end_date.replace(tzinfo=timezone.utc)
+            
+        # Convert to date objects to ignore time component
+        start_cal = start_date.date()
+        end_cal = end_date.date()
+        return (end_cal - start_cal).days
+
+    def calculate_current_streak(self) -> int:
+        """
+        Calculate current streak based on calendar days since last indulgence.
+        Uses calendar day logic (midnight to midnight) for consistent results.
+        """
+        now = datetime.utcnow()
+        
+        if self.last_indulgence_date is None:
+            # If no indulgences recorded, streak is calendar days since creation
+            return self._calendar_days_between(self.created_at, now)
+        
+        # Calculate calendar days since last indulgence
+        return self._calendar_days_between(self.last_indulgence_date, now)
+    
+    def debug_streak_calculation(self) -> dict:
+        """
+        Debug method to provide detailed streak calculation information.
+        Useful for comparing backend vs frontend calculations.
+        """
+        now = datetime.utcnow()
+        
+        return {
+            "vice_id": str(self.id),
+            "vice_name": self.name,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "last_indulgence_date": self.last_indulgence_date.isoformat() if self.last_indulgence_date else None,
+            "current_streak_stored": self.current_streak,
+            "current_streak_calculated": self.calculate_current_streak(),
+            "longest_streak": self.longest_streak,
+            "total_indulgences": self.total_indulgences,
+            "calculation_timestamp": now.isoformat(),
+            "calculation_method": "calendar_days_backend",
+            "timezone": "UTC",
+        }
 
     @property
     def severity_description(self) -> str:

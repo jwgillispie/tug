@@ -33,6 +33,8 @@ class _MoodSelectorState extends State<MoodSelector> {
   }
 
   Future<void> _loadMoodOptions() async {
+    if (!mounted) return;
+    
     setState(() {
       _isLoading = true;
       _error = null;
@@ -40,15 +42,19 @@ class _MoodSelectorState extends State<MoodSelector> {
 
     try {
       final options = await _moodService.getMoodOptions();
-      setState(() {
-        _moodOptions = options;
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _moodOptions = options;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _error = 'Failed to load mood options: $e';
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _error = 'Failed to load mood options: $e';
+          _isLoading = false;
+        });
+      }
     }
   }
 

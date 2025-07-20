@@ -123,6 +123,12 @@ class SocialPostModel {
   final int? activityDuration;
   @JsonKey(name: 'activity_notes')
   final String? activityNotes;
+  
+  // Vice info for indulgence posts
+  @JsonKey(name: 'vice_name')
+  final String? viceName;
+  @JsonKey(name: 'vice_color')
+  final String? viceColor;
 
   SocialPostModel({
     required this.id,
@@ -143,6 +149,8 @@ class SocialPostModel {
     this.activityName,
     this.activityDuration,
     this.activityNotes,
+    this.viceName,
+    this.viceColor,
   });
 
   factory SocialPostModel.fromJson(Map<String, dynamic> json) =>
@@ -165,11 +173,21 @@ class SocialPostModel {
   }
   
   bool get hasValueInfo => valueName != null && valueColor != null;
+  bool get hasViceInfo => viceName != null && viceColor != null;
   
   Color? get valueColorObject {
     if (valueColor == null) return null;
     try {
       return Color(int.parse(valueColor!.substring(1), radix: 16) + 0xFF000000);
+    } catch (e) {
+      return null;
+    }
+  }
+  
+  Color? get viceColorObject {
+    if (viceColor == null) return null;
+    try {
+      return Color(int.parse(viceColor!.substring(1), radix: 16) + 0xFF000000);
     } catch (e) {
       return null;
     }

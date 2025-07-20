@@ -23,14 +23,31 @@ class ViceService {
       return status != null && status >= 200 && status < 400;
     };
     
-    // Add auth interceptor
+    // Add auth interceptor with retry logic for quota exceeded
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
         try {
           final user = firebase_auth.FirebaseAuth.instance.currentUser;
           if (user != null) {
-            final token = await user.getIdToken(true);
-            options.headers['Authorization'] = 'Bearer $token';
+            // Try to get token without forcing refresh first
+            try {
+              final token = await user.getIdToken(false);
+              options.headers['Authorization'] = 'Bearer $token';
+            } catch (e) {
+              // If that fails, wait a bit and try with forced refresh as fallback
+              if (e.toString().contains('quota-exceeded')) {
+                _logger.w('ViceService: Auth quota exceeded, using cached token if available');
+                // Try to use cached token
+                try {
+                  final cachedToken = await user.getIdToken(false);
+                  options.headers['Authorization'] = 'Bearer $cachedToken';
+                } catch (_) {
+                  _logger.e('ViceService: No cached token available');
+                }
+              } else {
+                rethrow;
+              }
+            }
           }
         } catch (e) {
           _logger.e('ViceService: Error getting Firebase auth token: $e');
@@ -234,35 +251,130 @@ class ViceService {
     try {
       _logger.i('ViceService: Getting all indulgences for user');
       
-      final response = await _dio.get('/api/v1/indulgences/');
-      
-      if (response.statusCode == 200) {
-        final List<dynamic> data = response.data['indulgences'] ?? [];
-        return data.map((json) => IndulgenceModel.fromJson(json)).toList();
-      } else {
-        throw Exception('Failed to load indulgences: ${response.statusCode}');
-      }
-    } on DioException catch (e) {
-      _logger.e('ViceService: DioException getting all indulgences: ${e.message}');
-      throw Exception('Network error: ${e.message}');
+      // First get all vices (without streak calculation to avoid circular dependency)
+      final vices = await _getVicesRaw();
+      return await _getAllIndulgencesForVices(vices);
     } catch (e) {
       _logger.e('ViceService: Error getting all indulgences: $e');
-      throw Exception('Failed to load all indulgences: $e');
+      // Return empty list instead of throwing to prevent UI crashes
+      return [];
+    }
+  }
+
+  /// Get all indulgences for specific vices (internal method to avoid circular dependency)
+  Future<List<IndulgenceModel>> _getAllIndulgencesForVices(List<ViceModel> vices) async {
+    try {
+      _logger.i('ViceService: Getting all indulgences for ${vices.length} vices');
+      
+      final List<IndulgenceModel> allIndulgences = [];
+      
+      // Get indulgences for each vice
+      for (final vice in vices) {
+        if (vice.id != null) {
+          try {
+            final viceIndulgences = await getIndulgences(vice.id!);
+            allIndulgences.addAll(viceIndulgences);
+          } catch (e) {
+            _logger.w('ViceService: Failed to get indulgences for vice ${vice.id}: $e');
+            // Continue with other vices even if one fails
+          }
+        }
+      }
+      
+      // Sort by date descending (newest first)
+      allIndulgences.sort((a, b) => b.date.compareTo(a.date));
+      
+      return allIndulgences;
+    } catch (e) {
+      _logger.e('ViceService: Error getting indulgences for vices: $e');
+      return [];
+    }
+  }
+
+  /// Get raw vices from server without streak calculation (to avoid circular dependency)
+  Future<List<ViceModel>> _getVicesRaw() async {
+    try {
+      _logger.i('ViceService: Fetching raw vices from server');
+      
+      final response = await _dio.get('/api/v1/vices/');
+      
+      if (response.statusCode == 200) {
+        final List<dynamic> data = response.data['vices'] ?? [];
+        List<ViceModel> vices = data.map((json) => ViceModel.fromJson(json)).toList();
+        return vices;
+      } else {
+        throw Exception('Failed to load vices: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      _logger.e('ViceService: DioException getting raw vices: ${e.message}');
+      
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.connectionError ||
+          e.response?.statusCode == 404) {
+        // Return cached vices if available
+        _logger.i('ViceService: Falling back to cached vices due to network error or 404');
+        return _getCachedVices();
+      }
+      
+      throw Exception('Network error: ${e.message}');
+    } catch (e) {
+      _logger.e('ViceService: Error getting raw vices: $e');
+      return _getCachedVices();
+    }
+  }
+
+  /// Get indulgences for the current week (Sunday to Saturday)
+  Future<List<IndulgenceModel>> getWeeklyIndulgences() async {
+    try {
+      _logger.i('ViceService: Getting weekly indulgences');
+      
+      // Get all indulgences
+      final allIndulgences = await getAllIndulgences();
+      
+      // Calculate start of current week (Sunday)
+      final now = DateTime.now();
+      final startOfWeek = now.subtract(Duration(days: now.weekday % 7));
+      final endOfWeek = startOfWeek.add(const Duration(days: 6, hours: 23, minutes: 59, seconds: 59));
+      
+      // Filter indulgences for current week
+      final weeklyIndulgences = allIndulgences.where((indulgence) {
+        return indulgence.date.isAfter(startOfWeek) && indulgence.date.isBefore(endOfWeek);
+      }).toList();
+      
+      _logger.i('ViceService: Found ${weeklyIndulgences.length} indulgences for current week');
+      return weeklyIndulgences;
+    } catch (e) {
+      _logger.e('ViceService: Error getting weekly indulgences: $e');
+      return [];
     }
   }
 
   /// Calculate updated streaks for all vices using the new StreakUtils system
   Future<List<ViceModel>> _calculateViceStreaks(List<ViceModel> vices) async {
     try {
-      _logger.i('ViceService: Calculating streaks for ${vices.length} vices');
+      _logger.i('ViceService: Calculating streaks for ${vices.length} vices using calendar day logic');
       
-      // Get all indulgences for the user
-      final allIndulgences = await getAllIndulgences();
+      // Get all indulgences for the user (pass vices to avoid circular dependency)
+      final allIndulgences = await _getAllIndulgencesForVices(vices);
       
-      // Update each vice with calculated streak data
+      // Update each vice with calculated streak data using calendar days
       final updatedVices = StreakUtils.updateVicesWithStreaks(vices, allIndulgences);
       
-      _logger.i('ViceService: Successfully calculated streaks for all vices');
+      // Debug: Log streak calculations for verification
+      for (final vice in updatedVices) {
+        if (vice.id != null) {
+          final debugInfo = StreakUtils.debugViceStreakCalculation(
+            vice.id!,
+            vice.name,
+            allIndulgences.where((i) => i.viceId == vice.id).toList(),
+            vice.createdAt,
+          );
+          _logger.i('ViceService: Streak debug for ${vice.name}: current=${debugInfo['current_streak_calculated']}, method=${debugInfo['calculation_method']}');
+        }
+      }
+      
+      _logger.i('ViceService: Successfully calculated streaks for all vices using calendar day logic');
       return updatedVices;
     } catch (e) {
       _logger.w('ViceService: Error calculating streaks, returning original vices: $e');

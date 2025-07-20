@@ -249,20 +249,49 @@ class StreakUtils {
     );
   }
 
+  /// Debug method to provide detailed streak calculation information (frontend)
+  /// Useful for comparing frontend vs backend calculations
+  static Map<String, dynamic> debugViceStreakCalculation(
+    String viceId,
+    String viceName,
+    List<IndulgenceModel> indulgences,
+    DateTime? viceCreatedDate,
+  ) {
+    final now = DateTime.now();
+    final streakData = calculateViceStreak(viceId, indulgences, viceCreatedDate);
+    
+    return {
+      'vice_id': viceId,
+      'vice_name': viceName,
+      'created_at': viceCreatedDate?.toIso8601String(),
+      'last_indulgence_date': streakData.lastIndulgenceDate?.toIso8601String(),
+      'current_streak_calculated': streakData.currentStreak,
+      'longest_streak_calculated': streakData.longestStreak,
+      'total_indulgences': streakData.totalIndulgences,
+      'calculation_timestamp': now.toIso8601String(),
+      'calculation_method': 'calendar_days_frontend',
+      'timezone': now.timeZoneName,
+      'days_since_last_indulgence': streakData.daysSinceLastIndulgence,
+    };
+  }
+
   /// Calculate current clean streak from today backwards until last indulgence
+  /// Uses calendar days (midnight to midnight) for consistency with backend
   static int _calculateCurrentCleanStreak(List<DateTime> indulgenceDays, DateTime today, DateTime startDate) {
     if (indulgenceDays.isEmpty) {
-      // No indulgences recorded - streak is from start date to now
+      // No indulgences recorded - streak is calendar days from start date to now
       final startDay = _toCalendarDay(startDate);
-      return today.difference(startDay).inDays;
+      final todayCalendar = _toCalendarDay(today);
+      return todayCalendar.difference(startDay).inDays;
     }
 
     final lastIndulgenceDay = indulgenceDays.last;
+    final todayCalendar = _toCalendarDay(today);
     
-    // Current streak is days since last indulgence
-    final daysSinceLastIndulgence = today.difference(lastIndulgenceDay).inDays;
+    // Current streak is calendar days since last indulgence
+    final daysSinceLastIndulgence = todayCalendar.difference(lastIndulgenceDay).inDays;
     
-    // Return days since last indulgence (clean days)
+    // Return days since last indulgence (clean days), minimum 0
     return daysSinceLastIndulgence >= 0 ? daysSinceLastIndulgence : 0;
   }
 

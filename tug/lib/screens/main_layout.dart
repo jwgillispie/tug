@@ -62,11 +62,11 @@ class _MainLayoutState extends State<MainLayout> {
         'path': '/social',
       },
       {
-        'icon': Icons.insights_outlined,
-        'selectedIcon': Icons.insights_rounded,
-        'label': 'progress',
+        'icon': isViceMode ? Icons.spa_outlined : Icons.insights_outlined,
+        'selectedIcon': isViceMode ? Icons.spa : Icons.insights_rounded,
+        'label': isViceMode ? 'indulgence' : 'progress',
         'index': 1,
-        'path': '/progress',
+        'path': isViceMode ? '/indulgence-tracking' : '/progress',
       },
       {
         'icon': Icons.waving_hand_outlined,
