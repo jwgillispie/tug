@@ -279,6 +279,11 @@ class SocialService {
       }
     } on DioException catch (e) {
       _logger.e('SocialService: DioException getting social feed: ${e.message}');
+      // Temporary: Return empty list for 500 errors while backend fix deploys
+      if (e.response?.statusCode == 500) {
+        _logger.w('Backend 500 error, returning empty social feed temporarily');
+        return [];
+      }
       throw Exception('Network error: ${e.message}');
     } catch (e) {
       _logger.e('SocialService: Error getting social feed: $e');

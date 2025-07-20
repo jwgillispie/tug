@@ -11,6 +11,7 @@ from ..models.social_post import SocialPost, PostType
 from ..models.post_comment import PostComment
 from ..models.activity import Activity
 from ..models.value import Value
+from ..models.vice import Vice
 from ..schemas.social import (
     FriendRequestCreate, SocialPostCreate, SocialPostUpdate,
     CommentCreate, CommentUpdate, UserSearchResult, SocialPostData, CommentData,
