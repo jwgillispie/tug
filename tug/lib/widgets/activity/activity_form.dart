@@ -14,7 +14,7 @@ import 'package:tug/widgets/values/streak_celebration.dart';
 import 'package:tug/widgets/mood/mood_selector.dart';
 
 class ActivityFormWidget extends StatefulWidget {
-  final Function(String name, String valueId, int duration, DateTime date,
+  final Function(String name, List<String> valueIds, int duration, DateTime date,
       String? notes, bool isPublic, bool notesPublic, MoodType? mood) onSave;
   final bool isLoading;
 
@@ -35,7 +35,7 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
   final _durationController = TextEditingController();
   final _notesController = TextEditingController();
 
-  String? _selectedValueId;
+  List<String> _selectedValueIds = []; // Changed to support multiple values
   DateTime _selectedDate = DateTime.now();
   bool _showDurationPresets = true;
   bool _showStreakCelebration = false;
@@ -70,10 +70,10 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
     if (_isSaving) return;
     
     if (_formKey.currentState?.validate() ?? false) {
-      if (_selectedValueId == null) {
+      if (_selectedValueIds.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('please select a value'),
+            content: Text('please select at least one value'),
             backgroundColor: TugColors.error,
           ),
         );
@@ -89,8 +89,8 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
       final notes =
           _notesController.text.isEmpty ? null : _notesController.text;
 
-      // Load streak stats for the selected value to see if we need to show a celebration
-      context.read<ValuesBloc>().add(LoadStreakStats(valueId: _selectedValueId));
+      // Load streak stats for the primary selected value to see if we need to show a celebration
+      context.read<ValuesBloc>().add(LoadStreakStats(valueId: _selectedValueIds.first));
       
       // After creating the activity, wait for it to be processed, then check streak milestones
       Future.delayed(const Duration(milliseconds: 1000), () {
@@ -99,7 +99,7 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
         final valuesState = context.read<ValuesBloc>().state;
         if (valuesState is ValuesLoaded) {
           final selectedValue = valuesState.values.firstWhere(
-            (v) => v.id == _selectedValueId,
+            (v) => v.id == _selectedValueIds.first, // Use primary value for streak celebration
             orElse: () => const ValueModel(
               name: '', 
               importance: 1, 
@@ -124,7 +124,7 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
         }
       });
 
-      widget.onSave(name, _selectedValueId!, duration, _selectedDate, notes, _isPublic, _notesPublic, _selectedMood);
+      widget.onSave(name, _selectedValueIds, duration, _selectedDate, notes, _isPublic, _notesPublic, _selectedMood);
     }
   }
   
@@ -165,9 +165,9 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
 
             // Set default selected value ID if values are available and no value is selected yet
             // Important: Don't use setState during build phase
-            if (values.isNotEmpty && _selectedValueId == null) {
+            if (values.isNotEmpty && _selectedValueIds.isEmpty) {
               // Direct assignment is safe here as we're just initializing the value
-              _selectedValueId = values.first.id;
+              _selectedValueIds = [values.first.id!];
 
               // Schedule setState for after the build is complete
               WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -205,111 +205,165 @@ class _ActivityFormWidgetState extends State<ActivityFormWidget> {
                   ),
                   const SizedBox(height: 16),
 
-                  // Value Selector - Improved to clearly show the selected value
-                  DropdownButtonFormField<String>(
-                    decoration: const InputDecoration(
-                      labelText: 'related value',
-                      hintText: 'which value does this support?',
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                    ),
-                    isExpanded: true, // Important for preventing overflow
-                    icon: const Icon(Icons.arrow_drop_down_circle),
-                    menuMaxHeight: 300, // Set max height for dropdown menu
-                    dropdownColor: Theme.of(context).colorScheme.surface,
-                    borderRadius: BorderRadius.circular(8),
-                    value: _selectedValueId,
-                    selectedItemBuilder: (context) {
-                      // This builds what shows when an item is selected in the dropdown
-                      return values.map((value) {
-                        final valueColor = Color(
-                          int.parse(value.color.substring(1), radix: 16) + 0xFF000000,
-                        );
-
-                        // Make the selected item clearly visible with color and name
-                        return Row(
-                          children: [
-                            Container(
-                              width: 16,
-                              height: 16,
-                              decoration: BoxDecoration(
-                                color: valueColor,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: Colors.grey.withOpacity(0.5),
-                                  width: 1,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                value.name,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                  color: Theme.of(context).brightness == Brightness.light
-                                      ? Colors.black87
-                                      : Colors.white,
-                                ),
-                              ),
-                            ),
-                          ],
-                        );
-                      }).toList();
-                    },
-                    items: values.map((value) {
-                      final valueColor = Color(
-                        int.parse(value.color.substring(1), radix: 16) + 0xFF000000,
-                      );
-
-                      return DropdownMenuItem<String>(
-                        value: value.id,
-                        child: SizedBox(
+                  // Multi-Value Selector
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Related Values',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Select which values this activity supports (tap to toggle)',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      // Selected values display
+                      if (_selectedValueIds.isNotEmpty) ...[
+                        Container(
                           width: double.infinity,
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 4.0),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Container(
-                                  width: 16,
-                                  height: 16,
-                                  decoration: BoxDecoration(
-                                    color: valueColor,
-                                    shape: BoxShape.circle,
-                                  ),
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade300),
+                            borderRadius: BorderRadius.circular(8),
+                            color: Theme.of(context).colorScheme.surface,
+                          ),
+                          child: Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: _selectedValueIds.map((valueId) {
+                              final value = values.firstWhere((v) => v.id == valueId);
+                              final valueColor = Color(
+                                int.parse(value.color.substring(1), radix: 16) + 0xFF000000,
+                              );
+                              return Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                decoration: BoxDecoration(
+                                  color: valueColor.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: valueColor),
                                 ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    value.name,
-                                    overflow: TextOverflow.ellipsis,
-                                    maxLines: 2, // Allow up to 2 lines for longer or all-caps text
-                                    style: const TextStyle(
-                                      fontSize: 14,
-                                      height: 1.2, // Tighter line height for better fit
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Container(
+                                      width: 12,
+                                      height: 12,
+                                      decoration: BoxDecoration(
+                                        color: valueColor,
+                                        shape: BoxShape.circle,
+                                      ),
                                     ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      value.name,
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: valueColor,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    GestureDetector(
+                                      onTap: () {
+                                        setState(() {
+                                          _selectedValueIds.remove(valueId);
+                                        });
+                                      },
+                                      child: Icon(
+                                        Icons.close,
+                                        size: 16,
+                                        color: valueColor,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                      // Available values list
+                      Container(
+                        width: double.infinity,
+                        constraints: const BoxConstraints(maxHeight: 200),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade300),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          itemCount: values.length,
+                          itemBuilder: (context, index) {
+                            final value = values[index];
+                            final isSelected = _selectedValueIds.contains(value.id);
+                            final valueColor = Color(
+                              int.parse(value.color.substring(1), radix: 16) + 0xFF000000,
+                            );
+                            
+                            return ListTile(
+                              dense: true,
+                              leading: Container(
+                                width: 20,
+                                height: 20,
+                                decoration: BoxDecoration(
+                                  color: valueColor,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: isSelected ? valueColor : Colors.grey.shade400,
+                                    width: isSelected ? 2 : 1,
                                   ),
                                 ),
-                              ],
+                                child: isSelected
+                                    ? const Icon(
+                                        Icons.check,
+                                        size: 14,
+                                        color: Colors.white,
+                                      )
+                                    : null,
+                              ),
+                              title: Text(
+                                value.name,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                  color: isSelected ? valueColor : null,
+                                ),
+                              ),
+                              onTap: () {
+                                setState(() {
+                                  if (isSelected) {
+                                    _selectedValueIds.remove(value.id);
+                                  } else {
+                                    _selectedValueIds.add(value.id!);
+                                  }
+                                });
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                      // Validation error display
+                      if (_selectedValueIds.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 8),
+                          child: Text(
+                            'Please select at least one value',
+                            style: TextStyle(
+                              color: Colors.red,
+                              fontSize: 12,
                             ),
                           ),
                         ),
-                      );
-                    }).toList(),
-                    onChanged: (String? id) {
-                      setState(() {
-                        _selectedValueId = id;
-                      });
-                    },
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'please select a value';
-                      }
-                      return null;
-                    },
+                    ],
                   ),
                   const SizedBox(height: 16),
 

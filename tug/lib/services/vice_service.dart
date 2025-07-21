@@ -198,10 +198,10 @@ class ViceService {
 
   Future<IndulgenceModel> recordIndulgence(IndulgenceModel indulgence) async {
     try {
-      _logger.i('ViceService: Recording indulgence for vice: ${indulgence.viceId}');
+      _logger.i('ViceService: Recording indulgence for vices: ${indulgence.viceIds.join(", ")}');
       
       final response = await _dio.post(
-        '/api/v1/vices/${indulgence.viceId}/indulge',
+        '/api/v1/indulgences', // Use new multi-vice endpoint
         data: indulgence.toJson(),
       );
       
@@ -367,7 +367,7 @@ class ViceService {
           final debugInfo = StreakUtils.debugViceStreakCalculation(
             vice.id!,
             vice.name,
-            allIndulgences.where((i) => i.viceId == vice.id).toList(),
+            allIndulgences.where((i) => i.viceIds.contains(vice.id)).toList(),
             vice.createdAt,
           );
           _logger.i('ViceService: Streak debug for ${vice.name}: current=${debugInfo['current_streak_calculated']}, method=${debugInfo['calculation_method']}');

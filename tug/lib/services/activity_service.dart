@@ -390,19 +390,22 @@ class ActivityService {
       final progressData = results[0] as Map<String, dynamic>;
       final activities = results[1] as List<ActivityModel>;
 
-      // Group activities by value for easier analysis
+      // Group activities by value for easier analysis (handle multiple values per activity)
       final Map<String, List<Map<String, dynamic>>> activitiesByValue = {};
       for (final activity in activities) {
-        final key = activity.valueId;
-        if (!activitiesByValue.containsKey(key)) {
-          activitiesByValue[key] = [];
+        // Each activity can now have multiple values, so add to all relevant groups
+        for (final valueId in activity.valueIds) {
+          if (!activitiesByValue.containsKey(valueId)) {
+            activitiesByValue[valueId] = [];
+          }
+          activitiesByValue[valueId]!.add({
+            'name': activity.name,
+            'duration': activity.duration,
+            'date': activity.date.toIso8601String(),
+            'notes': activity.notes,
+            'all_value_ids': activity.valueIds, // Include all values this activity supports
+          });
         }
-        activitiesByValue[key]!.add({
-          'name': activity.name,
-          'duration': activity.duration,
-          'date': activity.date.toIso8601String(),
-          'notes': activity.notes,
-        });
       }
 
       final combinedData = {
@@ -410,7 +413,8 @@ class ActivityService {
         'summary': progressData['summary'],
         'individual_activities': activities.map((a) => {
           'name': a.name,
-          'value_id': a.valueId,
+          'value_ids': a.valueIds, // Changed to support multiple values
+          'primary_value_id': a.primaryValueId, // For backward compatibility
           'duration': a.duration,
           'date': a.date.toIso8601String(),
           'notes': a.notes,
@@ -470,9 +474,9 @@ class ActivityService {
   // Get values associated with activities
   Future<List<ValueModel>> getValuesByActivities(List<ActivityModel> activities) async {
     try {
-      // Extract unique value IDs from activities
+      // Extract unique value IDs from activities (handle multiple values per activity)
       final valueIds = activities
-          .map((activity) => activity.valueId)
+          .expand((activity) => activity.valueIds) // Expand to handle multiple values per activity
           .where((id) => id.isNotEmpty)
           .toSet()
           .toList();

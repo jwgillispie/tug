@@ -163,13 +163,110 @@ class ViceService:
         return new_indulgence
 
     @staticmethod
+    async def record_multi_vice_indulgence(user: User, indulgence_data: IndulgenceCreate) -> Indulgence:
+        """Record a new indulgence for multiple vices"""
+        # Verify all vices exist and belong to the user
+        vices = []
+        for vice_id in indulgence_data.vice_ids:
+            vice = await ViceService.get_vice(user, vice_id)
+            vices.append(vice)
+        
+        # Create the indulgence with multiple vices
+        new_indulgence = Indulgence(
+            vice_ids=indulgence_data.vice_ids,
+            user_id=str(user.id),
+            date=indulgence_data.date,
+            duration=indulgence_data.duration,
+            notes=indulgence_data.notes,
+            severity_at_time=indulgence_data.severity_at_time,
+            triggers=indulgence_data.triggers,
+            emotional_state=indulgence_data.emotional_state,
+            is_public=indulgence_data.is_public,
+            notes_public=indulgence_data.notes_public
+        )
+        
+        await new_indulgence.insert()
+        
+        # Update all associated vices' streak information
+        await new_indulgence.update_vice_streaks()
+        
+        # Create social post if indulgence is public and has user-provided notes
+        # Use the primary (first) vice for social post
+        if indulgence_data.is_public and indulgence_data.notes_public and indulgence_data.notes and vices:
+            await ViceService._create_indulgence_social_post(user, new_indulgence, vices[0])
+        
+        return new_indulgence
+
+    @staticmethod
+    async def vice_belongs_to_user(user: User, vice_id: str) -> bool:
+        """Check if a vice belongs to the current user"""
+        try:
+            await ViceService.get_vice(user, vice_id)
+            return True
+        except HTTPException:
+            return False
+
+    @staticmethod
+    async def get_all_user_indulgences(user: User, limit: Optional[int] = None) -> List[Indulgence]:
+        """Get all indulgences for a user across all vices"""
+        query = Indulgence.find(
+            Indulgence.user_id == str(user.id)
+        ).sort(-Indulgence.date)
+        
+        if limit:
+            query = query.limit(limit)
+        
+        return await query.to_list()
+
+    @staticmethod
+    async def get_indulgence_by_id(user: User, indulgence_id: str) -> Indulgence:
+        """Get a specific indulgence by ID"""
+        try:
+            indulgence = await Indulgence.get(indulgence_id)
+            if not indulgence or indulgence.user_id != str(user.id):
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Indulgence not found"
+                )
+            return indulgence
+        except Exception as e:
+            if isinstance(e, HTTPException):
+                raise
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Indulgence not found"
+            )
+
+    @staticmethod
+    async def update_indulgence(user: User, indulgence_id: str, update_data) -> Indulgence:
+        """Update an existing indulgence"""
+        indulgence = await ViceService.get_indulgence_by_id(user, indulgence_id)
+        
+        # Update fields
+        update_dict = update_data.dict(exclude_unset=True)
+        for field, value in update_dict.items():
+            setattr(indulgence, field, value)
+        
+        indulgence.updated_at = datetime.utcnow()
+        await indulgence.save()
+        
+        return indulgence
+
+    @staticmethod
+    async def delete_indulgence(user: User, indulgence_id: str) -> None:
+        """Delete an indulgence"""
+        indulgence = await ViceService.get_indulgence_by_id(user, indulgence_id)
+        await indulgence.delete()
+
+    @staticmethod
     async def get_indulgences(user: User, vice_id: str, limit: Optional[int] = None) -> List[Indulgence]:
         """Get indulgences for a specific vice"""
         # Verify the vice exists and belongs to the user
         await ViceService.get_vice(user, vice_id)
         
+        # Updated to handle both old single-vice indulgences and new multi-vice indulgences
         query = Indulgence.find(
-            Indulgence.vice_id == vice_id,
+            Indulgence.vice_ids.in_([vice_id]),  # Check if vice_id is in the vice_ids array
             Indulgence.user_id == str(user.id)
         ).sort(-Indulgence.date)
         

@@ -13,7 +13,7 @@ void main() {
         ActivityModel(
           id: '1',
           name: 'Morning Exercise',
-          valueId: 'exercise_value',
+          valueIds: ['exercise_value'],
           duration: 30,
           date: todayStart.add(const Duration(hours: 8)),
           notes: 'Morning workout',
@@ -21,7 +21,7 @@ void main() {
         ActivityModel(
           id: '2',
           name: 'Evening Exercise',
-          valueId: 'exercise_value',
+          valueIds: ['exercise_value'],
           duration: 45,
           date: todayStart.add(const Duration(hours: 18)),
           notes: 'Evening workout',
@@ -29,7 +29,7 @@ void main() {
         ActivityModel(
           id: '3',
           name: 'Reading',
-          valueId: 'learning_value',
+          valueIds: ['learning_value'],
           duration: 60,
           date: todayStart.add(const Duration(hours: 20)),
           notes: 'Book reading',
@@ -38,7 +38,7 @@ void main() {
 
       // Filter activities for exercise value
       final exerciseActivities = activities.where(
-        (activity) => activity.valueId == 'exercise_value'
+        (activity) => activity.primaryValueId == 'exercise_value'
       ).toList();
       
       final totalMinutes = exerciseActivities.fold<int>(
@@ -97,7 +97,7 @@ void main() {
         ActivityModel(
           id: '1',
           name: 'Today Exercise',
-          valueId: 'exercise_value',
+          valueIds: ['exercise_value'],
           duration: 30,
           date: today.add(const Duration(hours: 8)),
           notes: 'Today',
@@ -105,7 +105,7 @@ void main() {
         ActivityModel(
           id: '2',
           name: 'Yesterday Exercise',
-          valueId: 'exercise_value',
+          valueIds: ['exercise_value'],
           duration: 45,
           date: yesterday.add(const Duration(hours: 8)),
           notes: 'Yesterday',
@@ -113,7 +113,7 @@ void main() {
         ActivityModel(
           id: '3',
           name: 'Old Exercise',
-          valueId: 'exercise_value',
+          valueIds: ['exercise_value'],
           duration: 60,
           date: twoDaysAgo.add(const Duration(hours: 8)),
           notes: 'Two days ago',

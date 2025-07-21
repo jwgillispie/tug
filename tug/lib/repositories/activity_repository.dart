@@ -263,7 +263,7 @@ class ActivityRepository implements IActivityRepository {
 
         // Apply filters if provided
         if (valueId != null) {
-          activities = activities.where((a) => a.valueId == valueId).toList();
+          activities = activities.where((a) => a.valueIds.contains(valueId)).toList();
         }
         
         if (startDate != null) {

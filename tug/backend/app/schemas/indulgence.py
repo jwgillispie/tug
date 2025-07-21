@@ -16,7 +16,7 @@ class IndulgenceBase(BaseModel):
 
 class IndulgenceCreate(IndulgenceBase):
     """Schema for creating a new indulgence"""
-    vice_id: str = Field(..., description="ID of the vice this indulgence is for")
+    vice_ids: List[str] = Field(..., description="IDs of the vices this indulgence is for")
 
 class IndulgenceUpdate(BaseModel):
     """Schema for updating an indulgence"""
@@ -32,7 +32,7 @@ class IndulgenceUpdate(BaseModel):
 class IndulgenceInDB(IndulgenceBase):
     """Schema for indulgence as stored in database"""
     id: str
-    vice_id: str
+    vice_ids: List[str]
     user_id: str
     created_at: datetime
     updated_at: datetime
@@ -43,7 +43,7 @@ class IndulgenceInDB(IndulgenceBase):
 class IndulgenceResponse(IndulgenceBase):
     """Schema for indulgence data returned to client"""
     id: str
-    vice_id: str
+    vice_ids: List[str]
     user_id: str
     created_at: datetime
     updated_at: datetime

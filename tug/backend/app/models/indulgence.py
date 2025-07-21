@@ -7,7 +7,7 @@ from .vice import Vice
 
 class Indulgence(Document):
     """Indulgence model for MongoDB with Beanie ODM"""
-    vice_id: str = Indexed()
+    vice_ids: List[str] = Field(..., description="IDs of the vices this indulgence is for")
     user_id: str = Indexed()
     date: datetime = Field(..., description="When the indulgence occurred")
     duration: Optional[int] = Field(default=None, ge=0, description="Duration in minutes (optional)")
@@ -24,14 +24,14 @@ class Indulgence(Document):
         name = "indulgences"
         indexes = [
             [("user_id", 1), ("date", -1)],
-            [("vice_id", 1), ("date", -1)],
-            [("user_id", 1), ("vice_id", 1), ("date", -1)]
+            [("vice_ids", 1), ("date", -1)],
+            [("user_id", 1), ("vice_ids", 1), ("date", -1)]
         ]
 
     class Config:
         schema_extra = {
             "example": {
-                "vice_id": "vice123",
+                "vice_ids": ["vice123", "vice456"],
                 "user_id": "user123",
                 "date": "2024-02-12T14:30:00Z",
                 "duration": 15,
@@ -108,14 +108,31 @@ class Indulgence(Document):
             return f"{hours}h"
         return f"{hours}h {minutes}m"
 
-    async def update_vice_streak(self):
-        """Update the associated vice's streak when this indulgence is recorded"""
-        try:
-            # Find the associated vice
-            vice = await Vice.get(self.vice_id)
-            if vice:
-                await vice.update_streak_on_indulgence()
-        except Exception as e:
-            # Log error but don't fail the indulgence creation
-            print(f"Error updating vice streak: {e}")
-            pass
+    async def update_vice_streaks(self):
+        """Update all associated vices' streaks when this indulgence is recorded"""
+        for vice_id in self.vice_ids:
+            try:
+                # Find the associated vice
+                vice = await Vice.get(vice_id)
+                if vice:
+                    await vice.update_streak_on_indulgence()
+            except Exception as e:
+                # Log error but don't fail the indulgence creation
+                print(f"Error updating vice streak for {vice_id}: {e}")
+                continue
+    
+    # Helper properties for backward compatibility
+    @property
+    def primary_vice_id(self) -> Optional[str]:
+        """Get the primary (first) vice ID for backward compatibility"""
+        return self.vice_ids[0] if self.vice_ids else None
+    
+    @property
+    def secondary_vice_ids(self) -> List[str]:
+        """Get secondary vice IDs (all except first)"""
+        return self.vice_ids[1:] if len(self.vice_ids) > 1 else []
+    
+    @property
+    def has_multiple_vices(self) -> bool:
+        """Check if indulgence has multiple vices"""
+        return len(self.vice_ids) > 1

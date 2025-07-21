@@ -26,7 +26,7 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
   final _notesController = TextEditingController();
   final _durationController = TextEditingController();
   
-  ViceModel? _selectedVice;
+  List<ViceModel> _selectedVices = []; // Changed to support multiple vices
   DateTime _selectedDate = DateTime.now();
   TimeOfDay _selectedTime = TimeOfDay.now();
   int _emotionalState = 5;
@@ -125,7 +125,7 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
         setState(() {
           _fallbackVices.clear();
           _usesFallback = false;
-          _selectedVice = null;
+          _selectedVices.clear();
         });
       }
       // print('DEBUG: Cleared local state');
@@ -173,17 +173,17 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
       return;
     }
 
-    if (_selectedVice == null) {
+    if (_selectedVices.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please select a vice'),
+          content: Text('Please select at least one vice'),
           backgroundColor: TugColors.indulgenceGreen,
         ),
       );
       return;
     }
 
-    if (_selectedVice!.id == null || _selectedVice!.id!.isEmpty) {
+    if (_selectedVices.any((v) => v.id == null || v.id!.isEmpty)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Selected vice has no ID. Please refresh and try again.'),
@@ -207,14 +207,14 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
       );
 
       final indulgence = IndulgenceModel(
-        viceId: _selectedVice!.id!,
+        viceIds: _selectedVices.map((v) => v.id!).toList(),
         userId: 'current_user', // This should come from auth
         date: indulgenceDateTime,
         duration: _durationController.text.isNotEmpty 
             ? int.tryParse(_durationController.text) 
             : null,
         notes: _notesController.text.trim(),
-        severityAtTime: _selectedVice!.severity,
+        severityAtTime: _selectedVices.isNotEmpty ? _selectedVices.first.severity : 1, // Use primary vice severity
         triggers: _selectedTriggers,
         emotionalState: _emotionalState,
         isPublic: _isPublic,
@@ -425,7 +425,7 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
           ),
           child: BlocBuilder<VicesBloc, VicesState>(
             builder: (context, state) {
-              if (state is VicesLoading && _selectedVice == null) {
+              if (state is VicesLoading && _selectedVices.isEmpty) {
                 return Center(child: CircularProgressIndicator(color: TugColors.indulgenceGreen));
               }
               
@@ -683,64 +683,198 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
                               );
                             }
                             
-                            return DropdownButton<ViceModel>(
-                              value: _selectedVice,
-                              hint: Text(
-                                'select a vice',
-                                style: TextStyle(
-                                  color: isDarkMode ? TugColors.viceModeTextSecondary : TugColors.lightTextSecondary,
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Select Vices',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: isDarkMode ? TugColors.viceModeTextPrimary : TugColors.lightTextPrimary,
+                                  ),
                                 ),
-                              ),
-                              isExpanded: true,
-                              underline: const SizedBox(),
-                              dropdownColor: isDarkMode ? TugColors.viceModeDarkSurface : Colors.white,
-                              items: validVices.map((vice) {
-                            final color = Color(int.parse(vice.color.substring(1), radix: 16) + 0xFF000000);
-                            return DropdownMenuItem<ViceModel>(
-                              value: vice,
-                              child: Row(
-                                children: [
-                                  Container(
-                                    width: 16,
-                                    height: 16,
-                                    decoration: BoxDecoration(
-                                      color: color,
-                                      shape: BoxShape.circle,
-                                    ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Tap to select multiple vices for this indulgence',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: isDarkMode ? TugColors.viceModeTextSecondary : TugColors.lightTextSecondary,
                                   ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Text(
-                                      vice.name,
-                                      style: TextStyle(
-                                        color: isDarkMode ? TugColors.viceModeTextPrimary : TugColors.lightTextPrimary,
-                                      ),
-                                    ),
-                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                // Selected vices display
+                                if (_selectedVices.isNotEmpty) ...[
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.all(12),
                                     decoration: BoxDecoration(
-                                      color: TugColors.getSeverityColor(vice.severity),
+                                      border: Border.all(color: Colors.grey.shade300),
                                       borderRadius: BorderRadius.circular(8),
+                                      color: isDarkMode ? TugColors.viceModeDarkSurface : Colors.white,
                                     ),
+                                    child: Wrap(
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      children: _selectedVices.map((vice) {
+                                        final viceColor = Color(
+                                          int.parse(vice.color.substring(1), radix: 16) + 0xFF000000,
+                                        );
+                                        return Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                          decoration: BoxDecoration(
+                                            color: viceColor.withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(16),
+                                            border: Border.all(color: viceColor),
+                                          ),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Container(
+                                                width: 12,
+                                                height: 12,
+                                                decoration: BoxDecoration(
+                                                  color: viceColor,
+                                                  shape: BoxShape.circle,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Text(
+                                                vice.name,
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  color: viceColor,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                                                decoration: BoxDecoration(
+                                                  color: TugColors.getSeverityColor(vice.severity),
+                                                  borderRadius: BorderRadius.circular(6),
+                                                ),
+                                                child: Text(
+                                                  '${vice.severity}',
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                              ),
+                                              const SizedBox(width: 4),
+                                              GestureDetector(
+                                                onTap: () {
+                                                  setState(() {
+                                                    _selectedVices.remove(vice);
+                                                  });
+                                                },
+                                                child: Icon(
+                                                  Icons.close,
+                                                  size: 16,
+                                                  color: viceColor,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 12),
+                                ],
+                                // Available vices list
+                                Container(
+                                  width: double.infinity,
+                                  constraints: const BoxConstraints(maxHeight: 200),
+                                  decoration: BoxDecoration(
+                                    border: Border.all(color: Colors.grey.shade300),
+                                    borderRadius: BorderRadius.circular(8),
+                                    color: isDarkMode ? TugColors.viceModeDarkSurface : Colors.white,
+                                  ),
+                                  child: ListView.builder(
+                                    shrinkWrap: true,
+                                    itemCount: validVices.length,
+                                    itemBuilder: (context, index) {
+                                      final vice = validVices[index];
+                                      final isSelected = _selectedVices.any((v) => v.id == vice.id);
+                                      final viceColor = Color(
+                                        int.parse(vice.color.substring(1), radix: 16) + 0xFF000000,
+                                      );
+                                      
+                                      return ListTile(
+                                        dense: true,
+                                        leading: Container(
+                                          width: 20,
+                                          height: 20,
+                                          decoration: BoxDecoration(
+                                            color: viceColor,
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                              color: isSelected ? viceColor : Colors.grey.shade400,
+                                              width: isSelected ? 2 : 1,
+                                            ),
+                                          ),
+                                          child: isSelected
+                                              ? const Icon(
+                                                  Icons.check,
+                                                  size: 14,
+                                                  color: Colors.white,
+                                                )
+                                              : null,
+                                        ),
+                                        title: Text(
+                                          vice.name,
+                                          style: TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                            color: isSelected 
+                                                ? viceColor 
+                                                : (isDarkMode ? TugColors.viceModeTextPrimary : TugColors.lightTextPrimary),
+                                          ),
+                                        ),
+                                        trailing: Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: TugColors.getSeverityColor(vice.severity),
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Text(
+                                            '${vice.severity}',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                        onTap: () {
+                                          setState(() {
+                                            if (isSelected) {
+                                              _selectedVices.removeWhere((v) => v.id == vice.id);
+                                            } else {
+                                              _selectedVices.add(vice);
+                                            }
+                                          });
+                                        },
+                                      );
+                                    },
+                                  ),
+                                ),
+                                // Validation error display
+                                if (_selectedVices.isEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 8),
                                     child: Text(
-                                      '${vice.severity}',
-                                      style: const TextStyle(
-                                        color: Colors.white,
+                                      'Please select at least one vice',
+                                      style: TextStyle(
+                                        color: isDarkMode ? Colors.red.shade300 : Colors.red,
                                         fontSize: 12,
-                                        fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                   ),
-                                ],
-                              ),
-                            );
-                              }).toList(),
-                              onChanged: (vice) {
-                                setState(() {
-                                  _selectedVice = vice;
-                                });
-                              },
+                              ],
                             );
                           }
                         ),

@@ -253,11 +253,13 @@ class AchievementService {
       return achievement.copyWith(progress: 0.0, isUnlocked: false);
     }
 
-    // Calculate activity counts per value
+    // Calculate activity counts per value (handle multiple values per activity)
     final Map<String, int> activityCountsByValue = {};
     for (final activity in activities) {
-      final valueId = activity.valueId;
-      activityCountsByValue[valueId] = (activityCountsByValue[valueId] ?? 0) + 1;
+      // Each activity can now support multiple values
+      for (final valueId in activity.valueIds) {
+        activityCountsByValue[valueId] = (activityCountsByValue[valueId] ?? 0) + 1;
+      }
     }
 
     // Calculate average activity count
@@ -393,11 +395,13 @@ class AchievementService {
       return achievement.copyWith(progress: 0.0, isUnlocked: false);
     }
 
-    // Calculate activity minutes per value
+    // Calculate activity minutes per value (handle multiple values per activity)
     final Map<String, int> minutesByValue = {};
     for (final activity in activities) {
-      final valueId = activity.valueId;
-      minutesByValue[valueId] = (minutesByValue[valueId] ?? 0) + activity.duration;
+      // Each activity can now support multiple values
+      for (final valueId in activity.valueIds) {
+        minutesByValue[valueId] = (minutesByValue[valueId] ?? 0) + activity.duration;
+      }
     }
 
     // Count values that have activities

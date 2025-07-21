@@ -16,7 +16,7 @@ void main() {
         ActivityModel(
           id: '1',
           name: 'Exercise',
-          valueId: 'value1',
+          valueIds: ['value1'],
           duration: 30,
           date: dayBeforeYesterday.add(const Duration(hours: 8)), // 2 days ago, 8 AM
           notes: 'Morning workout',
@@ -24,7 +24,7 @@ void main() {
         ActivityModel(
           id: '2',
           name: 'Exercise',
-          valueId: 'value1',
+          valueIds: ['value1'],
           duration: 45,
           date: yesterday.add(const Duration(hours: 23, minutes: 30)), // Yesterday, 11:30 PM
           notes: 'Late evening workout',
@@ -32,7 +32,7 @@ void main() {
         ActivityModel(
           id: '3',
           name: 'Exercise',
-          valueId: 'value1',
+          valueIds: ['value1'],
           duration: 60,
           date: today.add(const Duration(hours: 7, minutes: 15)), // Today, 7:15 AM
           notes: 'Early morning workout',
@@ -58,7 +58,7 @@ void main() {
         ActivityModel(
           id: '1',
           name: 'Exercise',
-          valueId: 'value1',
+          valueIds: ['value1'],
           duration: 30,
           date: fourDaysAgo.add(const Duration(hours: 8)), // 4 days ago
           notes: 'Day 1',
@@ -66,7 +66,7 @@ void main() {
         ActivityModel(
           id: '2',
           name: 'Exercise',
-          valueId: 'value1',
+          valueIds: ['value1'],
           duration: 45,
           date: threeDaysAgo.add(const Duration(hours: 20)), // 3 days ago
           notes: 'Day 2',
@@ -75,7 +75,7 @@ void main() {
         ActivityModel(
           id: '3',
           name: 'Exercise',
-          valueId: 'value1',
+          valueIds: ['value1'],
           duration: 60,
           date: yesterday.add(const Duration(hours: 10)), // Yesterday
           notes: 'Day 4',
@@ -83,7 +83,7 @@ void main() {
         ActivityModel(
           id: '4',
           name: 'Exercise',
-          valueId: 'value1',
+          valueIds: ['value1'],
           duration: 30,
           date: today.add(const Duration(hours: 15)), // Today
           notes: 'Day 5',
@@ -106,7 +106,7 @@ void main() {
         ActivityModel(
           id: '1',
           name: 'Exercise',
-          valueId: 'value1',
+          valueIds: ['value1'],
           duration: 30,
           date: yesterday.add(const Duration(hours: 8)), // Yesterday, morning
           notes: 'Morning workout',
@@ -114,7 +114,7 @@ void main() {
         ActivityModel(
           id: '2',
           name: 'Exercise',
-          valueId: 'value1',
+          valueIds: ['value1'],
           duration: 45,
           date: yesterday.add(const Duration(hours: 18)), // Yesterday, evening
           notes: 'Evening workout',
@@ -122,7 +122,7 @@ void main() {
         ActivityModel(
           id: '3',
           name: 'Exercise',
-          valueId: 'value1',
+          valueIds: ['value1'],
           duration: 60,
           date: today.add(const Duration(hours: 10)), // Today
           notes: 'Next day workout',
@@ -145,7 +145,7 @@ void main() {
         ActivityModel(
           id: '1',
           name: 'Exercise',
-          valueId: 'value1',
+          valueIds: ['value1'],
           duration: 30,
           date: threeDaysAgo,
           notes: 'Old workout',
@@ -166,7 +166,7 @@ void main() {
         ActivityModel(
           id: '1',
           name: 'Exercise',
-          valueId: 'value1',
+          valueIds: ['value1'],
           duration: 30,
           date: yesterday,
           notes: 'Yesterday workout',
@@ -197,7 +197,7 @@ void main() {
         ActivityModel(
           id: '1',
           name: 'Exercise',
-          valueId: 'value1',
+          valueIds: ['value1'],
           duration: 30,
           date: yesterday,
           notes: 'Value 1 activity',
@@ -205,7 +205,7 @@ void main() {
         ActivityModel(
           id: '2',
           name: 'Reading',
-          valueId: 'value2',
+          valueIds: ['value2'],
           duration: 45,
           date: yesterday,
           notes: 'Value 2 activity',
@@ -213,7 +213,7 @@ void main() {
         ActivityModel(
           id: '3',
           name: 'Exercise',
-          valueId: 'value1',
+          valueIds: ['value1'],
           duration: 60,
           date: today,
           notes: 'Value 1 activity day 2',

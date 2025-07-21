@@ -202,10 +202,10 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                 child: ActivityFormWidget(
                   isLoading: context.watch<ActivitiesBloc>().state
                       is ActivitiesLoading,
-                  onSave: (name, valueId, duration, date, notes, isPublic, notesPublic, mood) {
+                  onSave: (name, valueIds, duration, date, notes, isPublic, notesPublic, mood) {
                     final activity = ActivityModel(
                       name: name,
-                      valueId: valueId,
+                      valueIds: valueIds,
                       duration: duration,
                       date: date,
                       notes: notes,
@@ -213,13 +213,13 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                       notesPublic: notesPublic,
                     );
 
-                    // Get the value model for social sharing
+                    // Get the primary value model for social sharing (use first selected value)
                     ValueModel? selectedValue;
                     final valuesState = context.read<ValuesBloc>().state;
-                    if (valuesState is ValuesLoaded) {
+                    if (valuesState is ValuesLoaded && valueIds.isNotEmpty) {
                       try {
                         selectedValue = valuesState.values.firstWhere(
-                          (v) => v.id == valueId,
+                          (v) => v.id == valueIds.first,
                         );
                       } catch (e) {
                         // Value not found, will use null
@@ -757,7 +757,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                           final valuesState = context.watch<ValuesBloc>().state;
                           if (valuesState is ValuesLoaded) {
                             final value = valuesState.values.firstWhere(
-                              (v) => v.id == activity.valueId,
+                              (v) => v.id == activity.primaryValueId,
                               orElse: () => const ValueModel(
                                 name: 'unknown value',
                                 importance: 1,
@@ -1007,14 +1007,17 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
             final totalTime = activities.fold<int>(
                 0, (sum, activity) => sum + activity.duration);
 
-            // Calculate activities per value
+            // Calculate activities per value (handle multiple values per activity)
             final valuesMap = <String, int>{};
             for (final activity in activities) {
-              valuesMap.update(
-                activity.valueId,
-                (count) => count + 1,
-                ifAbsent: () => 1,
-              );
+              // Count this activity for each value it supports
+              for (final valueId in activity.valueIds) {
+                valuesMap.update(
+                  valueId,
+                  (count) => count + 1,
+                  ifAbsent: () => 1,
+                );
+              }
             }
 
             return Row(

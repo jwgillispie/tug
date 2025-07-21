@@ -363,7 +363,7 @@ class _IndulgenceTrackingScreenState extends State<IndulgenceTrackingScreen>
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Vice: ${_getViceNameById(indulgence.viceId)}',
+                          'Vices: ${indulgence.viceIds.map((id) => _getViceNameById(id)).join(', ')}',
                           style: TextStyle(
                             fontWeight: FontWeight.w500,
                             color: isDarkMode ? TugColors.viceModeTextPrimary : TugColors.lightTextPrimary,

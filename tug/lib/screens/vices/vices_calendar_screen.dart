@@ -214,7 +214,7 @@ class _VicesCalendarScreenState extends State<VicesCalendarScreen> with Automati
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Vice: ${indulgence.viceId}', // We'd need to resolve the vice name
+                          'Vices: ${indulgence.viceIds.join(', ')}', // Show all vices involved
                           style: TextStyle(
                             fontWeight: FontWeight.w500,
                             color: isDarkMode ? TugColors.viceModeTextPrimary : TugColors.lightTextPrimary,

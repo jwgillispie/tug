@@ -4,7 +4,7 @@ import 'package:equatable/equatable.dart';
 class ActivityModel extends Equatable {
   final String? id;
   final String name;
-  final String valueId;
+  final List<String> valueIds; // Changed from single valueId to list
   final int duration;
   final DateTime date;
   final String? notes;
@@ -15,7 +15,7 @@ class ActivityModel extends Equatable {
   const ActivityModel({
     this.id,
     required this.name,
-    required this.valueId,
+    required this.valueIds,
     required this.duration,
     required this.date,
     this.notes,
@@ -27,7 +27,7 @@ class ActivityModel extends Equatable {
   ActivityModel copyWith({
     String? id,
     String? name,
-    String? valueId,
+    List<String>? valueIds,
     int? duration,
     DateTime? date,
     String? notes,
@@ -38,7 +38,7 @@ class ActivityModel extends Equatable {
     return ActivityModel(
       id: id ?? this.id,
       name: name ?? this.name,
-      valueId: valueId ?? this.valueId,
+      valueIds: valueIds ?? this.valueIds,
       duration: duration ?? this.duration,
       date: date ?? this.date,
       notes: notes ?? this.notes,
@@ -53,7 +53,7 @@ class ActivityModel extends Equatable {
     // The backend should handle timezone conversion if needed
     return {
       'name': name,
-      'value_id': valueId,
+      'value_ids': valueIds,
       'duration': duration,
       'date': date.toIso8601String(), // Send local time to preserve user's intended date
       'notes': notes,
@@ -77,7 +77,9 @@ class ActivityModel extends Equatable {
     return ActivityModel(
       id: json['id'],
       name: json['name'],
-      valueId: json['value_id'],
+      valueIds: json['value_ids'] != null 
+          ? List<String>.from(json['value_ids'])
+          : (json['value_id'] != null ? [json['value_id']] : []), // Backward compatibility
       duration: json['duration'],
       date: parseDate(json['date']),
       notes: json['notes'],
@@ -89,11 +91,22 @@ class ActivityModel extends Equatable {
     );
   }
 
+  // Helper methods for backward compatibility and ease of use
+  
+  /// Get primary value ID (first in list, for backward compatibility)
+  String? get primaryValueId => valueIds.isNotEmpty ? valueIds.first : null;
+  
+  /// Get secondary value IDs (all except first)
+  List<String> get secondaryValueIds => valueIds.length > 1 ? valueIds.skip(1).toList() : [];
+  
+  /// Check if activity has multiple values
+  bool get hasMultipleValues => valueIds.length > 1;
+
   @override
   List<Object?> get props => [
     id, 
     name, 
-    valueId, 
+    valueIds, 
     duration, 
     date, 
     notes, 

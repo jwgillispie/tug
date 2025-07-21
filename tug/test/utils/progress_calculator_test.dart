@@ -32,7 +32,7 @@ void main() {
         ActivityModel(
           id: '1',
           name: 'Morning Exercise',
-          valueId: 'exercise_id',
+          valueIds: ['exercise_id'],
           duration: 45,
           date: todayStart.add(const Duration(hours: 8)),
           notes: 'Workout',
@@ -40,7 +40,7 @@ void main() {
         ActivityModel(
           id: '2',
           name: 'Reading',
-          valueId: 'reading_id',
+          valueIds: ['reading_id'],
           duration: 30,
           date: todayStart.add(const Duration(hours: 20)),
           notes: 'Book',
@@ -132,7 +132,7 @@ void main() {
         ActivityModel(
           id: '1',
           name: 'Today Exercise',
-          valueId: 'exercise_id',
+          valueIds: ['exercise_id'],
           duration: 30,
           date: todayStart.add(const Duration(hours: 8)),
           notes: 'Today',
@@ -140,7 +140,7 @@ void main() {
         ActivityModel(
           id: '2',
           name: 'Yesterday Exercise',
-          valueId: 'exercise_id',
+          valueIds: ['exercise_id'],
           duration: 45,
           date: yesterday.add(const Duration(hours: 8)),
           notes: 'Yesterday',
@@ -148,7 +148,7 @@ void main() {
         ActivityModel(
           id: '3',
           name: 'Old Exercise',
-          valueId: 'exercise_id',
+          valueIds: ['exercise_id'],
           duration: 60,
           date: twoDaysAgo.add(const Duration(hours: 8)),
           notes: 'Two days ago',

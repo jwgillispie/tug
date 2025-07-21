@@ -16,7 +16,7 @@ void main() {
         ActivityModel(
           id: '1',
           name: 'Morning Exercise',
-          valueId: 'exercise_value_id',
+          valueIds: ['exercise_value_id'],
           duration: 45, // 45 minutes today
           date: todayStart.add(const Duration(hours: 8)),
           notes: 'Morning workout',
@@ -24,7 +24,7 @@ void main() {
         ActivityModel(
           id: '2',
           name: 'Reading',
-          valueId: 'learning_value_id',
+          valueIds: ['learning_value_id'],
           duration: 30, // 30 minutes today
           date: todayStart.add(const Duration(hours: 20)),
           notes: 'Book reading',
@@ -86,7 +86,7 @@ void main() {
         // Calculate data for each value
         for (final value in values) {
           final valueActivities = filteredActivities.where(
-            (activity) => activity.valueId == value.id
+            (activity) => activity.primaryValueId == value.id
           ).toList();
 
           final totalMinutes = valueActivities.fold<int>(

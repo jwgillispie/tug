@@ -38,7 +38,7 @@ class _EditActivityDialogState extends State<EditActivityDialog> {
     _nameController = TextEditingController(text: widget.activity.name);
     _durationController = TextEditingController(text: widget.activity.duration.toString());
     _notesController = TextEditingController(text: widget.activity.notes ?? '');
-    _valueId = widget.activity.valueId;
+    _valueId = widget.activity.primaryValueId ?? ''; // Use primary value for editing
     _selectedDate = widget.activity.date;
   }
 
@@ -259,9 +259,17 @@ class _EditActivityDialogState extends State<EditActivityDialog> {
         : null;
     
     // Create updated activity model
+    // For now, preserve the original multiple values but update the primary value
+    List<String> updatedValueIds = List.from(widget.activity.valueIds);
+    if (updatedValueIds.isNotEmpty && _valueId.isNotEmpty) {
+      updatedValueIds[0] = _valueId; // Update primary value
+    } else if (_valueId.isNotEmpty) {
+      updatedValueIds = [_valueId]; // Set as new primary value if none existed
+    }
+    
     final updatedActivity = widget.activity.copyWith(
       name: name,
-      valueId: _valueId,
+      valueIds: updatedValueIds,
       duration: duration,
       date: _selectedDate,
       notes: notes,

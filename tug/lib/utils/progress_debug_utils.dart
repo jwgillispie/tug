@@ -19,13 +19,16 @@ class ProgressDebugUtils {
       return;
     }
     
-    // Group by value
+    // Group by value (handle multiple values per activity)
     final Map<String, List<ActivityModel>> groupedActivities = {};
     for (final activity in activities) {
-      if (!groupedActivities.containsKey(activity.valueId)) {
-        groupedActivities[activity.valueId] = [];
+      // Each activity can now support multiple values
+      for (final valueId in activity.valueIds) {
+        if (!groupedActivities.containsKey(valueId)) {
+          groupedActivities[valueId] = [];
+        }
+        groupedActivities[valueId]!.add(activity);
       }
-      groupedActivities[activity.valueId]!.add(activity);
     }
     
     // Print summary for each value

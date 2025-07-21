@@ -13,9 +13,9 @@ class StreakUtils {
     String valueId, 
     List<ActivityModel> activities
   ) {
-    // Filter activities for this specific value
+    // Filter activities for this specific value (handle multiple values per activity)
     final valueActivities = activities
-        .where((activity) => activity.valueId == valueId)
+        .where((activity) => activity.valueIds.contains(valueId))
         .toList();
 
     if (valueActivities.isEmpty) {
@@ -214,9 +214,9 @@ class StreakUtils {
     List<IndulgenceModel> indulgences,
     DateTime? viceCreatedDate,
   ) {
-    // Filter indulgences for this specific vice
+    // Filter indulgences for this specific vice (handle multiple vices per indulgence)
     final viceIndulgences = indulgences
-        .where((indulgence) => indulgence.viceId == viceId)
+        .where((indulgence) => indulgence.viceIds.contains(viceId))
         .toList();
 
     // Sort indulgences by date
@@ -360,7 +360,7 @@ class StreakUtils {
       lastIndulgenceDate: streakData.lastIndulgenceDate,
       totalIndulgences: streakData.totalIndulgences,
       indulgenceDates: indulgences
-          .where((i) => i.viceId == vice.id)
+          .where((i) => i.viceIds.contains(vice.id))
           .map((i) => i.date)
           .toList(),
     );

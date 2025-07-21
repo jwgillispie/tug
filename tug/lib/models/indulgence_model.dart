@@ -3,7 +3,7 @@ import 'package:equatable/equatable.dart';
 
 class IndulgenceModel extends Equatable {
   final String? id;
-  final String viceId;
+  final List<String> viceIds; // Changed from single viceId to list
   final String userId;
   final DateTime date;
   final int? duration; // minutes spent, optional
@@ -18,7 +18,7 @@ class IndulgenceModel extends Equatable {
 
   const IndulgenceModel({
     this.id,
-    required this.viceId,
+    required this.viceIds,
     required this.userId,
     required this.date,
     this.duration,
@@ -34,7 +34,7 @@ class IndulgenceModel extends Equatable {
 
   IndulgenceModel copyWith({
     String? id,
-    String? viceId,
+    List<String>? viceIds,
     String? userId,
     DateTime? date,
     int? duration,
@@ -49,7 +49,7 @@ class IndulgenceModel extends Equatable {
   }) {
     return IndulgenceModel(
       id: id ?? this.id,
-      viceId: viceId ?? this.viceId,
+      viceIds: viceIds ?? this.viceIds,
       userId: userId ?? this.userId,
       date: date ?? this.date,
       duration: duration ?? this.duration,
@@ -66,7 +66,7 @@ class IndulgenceModel extends Equatable {
 
   Map<String, dynamic> toJson() {
     return {
-      'vice_id': viceId,
+      'vice_ids': viceIds,
       'user_id': userId,
       'date': date.toIso8601String(),
       'duration': duration,
@@ -82,7 +82,9 @@ class IndulgenceModel extends Equatable {
   factory IndulgenceModel.fromJson(Map<String, dynamic> json) {
     return IndulgenceModel(
       id: json['id'],
-      viceId: json['vice_id'],
+      viceIds: json['vice_ids'] != null 
+          ? List<String>.from(json['vice_ids'])
+          : (json['vice_id'] != null ? [json['vice_id']] : []), // Backward compatibility
       userId: json['user_id'],
       date: DateTime.parse(json['date']),
       duration: json['duration'],
@@ -103,7 +105,16 @@ class IndulgenceModel extends Equatable {
     );
   }
 
-  // Helper methods
+  // Helper methods for backward compatibility and ease of use
+  
+  /// Get primary vice ID (first in list, for backward compatibility)
+  String? get primaryViceId => viceIds.isNotEmpty ? viceIds.first : null;
+  
+  /// Get secondary vice IDs (all except first)
+  List<String> get secondaryViceIds => viceIds.length > 1 ? viceIds.skip(1).toList() : [];
+  
+  /// Check if indulgence has multiple vices
+  bool get hasMultipleVices => viceIds.length > 1;
 
   /// Get time of day when indulgence occurred
   String get timeOfDay {
@@ -140,7 +151,7 @@ class IndulgenceModel extends Equatable {
   @override
   List<Object?> get props => [
     id,
-    viceId,
+    viceIds,
     userId,
     date,
     duration,

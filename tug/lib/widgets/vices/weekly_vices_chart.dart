@@ -243,25 +243,29 @@ class WeeklyVicesChart extends StatelessWidget {
 
     // Group indulgences by day and vice (only for vices that still exist)
     for (final indulgence in weeklyIndulgences) {
-      // Skip indulgences for vices that no longer exist
-      if (!validViceIds.contains(indulgence.viceId)) {
-        continue;
-      }
       final indulgenceDate = indulgence.date;
       final daysDiff = indulgenceDate.difference(startOfWeek).inDays;
       
       if (daysDiff >= 0 && daysDiff < 7) {
-        final existingViceIndex = weekData[daysDiff]!.indexWhere(
-          (item) => item['viceId'] == indulgence.viceId,
-        );
-        
-        if (existingViceIndex >= 0) {
-          weekData[daysDiff]![existingViceIndex]['count']++;
-        } else {
-          weekData[daysDiff]!.add({
-            'viceId': indulgence.viceId,
-            'count': 1,
-          });
+        // Handle multiple vices per indulgence
+        for (final viceId in indulgence.viceIds) {
+          // Skip indulgences for vices that no longer exist
+          if (!validViceIds.contains(viceId)) {
+            continue;
+          }
+          
+          final existingViceIndex = weekData[daysDiff]!.indexWhere(
+            (item) => item['viceId'] == viceId,
+          );
+          
+          if (existingViceIndex >= 0) {
+            weekData[daysDiff]![existingViceIndex]['count']++;
+          } else {
+            weekData[daysDiff]!.add({
+              'viceId': viceId,
+              'count': 1,
+            });
+          }
         }
       }
     }

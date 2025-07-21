@@ -20,13 +20,16 @@ class ProgressCalculator {
       (activity.date.isBefore(endDate) || activity.date.isAtSameMomentAs(endDate))
     ).toList();
 
-    // Group activities by value ID for efficient lookup
+    // Group activities by value ID for efficient lookup (handle multiple values per activity)
     final Map<String, List<ActivityModel>> activitiesByValue = {};
     for (final activity in filteredActivities) {
-      if (!activitiesByValue.containsKey(activity.valueId)) {
-        activitiesByValue[activity.valueId] = [];
+      // Each activity can now support multiple values
+      for (final valueId in activity.valueIds) {
+        if (!activitiesByValue.containsKey(valueId)) {
+          activitiesByValue[valueId] = [];
+        }
+        activitiesByValue[valueId]!.add(activity);
       }
-      activitiesByValue[activity.valueId]!.add(activity);
     }
 
     // Process only active values
