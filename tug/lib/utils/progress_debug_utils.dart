@@ -10,12 +10,12 @@ class ProgressDebugUtils {
     DateTime startDate,
     DateTime endDate,
   ) {
-    print('=== Activity Summary ($timeframe) ===');
-    print('Date range: ${startDate.toLocal()} to ${endDate.toLocal()}');
-    print('Total activities: ${activities.length}');
+    // print('=== Activity Summary ($timeframe) ===');
+    // print('Date range: ${startDate.toLocal()} to ${endDate.toLocal()}');
+    // print('Total activities: ${activities.length}');
     
     if (activities.isEmpty) {
-      print('No activities found in this timeframe');
+      // print('No activities found in this timeframe');
       return;
     }
     
@@ -35,13 +35,13 @@ class ProgressDebugUtils {
         (sum, activity) => sum + activity.duration
       );
       
-      print('Value: $valueId');
-      print('  Activities: ${valueActivities.length}');
-      print('  Total minutes: $totalMinutes');
-      print('  Activities: ${valueActivities.map((a) => '${a.name} (${a.duration}m)').join(', ')}');
+      // print('Value: $valueId');
+      // print('  Activities: ${valueActivities.length}');
+      // print('  Total minutes: $totalMinutes');
+      // print('  Activities: ${valueActivities.map((a) => '${a.name} (${a.duration}m)').join(', ')}');
     });
     
-    print('==============================\n');
+    // print('==============================\n');
   }
   
   /// Debug print community average calculations
@@ -49,14 +49,14 @@ class ProgressDebugUtils {
     Map<String, String> valueNames,
     String timeframe,
   ) {
-    print('=== Community Averages ($timeframe) ===');
+    // print('=== Community Averages ($timeframe) ===');
     
     valueNames.forEach((valueId, valueName) {
       final avg = _calculateCommunityAverage(valueName, timeframe);
-      print('$valueName: ${_formatMinutes(avg)}');
+      // print('$valueName: ${_formatMinutes(avg)}');
     });
     
-    print('=====================================\n');
+    // print('=====================================\n');
   }
   
   /// Helper method to calculate community average (matches progress screen logic)

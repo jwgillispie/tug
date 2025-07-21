@@ -156,12 +156,13 @@ class ApiService {
         
         switch (method.toLowerCase()) {
           case 'get':
-            // For GET requests, always include trailing slash to avoid redirects
-            response = await _dio.get('$path/', queryParameters: queryParameters);
+            // For GET requests, include trailing slash except for mood endpoints to avoid redirects
+            final getUrl = path.contains('mood') ? path : '$path/';
+            response = await _dio.get(getUrl, queryParameters: queryParameters);
             break;
           case 'post':
             // Don't add trailing slash for specific endpoints to avoid redirects
-            final postUrl = path.contains('profile-picture') ? path : '$path/';
+            final postUrl = (path.contains('profile-picture') || path.contains('mood')) ? path : '$path/';
             response = await _dio.post(postUrl, data: data);
             break;
           case 'put':

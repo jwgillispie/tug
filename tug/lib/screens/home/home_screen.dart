@@ -183,18 +183,19 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   // Load mood entries for chart
   Future<void> _loadMoodEntries() async {
+    print('DEBUG: Starting _loadMoodEntries()');
     try {
       final moodEntries = await _moodService.getMoodEntries();
+      print('DEBUG: Received ${moodEntries.length} mood entries from service');
       if (mounted) {
         setState(() {
           _moodEntries = moodEntries;
         });
-        // Debug: Print mood entries count and recent entries
-        print('DEBUG: Loaded ${moodEntries.length} mood entries');
+        print('DEBUG: Updated state with ${moodEntries.length} mood entries');
         if (moodEntries.isNotEmpty) {
           final recent = moodEntries.take(3);
           for (final entry in recent) {
-            print('  - ${entry.moodType.name}: ${entry.positivityScore} (activityId: ${entry.activityId})');
+            print('  - ${entry.moodType.name}: ${entry.positivityScore} (activityId: ${entry.activityId}, recorded: ${entry.recordedAt})');
           }
         }
       }
@@ -434,8 +435,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         // Swipeable Charts (Activity & Mood)
                         BlocListener<ActivitiesBloc, ActivitiesState>(
                           listener: (context, state) {
+                            print('DEBUG: BlocListener received state: ${state.runtimeType}');
                             // Refresh mood entries when activities are updated
                             if (state is ActivityOperationSuccess) {
+                              print('DEBUG: ActivityOperationSuccess - refreshing mood entries');
                               _loadMoodEntries();
                             }
                           },

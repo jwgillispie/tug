@@ -53,6 +53,7 @@ class _MoodChartState extends State<MoodChart> {
   late List<FlSpot> _spots;
   late double _maxY;
   late List<DateTime> _dateLabels;
+  late List<bool> _daysWithMoodData; // Track which days have actual mood data
   TimeRange _selectedTimeRange = TimeRange.week;
   
   @override
@@ -105,10 +106,12 @@ class _MoodChartState extends State<MoodChart> {
     final effectiveDays = _effectiveDaysToShow;
     final startDate = DateTime(now.year, now.month, now.day)
         .subtract(Duration(days: effectiveDays - 1));
+    final endDate = DateTime(now.year, now.month, now.day)
+        .add(Duration(days: 1)); // Include tomorrow to capture today's entries
     
     // Debug mood data
     print('DEBUG MoodChart: Processing ${widget.moodEntries.length} mood entries');
-    print('DEBUG MoodChart: Date range: $startDate to $now');
+    print('DEBUG MoodChart: Date range: $startDate to $endDate');
     
     // Get aggregation level based on time range
     final aggregation = widget.daysToShow != null 
@@ -132,9 +135,9 @@ class _MoodChartState extends State<MoodChart> {
   }
 
   void _prepareDailyData(DateTime startDate, int days) {
-    // Create a list of dates for the x-axis
+    // Create a list of dates for the x-axis (include an extra day to capture today)
     _dateLabels = List.generate(
-      days,
+      days + 1, // Add 1 to include today properly
       (index) => startDate.add(Duration(days: index)),
     );
     
@@ -156,31 +159,41 @@ class _MoodChartState extends State<MoodChart> {
       );
       
       final moodKey = '${moodDate.year}-${moodDate.month}-${moodDate.day}';
+      print('DEBUG MoodChart: Mood entry recorded ${moodEntry.recordedAt} -> dateKey: $moodKey');
       
       if (dailyMoodScores.containsKey(moodKey)) {
         dailyMoodScores[moodKey]!.add(moodEntry.positivityScore);
+        print('DEBUG MoodChart: Added mood score ${moodEntry.positivityScore} to day $moodKey');
+      } else {
+        print('DEBUG MoodChart: Date $moodKey not in chart range');
       }
     }
     
-    // Create spots for the line chart (only include days with mood entries)
-    _spots = _dateLabels.asMap().entries
-        .where((entry) {
-          final date = entry.value;
-          final dateKey = '${date.year}-${date.month}-${date.day}';
-          final moodScores = dailyMoodScores[dateKey] ?? [];
-          return moodScores.isNotEmpty; // Only include days with actual mood data
-        })
-        .map((entry) {
-          final index = entry.key;
-          final date = entry.value;
-          final dateKey = '${date.year}-${date.month}-${date.day}';
-          final moodScores = dailyMoodScores[dateKey]!; // Safe because we filtered above
-          
-          // Calculate average mood score for the day
-          final avgScore = moodScores.reduce((a, b) => a + b) / moodScores.length.toDouble();
-          
-          return FlSpot(index.toDouble(), avgScore);
-        }).toList();
+    // Create spots for the line chart (include ALL days, use null for days without mood data)
+    _spots = _dateLabels.asMap().entries.map((entry) {
+      final index = entry.key;
+      final date = entry.value;
+      final dateKey = '${date.year}-${date.month}-${date.day}';
+      final moodScores = dailyMoodScores[dateKey] ?? [];
+      
+      if (moodScores.isNotEmpty) {
+        // Calculate average mood score for the day
+        final avgScore = moodScores.reduce((a, b) => a + b) / moodScores.length.toDouble();
+        return FlSpot(index.toDouble(), avgScore);
+      } else {
+        // Use a neutral mood score (5.0) for days without mood data to maintain line continuity
+        // This will be rendered transparently or with different styling
+        return FlSpot(index.toDouble(), 5.0);
+      }
+    }).toList();
+    
+    // Store which days have actual mood data for styling purposes
+    _daysWithMoodData = _dateLabels.asMap().entries.map((entry) {
+      final date = entry.value;
+      final dateKey = '${date.year}-${date.month}-${date.day}';
+      final moodScores = dailyMoodScores[dateKey] ?? [];
+      return moodScores.isNotEmpty;
+    }).toList();
   }
 
   void _prepareWeeklyData(DateTime startDate, int days) {
@@ -236,23 +249,28 @@ class _MoodChartState extends State<MoodChart> {
       }
     }
     
-    // Create spots for weekly data (only include weeks with mood entries)
-    _spots = _dateLabels.asMap().entries
-        .where((entry) {
-          final weekStart = entry.value;
-          final moodScores = weeklyMoodScores[weekStart] ?? [];
-          return moodScores.isNotEmpty; // Only include weeks with actual mood data
-        })
-        .map((entry) {
-          final index = entry.key;
-          final weekStart = entry.value;
-          final moodScores = weeklyMoodScores[weekStart]!; // Safe because we filtered above
-          
-          // Calculate average mood score for the week
-          final avgScore = moodScores.reduce((a, b) => a + b) / moodScores.length.toDouble();
-          
-          return FlSpot(index.toDouble(), avgScore);
-        }).toList();
+    // Create spots for weekly data (include ALL weeks, use neutral for weeks without mood data)
+    _spots = _dateLabels.asMap().entries.map((entry) {
+      final index = entry.key;
+      final weekStart = entry.value;
+      final moodScores = weeklyMoodScores[weekStart] ?? [];
+      
+      if (moodScores.isNotEmpty) {
+        // Calculate average mood score for the week
+        final avgScore = moodScores.reduce((a, b) => a + b) / moodScores.length.toDouble();
+        return FlSpot(index.toDouble(), avgScore);
+      } else {
+        // Use neutral mood score for weeks without mood data
+        return FlSpot(index.toDouble(), 5.0);
+      }
+    }).toList();
+    
+    // Store which weeks have actual mood data for styling purposes
+    _daysWithMoodData = _dateLabels.asMap().entries.map((entry) {
+      final weekStart = entry.value;
+      final moodScores = weeklyMoodScores[weekStart] ?? [];
+      return moodScores.isNotEmpty;
+    }).toList();
   }
 
   // Smart X-axis interval calculation for cleaner labels
@@ -318,7 +336,7 @@ class _MoodChartState extends State<MoodChart> {
     return aggregation == DataAggregation.daily ? 2.5 : 3.0;
   }
 
-  // Smart dot visibility - hide dots for longer time ranges
+  // Smart dot visibility - hide dots for longer time ranges, show only for days with actual mood data
   FlDotData _getDotData() {
     final numPoints = _dateLabels.length;
     final aggregation = widget.daysToShow != null 
@@ -334,6 +352,11 @@ class _MoodChartState extends State<MoodChart> {
     
     return FlDotData(
       show: true,
+      checkToShowDot: (spot, barData) {
+        // Only show dots for days/weeks that have actual mood data
+        final index = spot.x.toInt();
+        return index < _daysWithMoodData.length && _daysWithMoodData[index];
+      },
       getDotPainter: (spot, percent, barData, index) {
         return FlDotCirclePainter(
           radius: 3,
@@ -381,7 +404,7 @@ class _MoodChartState extends State<MoodChart> {
     _maxY = 10.0;
   }
   
-  // Calculate the average mood score from the mood data
+  // Calculate the average mood score from the mood data (only days with actual data)
   double _calculateAverageScore() {
     if (widget.moodEntries.isEmpty) {
       return 5.0; // Default neutral mood
@@ -415,7 +438,7 @@ class _MoodChartState extends State<MoodChart> {
       }
     }
     
-    // Calculate daily averages and then overall average
+    // Calculate daily averages and then overall average (only for days with mood data)
     double totalScore = 0.0;
     int daysWithMoods = 0;
     
@@ -543,33 +566,34 @@ class _MoodChartState extends State<MoodChart> {
                       ),
                     ],
                   ),
-                  // Average mood stat
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3), // Reduced padding
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(10), // Slightly smaller radius
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.mood,
-                          color: Colors.white,
-                          size: 10, // Smaller icon
-                        ),
-                        const SizedBox(width: 3), // Reduced spacing
-                        Text(
-                          'avg: ${_getMoodNameFromScore(_calculateAverageScore())}',
-                          style: const TextStyle(
+                  // Average mood stat (only show if there's mood data)
+                  if (_daysWithMoodData.any((hasData) => hasData))
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3), // Reduced padding
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10), // Slightly smaller radius
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(
+                            Icons.mood,
                             color: Colors.white,
-                            fontSize: 10, // Smaller font
-                            fontWeight: FontWeight.w500,
+                            size: 10, // Smaller icon
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 3), // Reduced spacing
+                          Text(
+                            'avg: ${_getMoodNameFromScore(_calculateAverageScore())}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10, // Smaller font
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
                 ],
               ),
               const SizedBox(height: 6), // Reduced spacing
@@ -578,7 +602,7 @@ class _MoodChartState extends State<MoodChart> {
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.only(right: 8, top: 8),
-                  child: _spots.isEmpty
+                  child: _daysWithMoodData.every((hasData) => !hasData)
                       ? Center(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -741,8 +765,13 @@ class _MoodChartState extends State<MoodChart> {
                                   ? DataAggregation.daily 
                                   : _selectedTimeRange.aggregation;
                               
+                              // Check if this day has actual mood data
+                              final hasActualData = index < _daysWithMoodData.length && _daysWithMoodData[index];
+                              
                               String tooltip;
-                              if (aggregation == DataAggregation.weekly) {
+                              if (!hasActualData) {
+                                tooltip = 'No mood data\n${DateFormat('MMM d').format(date)}';
+                              } else if (aggregation == DataAggregation.weekly) {
                                 tooltip = '${moodScore.toStringAsFixed(1)}/10 avg\nWeek of ${DateFormat('MMM d').format(date)}';
                               } else {
                                 tooltip = '${moodScore.toStringAsFixed(1)}/10 (${_getMoodNameFromScore(moodScore)})\n${DateFormat('MMM d').format(date)}';
@@ -772,8 +801,8 @@ class _MoodChartState extends State<MoodChart> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // Average mood badge
-                    if (widget.moodEntries.isNotEmpty)
+                    // Average mood badge (only show if there's mood data)
+                    if (_daysWithMoodData.any((hasData) => hasData))
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), // Reduced padding
                         decoration: BoxDecoration(

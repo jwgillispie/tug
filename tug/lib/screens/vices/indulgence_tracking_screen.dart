@@ -103,7 +103,7 @@ class _IndulgenceTrackingScreenState extends State<IndulgenceTrackingScreen>
   Future<void> _loadIndulgences() async {
     if (_isLoading) return;
     
-    print('DEBUG: Loading all indulgences for calendar...');
+    // print('DEBUG: Loading all indulgences for calendar...');
     
     setState(() {
       _isLoading = true;
@@ -111,7 +111,7 @@ class _IndulgenceTrackingScreenState extends State<IndulgenceTrackingScreen>
 
     try {
       final indulgences = await _viceService.getAllIndulgences();
-      print('DEBUG: Loaded ${indulgences.length} total indulgences');
+      // print('DEBUG: Loaded ${indulgences.length} total indulgences');
       
       // Group indulgences by date
       final Map<DateTime, List<IndulgenceModel>> groupedIndulgences = {};
@@ -128,16 +128,16 @@ class _IndulgenceTrackingScreenState extends State<IndulgenceTrackingScreen>
         groupedIndulgences[date]!.add(indulgence);
       }
 
-      print('DEBUG: Grouped indulgences into ${groupedIndulgences.keys.length} days');
+      // print('DEBUG: Grouped indulgences into ${groupedIndulgences.keys.length} days');
 
       setState(() {
         _indulgences = groupedIndulgences;
         _isLoading = false;
       });
       
-      print('DEBUG: Calendar indulgences updated successfully');
+      // print('DEBUG: Calendar indulgences updated successfully');
     } catch (e) {
-      print('DEBUG: Error loading calendar indulgences: $e');
+      // print('DEBUG: Error loading calendar indulgences: $e');
       setState(() {
         _isLoading = false;
       });
@@ -581,10 +581,10 @@ class _IndulgenceTrackingScreenState extends State<IndulgenceTrackingScreen>
     
     return BlocListener<VicesBloc, VicesState>(
       listener: (context, state) {
-        print('DEBUG: IndulgenceTrackingScreen - VicesBloc state changed: ${state.runtimeType}');
+        // print('DEBUG: IndulgenceTrackingScreen - VicesBloc state changed: ${state.runtimeType}');
         
         if (state is IndulgenceRecorded) {
-          print('DEBUG: IndulgenceRecorded detected! Refreshing indulgences data...');
+          // print('DEBUG: IndulgenceRecorded detected! Refreshing indulgences data...');
           
           // Clear cached indulgences to force reload
           _viceIndulgences.clear();
@@ -858,26 +858,26 @@ class _IndulgenceTrackingScreenState extends State<IndulgenceTrackingScreen>
   }
 
   Future<void> _loadIndulgencesForVice(String viceId) async {
-    print('DEBUG: Loading indulgences for vice: $viceId');
+    // print('DEBUG: Loading indulgences for vice: $viceId');
     
     if (_viceIndulgences.containsKey(viceId)) {
-      print('DEBUG: Indulgences already cached for vice $viceId (${_viceIndulgences[viceId]!.length} items)');
+      // print('DEBUG: Indulgences already cached for vice $viceId (${_viceIndulgences[viceId]!.length} items)');
       return; // Already loaded
     }
     
     try {
-      print('DEBUG: Fetching indulgences from service for vice: $viceId');
+      // print('DEBUG: Fetching indulgences from service for vice: $viceId');
       final indulgences = await _viceService.getIndulgences(viceId);
-      print('DEBUG: Successfully loaded ${indulgences.length} indulgences for vice $viceId');
+      // print('DEBUG: Successfully loaded ${indulgences.length} indulgences for vice $viceId');
       
       if (mounted) {
         setState(() {
           _viceIndulgences[viceId] = indulgences;
         });
-        print('DEBUG: Updated state with ${indulgences.length} indulgences for vice $viceId');
+        // print('DEBUG: Updated state with ${indulgences.length} indulgences for vice $viceId');
       }
     } catch (e) {
-      print('DEBUG: Error loading indulgences for vice $viceId: $e');
+      // print('DEBUG: Error loading indulgences for vice $viceId: $e');
       // Handle error - show empty list
       if (mounted) {
         setState(() {

@@ -71,7 +71,7 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
   }
 
   Future<void> _loadVicesWithRetry() async {
-    print('DEBUG: Loading vices with force refresh by default (using the working method)');
+    // print('DEBUG: Loading vices with force refresh by default (using the working method)');
     
     // Use the working method immediately: bloc force refresh
     // This bypasses the potentially corrupted cache that causes the "missing IDs" issue
@@ -85,21 +85,21 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
       final state = context.read<VicesBloc>().state;
       if (state is VicesError || 
           (state is VicesLoaded && state.vices.isEmpty)) {
-        print('DEBUG: Force refresh failed, trying direct service as fallback');
+        // print('DEBUG: Force refresh failed, trying direct service as fallback');
         await _loadVicesDirectly();
       } else if (state is VicesLoaded) {
-        print('DEBUG: Successfully loaded ${state.vices.length} vices with force refresh');
+        // print('DEBUG: Successfully loaded ${state.vices.length} vices with force refresh');
       }
     }
   }
 
   Future<void> _loadVicesDirectly() async {
     try {
-      print('DEBUG: Attempting direct vice service call as fallback');
+      // print('DEBUG: Attempting direct vice service call as fallback');
       final vices = await _viceService.getVices(forceRefresh: false, useCache: true);
       final activeVices = vices.where((v) => v.active && v.id != null).toList();
       
-      print('DEBUG: Direct service loaded ${activeVices.length} vices');
+      // print('DEBUG: Direct service loaded ${activeVices.length} vices');
       
       if (activeVices.isNotEmpty) {
         setState(() {
@@ -108,17 +108,17 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
         });
       }
     } catch (e) {
-      print('DEBUG: Direct service call failed: $e');
+      // print('DEBUG: Direct service call failed: $e');
     }
   }
 
   Future<void> _performDataCleanup() async {
     try {
-      print('DEBUG: Starting comprehensive data cleanup...');
+      // print('DEBUG: Starting comprehensive data cleanup...');
       
       // Clear all caches completely
       await _viceService.clearAllCache();
-      print('DEBUG: Cleared all vice service caches');
+      // print('DEBUG: Cleared all vice service caches');
       
       // Clear local state
       if (mounted) {
@@ -128,7 +128,7 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
           _selectedVice = null;
         });
       }
-      print('DEBUG: Cleared local state');
+      // print('DEBUG: Cleared local state');
       
       // Force a fresh load using the working method (bloc refresh)
       context.read<VicesBloc>().add(const ClearVicesCache());
@@ -136,7 +136,7 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
       
       if (mounted) {
         context.read<VicesBloc>().add(const LoadVices(forceRefresh: true));
-        print('DEBUG: Triggered fresh data load via bloc refresh (the working method)');
+        // print('DEBUG: Triggered fresh data load via bloc refresh (the working method)');
       }
       
       // Show user feedback
@@ -149,7 +149,7 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
         );
       }
     } catch (e) {
-      print('DEBUG: Data cleanup failed: $e');
+      // print('DEBUG: Data cleanup failed: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -221,11 +221,11 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
         notesPublic: _notesPublic,
       );
 
-      print('DEBUG: Recording indulgence for vice ${_selectedVice!.name} (ID: ${_selectedVice!.id})');
-      print('DEBUG: Social sharing settings - isPublic: $_isPublic, notesPublic: $_notesPublic');
-      print('DEBUG: Notes content: "${_notesController.text.trim()}"');
-      print('DEBUG: Will create social post: ${_isPublic && _notesPublic && _notesController.text.trim().isNotEmpty}');
-      print('DEBUG: Indulgence details: ${indulgence.toString()}');
+      // print('DEBUG: Recording indulgence for vice ${_selectedVice!.name} (ID: ${_selectedVice!.id})');
+      // print('DEBUG: Social sharing settings - isPublic: $_isPublic, notesPublic: $_notesPublic');
+      // print('DEBUG: Notes content: "${_notesController.text.trim()}"');
+      // print('DEBUG: Will create social post: ${_isPublic && _notesPublic && _notesController.text.trim().isNotEmpty}');
+      // print('DEBUG: Indulgence details: ${indulgence.toString()}');
       
       context.read<VicesBloc>().add(RecordIndulgence(indulgence));
       
@@ -339,12 +339,12 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
     
     return BlocListener<VicesBloc, VicesState>(
       listener: (context, state) {
-        print('DEBUG: BlocListener received state: ${state.runtimeType}');
+        // print('DEBUG: BlocListener received state: ${state.runtimeType}');
         if (state is VicesLoaded) {
-          print('DEBUG: VicesLoaded with ${state.vices.length} vices');
+          // print('DEBUG: VicesLoaded with ${state.vices.length} vices');
         }
         if (state is VicesError) {
-          print('DEBUG: VicesError: ${state.message}');
+          // print('DEBUG: VicesError: ${state.message}');
         }
         
         setState(() => _isLoading = state is VicesLoading);
@@ -486,21 +486,21 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
               final vices = allVices.where((v) => v.active).toList();
               
               // Debug info
-              print('DEBUG: BlocBuilder - State: ${state.runtimeType}, All vices: ${allVices.length}, Active vices: ${vices.length}, Uses fallback: $_usesFallback');
-              if (allVices.isNotEmpty) {
-                print('DEBUG: First vice - Name: ${allVices.first.name}, Active: ${allVices.first.active}, ID: ${allVices.first.id}');
-                print('DEBUG: All vices details:');
-                for (var i = 0; i < allVices.length; i++) {
-                  final vice = allVices[i];
-                  print('  Vice $i: ${vice.name}, Active: ${vice.active}, ID: ${vice.id}');
-                }
-              } else {
-                print('DEBUG: No vices found at all');
-              }
+              // print('DEBUG: BlocBuilder - State: ${state.runtimeType}, All vices: ${allVices.length}, Active vices: ${vices.length}, Uses fallback: $_usesFallback');
+              // if (allVices.isNotEmpty) {
+              //   print('DEBUG: First vice - Name: ${allVices.first.name}, Active: ${allVices.first.active}, ID: ${allVices.first.id}');
+              //   print('DEBUG: All vices details:');
+              //   for (var i = 0; i < allVices.length; i++) {
+              //     final vice = allVices[i];
+              //     print('  Vice $i: ${vice.name}, Active: ${vice.active}, ID: ${vice.id}');
+              //   }
+              // } else {
+              //   print('DEBUG: No vices found at all');
+              // }
               
               // Check dropdown filtering
               final dropdownVices = vices.where((v) => v.id != null && v.id!.isNotEmpty).toList();
-              print('DEBUG: Dropdown will show ${dropdownVices.length} vices (filtered for valid IDs)');
+              // print('DEBUG: Dropdown will show ${dropdownVices.length} vices (filtered for valid IDs)');
               
               if (vices.isEmpty && (state is VicesLoaded || _usesFallback)) {
                 return Center(
@@ -631,7 +631,7 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
                         child: Builder(
                           builder: (context) {
                             final validVices = vices.where((v) => v.id != null && v.id!.isNotEmpty).toList();
-                            print('DEBUG: DropdownButton validVices count: ${validVices.length}');
+                            // print('DEBUG: DropdownButton validVices count: ${validVices.length}');
                             
                             if (validVices.isEmpty) {
                               return Container(

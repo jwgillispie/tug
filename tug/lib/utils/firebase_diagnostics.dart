@@ -161,30 +161,30 @@ class FirebaseDiagnostics {
   // Print all Firebase diagnostic info
   Future<void> printAllDiagnostics(String email, String password) async {
     try {
-      debugPrint('\n---------- FIREBASE DIAGNOSTICS ----------');
+      // debugPrint('\n---------- FIREBASE DIAGNOSTICS ----------');
       
       // Check Firebase status
       final status = await checkFirebaseStatus();
-      debugPrint('Firebase Status:');
-      status.forEach((key, value) {
-        debugPrint('  $key: $value');
-      });
+      // debugPrint('Firebase Status:');
+      // status.forEach((key, value) {
+      //   debugPrint('  $key: $value');
+      // });
       
       // Test auth
       final authTest = await testAuth(email, password);
-      debugPrint('\nAuth Test:');
-      authTest.forEach((key, value) {
-        debugPrint('  $key: $value');
-      });
+      // debugPrint('\nAuth Test:');
+      // authTest.forEach((key, value) {
+      //   debugPrint('  $key: $value');
+      // });
       
       // Get current user details
       final userDetails = await getCurrentUserDetails();
-      debugPrint('\nCurrent User Details:');
-      userDetails.forEach((key, value) {
-        debugPrint('  $key: $value');
-      });
+      // debugPrint('\nCurrent User Details:');
+      // userDetails.forEach((key, value) {
+      //   debugPrint('  $key: $value');
+      // });
       
-      debugPrint('\n------ END FIREBASE DIAGNOSTICS ------\n');
+      // debugPrint('\n------ END FIREBASE DIAGNOSTICS ------\n');
     } catch (e) {
       // Failed to run diagnostics - handle silently
     }
