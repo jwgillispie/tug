@@ -200,21 +200,49 @@ class ViceService {
     try {
       _logger.i('ViceService: Recording indulgence for vices: ${indulgence.viceIds.join(", ")}');
       
-      final response = await _dio.post(
-        '/api/v1/indulgences', // Use new multi-vice endpoint
-        data: indulgence.toJson(),
-      );
-      
-      if (response.statusCode == 201) {
-        final recordedIndulgence = IndulgenceModel.fromJson(response.data['indulgence']);
-        _logger.i('ViceService: Indulgence recorded successfully');
+      // Try the new multi-vice endpoint first
+      try {
+        final response = await _dio.post(
+          '/api/v1/indulgences/', // New multi-vice endpoint
+          data: indulgence.toJson(),
+        );
         
-        // Invalidate cache to force recalculation of streaks on next load
-        await invalidateVicesCache();
+        if (response.statusCode == 201) {
+          final recordedIndulgence = IndulgenceModel.fromJson(response.data['indulgence']);
+          _logger.i('ViceService: Indulgence recorded successfully via new endpoint');
+          
+          // Invalidate cache to force recalculation of streaks on next load
+          await invalidateVicesCache();
+          
+          return recordedIndulgence;
+        } else {
+          throw Exception('Failed to record indulgence: ${response.statusCode}');
+        }
+      } catch (e) {
+        _logger.w('ViceService: New endpoint failed, trying fallback: $e');
         
-        return recordedIndulgence;
-      } else {
-        throw Exception('Failed to record indulgence: ${response.statusCode}');
+        // Fallback to old single-vice endpoint using primary vice
+        final primaryViceId = indulgence.primaryViceId;
+        if (primaryViceId == null || primaryViceId.isEmpty) {
+          throw Exception('No valid vice selected for indulgence');
+        }
+        
+        final fallbackResponse = await _dio.post(
+          '/api/v1/vices/$primaryViceId/indulge', // Fallback to old single-vice endpoint
+          data: indulgence.toJson(),
+        );
+        
+        if (fallbackResponse.statusCode == 201) {
+          final recordedIndulgence = IndulgenceModel.fromJson(fallbackResponse.data['indulgence']);
+          _logger.i('ViceService: Indulgence recorded successfully via fallback endpoint');
+          
+          // Invalidate cache to force recalculation of streaks on next load
+          await invalidateVicesCache();
+          
+          return recordedIndulgence;
+        } else {
+          throw Exception('Failed to record indulgence via fallback: ${fallbackResponse.statusCode}');
+        }
       }
     } on DioException catch (e) {
       _logger.e('ViceService: DioException recording indulgence: ${e.message}');

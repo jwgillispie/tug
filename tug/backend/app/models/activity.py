@@ -1,6 +1,6 @@
 # app/models/activity.py
 from beanie import Document, Indexed, Link
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime, timedelta
 from bson import ObjectId
 from fastapi import logger
@@ -9,7 +9,7 @@ from pydantic import Field
 class Activity(Document):
     """Activity model for MongoDB with Beanie ODM"""
     user_id: str = Indexed()
-    value_id: str = Indexed()
+    value_ids: List[str] = Field(..., description="IDs of the values this activity is for")
     name: str = Field(..., min_length=2, max_length=50)
     duration: int = Field(..., gt=0, le=1440)  # in minutes, max 24 hours
     date: datetime = Indexed()
@@ -19,12 +19,28 @@ class Activity(Document):
     notes_public: bool = Field(default=False)  # Whether notes are shared publicly
     version: int = 1
 
+    # Helper properties for backward compatibility
+    @property
+    def value_id(self) -> Optional[str]:
+        """Return the primary (first) value ID for backward compatibility"""
+        return self.value_ids[0] if self.value_ids else None
+    
+    @property
+    def primary_value_id(self) -> Optional[str]:
+        """Return the primary (first) value ID"""
+        return self.value_ids[0] if self.value_ids else None
+    
+    @property
+    def has_multiple_values(self) -> bool:
+        """Check if this activity has multiple values"""
+        return len(self.value_ids) > 1
+
     class Settings:
         name = "activities"
         indexes = [
             [("user_id", 1), ("date", -1)],
-            [("value_id", 1), ("date", -1)],
-            [("user_id", 1), ("value_id", 1), ("date", -1)]
+            [("value_ids", 1), ("date", -1)],
+            [("user_id", 1), ("value_ids", 1), ("date", -1)]
         ]
 # Add this method to the Activity model in app/models/activity.py if it doesn't exist or update it
 

@@ -1,7 +1,7 @@
 name: tug
 description: Track your values and overcome your vices
 publish_to: 'none'
-version: 3.0.0+4
+version: 3.0.1+7
 
 environment:
   sdk: '>=3.0.0 <4.0.0'

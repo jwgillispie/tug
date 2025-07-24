@@ -32,14 +32,15 @@ async def create_activity(
         logger.info(f"Creating activity for user: {current_user.id}")
         new_activity = await ActivityService.create_activity(current_user, activity)
         
-        # Update the streak for the associated value
-        if new_activity and new_activity.value_id:
-            try:
-                await ValueService.update_streak(new_activity.value_id, new_activity.date)
-                logger.info(f"Streak updated for value {new_activity.value_id}")
-            except Exception as streak_error:
-                logger.error(f"Error updating streak: {streak_error}", exc_info=True)
-                # Continue even if streak update fails
+        # Update the streak for all associated values
+        if new_activity and new_activity.value_ids:
+            for value_id in new_activity.value_ids:
+                try:
+                    await ValueService.update_streak(value_id, new_activity.date)
+                    logger.info(f"Streak updated for value {value_id}")
+                except Exception as streak_error:
+                    logger.error(f"Error updating streak for value {value_id}: {streak_error}", exc_info=True)
+                    # Continue even if streak update fails for one value
         
         # Convert to dictionary and encode MongoDB types
         activity_dict = new_activity.dict()

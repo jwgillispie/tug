@@ -7,7 +7,7 @@ class ActivityBase(BaseModel):
     """Base activity schema with common attributes"""
     name: str = Field(..., min_length=2, max_length=50)
     duration: int = Field(..., gt=0, le=1440)  # in minutes, max 24 hours
-    value_id: str
+    value_ids: List[str] = Field(..., description="IDs of the values this activity is for")
     notes: Optional[str] = None
     is_public: bool = Field(default=True)  # Whether activity is shared publicly
     notes_public: bool = Field(default=False)  # Whether notes are shared publicly
@@ -20,7 +20,7 @@ class ActivityUpdate(BaseModel):
     """Schema for updating an activity"""
     name: Optional[str] = Field(None, min_length=2, max_length=50)
     duration: Optional[int] = Field(None, gt=0, le=1440)
-    value_id: Optional[str] = None
+    value_ids: Optional[List[str]] = None
     date: Optional[datetime] = None
     notes: Optional[str] = None
     is_public: Optional[bool] = None

@@ -20,19 +20,22 @@ class ActivityService:
     @staticmethod
     async def create_activity(user: User, activity_data: ActivityCreate) -> Activity:
         """Create a new activity for a user"""
-        # Check if value exists and belongs to user
-        logger.info(f"Attempting to find value with ID: {activity_data.value_id} for user: {user.id}")
+        # Check if all values exist and belong to user
+        logger.info(f"Attempting to find values with IDs: {activity_data.value_ids} for user: {user.id}")
 
-        value = await Value.find_one(
-            Value.id == ObjectId(activity_data.value_id) if not isinstance(activity_data.value_id, ObjectId) else activity_data.value_id,
-            Value.user_id == str(user.id)
-        )
-        
-        if not value:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Value not found"
+        values = []
+        for value_id in activity_data.value_ids:
+            value = await Value.find_one(
+                Value.id == ObjectId(value_id) if not isinstance(value_id, ObjectId) else value_id,
+                Value.user_id == str(user.id)
             )
+            
+            if not value:
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail=f"Value {value_id} not found"
+                )
+            values.append(value)
         
         # Check if date is not in future
         if activity_data.date > datetime.utcnow():
@@ -41,10 +44,10 @@ class ActivityService:
                 detail="Cannot log future activities"
             )
         
-        # Create new activity
+        # Create new activity with multiple values
         new_activity = Activity(
             user_id=str(user.id),
-            value_id=activity_data.value_id,
+            value_ids=activity_data.value_ids,
             name=activity_data.name,
             duration=activity_data.duration,
             date=activity_data.date,
@@ -56,8 +59,9 @@ class ActivityService:
         await new_activity.insert()
         
         # Create social post if activity is public and has user-provided notes
-        if activity_data.is_public and activity_data.notes_public and activity_data.notes:
-            await ActivityService._create_activity_social_post(user, new_activity, value)
+        # Use the primary (first) value for social post
+        if activity_data.is_public and activity_data.notes_public and activity_data.notes and values:
+            await ActivityService._create_activity_social_post(user, new_activity, values[0])
         
         return new_activity
 
