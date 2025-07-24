@@ -33,8 +33,9 @@ async def create_activity(
         new_activity = await ActivityService.create_activity(current_user, activity)
         
         # Update the streak for all associated values
-        if new_activity and new_activity.value_ids:
-            for value_id in new_activity.value_ids:
+        effective_value_ids = new_activity.effective_value_ids
+        if new_activity and effective_value_ids:
+            for value_id in effective_value_ids:
                 try:
                     await ValueService.update_streak(value_id, new_activity.date)
                     logger.info(f"Streak updated for value {value_id}")

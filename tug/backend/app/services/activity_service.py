@@ -48,6 +48,7 @@ class ActivityService:
         new_activity = Activity(
             user_id=str(user.id),
             value_ids=activity_data.value_ids,
+            value_id=activity_data.value_ids[0] if activity_data.value_ids else None,  # For backward compatibility
             name=activity_data.name,
             duration=activity_data.duration,
             date=activity_data.date,

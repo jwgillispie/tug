@@ -9,7 +9,9 @@ from pydantic import Field
 class Activity(Document):
     """Activity model for MongoDB with Beanie ODM"""
     user_id: str = Indexed()
-    value_ids: List[str] = Field(..., description="IDs of the values this activity is for")
+    # Support both old and new formats for backward compatibility
+    value_ids: Optional[List[str]] = Field(None, description="IDs of the values this activity is for")
+    value_id: Optional[str] = Field(None, description="Legacy single value ID (deprecated)")
     name: str = Field(..., min_length=2, max_length=50)
     duration: int = Field(..., gt=0, le=1440)  # in minutes, max 24 hours
     date: datetime = Indexed()
@@ -19,21 +21,48 @@ class Activity(Document):
     notes_public: bool = Field(default=False)  # Whether notes are shared publicly
     version: int = 1
 
-    # Helper properties for backward compatibility
-    @property
-    def value_id(self) -> Optional[str]:
-        """Return the primary (first) value ID for backward compatibility"""
-        return self.value_ids[0] if self.value_ids else None
+    def __init__(self, **data):
+        # Handle migration from old value_id to new value_ids
+        if 'value_id' in data and 'value_ids' not in data:
+            data['value_ids'] = [data['value_id']]
+        elif 'value_ids' in data and 'value_id' not in data and data['value_ids']:
+            data['value_id'] = data['value_ids'][0]
+        super().__init__(**data)
     
+    @classmethod
+    def model_validate(cls, obj):
+        """Custom validation to handle legacy data format"""
+        if isinstance(obj, dict):
+            # Handle legacy format where only value_id exists
+            if 'value_id' in obj and 'value_ids' not in obj:
+                obj = obj.copy()
+                obj['value_ids'] = [obj['value_id']]
+            # Handle new format where only value_ids exists
+            elif 'value_ids' in obj and 'value_id' not in obj and obj['value_ids']:
+                obj = obj.copy()
+                obj['value_id'] = obj['value_ids'][0]
+        return super().model_validate(obj)
+
     @property
     def primary_value_id(self) -> Optional[str]:
         """Return the primary (first) value ID"""
-        return self.value_ids[0] if self.value_ids else None
+        if self.value_ids:
+            return self.value_ids[0]
+        return self.value_id
     
     @property
     def has_multiple_values(self) -> bool:
         """Check if this activity has multiple values"""
-        return len(self.value_ids) > 1
+        return self.value_ids is not None and len(self.value_ids) > 1
+
+    @property
+    def effective_value_ids(self) -> List[str]:
+        """Get the effective list of value IDs, handling both old and new formats"""
+        if self.value_ids:
+            return self.value_ids
+        elif self.value_id:
+            return [self.value_id]
+        return []
 
     class Settings:
         name = "activities"

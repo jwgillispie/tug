@@ -299,7 +299,9 @@ class MoodService:
             # Get related values for context (handle multi-value activities)
             value_ids = []
             for act in activities.values():
-                if hasattr(act, 'value_ids') and act.value_ids:
+                if hasattr(act, 'effective_value_ids'):
+                    value_ids.extend(act.effective_value_ids)
+                elif hasattr(act, 'value_ids') and act.value_ids:
                     value_ids.extend(act.value_ids)
                 elif hasattr(act, 'value_id') and act.value_id:
                     value_ids.append(act.value_id)
@@ -333,11 +335,9 @@ class MoodService:
                 # Handle multi-value activities - use primary value for display
                 value = None
                 if activity:
-                    if hasattr(activity, 'value_ids') and activity.value_ids:
-                        primary_value_id = activity.value_ids[0]
+                    primary_value_id = activity.primary_value_id
+                    if primary_value_id:
                         value = values.get(primary_value_id)
-                    elif hasattr(activity, 'value_id') and activity.value_id:
-                        value = values.get(activity.value_id)
                 
                 mood_data.append(MoodChartData(
                     date=entry.recorded_at,
