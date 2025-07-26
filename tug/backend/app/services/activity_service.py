@@ -197,11 +197,9 @@ class ActivityService:
         # Count activities
         total_activities = await Activity.find(query).count()
         
-        # Get total duration using aggregation
-        total_duration_result = await Activity.find(query).aggregate([
-            {"$group": {"_id": None, "total": {"$sum": "$duration"}}}
-        ]).to_list()
-        total_duration = total_duration_result[0]["total"] if total_duration_result and total_duration_result[0]["total"] else 0
+        # Get total duration by fetching all activities and summing manually
+        activities = await Activity.find(query).to_list()
+        total_duration = sum(activity.duration for activity in activities if activity.duration)
         
         # Calculate statistics
         return {
