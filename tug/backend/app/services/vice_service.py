@@ -266,7 +266,7 @@ class ViceService:
         
         # Updated to handle both old single-vice indulgences and new multi-vice indulgences
         query = Indulgence.find(
-            Indulgence.vice_ids.in_([vice_id]),  # Check if vice_id is in the vice_ids array
+            {"vice_ids": {"$in": [vice_id]}},  # Check if vice_id is in the vice_ids array
             Indulgence.user_id == str(user.id)
         ).sort(-Indulgence.date)
         
