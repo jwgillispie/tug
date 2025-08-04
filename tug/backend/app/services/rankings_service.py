@@ -1,5 +1,5 @@
 # app/services/rankings_service.py
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from bson import ObjectId
 from typing import List, Dict, Any, Optional
 import logging
@@ -26,7 +26,7 @@ class RankingsService:
             List of user rankings with activity stats
         """
         # Calculate the start date
-        start_date = datetime.utcnow() - timedelta(days=days)
+        start_date = datetime.now(timezone.utc) - timedelta(days=days)
         
         logger.info(f"Calculating rankings from {start_date} to now")
         
@@ -66,11 +66,8 @@ class RankingsService:
             },
         ]
         
-        # FIX: Execute the aggregation pipeline properly
-        # OLD (BROKEN): user_stats = await Activity.aggregate(pipeline).to_list()
-        # NEW (FIXED): Get cursor first, then convert to list
-        cursor = Activity.aggregate(pipeline)
-        user_stats = await cursor.to_list(length=None)
+        # Execute the aggregation pipeline
+        user_stats = await Activity.aggregate(pipeline).to_list()
         
         # If ranking by streak, change the sorting
         if rank_by == "streak":
@@ -147,7 +144,7 @@ class RankingsService:
             User's rank and activity stats
         """
         # Calculate the start date
-        start_date = datetime.utcnow() - timedelta(days=days)
+        start_date = datetime.now(timezone.utc) - timedelta(days=days)
         
         logger.info(f"Calculating rank for user {user.id} from {start_date} to now")
         
@@ -179,11 +176,8 @@ class RankingsService:
             },
         ]
         
-        # FIX: Execute the aggregation pipeline properly
-        # OLD (BROKEN): user_stats_result = await Activity.aggregate(user_stats_pipeline).to_list()
-        # NEW (FIXED): Get cursor first, then convert to list
-        cursor = Activity.aggregate(user_stats_pipeline)
-        user_stats_result = await cursor.to_list(length=None)
+        # Execute the aggregation pipeline  
+        user_stats_result = await Activity.aggregate(user_stats_pipeline).to_list()
         
         # If user has no activities, return None or a default rank
         if not user_stats_result:
@@ -236,11 +230,8 @@ class RankingsService:
             }
         ]
         
-        # FIX: Execute the aggregation pipeline properly
-        # OLD (BROKEN): higher_rank_result = await Activity.aggregate(higher_rank_pipeline).to_list()
-        # NEW (FIXED): Get cursor first, then convert to list
-        cursor = Activity.aggregate(higher_rank_pipeline)
-        higher_rank_result = await cursor.to_list(length=None)
+        # Execute the aggregation pipeline
+        higher_rank_result = await Activity.aggregate(higher_rank_pipeline).to_list()
         higher_rank_count = higher_rank_result[0]["higher_rank_count"] if higher_rank_result else 0
         
         # The user's rank is the number of users with more activities plus 1
