@@ -31,7 +31,7 @@ class BattleLeaderboards extends StatefulWidget {
 }
 
 class _BattleLeaderboardsState extends State<BattleLeaderboards>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   
   late TabController _tabController;
   late AnimationController _animationController;
