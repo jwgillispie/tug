@@ -116,7 +116,7 @@ class _BalanceDashboardState extends State<BalanceDashboard>
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     
     return Semantics(
-      label: 'Balance Dashboard: $_dominantSide side is leading with ${_balanceStreak} day balance streak',
+      label: 'balance dashboard: $_dominantSide side is leading with ${_balanceStreak} day balance streak',
       child: Container(
         margin: const EdgeInsets.all(16),
         padding: const EdgeInsets.all(24),
@@ -196,7 +196,7 @@ class _BalanceDashboardState extends State<BalanceDashboard>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Balance Dashboard',
+                'balance dashboard',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -279,7 +279,7 @@ class _BalanceDashboardState extends State<BalanceDashboard>
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        'VICES',
+                        'vices',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -311,7 +311,7 @@ class _BalanceDashboardState extends State<BalanceDashboard>
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        'VALUES',
+                        'values',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -370,7 +370,7 @@ class _BalanceDashboardState extends State<BalanceDashboard>
       children: [
         Expanded(
           child: _buildStatCard(
-            'Values Side',
+            'values side',
             '${widget.recentActivities.length}',
             'activities',
             TugColors.primaryPurple,
@@ -380,7 +380,7 @@ class _BalanceDashboardState extends State<BalanceDashboard>
         const SizedBox(width: 16),
         Expanded(
           child: _buildStatCard(
-            'Balance Score',
+            'balance score',
             '${(_balanceScore * 100).abs().toInt()}%',
             _dominantSide,
             _getBalanceColor(),
@@ -390,7 +390,7 @@ class _BalanceDashboardState extends State<BalanceDashboard>
         const SizedBox(width: 16),
         Expanded(
           child: _buildStatCard(
-            'Vices Side',
+            'vices side',
             '${widget.recentIndulgences.length}',
             'indulgences',
             TugColors.viceGreen,
@@ -453,7 +453,7 @@ class _BalanceDashboardState extends State<BalanceDashboard>
           child: ElevatedButton.icon(
             onPressed: () {/* Navigate to values */},
             icon: const Icon(Icons.favorite, size: 18),
-            label: const Text('Track Values'),
+            label: const Text('track values'),
             style: ElevatedButton.styleFrom(
               backgroundColor: TugColors.primaryPurple,
               foregroundColor: Colors.white,
@@ -469,7 +469,7 @@ class _BalanceDashboardState extends State<BalanceDashboard>
           child: ElevatedButton.icon(
             onPressed: () {/* Navigate to vices */},
             icon: const Icon(Icons.psychology, size: 18),
-            label: const Text('Track Vices'),
+            label: const Text('track vices'),
             style: ElevatedButton.styleFrom(
               backgroundColor: TugColors.viceGreen,
               foregroundColor: Colors.white,

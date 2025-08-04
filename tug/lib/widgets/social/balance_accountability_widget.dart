@@ -30,7 +30,7 @@ class _BalanceAccountabilityWidgetState extends State<BalanceAccountabilityWidge
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     
     return Semantics(
-      label: 'Balance Accountability: ${widget.partners.length} accountability partners',
+      label: 'balance accountability: ${widget.partners.length} accountability partners',
       child: Container(
         margin: const EdgeInsets.all(16),
         child: Column(
@@ -80,7 +80,7 @@ class _BalanceAccountabilityWidgetState extends State<BalanceAccountabilityWidge
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Balance Buddies',
+                'balance buddies',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -88,7 +88,7 @@ class _BalanceAccountabilityWidgetState extends State<BalanceAccountabilityWidge
                 ),
               ),
               Text(
-                'Friends keeping you accountable on both sides',
+                'friends keeping you accountable on both sides',
                 style: TextStyle(
                   fontSize: 14,
                   color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
@@ -126,7 +126,7 @@ class _BalanceAccountabilityWidgetState extends State<BalanceAccountabilityWidge
 
   Widget _buildPartnerCard(AccountabilityPartner partner, bool isDarkMode) {
     return Semantics(
-      label: '${partner.displayName}, balance buddy. Values: ${partner.valuesProgress}%, Vices: ${partner.vicesProgress}%',
+      label: '${partner.displayName}, balance buddy. values: ${partner.valuesProgress}%, vices: ${partner.vicesProgress}%',
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
@@ -217,7 +217,7 @@ class _BalanceAccountabilityWidgetState extends State<BalanceAccountabilityWidge
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Balance Buddy since ${_formatJoinDate(partner.partnershipDate)}',
+                        'balance buddy since ${_formatJoinDate(partner.partnershipDate)}',
                         style: TextStyle(
                           fontSize: 12,
                           color: isDarkMode 
@@ -243,7 +243,7 @@ class _BalanceAccountabilityWidgetState extends State<BalanceAccountabilityWidge
                         children: [
                           Icon(Icons.favorite, size: 18, color: Colors.red),
                           SizedBox(width: 8),
-                          Text('Send Encouragement'),
+                          Text('send encouragement'),
                         ],
                       ),
                     ),
@@ -253,7 +253,7 @@ class _BalanceAccountabilityWidgetState extends State<BalanceAccountabilityWidge
                         children: [
                           Icon(Icons.person_remove, size: 18, color: Colors.grey),
                           SizedBox(width: 8),
-                          Text('Remove Partner'),
+                          Text('remove partner'),
                         ],
                       ),
                     ),
@@ -274,7 +274,7 @@ class _BalanceAccountabilityWidgetState extends State<BalanceAccountabilityWidge
               children: [
                 Expanded(
                   child: _buildProgressBar(
-                    'Values',
+                    'values',
                     partner.valuesProgress,
                     TugColors.primaryPurple,
                     isDarkMode,
@@ -283,7 +283,7 @@ class _BalanceAccountabilityWidgetState extends State<BalanceAccountabilityWidge
                 const SizedBox(width: 16),
                 Expanded(
                   child: _buildProgressBar(
-                    'Vices',
+                    'vices',
                     partner.vicesProgress,
                     TugColors.viceGreen,
                     isDarkMode,
@@ -314,7 +314,7 @@ class _BalanceAccountabilityWidgetState extends State<BalanceAccountabilityWidge
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Last activity: ${partner.lastActivity}',
+                        'last activity: ${partner.lastActivity}',
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.blue.withValues(alpha: 0.8),
@@ -402,7 +402,7 @@ class _BalanceAccountabilityWidgetState extends State<BalanceAccountabilityWidge
           ),
           const SizedBox(height: 16),
           Text(
-            'No Balance Buddies Yet',
+            'no balance buddies yet',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -413,7 +413,7 @@ class _BalanceAccountabilityWidgetState extends State<BalanceAccountabilityWidge
           ),
           const SizedBox(height: 8),
           Text(
-            'Add accountability partners to keep each other motivated on both values and vices!',
+            'add accountability partners to keep each other motivated on both values and vices!',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,
@@ -445,7 +445,7 @@ class _BalanceAccountabilityWidgetState extends State<BalanceAccountabilityWidge
             ),
             const SizedBox(width: 8),
             Text(
-              'Add Balance Buddy',
+              'add balance buddy',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -462,19 +462,19 @@ class _BalanceAccountabilityWidgetState extends State<BalanceAccountabilityWidge
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Add Balance Buddy'),
-        content: const Text('Enter your friend\'s username or email to send them a balance buddy request.'),
+        title: const Text('add balance buddy'),
+        content: const Text('enter your friend\'s username or email to send them a balance buddy request.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text('cancel'),
           ),
           TextButton(
             onPressed: () {
               // TODO: Implement add partner logic
               Navigator.pop(context);
             },
-            child: const Text('Send Request'),
+            child: const Text('send request'),
           ),
         ],
       ),
@@ -485,19 +485,19 @@ class _BalanceAccountabilityWidgetState extends State<BalanceAccountabilityWidge
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Encourage ${partner.displayName}'),
-        content: const Text('Send a motivational message to your balance buddy!'),
+        title: Text('encourage ${partner.displayName}'),
+        content: const Text('send a motivational message to your balance buddy!'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text('cancel'),
           ),
           TextButton(
             onPressed: () {
-              widget.onSendEncouragement(partner.userId, 'Keep up the great work! 💪');
+              widget.onSendEncouragement(partner.userId, 'keep up the great work! 💪');
               Navigator.pop(context);
             },
-            child: const Text('Send'),
+            child: const Text('send'),
           ),
         ],
       ),
@@ -508,12 +508,12 @@ class _BalanceAccountabilityWidgetState extends State<BalanceAccountabilityWidge
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Remove ${partner.displayName}?'),
-        content: const Text('Are you sure you want to remove this balance buddy? You can always add them back later.'),
+        title: Text('remove ${partner.displayName}?'),
+        content: const Text('are you sure you want to remove this balance buddy? you can always add them back later.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: const Text('cancel'),
           ),
           TextButton(
             onPressed: () {
@@ -521,7 +521,7 @@ class _BalanceAccountabilityWidgetState extends State<BalanceAccountabilityWidge
               Navigator.pop(context);
             },
             style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Remove'),
+            child: const Text('remove'),
           ),
         ],
       ),

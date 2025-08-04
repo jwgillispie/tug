@@ -393,26 +393,26 @@ class _HomeScreenRefactoredState extends State<HomeScreenRefactored>
           HomeFeatureCard(
             icon: Icons.trending_up,
             iconColor: TugColors.getPrimaryColor(isViceMode),
-            title: isViceMode ? 'Vice Analytics' : 'Progress Analytics',
+            title: isViceMode ? 'vice analytics' : 'progress analytics',
             subtitle: isViceMode 
-                ? 'View detailed vice tracking insights'
-                : 'View detailed progress insights',
+                ? 'view detailed vice tracking insights'
+                : 'view detailed progress insights',
             onTap: () => context.go('/progress'),
           ),
           
           HomeFeatureCard(
             icon: Icons.people,
             iconColor: TugColors.getPrimaryColor(isViceMode),
-            title: 'Social Feed',
-            subtitle: 'Connect with friends and share your journey',
+            title: 'social feed',
+            subtitle: 'connect with friends and share your journey',
             onTap: () => context.go('/social'),
           ),
           
           HomeFeatureCard(
             icon: Icons.emoji_events,
             iconColor: Colors.amber,
-            title: 'Achievements',
-            subtitle: 'View your milestones and earned badges',
+            title: 'achievements',
+            subtitle: 'view your milestones and earned badges',
             onTap: () => context.push('/achievements'),
           ),
         ],
@@ -424,13 +424,13 @@ class _HomeScreenRefactoredState extends State<HomeScreenRefactored>
     return Container(
       margin: const EdgeInsets.all(16),
       child: HomeSettingsSection(
-        title: 'Quick Actions',
+        title: 'quick actions',
         currentMode: _currentMode,
         items: [
           HomeFeatureSettingsItem(
             icon: Icons.person,
-            title: 'Profile',
-            description: 'Manage your account and preferences',
+            title: 'profile',
+            description: 'manage your account and preferences',
             onTap: () => context.go('/profile'),
             isFirst: true,
             currentMode: _currentMode,
@@ -438,16 +438,16 @@ class _HomeScreenRefactoredState extends State<HomeScreenRefactored>
           
           HomeFeatureSettingsItem(
             icon: Icons.notifications,
-            title: 'Notifications',
-            description: 'View recent updates and alerts',
+            title: 'notifications',
+            description: 'view recent updates and alerts',
             onTap: () => context.go('/notifications'),
             currentMode: _currentMode,
           ),
           
           HomeFeatureSettingsItem(
             icon: Icons.help,
-            title: 'Help & Support',
-            description: 'Get help and contact support',
+            title: 'help & support',
+            description: 'get help and contact support',
             onTap: () => context.go('/help'),
             isLast: true,
             currentMode: _currentMode,

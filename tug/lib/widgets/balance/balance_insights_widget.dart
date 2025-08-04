@@ -99,7 +99,7 @@ class _BalanceInsightsWidgetState extends State<BalanceInsightsWidget>
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'AI Insights',
+                'ai insights',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -107,7 +107,7 @@ class _BalanceInsightsWidgetState extends State<BalanceInsightsWidget>
                 ),
               ),
               Text(
-                'Personalized patterns from your balance data',
+                'personalized patterns from your balance data',
                 style: TextStyle(
                   fontSize: 14,
                   color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
@@ -350,7 +350,7 @@ class _BalanceInsightsWidgetState extends State<BalanceInsightsWidget>
           ),
           const SizedBox(height: 16),
           Text(
-            'Insights Coming Soon',
+            'insights coming soon',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
@@ -361,7 +361,7 @@ class _BalanceInsightsWidgetState extends State<BalanceInsightsWidget>
           ),
           const SizedBox(height: 8),
           Text(
-            'Track more activities and indulgences to unlock AI-powered insights about your balance patterns.',
+            'track more activities and indulgences to unlock ai-powered insights about your balance patterns.',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,

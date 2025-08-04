@@ -64,12 +64,12 @@ class BalanceInsightsService {
       
       if (moodDifference > 1.0) {
         insights.add(BalanceInsight(
-          title: "Values Boost Your Mood",
-          description: "Your mood improves by ${(moodDifference * 20).toInt()}% on days when you complete activities vs days with indulgences.",
+          title: "values boost your mood",
+          description: "your mood improves by ${(moodDifference * 20).toInt()}% on days when you complete activities vs days with indulgences.",
           type: BalanceInsightType.moodCorrelation,
           priority: BalanceInsightPriority.high,
           icon: "😊",
-          actionSuggestion: "Try doing a quick value activity when you feel down to naturally boost your mood.",
+          actionSuggestion: "try doing a quick value activity when you feel down to naturally boost your mood.",
         ));
       }
     }
@@ -93,23 +93,23 @@ class BalanceInsightsService {
     
     if (morningActivities > afternoonActivities && morningActivities > eveningActivities) {
       insights.add(BalanceInsight(
-        title: "You're a Morning Champion",
+        title: "you're a morning champion",
         description: "${(morningActivities / activities.length * 100).toInt()}% of your activities happen in the morning. Your values side is strongest early in the day.",
         type: BalanceInsightType.timePattern,
         priority: BalanceInsightPriority.medium,
         icon: "🌅",
-        actionSuggestion: "Schedule your most important value activities for morning when your willpower is highest.",
+        actionSuggestion: "schedule your most important value activities for morning when your willpower is highest.",
       ));
     }
     
     if (eveningIndulgences > morningIndulgences && indulgences.isNotEmpty) {
       insights.add(BalanceInsight(
-        title: "Evening Vice Vulnerability",
+        title: "evening vice vulnerability",
         description: "${(eveningIndulgences / indulgences.length * 100).toInt()}% of indulgences happen in the evening. Plan evening value activities to stay balanced.",
         type: BalanceInsightType.timePattern,
         priority: BalanceInsightPriority.high,
         icon: "🌙",
-        actionSuggestion: "Create an evening routine with value activities to prevent indulgences.",
+        actionSuggestion: "create an evening routine with value activities to prevent indulgences.",
       ));
     }
     
@@ -146,12 +146,12 @@ class BalanceInsightsService {
     
     if (valueStreak >= 7) {
       insights.add(BalanceInsight(
-        title: "Epic Value Streak! 🔥",
-        description: "You're on a $valueStreak-day value streak! This is your best streak in the last 30 days.",
+        title: "epic value streak! 🔥",
+        description: "you're on a $valueStreak-day value streak! this is your best streak in the last 30 days.",
         type: BalanceInsightType.streak,
         priority: BalanceInsightPriority.high,
         icon: "🔥",
-        actionSuggestion: "Keep the momentum going! Even a small activity today will extend your streak.",
+        actionSuggestion: "keep the momentum going! even a small activity today will extend your streak.",
       ));
     }
     
@@ -175,21 +175,21 @@ class BalanceInsightsService {
     
     if (balanceRatio >= 3.0) {
       insights.add(BalanceInsight(
-        title: "Balance Master 🏆",
-        description: "Your value activities outnumber indulgences 3:1! You're winning the tug of war convincingly.",
+        title: "balance master 🏆",
+        description: "your value activities outnumber indulgences 3:1! you're winning the tug of war convincingly.",
         type: BalanceInsightType.balance,
         priority: BalanceInsightPriority.high,
         icon: "🏆",
-        actionSuggestion: "You're in the optimal zone. Consider helping others achieve this balance!",
+        actionSuggestion: "you're in the optimal zone. consider helping others achieve this balance!",
       ));
     } else if (balanceRatio < 0.5) {
       insights.add(BalanceInsight(
-        title: "Rebalance Opportunity",
-        description: "Your indulgences are outpacing value activities 2:1. Time to tip the scales!",
+        title: "rebalance opportunity",
+        description: "your indulgences are outpacing value activities 2:1. time to tip the scales!",
         type: BalanceInsightType.balance,
         priority: BalanceInsightPriority.high,
         icon: "⚖️",
-        actionSuggestion: "Focus on 2-3 quick value activities today to start rebalancing the tug of war.",
+        actionSuggestion: "focus on 2-3 quick value activities today to start rebalancing the tug of war.",
       ));
     }
     
@@ -211,12 +211,12 @@ class BalanceInsightsService {
     
     if (lastWeekActivities > previousWeekActivities * 1.5) {
       insights.add(BalanceInsight(
-        title: "Momentum Building 📈",
-        description: "Your activity rate increased by ${((lastWeekActivities / math.max(1, previousWeekActivities) - 1) * 100).toInt()}% this week! You're gaining momentum.",
+        title: "momentum building 📈",
+        description: "your activity rate increased by ${((lastWeekActivities / math.max(1, previousWeekActivities) - 1) * 100).toInt()}% this week! you're gaining momentum.",
         type: BalanceInsightType.prediction,
         priority: BalanceInsightPriority.medium,
         icon: "📈",
-        actionSuggestion: "Ride this wave! Set a slightly higher goal this week to keep the momentum going.",
+        actionSuggestion: "ride this wave! set a slightly higher goal this week to keep the momentum going.",
       ));
     }
     
@@ -238,23 +238,23 @@ class BalanceInsightsService {
     
     if (weekendIndulgences > weekdayIndulgences && indulgences.isNotEmpty) {
       insights.add(BalanceInsight(
-        title: "Weekend Vice Pattern",
+        title: "weekend vice pattern",
         description: "${(weekendIndulgences / indulgences.length * 100).toInt()}% of your indulgences happen on weekends. Plan weekend value activities!",
         type: BalanceInsightType.weeklyPattern,
         priority: BalanceInsightPriority.medium,
         icon: "🏖️",
-        actionSuggestion: "Create a weekend routine with planned value activities to maintain balance.",
+        actionSuggestion: "create a weekend routine with planned value activities to maintain balance.",
       ));
     }
     
     if (weekdayActivities > weekendActivities && activities.isNotEmpty) {
       insights.add(BalanceInsight(
-        title: "Weekday Warrior 💼",
-        description: "You complete ${(weekdayActivities / activities.length * 100).toInt()}% of activities on weekdays. Great work-life integration!",
+        title: "weekday warrior 💼",
+        description: "you complete ${(weekdayActivities / activities.length * 100).toInt()}% of activities on weekdays. great work-life integration!",
         type: BalanceInsightType.weeklyPattern,
         priority: BalanceInsightPriority.low,
         icon: "💼",
-        actionSuggestion: "Try adding one weekend value activity to maintain momentum through the week.",
+        actionSuggestion: "try adding one weekend value activity to maintain momentum through the week.",
       ));
     }
     
@@ -299,11 +299,11 @@ extension BalanceInsightPriorityExtension on BalanceInsightPriority {
   String get displayName {
     switch (this) {
       case BalanceInsightPriority.low:
-        return 'Nice to know';
+        return 'nice to know';
       case BalanceInsightPriority.medium:
-        return 'Worth noting';
+        return 'worth noting';
       case BalanceInsightPriority.high:
-        return 'Key insight';
+        return 'key insight';
     }
   }
   
