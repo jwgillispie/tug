@@ -54,6 +54,7 @@ import 'screens/achievements/achievements_screen.dart';
 import 'screens/rankings/rankings_screen.dart';
 import 'screens/user_profile/user_profile_screen.dart';
 import 'screens/onboarding/onboarding_screen.dart';
+import 'screens/notifications/notifications_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -356,6 +357,14 @@ class _TugAppState extends State<TugApp> {
         GoRoute(
           path: '/diagnostics',
           builder: (context, state) => const DiagnosticScreen(),
+        ),
+        // Notifications Screen
+        GoRoute(
+          path: '/notifications',
+          builder: (context, state) => const MainLayout(
+            currentIndex: 3,
+            child: NotificationsScreen(),
+          ),
         ),
       ],
       redirect: (context, state) {

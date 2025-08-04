@@ -1,5 +1,6 @@
 // lib/widgets/balance/balance_dashboard.dart
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'dart:math' as math;
 import '../../utils/theme/colors.dart';
 import '../../utils/quantum_effects.dart';
@@ -74,34 +75,85 @@ class _BalanceDashboardState extends State<BalanceDashboard>
   }
 
   void _calculateBalance() {
-    // Calculate values score (positive activities)
-    final valueActivity = widget.recentActivities.length;
-    final totalValueTime = widget.recentActivities
+    // Get recent data for the specified time period
+    final now = DateTime.now();
+    final cutoffDate = now.subtract(Duration(days: widget.daysToShow));
+    
+    // Filter activities and indulgences within the time period
+    final recentActivities = widget.recentActivities
+        .where((a) => a.date.isAfter(cutoffDate))
+        .toList();
+    final recentIndulgences = widget.recentIndulgences
+        .where((i) => i.date.isAfter(cutoffDate))
+        .toList();
+    
+    // Calculate value strength (activities and time spent)
+    final totalActivities = recentActivities.length;
+    final totalValueMinutes = recentActivities
         .fold(0, (sum, activity) => sum + activity.duration);
     
-    // Calculate vices score (clean days vs indulgences)
-    final totalIndulgences = widget.recentIndulgences.length;
-    final cleanDays = widget.daysToShow - 
-        widget.recentIndulgences.map((i) => i.date.day).toSet().length;
+    // Calculate vice pressure (indulgences frequency and recency)
+    final totalIndulgences = recentIndulgences.length;
+    final uniqueIndulgenceDays = recentIndulgences
+        .map((i) => DateTime(i.date.year, i.date.month, i.date.day))
+        .toSet().length;
     
-    // Normalize scores (0-1 range)
-    final valueScore = math.min(1.0, (valueActivity * 0.1 + totalValueTime * 0.01) / 10);
-    final viceScore = math.min(1.0, cleanDays / widget.daysToShow.toDouble());
+    // Create a balanced scoring system
+    // Values side: activities per day + time investment
+    final avgActivitiesPerDay = totalActivities / widget.daysToShow.toDouble();
+    final avgMinutesPerDay = totalValueMinutes / widget.daysToShow.toDouble();
+    final valueStrength = (avgActivitiesPerDay * 0.7 + avgMinutesPerDay / 60 * 0.3).clamp(0.0, 3.0);
     
-    // Calculate overall balance (-1 to 1, where 0 is perfect balance)
-    _balanceScore = (valueScore + viceScore - 1.0).clamp(-1.0, 1.0);
+    // Vices side: indulgence frequency and consistency
+    final avgIndulgencesPerDay = totalIndulgences / widget.daysToShow.toDouble();
+    final indulgenceConsistency = uniqueIndulgenceDays / widget.daysToShow.toDouble();
+    final viceStrength = (avgIndulgencesPerDay * 0.8 + indulgenceConsistency * 0.2).clamp(0.0, 3.0);
     
-    // Determine dominant side
-    if (_balanceScore > 0.3) {
+    // Calculate balance score (-1.0 = vices winning, +1.0 = values winning, 0 = balanced)
+    if (valueStrength + viceStrength == 0) {
+      _balanceScore = 0.0; // No data = balanced
+    } else {
+      _balanceScore = ((valueStrength - viceStrength) / (valueStrength + viceStrength)).clamp(-1.0, 1.0);
+    }
+    
+    // Determine dominant side with better thresholds
+    if (_balanceScore > 0.2) {
       _dominantSide = "values";
-    } else if (_balanceScore < -0.3) {
+    } else if (_balanceScore < -0.2) {
       _dominantSide = "vices";
     } else {
       _dominantSide = "balanced";
     }
     
-    // Calculate balance streak (simplified - in real app, store in database)
-    _balanceStreak = _balanceScore.abs() < 0.2 ? 5 : 0; // Mock data
+    // Calculate balance streak (count consecutive balanced days)
+    _balanceStreak = _calculateBalanceStreak(recentActivities, recentIndulgences);
+  }
+  
+  int _calculateBalanceStreak(List<ActivityModel> activities, List<IndulgenceModel> indulgences) {
+    int streak = 0;
+    final now = DateTime.now();
+    
+    for (int i = 0; i < 30; i++) {
+      final checkDate = now.subtract(Duration(days: i));
+      final dayStart = DateTime(checkDate.year, checkDate.month, checkDate.day);
+      final dayEnd = dayStart.add(const Duration(days: 1));
+      
+      final dayActivities = activities.where((a) => 
+          a.date.isAfter(dayStart) && a.date.isBefore(dayEnd)).length;
+      final dayIndulgences = indulgences.where((i) => 
+          i.date.isAfter(dayStart) && i.date.isBefore(dayEnd)).length;
+      
+      // Balanced day = has activity OR zero indulgences (recovery day)
+      final isBalanced = (dayActivities > 0) || (dayIndulgences == 0 && i < 7); // Allow clean days
+      
+      if (isBalanced) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+    
+    return streak;
   }
 
   @override
@@ -242,7 +294,7 @@ class _BalanceDashboardState extends State<BalanceDashboard>
     return AnimatedBuilder(
       animation: _ropeAnimation,
       builder: (context, child) {
-        return Container(
+        return SizedBox(
           height: 120,
           child: Stack(
             children: [
@@ -266,41 +318,9 @@ class _BalanceDashboardState extends State<BalanceDashboard>
                 ),
               ),
               
-              // Left side (Vices)
+              // Left side (Values) - Positive side
               Positioned(
                 left: 0,
-                top: 20,
-                child: Column(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: TugColors.viceGreen.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        'vices',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: TugColors.viceGreen,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Icon(
-                      Icons.psychology,
-                      color: TugColors.viceGreen,
-                      size: 32,
-                    ),
-                  ],
-                ),
-              ),
-              
-              // Right side (Values)
-              Positioned(
-                right: 0,
                 top: 20,
                 child: Column(
                   children: [
@@ -324,6 +344,38 @@ class _BalanceDashboardState extends State<BalanceDashboard>
                     Icon(
                       Icons.favorite,
                       color: TugColors.primaryPurple,
+                      size: 32,
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Right side (Vices) - Negative side
+              Positioned(
+                right: 0,
+                top: 20,
+                child: Column(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: TugColors.viceGreen.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        'vices',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: TugColors.viceGreen,
+                          letterSpacing: 1.2,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Icon(
+                      Icons.psychology,
+                      color: TugColors.viceGreen,
                       size: 32,
                     ),
                   ],
@@ -371,7 +423,7 @@ class _BalanceDashboardState extends State<BalanceDashboard>
         Expanded(
           child: _buildStatCard(
             'values side',
-            '${widget.recentActivities.length}',
+            '${widget.recentActivities.where((a) => DateTime.now().difference(a.date).inDays <= widget.daysToShow).length}',
             'activities',
             TugColors.primaryPurple,
             isDarkMode,
@@ -381,7 +433,7 @@ class _BalanceDashboardState extends State<BalanceDashboard>
         Expanded(
           child: _buildStatCard(
             'balance score',
-            '${(_balanceScore * 100).abs().toInt()}%',
+            '${(_balanceScore * 100).toInt()}%',
             _dominantSide,
             _getBalanceColor(),
             isDarkMode,
@@ -391,7 +443,7 @@ class _BalanceDashboardState extends State<BalanceDashboard>
         Expanded(
           child: _buildStatCard(
             'vices side',
-            '${widget.recentIndulgences.length}',
+            '${widget.recentIndulgences.where((i) => DateTime.now().difference(i.date).inDays <= widget.daysToShow).length}',
             'indulgences',
             TugColors.viceGreen,
             isDarkMode,
@@ -451,7 +503,12 @@ class _BalanceDashboardState extends State<BalanceDashboard>
       children: [
         Expanded(
           child: ElevatedButton.icon(
-            onPressed: () {/* Navigate to values */},
+            onPressed: () {
+              // Navigate to values input/tracking screen
+              if (context.mounted) {
+                context.go('/activities/new');
+              }
+            },
             icon: const Icon(Icons.favorite, size: 18),
             label: const Text('track values'),
             style: ElevatedButton.styleFrom(
@@ -467,7 +524,12 @@ class _BalanceDashboardState extends State<BalanceDashboard>
         const SizedBox(width: 12),
         Expanded(
           child: ElevatedButton.icon(
-            onPressed: () {/* Navigate to vices */},
+            onPressed: () {
+              // Navigate to vices tracking screen
+              if (context.mounted) {
+                context.go('/indulgences/new');
+              }
+            },
             icon: const Icon(Icons.psychology, size: 18),
             label: const Text('track vices'),
             style: ElevatedButton.styleFrom(

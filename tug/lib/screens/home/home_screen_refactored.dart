@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'dart:math' as math;
 
 // Bloc imports
 import '../../blocs/activities/activities_bloc.dart';
@@ -34,8 +35,9 @@ import '../../widgets/home/components/home_app_bar.dart';
 import '../../widgets/home/components/home_loading_states.dart';
 import '../../widgets/home/components/home_feature_card.dart';
 import '../../widgets/home/components/home_settings_section.dart';
-import '../../widgets/balance/balance_dashboard.dart';
-import '../../widgets/balance/balance_insights_widget.dart';
+import '../../widgets/battle/epic_balance_battle.dart';
+import '../../widgets/battle/ai_battle_coach.dart';
+import '../../widgets/battle/battle_leaderboards.dart';
 import '../../services/balance_insights_service.dart';
 
 // Utils
@@ -65,7 +67,7 @@ class _HomeScreenRefactoredState extends State<HomeScreenRefactored>
   AppMode _currentMode = AppMode.valuesMode;
   List<MoodEntry> _moodEntries = [];
   List<IndulgenceModel> _weeklyIndulgences = [];
-  List<ActivityModel> _activities = [];
+  final List<ActivityModel> _activities = [];
 
   @override
   bool get wantKeepAlive => true;
@@ -228,8 +230,11 @@ class _HomeScreenRefactoredState extends State<HomeScreenRefactored>
               // 🎯 KILLER FEATURE: Balance Dashboard
               _buildBalanceDashboard(isDarkMode, isViceMode),
               
-              // 🧠 AI-POWERED INSIGHTS
+              // 🧠 AI BATTLE COACH
               _buildAIInsights(isDarkMode, isViceMode),
+              
+              // 🏆 BATTLE LEADERBOARDS
+              _buildBattleLeaderboards(isDarkMode, isViceMode),
               
               // Charts section
               _buildChartsSection(isDarkMode, isViceMode),
@@ -261,7 +266,7 @@ class _HomeScreenRefactoredState extends State<HomeScreenRefactored>
                 final vices = vicesState is VicesLoaded ? vicesState.vices : <ViceModel>[];
                 final activities = activitiesState is ActivitiesLoaded ? activitiesState.activities : <ActivityModel>[];
                 
-                return BalanceDashboard(
+                return EpicBalanceBattle(
                   values: values,
                   vices: vices,
                   recentActivities: activities,
@@ -298,7 +303,97 @@ class _HomeScreenRefactoredState extends State<HomeScreenRefactored>
                   daysToAnalyze: 30,
                 );
                 
-                return BalanceInsightsWidget(insights: insights);
+                // Calculate current balance for coach
+                final totalActivities = activities.length;
+                final totalIndulgences = _weeklyIndulgences.length;
+                final currentBalance = totalActivities + totalIndulgences > 0 
+                    ? (totalActivities - totalIndulgences) / (totalActivities + totalIndulgences)
+                    : 0.0;
+                
+                // Calculate battle streak
+                int streak = 0;
+                final now = DateTime.now();
+                for (int i = 0; i < 30; i++) {
+                  final checkDate = now.subtract(Duration(days: i));
+                  final dayStart = DateTime(checkDate.year, checkDate.month, checkDate.day);
+                  final dayEnd = dayStart.add(const Duration(days: 1));
+                  
+                  final dayActivities = activities.where((a) => 
+                      a.date.isAfter(dayStart) && a.date.isBefore(dayEnd)).length;
+                  final dayIndulgences = _weeklyIndulgences.where((i) => 
+                      i.date.isAfter(dayStart) && i.date.isBefore(dayEnd)).length;
+                  
+                  if (dayActivities > dayIndulgences || (dayIndulgences == 0 && dayActivities >= 1)) {
+                    streak++;
+                  } else {
+                    break;
+                  }
+                }
+                
+                // Determine battle phase
+                String battlePhase = "preparation";
+                if (currentBalance > 0.7) {
+                  battlePhase = "victory";
+                } else if (currentBalance < -0.7) {
+                  battlePhase = "defeat";
+                } else if (currentBalance.abs() > 0.3) {
+                  battlePhase = "battle";
+                } else if (currentBalance.abs() > 0.1) {
+                  battlePhase = "skirmish";
+                }
+                
+                // Calculate battle score for AI coach
+                final battleScore = activities.isNotEmpty || _weeklyIndulgences.isNotEmpty
+                    ? ((activities.length - _weeklyIndulgences.length) / 
+                       (activities.length + _weeklyIndulgences.length + 1)).clamp(-1.0, 1.0)
+                    : 0.0;
+                
+                return AIBattleCoach(
+                  values: values,
+                  vices: vices,
+                  recentActivities: activities,
+                  recentIndulgences: _weeklyIndulgences,
+                  battleScore: battleScore,
+                  winStreak: streak,
+                  daysToShow: 7,
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  /// 🏆 BATTLE LEADERBOARDS: Competitive social gaming
+  Widget _buildBattleLeaderboards(bool isDarkMode, bool isViceMode) {
+    return BlocBuilder<ValuesBloc, ValuesState>(
+      builder: (context, valuesState) {
+        return BlocBuilder<VicesBloc, VicesState>(
+          builder: (context, vicesState) {
+            return BlocBuilder<ActivitiesBloc, ActivitiesState>(
+              builder: (context, activitiesState) {
+                final values = valuesState is ValuesLoaded ? valuesState.values : <ValueModel>[];
+                final vices = vicesState is VicesLoaded ? vicesState.vices : <ViceModel>[];
+                final activities = activitiesState is ActivitiesLoaded ? activitiesState.activities : <ActivityModel>[];
+                
+                // Calculate battle score for leaderboards
+                final battleScore = activities.isNotEmpty || _weeklyIndulgences.isNotEmpty
+                    ? ((activities.length - _weeklyIndulgences.length) / 
+                       (activities.length + _weeklyIndulgences.length + 1)).clamp(-1.0, 1.0)
+                    : 0.0;
+                
+                // Calculate win streak
+                final winStreak = math.max(0, activities.length - _weeklyIndulgences.length);
+                
+                return BattleLeaderboards(
+                  values: values,
+                  vices: vices,
+                  recentActivities: activities,
+                  recentIndulgences: _weeklyIndulgences,
+                  personalBattleScore: battleScore,
+                  personalWinStreak: winStreak,
+                );
               },
             );
           },
