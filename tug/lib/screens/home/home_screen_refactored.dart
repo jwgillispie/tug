@@ -34,6 +34,9 @@ import '../../widgets/home/components/home_app_bar.dart';
 import '../../widgets/home/components/home_loading_states.dart';
 import '../../widgets/home/components/home_feature_card.dart';
 import '../../widgets/home/components/home_settings_section.dart';
+import '../../widgets/balance/balance_dashboard.dart';
+import '../../widgets/balance/balance_insights_widget.dart';
+import '../../services/balance_insights_service.dart';
 
 // Utils
 import '../../utils/theme/colors.dart';
@@ -222,6 +225,12 @@ class _HomeScreenRefactoredState extends State<HomeScreenRefactored>
           physics: const BouncingScrollPhysics(),
           child: Column(
             children: [
+              // 🎯 KILLER FEATURE: Balance Dashboard
+              _buildBalanceDashboard(isDarkMode, isViceMode),
+              
+              // 🧠 AI-POWERED INSIGHTS
+              _buildAIInsights(isDarkMode, isViceMode),
+              
               // Charts section
               _buildChartsSection(isDarkMode, isViceMode),
               
@@ -237,6 +246,54 @@ class _HomeScreenRefactoredState extends State<HomeScreenRefactored>
           ),
         ),
       ),
+    );
+  }
+
+  /// 🎯 COMPETITIVE ADVANTAGE: Balance Dashboard
+  Widget _buildBalanceDashboard(bool isDarkMode, bool isViceMode) {
+    return BlocBuilder<ValuesBloc, ValuesState>(
+      builder: (context, valuesState) {
+        return BlocBuilder<VicesBloc, VicesState>(
+          builder: (context, vicesState) {
+            final values = valuesState is ValuesLoaded ? valuesState.values : <ValueModel>[];
+            final vices = vicesState is VicesLoaded ? vicesState.vices : <ViceModel>[];
+            
+            return BalanceDashboard(
+              values: values,
+              vices: vices,
+              recentActivities: _activities,
+              recentIndulgences: _weeklyIndulgences,
+              daysToShow: 7,
+            );
+          },
+        );
+      },
+    );
+  }
+
+  /// 🧠 AI-POWERED INSIGHTS: Unique to dual tracking
+  Widget _buildAIInsights(bool isDarkMode, bool isViceMode) {
+    return BlocBuilder<ValuesBloc, ValuesState>(
+      builder: (context, valuesState) {
+        return BlocBuilder<VicesBloc, VicesState>(
+          builder: (context, vicesState) {
+            final values = valuesState is ValuesLoaded ? valuesState.values : <ValueModel>[];
+            final vices = vicesState is VicesLoaded ? vicesState.vices : <ViceModel>[];
+            
+            // Generate AI insights from balance data
+            final insights = BalanceInsightsService.generateInsights(
+              activities: _activities,
+              indulgences: _weeklyIndulgences,
+              values: values,
+              vices: vices,
+              moodEntries: _moodEntries,
+              daysToAnalyze: 30,
+            );
+            
+            return BalanceInsightsWidget(insights: insights);
+          },
+        );
+      },
     );
   }
 
