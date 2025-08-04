@@ -4,19 +4,18 @@ Migration script to update all existing achievement records to lowercase text.
 This ensures existing user achievements match the new lowercase definitions.
 """
 
-import asyncio
 import logging
 from datetime import datetime
-from motor.motor_asyncio import AsyncIOMotorClient
+from pymongo import MongoClient
 import os
-from dotenv import load_dotenv
-
-# Load environment variables
-load_dotenv()
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# MongoDB connection
+MONGODB_URL = os.getenv("MONGODB_URL", "mongodb://localhost:27017")
+DATABASE_NAME = os.getenv("MONGODB_DB_NAME", "tug")
 
 # Achievement text mappings from old (uppercase) to new (lowercase)
 ACHIEVEMENT_UPDATES = {
@@ -75,26 +74,20 @@ DESCRIPTION_UPDATES = {
     "Return to logging activities after a 2-week break": "return to logging activities after a 2-week break",
 }
 
-async def update_achievements_to_lowercase():
+def update_achievements_to_lowercase():
     """Update all existing achievement records to use lowercase text"""
-    
-    # Get MongoDB connection string
-    mongodb_url = os.getenv('MONGODB_URL')
-    if not mongodb_url:
-        logger.error("MONGODB_URL not found in environment variables")
-        return False
     
     client = None
     try:
         # Connect to MongoDB
-        client = AsyncIOMotorClient(mongodb_url)
-        db = client.get_default_database()
+        client = MongoClient(MONGODB_URL)
+        db = client[DATABASE_NAME]
         achievements_collection = db.achievements
         
         logger.info("Connected to MongoDB")
         
         # Count total achievements before update
-        total_achievements = await achievements_collection.count_documents({})
+        total_achievements = achievements_collection.count_documents({})
         logger.info(f"Found {total_achievements} achievement records")
         
         if total_achievements == 0:
@@ -104,7 +97,7 @@ async def update_achievements_to_lowercase():
         # Update titles
         title_updates = 0
         for old_title, new_title in ACHIEVEMENT_UPDATES.items():
-            result = await achievements_collection.update_many(
+            result = achievements_collection.update_many(
                 {"title": old_title},
                 {
                     "$set": {
@@ -120,7 +113,7 @@ async def update_achievements_to_lowercase():
         # Update descriptions  
         description_updates = 0
         for old_desc, new_desc in DESCRIPTION_UPDATES.items():
-            result = await achievements_collection.update_many(
+            result = achievements_collection.update_many(
                 {"description": old_desc},
                 {
                     "$set": {
@@ -148,10 +141,10 @@ async def update_achievements_to_lowercase():
             client.close()
             logger.info("Database connection closed")
 
-async def main():
+def main():
     """Main function to run the migration"""
     logger.info("Starting achievement lowercase migration...")
-    success = await update_achievements_to_lowercase()
+    success = update_achievements_to_lowercase()
     
     if success:
         logger.info("✅ Migration completed successfully!")
@@ -161,4 +154,4 @@ async def main():
         exit(1)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
