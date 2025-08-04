@@ -60,12 +60,30 @@ class LocalStorage {
     _prefs = await SharedPreferences.getInstance();
   }
 
-  // Example: Store & retrieve a string
+  // Store & retrieve a string
   static Future<void> setValue(String key, String value) async {
     await _prefs.setString(key, value);
   }
 
   static String? getValue(String key) {
     return _prefs.getString(key);
+  }
+
+  // Store & retrieve a boolean
+  static Future<void> setBool(String key, bool value) async {
+    await _prefs.setBool(key, value);
+  }
+
+  static bool? getBool(String key) {
+    return _prefs.getBool(key);
+  }
+
+  // Store & retrieve an integer
+  static Future<void> setInt(String key, int value) async {
+    await _prefs.setInt(key, value);
+  }
+
+  static int? getInt(String key) {
+    return _prefs.getInt(key);
   }
 }

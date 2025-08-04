@@ -169,7 +169,7 @@ class AchievementService:
         predefined = cls.get_predefined_achievements()
         
         # Check if user already has achievements initialized
-        existing = await Achievement.find(Achievement.user_id == user_id).to_list()
+        existing = await Achievement.find(Achievement.user_id == user_id).to_list(length=None)
         if existing:
             logger.info(f"User {user_id} already has {len(existing)} achievements initialized")
             return
@@ -326,8 +326,8 @@ class AchievementService:
             return []
         
         # Get the data needed for calculations
-        activities = await Activity.find(Activity.user_id == str(user.id)).to_list()
-        values = await Value.find(Value.user_id == str(user.id)).to_list()
+        activities = await Activity.find(Activity.user_id == str(user.id)).to_list(length=None)
+        values = await Value.find(Value.user_id == str(user.id)).to_list(length=None)
         
         # Create a copy of achievements to modify
         updated_achievements = []

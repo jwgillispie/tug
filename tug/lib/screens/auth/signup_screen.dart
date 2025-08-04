@@ -81,11 +81,13 @@ class _SignUpScreenState extends State<SignUpScreen> {
           if (state is Authenticated) {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
-                content: Text('yayyyyyyyyyyyyyyy'),
+                content: Text('Account created successfully!'),
                 backgroundColor: TugColors.success,
+                duration: Duration(seconds: 2),
               ),
             );
-            context.go('/social');
+            // Navigate to onboarding for new users
+            context.go('/onboarding');
           } else if (state is AuthError) {
             setState(() => _errorMessage = state.message);
           } else if (state is EmailVerificationSent) {

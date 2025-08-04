@@ -53,6 +53,7 @@ import 'screens/profile/change_password_screen.dart';
 import 'screens/achievements/achievements_screen.dart';
 import 'screens/rankings/rankings_screen.dart';
 import 'screens/user_profile/user_profile_screen.dart';
+import 'screens/onboarding/onboarding_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -192,6 +193,10 @@ class _TugAppState extends State<TugApp> {
         GoRoute(
           path: '/splash',
           builder: (context, state) => const SplashScreen(),
+        ),
+        GoRoute(
+          path: '/onboarding',
+          builder: (context, state) => const OnboardingScreen(),
         ),
         GoRoute(
           path: '/terms',
@@ -364,22 +369,27 @@ class _TugAppState extends State<TugApp> {
         final isValuesInputScreen = state.fullPath == '/values-input';
         final isTermsScreen = state.fullPath == '/terms';
         final isPrivacyScreen = state.fullPath == '/privacy';
+        final isOnboardingScreen = state.fullPath == '/onboarding';
 
         // Always allow access to diagnostic screen
         if (isDiagnosticScreen) {
           return null;
         }
 
-        // Always allow access to splash screen
-        if (isSplashScreen) {
+        // Always allow access to splash screen and onboarding
+        if (isSplashScreen || isOnboardingScreen) {
           return null;
         }
 
         // If user is logged in
         if (isLoggedIn) {
-          // If coming from home to values input, allow it
-          if (isValuesInputScreen &&
-              state.uri.queryParameters['fromHome'] == 'true') {
+          // Allow onboarding for new users
+          if (isOnboardingScreen) {
+            return null;
+          }
+
+          // Allow values input screen for new users or from home
+          if (isValuesInputScreen) {
             return null;
           }
 

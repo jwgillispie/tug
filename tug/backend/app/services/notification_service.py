@@ -35,7 +35,7 @@ class NotificationService:
                 .sort([("created_at", -1)])\
                 .skip(skip)\
                 .limit(limit)\
-                .to_list()
+                .to_list(length=None)
             
             # Get total count
             total_count = await Notification.find(filter_dict).count()
@@ -44,7 +44,7 @@ class NotificationService:
             related_user_ids = [n.related_user_id for n in notifications if n.related_user_id]
             users = []
             if related_user_ids:
-                users = await User.find({"_id": {"$in": [ObjectId(uid) for uid in related_user_ids]}}).to_list()
+                users = await User.find({"_id": {"$in": [ObjectId(uid) for uid in related_user_ids]}}).to_list(length=None)
             user_map = {str(user.id): user for user in users}
             
             # Build notification data with user info
@@ -103,13 +103,13 @@ class NotificationService:
             # Get latest 3 notifications
             latest_notifications = await Notification.find({
                 "user_id": str(current_user.id)
-            }).sort([("created_at", -1)]).limit(3).to_list()
+            }).sort([("created_at", -1)]).limit(3).to_list(length=None)
             
             # Get user info for latest notifications
             related_user_ids = [n.related_user_id for n in latest_notifications if n.related_user_id]
             users = []
             if related_user_ids:
-                users = await User.find({"_id": {"$in": [ObjectId(uid) for uid in related_user_ids]}}).to_list()
+                users = await User.find({"_id": {"$in": [ObjectId(uid) for uid in related_user_ids]}}).to_list(length=None)
             user_map = {str(user.id): user for user in users}
             
             # Build latest notification data
@@ -352,7 +352,7 @@ class NotificationService:
                 .sort([("updated_at", -1)])\
                 .skip(skip)\
                 .limit(limit)\
-                .to_list()
+                .to_list(length=None)
             
             # Get total count
             total_count = await NotificationBatch.find(filter_dict).count()
@@ -407,7 +407,7 @@ class NotificationService:
             # Get latest 3 batched notifications
             latest_batches = await NotificationBatch.find({
                 "user_id": str(current_user.id)
-            }).sort([("updated_at", -1)]).limit(3).to_list()
+            }).sort([("updated_at", -1)]).limit(3).to_list(length=None)
             
             # Convert to notification data format
             latest_data = []
