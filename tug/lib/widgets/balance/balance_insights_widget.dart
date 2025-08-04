@@ -137,7 +137,7 @@ class _BalanceInsightsWidgetState extends State<BalanceInsightsWidget>
 
   Widget _buildInsightsCarousel(bool isDarkMode) {
     return SizedBox(
-      height: 160,
+      height: 180,
       child: PageView.builder(
         controller: _pageController,
         onPageChanged: (index) {
@@ -176,7 +176,7 @@ class _BalanceInsightsWidgetState extends State<BalanceInsightsWidget>
       label: '${insight.priority.displayName}: ${insight.title}. ${insight.description}',
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 4),
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
@@ -251,20 +251,22 @@ class _BalanceInsightsWidgetState extends State<BalanceInsightsWidget>
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Text(
               insight.description,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 13,
                 color: isDarkMode 
                     ? TugColors.darkTextSecondary 
                     : TugColors.lightTextSecondary,
-                height: 1.4,
+                height: 1.3,
               ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: insight.priority.color.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(8),
@@ -285,10 +287,12 @@ class _BalanceInsightsWidgetState extends State<BalanceInsightsWidget>
                     child: Text(
                       insight.actionSuggestion,
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 11,
                         color: insight.priority.color.withValues(alpha: 0.8),
                         fontWeight: FontWeight.w500,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
