@@ -66,8 +66,11 @@ class RankingsService:
             },
         ]
         
-        # Execute the aggregation pipeline
-        user_stats = await Activity.aggregate(pipeline).to_list()
+        # FIX: Execute the aggregation pipeline properly
+        # OLD (BROKEN): user_stats = await Activity.aggregate(pipeline).to_list()
+        # NEW (FIXED): Get cursor first, then convert to list
+        cursor = Activity.aggregate(pipeline)
+        user_stats = await cursor.to_list(length=None)
         
         # If ranking by streak, change the sorting
         if rank_by == "streak":
@@ -80,7 +83,7 @@ class RankingsService:
             }
             
             # Get all users with their streaks
-            all_users = await User.find_all()
+            all_users = await User.find_all().to_list()
             user_streaks = {str(u.id): getattr(u, "streak", 0) or 0 for u in all_users}
             
             # Create a map of user activities
@@ -176,7 +179,11 @@ class RankingsService:
             },
         ]
         
-        user_stats_result = await Activity.aggregate(user_stats_pipeline).to_list()
+        # FIX: Execute the aggregation pipeline properly
+        # OLD (BROKEN): user_stats_result = await Activity.aggregate(user_stats_pipeline).to_list()
+        # NEW (FIXED): Get cursor first, then convert to list
+        cursor = Activity.aggregate(user_stats_pipeline)
+        user_stats_result = await cursor.to_list(length=None)
         
         # If user has no activities, return None or a default rank
         if not user_stats_result:
@@ -229,7 +236,11 @@ class RankingsService:
             }
         ]
         
-        higher_rank_result = await Activity.aggregate(higher_rank_pipeline).to_list()
+        # FIX: Execute the aggregation pipeline properly
+        # OLD (BROKEN): higher_rank_result = await Activity.aggregate(higher_rank_pipeline).to_list()
+        # NEW (FIXED): Get cursor first, then convert to list
+        cursor = Activity.aggregate(higher_rank_pipeline)
+        higher_rank_result = await cursor.to_list(length=None)
         higher_rank_count = higher_rank_result[0]["higher_rank_count"] if higher_rank_result else 0
         
         # The user's rank is the number of users with more activities plus 1
