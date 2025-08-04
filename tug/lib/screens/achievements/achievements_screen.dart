@@ -155,6 +155,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> with SingleTick
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
+        automaticallyImplyLeading: true,
         flexibleSpace: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(

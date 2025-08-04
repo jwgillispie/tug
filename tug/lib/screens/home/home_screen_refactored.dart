@@ -413,7 +413,7 @@ class _HomeScreenRefactoredState extends State<HomeScreenRefactored>
             iconColor: Colors.amber,
             title: 'Achievements',
             subtitle: 'View your milestones and earned badges',
-            onTap: () => context.go('/achievements'),
+            onTap: () => context.push('/achievements'),
           ),
         ],
       ),
