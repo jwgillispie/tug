@@ -19,7 +19,7 @@ import 'package:tug/screens/activity/activity_screen.dart';
 import 'package:tug/screens/auth/forgot_password_screen.dart';
 import 'package:tug/screens/diagnostics_screen.dart';
 import 'package:tug/screens/help/help_screen.dart';
-import 'package:tug/screens/home/home_screen.dart';
+import 'package:tug/screens/home/home_screen_refactored.dart';
 import 'package:tug/screens/legal/privacy_policy_screen.dart';
 import 'package:tug/screens/legal/terms_screen.dart';
 import 'package:tug/screens/main_layout.dart';
@@ -270,7 +270,7 @@ class _TugAppState extends State<TugApp> {
           path: '/home',
           builder: (context, state) => const MainLayout(
             currentIndex: 2,
-            child: HomeScreen(),
+            child: HomeScreenRefactored(),
           ),
         ),
         GoRoute(

@@ -35,7 +35,7 @@ class HomeLoadingChart extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              QuantumEffects.cosmicPulse(
+              QuantumEffects.cosmicBreath(
                 child: CircularProgressIndicator(
                   color: TugColors.getPrimaryColor(isViceMode),
                   strokeWidth: 2,
@@ -43,7 +43,7 @@ class HomeLoadingChart extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               Text(
-                LoadingMessages.getRandomMessage(),
+                LoadingMessages.getGeneral(),
                 style: TextStyle(
                   color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
                   fontSize: 14,
