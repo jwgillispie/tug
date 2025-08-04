@@ -6,7 +6,7 @@ import 'package:tug/services/service_locator.dart';
 class MoodService {
   final ApiService _apiService = ServiceLocator.apiService;
 
-  /// Get all available mood options from the backend
+  /// Get all available mood options from the backend or fallback to defaults
   Future<List<MoodOption>> getMoodOptions() async {
     try {
       final response = await _apiService.get('/api/v1/mood/options');
@@ -17,10 +17,123 @@ class MoodService {
             .toList();
       }
       
-      return [];
+      return _getDefaultMoodOptions();
     } catch (e) {
-      throw Exception('Failed to fetch mood options: $e');
+      // If API is unavailable, return default mood options
+      print('Mood API unavailable, using default options: $e');
+      return _getDefaultMoodOptions();
     }
+  }
+
+  /// Get default mood options when API is unavailable
+  List<MoodOption> _getDefaultMoodOptions() {
+    return [
+      const MoodOption(
+        moodType: MoodType.ecstatic,
+        displayName: "Ecstatic",
+        positivityScore: 10,
+        description: "Peak positive energy, euphoric",
+        emoji: "🤩",
+      ),
+      const MoodOption(
+        moodType: MoodType.joyful,
+        displayName: "Joyful",
+        positivityScore: 9,
+        description: "Very happy, delighted",
+        emoji: "😊",
+      ),
+      const MoodOption(
+        moodType: MoodType.confident,
+        displayName: "Confident",
+        positivityScore: 8,
+        description: "Self-assured, empowered",
+        emoji: "💪",
+      ),
+      const MoodOption(
+        moodType: MoodType.content,
+        displayName: "Content",
+        positivityScore: 7,
+        description: "Satisfied, peaceful",
+        emoji: "😌",
+      ),
+      const MoodOption(
+        moodType: MoodType.focused,
+        displayName: "Focused",
+        positivityScore: 6,
+        description: "Clear-minded, determined",
+        emoji: "🎯",
+      ),
+      const MoodOption(
+        moodType: MoodType.neutral,
+        displayName: "Neutral",
+        positivityScore: 5,
+        description: "Balanced, neither positive nor negative",
+        emoji: "😐",
+      ),
+      const MoodOption(
+        moodType: MoodType.restless,
+        displayName: "Restless",
+        positivityScore: 4,
+        description: "Agitated, unsettled",
+        emoji: "😣",
+      ),
+      const MoodOption(
+        moodType: MoodType.tired,
+        displayName: "Tired",
+        positivityScore: 3,
+        description: "Fatigued, low energy",
+        emoji: "😴",
+      ),
+      const MoodOption(
+        moodType: MoodType.frustrated,
+        displayName: "Frustrated",
+        positivityScore: 2,
+        description: "Annoyed, blocked",
+        emoji: "😤",
+      ),
+      const MoodOption(
+        moodType: MoodType.anxious,
+        displayName: "Anxious",
+        positivityScore: 2,
+        description: "Worried, stressed",
+        emoji: "😰",
+      ),
+      const MoodOption(
+        moodType: MoodType.sad,
+        displayName: "Sad",
+        positivityScore: 1,
+        description: "Down, melancholy",
+        emoji: "😢",
+      ),
+      const MoodOption(
+        moodType: MoodType.overwhelmed,
+        displayName: "Overwhelmed",
+        positivityScore: 1,
+        description: "Too much to handle",
+        emoji: "😵",
+      ),
+      const MoodOption(
+        moodType: MoodType.angry,
+        displayName: "Angry",
+        positivityScore: 1,
+        description: "Mad, irritated",
+        emoji: "😠",
+      ),
+      const MoodOption(
+        moodType: MoodType.defeated,
+        displayName: "Defeated",
+        positivityScore: 0,
+        description: "Hopeless, giving up",
+        emoji: "😞",
+      ),
+      const MoodOption(
+        moodType: MoodType.depressed,
+        displayName: "Depressed",
+        positivityScore: 0,
+        description: "Very low, heavy sadness",
+        emoji: "😔",
+      ),
+    ];
   }
 
   /// Create a new mood entry
