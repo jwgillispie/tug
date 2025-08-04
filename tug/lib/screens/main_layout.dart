@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../utils/theme/colors.dart';
 import '../utils/theme/decorations.dart';
 import '../utils/quantum_effects.dart';
+import '../utils/mobile_ux_utils.dart';
+import '../widgets/common/mobile_bottom_sheet.dart';
 import '../services/app_mode_service.dart';
 
 class MainLayout extends StatefulWidget {
@@ -242,270 +244,68 @@ class _MainLayoutState extends State<MainLayout> {
     );
   }
 
-  // Simplified add action sheet
+  // Mobile-optimized add action sheet
   void _showAddActionSheet(BuildContext context, bool isViceMode) {
-    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: TugColors.getSurfaceColor(isDarkMode, isViceMode),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+    final items = isViceMode ? [
+      MobileBottomSheetItem(
+        icon: Icons.spa_rounded,
+        title: 'record indulgence',
+        description: 'track when you indulged in a vice',
+        gradient: TugColors.getIndulgenceGradient(),
+        onTap: () => context.go('/indulgences/new'),
       ),
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _appModeService.primaryActionText,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 22,
-                  color: TugColors.getTextColor(isDarkMode, isViceMode),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                isViceMode 
-                    ? 'track your vices or record an indulgence'
-                    : 'what would you like to add today?',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
-                ),
-              ),
-              const SizedBox(height: 24),
-
-              // Mode-specific option cards
-              if (isViceMode) ...[
-                _buildActionCard(
-                  context: context,
-                  title: 'record indulgence',
-                  description: 'track when you indulged in a vice',
-                  icon: Icons.spa_rounded,
-                  gradient: TugColors.getIndulgenceGradient(),
-                  path: '/indulgences/new',
-                  isDarkMode: isDarkMode,
-                  isViceMode: isViceMode,
-                ),
-                const SizedBox(height: 16),
-                _buildActionCard(
-                  context: context,
-                  title: 'manage vices',
-                  description: 'add or edit your tracked vices',
-                  icon: Icons.psychology_rounded,
-                  gradient: TugColors.getViceGradient(),
-                  path: '/vices-input',
-                  isDarkMode: isDarkMode,
-                  isViceMode: isViceMode,
-                ),
-                const SizedBox(height: 16),
-                _buildModeToggleCard(context, isDarkMode, isViceMode),
-              ] else ...[
-                _buildActionCard(
-                  context: context,
-                  title: 'log activity',
-                  description: 'record activity session',
-                  icon: Icons.timelapse_rounded,
-                  gradient: TugColors.getPrimaryGradient(),
-                  path: '/activities/new',
-                  isDarkMode: isDarkMode,
-                  isViceMode: isViceMode,
-                ),
-                const SizedBox(height: 16),
-                _buildActionCard(
-                  context: context,
-                  title: 'add value',
-                  description: 'define what matters to you',
-                  icon: Icons.star_rounded,
-                  gradient: TugColors.getPrimaryGradient(),
-                  path: '/values-input',
-                  isDarkMode: isDarkMode,
-                  isViceMode: isViceMode,
-                ),
-                const SizedBox(height: 16),
-                _buildModeToggleCard(context, isDarkMode, isViceMode),
-              ],
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  // Mode toggle card
-  Widget _buildModeToggleCard(BuildContext context, bool isDarkMode, bool isViceMode) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: TugColors.getPrimaryColor(isViceMode).withValues(alpha: 0.2),
-          width: 1,
-        ),
+      MobileBottomSheetItem(
+        icon: Icons.psychology_rounded,
+        title: 'manage vices',
+        description: 'add or edit your tracked vices',
+        gradient: TugColors.getViceGradient(),
+        onTap: () => context.go('/vices-input'),
       ),
-      color: TugColors.getSurfaceColor(isDarkMode, isViceMode),
-      child: InkWell(
+      MobileBottomSheetItem(
+        icon: isViceMode ? Icons.favorite : Icons.psychology,
+        title: 'switch to ${isViceMode ? 'values' : 'vices'} mode',
+        description: isViceMode 
+            ? 'track positive habits and values'
+            : 'track behaviors to overcome',
+        onTap: () => _appModeService.toggleMode(),
+      ),
+    ] : [
+      MobileBottomSheetItem(
+        icon: Icons.timelapse_rounded,
+        title: 'log activity',
+        description: 'record activity session',
+        gradient: TugColors.getPrimaryGradient(),
         onTap: () {
-          Navigator.pop(context);
-          _appModeService.toggleMode();
+          context.replace('/activities/new');
         },
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: TugColors.getPrimaryColor(!isViceMode),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  isViceMode ? Icons.favorite : Icons.psychology,
-                  color: Colors.white,
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'switch to ${isViceMode ? 'values' : 'vices'} mode',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
-                        color: TugColors.getTextColor(isDarkMode, isViceMode),
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      isViceMode 
-                          ? 'track positive habits and values'
-                          : 'track behaviors to overcome',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(
-                Icons.swap_horiz,
-                size: 20,
-                color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
-              ),
-            ],
-          ),
-        ),
       ),
+      MobileBottomSheetItem(
+        icon: Icons.star_rounded,
+        title: 'add value',
+        description: 'define what matters to you',
+        gradient: TugColors.getPrimaryGradient(),
+        onTap: () => context.go('/values-input'),
+      ),
+      MobileBottomSheetItem(
+        icon: isViceMode ? Icons.favorite : Icons.psychology,
+        title: 'switch to ${isViceMode ? 'values' : 'vices'} mode',
+        description: isViceMode 
+            ? 'track positive habits and values'
+            : 'track behaviors to overcome',
+        onTap: () => _appModeService.toggleMode(),
+      ),
+    ];
+
+    MobileBottomSheet.show(
+      context: context,
+      title: _appModeService.primaryActionText,
+      subtitle: isViceMode 
+          ? 'track your vices or record an indulgence'
+          : 'what would you like to add today?',
+      items: items,
+      isViceMode: isViceMode,
     );
   }
-
-  // Simplified action card for the bottom sheet
-  Widget _buildActionCard({
-    required BuildContext context,
-    required String title,
-    required String description,
-    required IconData icon,
-    required LinearGradient gradient,
-    required String path,
-    required bool isDarkMode,
-    required bool isViceMode,
-  }) {
-    // Use the first color of the gradient for a solid accent
-    final Color accentColor = gradient.colors.first;
-
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: isDarkMode
-              ? Colors.white.withValues(alpha: 0.1)
-              : Colors.black.withValues(alpha: 0.05),
-          width: 1,
-        ),
-      ),
-      color: TugColors.getSurfaceColor(isDarkMode, isViceMode),
-      child: Semantics(
-        label: '$title, $description',
-        button: true,
-        child: InkWell(
-          onTap: () {
-            Navigator.pop(context);
-            // Use replace instead of go for the activity form to ensure proper navigation
-            if (path == '/activities/new') {
-              context.replace(path);
-            } else {
-              context.go(path);
-            }
-          },
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                // Icon with solid color
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: accentColor,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    icon,
-                    color: Colors.white,
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                // Text content
-                Expanded(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                          color: TugColors.getTextColor(isDarkMode, isViceMode),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        description,
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  Icons.arrow_forward_ios,
-                  size: 16,
-                  color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
 
   Widget _buildNavItem({
     required BuildContext context,
@@ -528,18 +328,21 @@ class _MainLayoutState extends State<MainLayout> {
       label: semanticLabel,
       button: true,
       selected: isSelected,
-      child: GestureDetector(
-        onTap: () {
+      child: MobileUXUtils.mobileButton(
+        onPressed: () {
           if (!isSelected) {
-            HapticFeedback.lightImpact();
             context.go(path);
           }
         },
+        backgroundColor: Colors.transparent,
+        borderRadius: BorderRadius.circular(20),
         child: QuantumEffects.floating(
           offset: isSelected ? 2 : 1, // Reduced for better performance
           child: Container(
-            height: 40,
-            constraints: const BoxConstraints(minWidth: 0),
+            constraints: const BoxConstraints(
+              minWidth: MobileUXUtils.minTouchTarget,
+              minHeight: MobileUXUtils.minTouchTarget,
+            ),
             decoration: isSelected
                 ? TugDecorations.iconContainerDecoration(
                     isDark: isDarkMode,
