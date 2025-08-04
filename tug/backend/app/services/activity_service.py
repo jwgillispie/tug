@@ -94,7 +94,7 @@ class ActivityService:
         # Get activities
         activities = await Activity.find(
             query
-        ).sort(-Activity.date).skip(skip).limit(limit).to_list(length=None)
+        ).sort(-Activity.date).skip(skip).limit(limit).to_list()
         
         return activities
 
@@ -198,7 +198,7 @@ class ActivityService:
         total_activities = await Activity.find(query).count()
         
         # Get total duration by fetching all activities and summing manually
-        activities = await Activity.find(query).to_list(length=None)
+        activities = await Activity.find(query).to_list()
         total_duration = sum(activity.duration for activity in activities if activity.duration)
         
         # Calculate statistics
@@ -228,7 +228,7 @@ class ActivityService:
         values = await Value.find(
             Value.user_id == str(user.id),
             Value.active == True
-        ).to_list(length=None)
+        ).to_list()
         
         result = []
         
@@ -239,7 +239,7 @@ class ActivityService:
                 Activity.value_id == str(value.id),
                 Activity.date >= start_date,
                 Activity.date <= end_date
-            ).to_list(length=None)
+            ).to_list()
             
             # Calculate total time
             total_minutes = sum(activity.duration for activity in activities)

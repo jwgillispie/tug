@@ -231,7 +231,7 @@ class MoodService:
                 query["recorded_at"] = date_filter
             
             # Get mood entries
-            mood_entries = await MoodEntry.find(query).sort(-MoodEntry.recorded_at).skip(skip).limit(limit).to_list(length=None)
+            mood_entries = await MoodEntry.find(query).sort(-MoodEntry.recorded_at).skip(skip).limit(limit).to_list()
             
             # Convert to response format
             return [
@@ -275,7 +275,7 @@ class MoodService:
             mood_entries = await MoodEntry.find({
                 "user_id": str(user.id),
                 "recorded_at": {"$gte": start_date, "$lte": end_date}
-            }).sort(MoodEntry.recorded_at).to_list(length=None)
+            }).sort(MoodEntry.recorded_at).to_list()
             
             # Get related activities for context (skip temporary IDs)
             activity_ids = [entry.activity_id for entry in mood_entries 
@@ -293,7 +293,7 @@ class MoodService:
                 if valid_object_ids:
                     activity_list = await Activity.find({
                         "_id": {"$in": valid_object_ids}
-                    }).to_list(length=None)
+                    }).to_list()
                     activities = {str(act.id): act for act in activity_list}
             
             # Get related values for context (handle multi-value activities)
@@ -322,7 +322,7 @@ class MoodService:
                 if valid_value_ids:
                     value_list = await Value.find({
                         "_id": {"$in": valid_value_ids}
-                    }).to_list(length=None)
+                    }).to_list()
                     values = {str(val.id): val for val in value_list}
             
             # Build chart data

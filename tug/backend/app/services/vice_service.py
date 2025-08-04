@@ -51,7 +51,7 @@ class ViceService:
         if not include_inactive:
             query[Vice.active] = True
         
-        vices = await Vice.find(query).sort(-Vice.created_at).to_list(length=None)
+        vices = await Vice.find(query).sort(-Vice.created_at).to_list()
         
         # Update current streaks based on calculation and check for milestones
         for vice in vices:
@@ -216,7 +216,7 @@ class ViceService:
         if limit:
             query = query.limit(limit)
         
-        return await query.to_list(length=None)
+        return await query.to_list()
 
     @staticmethod
     async def get_indulgence_by_id(user: User, indulgence_id: str) -> Indulgence:
@@ -273,7 +273,7 @@ class ViceService:
         if limit:
             query = query.limit(limit)
         
-        return await query.to_list(length=None)
+        return await query.to_list()
 
     @staticmethod
     async def update_vice_streak(user: User, vice_id: str, new_streak: int) -> Vice:

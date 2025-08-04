@@ -169,7 +169,7 @@ class SocialService:
                         {"addressee_id": str(current_user.id)}
                     ]}
                 ]
-            }).to_list(length=None)
+            }).to_list()
             
             # Extract friend user IDs and create ID mapping
             friend_ids = []
@@ -183,7 +183,7 @@ class SocialService:
                 friendship_map[friend_id] = friendship
             
             # Get friend user objects
-            friends = await User.find({"_id": {"$in": [ObjectId(fid) for fid in friend_ids]}}).to_list(length=None)
+            friends = await User.find({"_id": {"$in": [ObjectId(fid) for fid in friend_ids]}}).to_list()
             
             # Build friendship data with user info
             friendship_data_list = []
@@ -223,11 +223,11 @@ class SocialService:
             pending_requests = await Friendship.find({
                 "addressee_id": str(current_user.id),
                 "status": FriendshipStatus.PENDING
-            }).to_list(length=None)
+            }).to_list()
             
             # Get requester user info
             requester_ids = [req.requester_id for req in pending_requests]
-            requesters = await User.find({"_id": {"$in": [ObjectId(uid) for uid in requester_ids]}}).to_list(length=None)
+            requesters = await User.find({"_id": {"$in": [ObjectId(uid) for uid in requester_ids]}}).to_list()
             requester_map = {str(user.id): user for user in requesters}
             
             # Build friendship data with requester info
@@ -284,7 +284,7 @@ class SocialService:
                     {"requester_id": str(current_user.id), "addressee_id": {"$in": user_ids}},
                     {"requester_id": {"$in": user_ids}, "addressee_id": str(current_user.id)}
                 ]
-            }).to_list(length=None)
+            }).to_list()
             
             # Create friendship status map
             friendship_map = {}
@@ -475,12 +475,12 @@ class SocialService:
             logger.info(f"Social feed: Current user {current_user.id}, Friend IDs: {friend_ids}, Total user IDs: {user_ids}, Found {len(posts)} posts")
             
             # Debug: Check if there are any posts at all from these users
-            all_posts_from_users = await SocialPost.find({"user_id": {"$in": user_ids}}).to_list(length=None)
-            public_posts_from_users = await SocialPost.find({"user_id": {"$in": user_ids}, "is_public": True}).to_list(length=None)
+            all_posts_from_users = await SocialPost.find({"user_id": {"$in": user_ids}}).to_list()
+            public_posts_from_users = await SocialPost.find({"user_id": {"$in": user_ids}, "is_public": True}).to_list()
             logger.info(f"Debug: Total posts from these users: {len(all_posts_from_users)}, Public posts: {len(public_posts_from_users)}")
             
             # Debug: Check all posts in database
-            all_posts = await SocialPost.find({}).to_list(length=None)
+            all_posts = await SocialPost.find({}).to_list()
             logger.info(f"Debug: Total posts in database: {len(all_posts)}")
             if all_posts:
                 sample_post = all_posts[0]
@@ -488,22 +488,22 @@ class SocialService:
             
             # Get user info for posts
             post_user_ids = list(set([post.user_id for post in posts]))
-            users = await User.find({"_id": {"$in": [ObjectId(uid) for uid in post_user_ids]}}).to_list(length=None)
+            users = await User.find({"_id": {"$in": [ObjectId(uid) for uid in post_user_ids]}}).to_list()
             user_map = {str(user.id): user for user in users}
             
             # Get activity and value info for posts
             activity_ids = [post.activity_id for post in posts if post.activity_id]
-            activities = await Activity.find({"_id": {"$in": [ObjectId(aid) for aid in activity_ids]}}).to_list(length=None)
+            activities = await Activity.find({"_id": {"$in": [ObjectId(aid) for aid in activity_ids]}}).to_list()
             activity_map = {str(activity.id): activity for activity in activities}
             
             # Get value info for activities
             value_ids = [activity.value_id for activity in activities if activity.value_id]
-            values = await Value.find({"_id": {"$in": [ObjectId(vid) for vid in value_ids]}}).to_list(length=None)
+            values = await Value.find({"_id": {"$in": [ObjectId(vid) for vid in value_ids]}}).to_list()
             value_map = {str(value.id): value for value in values}
             
             # Get vice info for indulgence posts
             vice_ids = [post.vice_id for post in posts if post.vice_id]
-            vices = await Vice.find({"_id": {"$in": [ObjectId(vid) for vid in vice_ids]}}).to_list(length=None)
+            vices = await Vice.find({"_id": {"$in": [ObjectId(vid) for vid in vice_ids]}}).to_list()
             vice_map = {str(vice.id): vice for vice in vices}
             
             # Build post data with user, activity, value, and vice info
@@ -609,7 +609,7 @@ class SocialService:
             
             # Get user info for comments
             comment_user_ids = list(set([comment.user_id for comment in comments]))
-            users = await User.find({"_id": {"$in": [ObjectId(uid) for uid in comment_user_ids]}}).to_list(length=None)
+            users = await User.find({"_id": {"$in": [ObjectId(uid) for uid in comment_user_ids]}}).to_list()
             user_map = {str(user.id): user for user in users}
             
             # Build comment data with user info
@@ -643,7 +643,7 @@ class SocialService:
         """Get comprehensive social statistics for the current user"""
         try:
             # Get all user's posts
-            user_posts = await SocialPost.find({"user_id": str(current_user.id)}).to_list(length=None)
+            user_posts = await SocialPost.find({"user_id": str(current_user.id)}).to_list()
             
             # Get friends count
             friends = await Friendship.find({
@@ -651,13 +651,13 @@ class SocialService:
                     {"requester_id": str(current_user.id), "status": FriendshipStatus.ACCEPTED},
                     {"addressee_id": str(current_user.id), "status": FriendshipStatus.ACCEPTED}
                 ]
-            }).to_list(length=None)
+            }).to_list()
             
             # Get pending friend requests
             pending_requests = await Friendship.find({
                 "addressee_id": str(current_user.id),
                 "status": FriendshipStatus.PENDING
-            }).to_list(length=None)
+            }).to_list()
             
             # Calculate basic stats
             total_posts = len(user_posts)

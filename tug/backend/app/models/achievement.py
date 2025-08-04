@@ -36,7 +36,7 @@ class Achievement(Document):
     @classmethod
     async def get_user_achievements(cls, user_id: str) -> List["Achievement"]:
         """Get all achievements for a specific user"""
-        return await cls.find(Achievement.user_id == user_id).to_list(length=None)
+        return await cls.find(Achievement.user_id == user_id).to_list()
     
     @classmethod
     async def get_achievement(cls, user_id: str, achievement_id: str) -> Optional["Achievement"]:
