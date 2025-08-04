@@ -23,19 +23,27 @@ class ActivityService:
         # Check if all values exist and belong to user
         logger.info(f"Attempting to find values with IDs: {activity_data.value_ids} for user: {user.id}")
 
-        values = []
+        # Convert value_ids to ObjectIds for batch query
+        object_ids = []
         for value_id in activity_data.value_ids:
-            value = await Value.find_one(
-                Value.id == ObjectId(value_id) if not isinstance(value_id, ObjectId) else value_id,
-                Value.user_id == str(user.id)
+            if isinstance(value_id, ObjectId):
+                object_ids.append(value_id)
+            else:
+                object_ids.append(ObjectId(value_id))
+        
+        # Batch query to fetch all values at once
+        values = await Value.find(
+            {"_id": {"$in": object_ids}, "user_id": str(user.id)}
+        ).to_list()
+        
+        # Check if all requested values were found
+        if len(values) != len(activity_data.value_ids):
+            found_ids = {str(value.id) for value in values}
+            missing_ids = set(str(vid) for vid in activity_data.value_ids) - found_ids
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Values not found: {', '.join(missing_ids)}"
             )
-            
-            if not value:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Value {value_id} not found"
-                )
-            values.append(value)
         
         # Check if date is not in future
         if activity_data.date > datetime.utcnow():
@@ -194,12 +202,28 @@ class ActivityService:
         if value_id:
             query[Activity.value_id] = value_id
         
-        # Count activities
-        total_activities = await Activity.find(query).count()
+        # Use aggregation pipeline for efficient statistics calculation
+        pipeline = [
+            {"$match": query},
+            {
+                "$group": {
+                    "_id": None,
+                    "total_activities": {"$sum": 1},
+                    "total_duration": {"$sum": "$duration"}
+                }
+            }
+        ]
         
-        # Get total duration by fetching all activities and summing manually
-        activities = await Activity.find(query).to_list()
-        total_duration = sum(activity.duration for activity in activities if activity.duration)
+        # Execute aggregation
+        result = await Activity.aggregate(pipeline).to_list()
+        
+        if result:
+            stats = result[0]
+            total_activities = stats["total_activities"]
+            total_duration = stats["total_duration"] or 0
+        else:
+            total_activities = 0
+            total_duration = 0
         
         # Calculate statistics
         return {
@@ -224,44 +248,87 @@ class ActivityService:
         if end_date is None:
             end_date = datetime.utcnow()
         
-        # Get all user values
-        values = await Value.find(
-            Value.user_id == str(user.id),
-            Value.active == True
-        ).to_list()
+        # Calculate period in days
+        period_days = (end_date - start_date).days + 1
         
+        # Use aggregation pipeline to efficiently get activity summary by value
+        # First, get all user values and their activity statistics in a single query
+        pipeline = [
+            {
+                "$lookup": {
+                    "from": "activities",
+                    "let": {"value_id": {"$toString": "$_id"}, "user_id": "$user_id"},
+                    "pipeline": [
+                        {
+                            "$match": {
+                                "$expr": {
+                                    "$and": [
+                                        {"$eq": ["$user_id", "$$user_id"]},
+                                        {"$eq": ["$value_id", "$$value_id"]},
+                                        {"$gte": ["$date", start_date]},
+                                        {"$lte": ["$date", end_date]}
+                                    ]
+                                }
+                            }
+                        },
+                        {
+                            "$group": {
+                                "_id": None,
+                                "total_minutes": {"$sum": "$duration"},
+                                "count": {"$sum": 1}
+                            }
+                        }
+                    ],
+                    "as": "activity_stats"
+                }
+            },
+            {
+                "$match": {
+                    "user_id": str(user.id),
+                    "active": True
+                }
+            },
+            {
+                "$project": {
+                    "_id": 1,
+                    "name": 1,
+                    "color": 1,
+                    "importance": 1,
+                    "minutes": {
+                        "$ifNull": [
+                            {"$arrayElemAt": ["$activity_stats.total_minutes", 0]},
+                            0
+                        ]
+                    },
+                    "count": {
+                        "$ifNull": [
+                            {"$arrayElemAt": ["$activity_stats.count", 0]},
+                            0
+                        ]
+                    }
+                }
+            }
+        ]
+        
+        # Execute the aggregation on Value collection
+        values_with_stats = await Value.aggregate(pipeline).to_list()
+        
+        # Format the results
         result = []
-        
-        for value in values:
-            # Query for activities for this value within the date range
-            activities = await Activity.find(
-                Activity.user_id == str(user.id),
-                Activity.value_id == str(value.id),
-                Activity.date >= start_date,
-                Activity.date <= end_date
-            ).to_list()
+        for value_data in values_with_stats:
+            daily_average = round(value_data["minutes"] / period_days, 2) if period_days > 0 else 0
             
-            # Calculate total time
-            total_minutes = sum(activity.duration for activity in activities)
-            
-            # Calculate period in days
-            period_days = (end_date - start_date).days + 1
-            
-            # Calculate daily average (avoid division by zero)
-            daily_average = round(total_minutes / period_days, 2) if period_days > 0 else 0
-            
-            # Add to result
             result.append({
-                "id": str(value.id),
-                "name": value.name,
-                "color": value.color,
-                "importance": value.importance,
-                "minutes": total_minutes,
-                "count": len(activities),
+                "id": str(value_data["_id"]),
+                "name": value_data["name"],
+                "color": value_data["color"],
+                "importance": value_data["importance"],
+                "minutes": value_data["minutes"],
+                "count": value_data["count"],
                 "daily_average": daily_average,
                 # For demo purposes, set community average as a function of importance
                 # In a real app, this would come from actual community data
-                "community_avg": value.importance * 20  # Simple placeholder calculation
+                "community_avg": value_data["importance"] * 20  # Simple placeholder calculation
             })
         
         return {

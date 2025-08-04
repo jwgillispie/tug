@@ -26,7 +26,7 @@ app = FastAPI(
 # Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://tugg-app.web.app", "http://localhost:3000", "*"],  # Updated to include your frontend domain
+    allow_origins=["https://tugg-app.web.app", "http://localhost:3000"],  # Removed wildcard for security
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["*"],
