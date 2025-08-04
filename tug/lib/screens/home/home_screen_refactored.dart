@@ -255,15 +255,20 @@ class _HomeScreenRefactoredState extends State<HomeScreenRefactored>
       builder: (context, valuesState) {
         return BlocBuilder<VicesBloc, VicesState>(
           builder: (context, vicesState) {
-            final values = valuesState is ValuesLoaded ? valuesState.values : <ValueModel>[];
-            final vices = vicesState is VicesLoaded ? vicesState.vices : <ViceModel>[];
-            
-            return BalanceDashboard(
-              values: values,
-              vices: vices,
-              recentActivities: _activities,
-              recentIndulgences: _weeklyIndulgences,
-              daysToShow: 7,
+            return BlocBuilder<ActivitiesBloc, ActivitiesState>(
+              builder: (context, activitiesState) {
+                final values = valuesState is ValuesLoaded ? valuesState.values : <ValueModel>[];
+                final vices = vicesState is VicesLoaded ? vicesState.vices : <ViceModel>[];
+                final activities = activitiesState is ActivitiesLoaded ? activitiesState.activities : <ActivityModel>[];
+                
+                return BalanceDashboard(
+                  values: values,
+                  vices: vices,
+                  recentActivities: activities,
+                  recentIndulgences: _weeklyIndulgences,
+                  daysToShow: 7,
+                );
+              },
             );
           },
         );
@@ -277,20 +282,25 @@ class _HomeScreenRefactoredState extends State<HomeScreenRefactored>
       builder: (context, valuesState) {
         return BlocBuilder<VicesBloc, VicesState>(
           builder: (context, vicesState) {
-            final values = valuesState is ValuesLoaded ? valuesState.values : <ValueModel>[];
-            final vices = vicesState is VicesLoaded ? vicesState.vices : <ViceModel>[];
-            
-            // Generate AI insights from balance data
-            final insights = BalanceInsightsService.generateInsights(
-              activities: _activities,
-              indulgences: _weeklyIndulgences,
-              values: values,
-              vices: vices,
-              moodEntries: _moodEntries,
-              daysToAnalyze: 30,
+            return BlocBuilder<ActivitiesBloc, ActivitiesState>(
+              builder: (context, activitiesState) {
+                final values = valuesState is ValuesLoaded ? valuesState.values : <ValueModel>[];
+                final vices = vicesState is VicesLoaded ? vicesState.vices : <ViceModel>[];
+                final activities = activitiesState is ActivitiesLoaded ? activitiesState.activities : <ActivityModel>[];
+                
+                // Generate AI insights from balance data
+                final insights = BalanceInsightsService.generateInsights(
+                  activities: activities,
+                  indulgences: _weeklyIndulgences,
+                  values: values,
+                  vices: vices,
+                  moodEntries: _moodEntries,
+                  daysToAnalyze: 30,
+                );
+                
+                return BalanceInsightsWidget(insights: insights);
+              },
             );
-            
-            return BalanceInsightsWidget(insights: insights);
           },
         );
       },
@@ -353,10 +363,20 @@ class _HomeScreenRefactoredState extends State<HomeScreenRefactored>
               onAddFirst: () => context.go('/values-input'),
             );
           }
-          return SwipeableCharts(
-            activities: _activities,
-            values: state.values,
-            moodEntries: _moodEntries,
+          
+          // Get activities from ActivitiesBloc
+          return BlocBuilder<ActivitiesBloc, ActivitiesState>(
+            builder: (context, activitiesState) {
+              final activities = activitiesState is ActivitiesLoaded 
+                  ? activitiesState.activities 
+                  : <ActivityModel>[];
+              
+              return SwipeableCharts(
+                activities: activities,
+                values: state.values,
+                moodEntries: _moodEntries,
+              );
+            },
           );
         }
         
