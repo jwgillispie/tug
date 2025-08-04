@@ -215,7 +215,8 @@ class ActivityService:
         ]
         
         # Execute aggregation
-        result = await Activity.aggregate(pipeline).to_list()
+        cursor = Activity.aggregate(pipeline)
+        result = await cursor.to_list()
         
         if result:
             stats = result[0]
@@ -311,7 +312,8 @@ class ActivityService:
         ]
         
         # Execute the aggregation on Value collection
-        values_with_stats = await Value.aggregate(pipeline).to_list()
+        cursor = Value.aggregate(pipeline)
+        values_with_stats = await cursor.to_list()
         
         # Format the results
         result = []
