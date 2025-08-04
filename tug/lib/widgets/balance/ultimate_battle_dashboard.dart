@@ -320,7 +320,7 @@ class _UltimateBattleDashboardState extends State<UltimateBattleDashboard>
   void _updateBattleStats() {
     // This would normally come from a database
     _battleStats['powerLevel'] = (_battleStreak / 7).floor() + 1;
-    _battleStats['longestStreak'] = math.max(_battleStats['longestStreak'], _battleStreak);
+    _battleStats['longestStreak'] = math.max(_battleStats['longestStreak'] as int, _battleStreak);
     
     if (_battlePhase == "victory") {
       _battleStats['totalWins']++;

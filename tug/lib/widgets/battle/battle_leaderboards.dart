@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../models/activity_model.dart';
 import '../../models/vice_model.dart';
 import '../../models/value_model.dart';
@@ -101,7 +102,7 @@ class _BattleLeaderboardsState extends State<BattleLeaderboards>
                 _buildTabBar(isDarkMode),
                 const SizedBox(height: 16),
                 SizedBox(
-                  height: 300,
+                  height: 280,
                   child: TabBarView(
                     controller: _tabController,
                     children: [
@@ -294,10 +295,12 @@ class _BattleLeaderboardsState extends State<BattleLeaderboards>
   }
 
   Widget _buildGlobalLeaderboard(bool isDarkMode) {
-    return _buildEmptyState(
-      'global leaderboards coming soon!',
-      'compete with warriors worldwide once social features are activated',
+    return _buildPremiumFeatureState(
+      'global rankings available!',
+      'compete with warriors worldwide and see where you rank',
       '🌍',
+      'view rankings',
+      () => context.push('/rankings'),
       isDarkMode,
     );
   }
@@ -323,32 +326,87 @@ class _BattleLeaderboardsState extends State<BattleLeaderboards>
   Widget _buildEmptyState(String title, String description, String emoji, bool isDarkMode) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Text(
               emoji,
-              style: const TextStyle(fontSize: 48),
+              style: const TextStyle(fontSize: 40),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Text(
               title,
               style: TextStyle(
-                fontSize: 18,
+                fontSize: 16,
                 fontWeight: FontWeight.bold,
                 color: isDarkMode ? TugColors.darkTextPrimary : TugColors.lightTextPrimary,
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               description,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: 13,
                 color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
               ),
               textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPremiumFeatureState(String title, String description, String emoji, String buttonText, VoidCallback onTap, bool isDarkMode) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              emoji,
+              style: const TextStyle(fontSize: 40),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: isDarkMode ? TugColors.darkTextPrimary : TugColors.lightTextPrimary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 6),
+            Text(
+              description,
+              style: TextStyle(
+                fontSize: 13,
+                color: isDarkMode ? TugColors.darkTextSecondary : TugColors.lightTextSecondary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: onTap,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: TugColors.primaryPurple,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: Text(
+                buttonText,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+              ),
             ),
           ],
         ),
