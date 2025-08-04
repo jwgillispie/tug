@@ -46,7 +46,7 @@ def fix_mood_indexes():
         print("🚀 Continuing with startup anyway...")
 
 if __name__ == "__main__":
-    print("🚀 Starting TUG Backend...")
+    print("🚀 Starting TUG Backend v2...")
     
     # Fix indexes first
     fix_mood_indexes()
