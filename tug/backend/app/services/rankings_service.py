@@ -66,8 +66,14 @@ class RankingsService:
             },
         ]
         
-        # Execute the aggregation pipeline
-        user_stats = await Activity.aggregate(pipeline).to_list()
+        # Execute the aggregation pipeline using native collection access
+        try:
+            collection = Activity.get_motor_collection()
+            cursor = collection.aggregate(pipeline)
+            user_stats = await cursor.to_list(length=None)
+        except Exception as e:
+            logger.error(f"Rankings aggregation failed: {str(e)}")
+            return []
         
         # If ranking by streak, change the sorting
         if rank_by == "streak":
@@ -79,9 +85,10 @@ class RankingsService:
                 }
             }
             
-            # Get all users with their streaks
-            all_users = await User.find_all().to_list()
-            user_streaks = {str(u.id): getattr(u, "streak", 0) or 0 for u in all_users}
+            # Get all users with their streaks using Motor collection access
+            user_collection = User.get_motor_collection()
+            all_users_data = await user_collection.find({}).to_list(length=None)
+            user_streaks = {str(u.get("_id")): u.get("streak", 0) or 0 for u in all_users_data}
             
             # Create a map of user activities
             user_activities = {stats["_id"]: stats for stats in user_stats}
@@ -176,8 +183,14 @@ class RankingsService:
             },
         ]
         
-        # Execute the aggregation pipeline  
-        user_stats_result = await Activity.aggregate(user_stats_pipeline).to_list()
+        # Execute the aggregation pipeline using native collection access
+        try:
+            collection = Activity.get_motor_collection()
+            cursor = collection.aggregate(user_stats_pipeline)
+            user_stats_result = await cursor.to_list(length=None)
+        except Exception as e:
+            logger.error(f"User rank aggregation failed: {str(e)}")
+            return None
         
         # If user has no activities, return None or a default rank
         if not user_stats_result:
@@ -230,8 +243,14 @@ class RankingsService:
             }
         ]
         
-        # Execute the aggregation pipeline
-        higher_rank_result = await Activity.aggregate(higher_rank_pipeline).to_list()
+        # Execute the aggregation pipeline using native collection access
+        try:
+            collection = Activity.get_motor_collection()
+            cursor = collection.aggregate(higher_rank_pipeline)
+            higher_rank_result = await cursor.to_list(length=None)
+        except Exception as e:
+            logger.error(f"Higher rank aggregation failed: {str(e)}")
+            higher_rank_result = []
         higher_rank_count = higher_rank_result[0]["higher_rank_count"] if higher_rank_result else 0
         
         # The user's rank is the number of users with more activities plus 1
