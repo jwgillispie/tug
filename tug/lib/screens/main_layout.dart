@@ -57,21 +57,21 @@ class _MainLayoutState extends State<MainLayout> {
       {
         'icon': Icons.people_outline,
         'selectedIcon': Icons.people,
-        'label': 'home',
+        'label': 'social',
         'index': 0,
         'path': '/social',
       },
       {
         'icon': isViceMode ? Icons.spa_outlined : Icons.insights_outlined,
         'selectedIcon': isViceMode ? Icons.spa : Icons.insights_rounded,
-        'label': isViceMode ? 'indulgence' : 'progress',
+        'label': isViceMode ? 'track' : 'progress',
         'index': 1,
         'path': isViceMode ? '/indulgence-tracking' : '/progress',
       },
       {
-        'icon': Icons.waving_hand_outlined,
-        'selectedIcon': Icons.waving_hand,
-        'label': 'hello',
+        'icon': Icons.home_outlined,
+        'selectedIcon': Icons.home,
+        'label': 'home',
         'index': 2,
         'path': '/home',
       },
@@ -126,30 +126,34 @@ class _MainLayoutState extends State<MainLayout> {
             ],
           ),
         ),
-        floatingActionButton: QuantumEffects.floating(
-          offset: 8,
-          child: QuantumEffects.quantumBorder(
-            glowColor: TugColors.getPrimaryColor(isViceMode),
-            intensity: 0.8,
-            child: Container(
-              height: 56,
-              width: 56,
-              decoration: TugDecorations.premiumButtonDecoration(
-                isDark: isDarkMode,
-                isViceMode: isViceMode,
-              ),
-              child: Material(
-                color: Colors.transparent,
-                borderRadius: BorderRadius.circular(28),
-                child: InkWell(
-                  onTap: () => _showAddActionSheet(context, isViceMode),
+        floatingActionButton: Semantics(
+          label: isViceMode ? 'Add new indulgence or manage vices' : 'Add new activity or value',
+          button: true,
+          child: QuantumEffects.floating(
+            offset: 4, // Reduced from 8 for better performance
+            child: QuantumEffects.quantumBorder(
+              glowColor: TugColors.getPrimaryColor(isViceMode),
+              intensity: 0.4, // Reduced from 0.8 for better performance
+              child: Container(
+                height: 56,
+                width: 56,
+                decoration: TugDecorations.premiumButtonDecoration(
+                  isDark: isDarkMode,
+                  isViceMode: isViceMode,
+                ),
+                child: Material(
+                  color: Colors.transparent,
                   borderRadius: BorderRadius.circular(28),
-                  child: QuantumEffects.cosmicBreath(
-                    intensity: 0.05,
-                    child: const Icon(
-                      Icons.add_rounded,
-                      color: Colors.white,
-                      size: 28,
+                  child: InkWell(
+                    onTap: () => _showAddActionSheet(context, isViceMode),
+                    borderRadius: BorderRadius.circular(28),
+                    child: QuantumEffects.cosmicBreath(
+                      intensity: 0.02, // Reduced for better performance
+                      child: const Icon(
+                        Icons.add_rounded,
+                        color: Colors.white,
+                        size: 28,
+                      ),
                     ),
                   ),
                 ),
@@ -431,67 +435,71 @@ class _MainLayoutState extends State<MainLayout> {
         ),
       ),
       color: TugColors.getSurfaceColor(isDarkMode, isViceMode),
-      child: InkWell(
-        onTap: () {
-          Navigator.pop(context);
-          // Use replace instead of go for the activity form to ensure proper navigation
-          if (path == '/activities/new') {
-            context.replace(path);
-          } else {
-            context.go(path);
-          }
-        },
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              // Icon with solid color
-              Container(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: accentColor,
-                  shape: BoxShape.circle,
+      child: Semantics(
+        label: '$title, $description',
+        button: true,
+        child: InkWell(
+          onTap: () {
+            Navigator.pop(context);
+            // Use replace instead of go for the activity form to ensure proper navigation
+            if (path == '/activities/new') {
+              context.replace(path);
+            } else {
+              context.go(path);
+            }
+          },
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                // Icon with solid color
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: accentColor,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    icon,
+                    color: Colors.white,
+                    size: 22,
+                  ),
                 ),
-                child: Icon(
-                  icon,
-                  color: Colors.white,
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: 16),
-              // Text content
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
-                        color: TugColors.getTextColor(isDarkMode, isViceMode),
+                const SizedBox(width: 16),
+                // Text content
+                Expanded(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                          color: TugColors.getTextColor(isDarkMode, isViceMode),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      description,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
+                      const SizedBox(height: 2),
+                      Text(
+                        description,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-              Icon(
-                Icons.arrow_forward_ios,
-                size: 16,
-                color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
-              ),
-            ],
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 16,
+                  color: TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -513,70 +521,100 @@ class _MainLayoutState extends State<MainLayout> {
     final Color activeColor = TugColors.getPrimaryColor(isViceMode);
     final Color inactiveColor = TugColors.getTextColor(isDarkMode, isViceMode, isSecondary: true);
 
-    return GestureDetector(
-      onTap: () {
-        if (!isSelected) {
-          HapticFeedback.lightImpact();
-          context.go(path);
-        }
-      },
-      child: QuantumEffects.floating(
-        offset: isSelected ? 3 : 1,
-        child: Container(
-          height: 40,
-          constraints: const BoxConstraints(minWidth: 0),
-          decoration: isSelected
-              ? TugDecorations.iconContainerDecoration(
-                  isDark: isDarkMode,
-                  isViceMode: isViceMode,
-                )
-              : null,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Enhanced icon with quantum effects for selected state
-              isSelected
-                  ? QuantumEffects.cosmicBreath(
-                      intensity: 0.05,
-                      child: Icon(
-                        selectedIcon,
-                        color: activeColor,
-                        size: 20,
-                        shadows: TugColors.getNeonGlow(
-                          activeColor,
-                          intensity: 0.3,
-                        ).map((s) => Shadow(
-                          color: s.color,
-                          blurRadius: s.blurRadius / 2,
-                          offset: Offset(s.offset.dx, s.offset.dy),
-                        )).toList(),
+    // Generate proper semantic labels for accessibility
+    final semanticLabel = _getSemanticLabel(label, isViceMode, isSelected);
+
+    return Semantics(
+      label: semanticLabel,
+      button: true,
+      selected: isSelected,
+      child: GestureDetector(
+        onTap: () {
+          if (!isSelected) {
+            HapticFeedback.lightImpact();
+            context.go(path);
+          }
+        },
+        child: QuantumEffects.floating(
+          offset: isSelected ? 2 : 1, // Reduced for better performance
+          child: Container(
+            height: 40,
+            constraints: const BoxConstraints(minWidth: 0),
+            decoration: isSelected
+                ? TugDecorations.iconContainerDecoration(
+                    isDark: isDarkMode,
+                    isViceMode: isViceMode,
+                  )
+                : null,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Enhanced icon with quantum effects for selected state
+                isSelected
+                    ? QuantumEffects.cosmicBreath(
+                        intensity: 0.02, // Reduced for better performance
+                        child: Icon(
+                          selectedIcon,
+                          color: activeColor,
+                          size: 20,
+                          shadows: TugColors.getNeonGlow(
+                            activeColor,
+                            intensity: 0.3,
+                          ).map((s) => Shadow(
+                            color: s.color,
+                            blurRadius: s.blurRadius / 2,
+                            offset: Offset(s.offset.dx, s.offset.dy),
+                          )).toList(),
+                        ),
+                      )
+                    : Icon(
+                        icon,
+                        color: inactiveColor,
+                        size: 18,
                       ),
-                    )
-                  : Icon(
-                      icon,
-                      color: inactiveColor,
-                      size: 18,
+                const SizedBox(width: 3),
+                // Enhanced text with flexible layout
+                Flexible(
+                  child: Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: isSelected ? 11 : 10,
+                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                      color: isSelected ? activeColor : inactiveColor,
+                      letterSpacing: isSelected ? 0.2 : 0,
                     ),
-              const SizedBox(width: 3),
-              // Enhanced text with flexible layout
-              Flexible(
-                child: Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: isSelected ? 11 : 10,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                    color: isSelected ? activeColor : inactiveColor,
-                    letterSpacing: isSelected ? 0.2 : 0,
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
                   ),
-                  overflow: TextOverflow.ellipsis,
-                  maxLines: 1,
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
+  }
+
+  /// Generate descriptive semantic labels for screen readers
+  String _getSemanticLabel(String label, bool isViceMode, bool isSelected) {
+    final selectedText = isSelected ? ', currently selected' : '';
+    
+    switch (label) {
+      case 'social':
+        return 'Social feed, view posts and connect with friends$selectedText';
+      case 'track':
+        return isViceMode 
+            ? 'Track indulgences, monitor vice behaviors$selectedText'
+            : 'Progress tracking, view your activity statistics$selectedText';
+      case 'progress':
+        return 'Progress tracking, view your activity statistics$selectedText';
+      case 'home':
+        return 'Home dashboard, overview of your activities and values$selectedText';
+      case 'profile':
+        return 'Profile settings, manage your account and preferences$selectedText';
+      default:
+        return '$label tab$selectedText';
+    }
   }
 }
