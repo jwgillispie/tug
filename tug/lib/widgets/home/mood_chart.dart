@@ -110,8 +110,8 @@ class _MoodChartState extends State<MoodChart> {
         .add(Duration(days: 1)); // Include tomorrow to capture today's entries
     
     // Debug mood data
-    print('DEBUG MoodChart: Processing ${widget.moodEntries.length} mood entries');
-    print('DEBUG MoodChart: Date range: $startDate to $endDate');
+    // Processing ${widget.moodEntries.length} mood entries
+    // Date range: $startDate to $endDate
     
     // Get aggregation level based on time range
     final aggregation = widget.daysToShow != null 
@@ -124,10 +124,10 @@ class _MoodChartState extends State<MoodChart> {
       _prepareWeeklyData(startDate, effectiveDays);
     }
     
-    print('DEBUG MoodChart: Generated ${_spots.length} chart spots');
+    // Generated ${_spots.length} chart spots
     if (_spots.isNotEmpty) {
       for (int i = 0; i < _spots.length && i < 3; i++) {
-        print('  - Spot $i: x=${_spots[i].x}, y=${_spots[i].y}');
+        // Spot $i: x=${_spots[i].x}, y=${_spots[i].y}
       }
     }
     
@@ -159,13 +159,13 @@ class _MoodChartState extends State<MoodChart> {
       );
       
       final moodKey = '${moodDate.year}-${moodDate.month}-${moodDate.day}';
-      print('DEBUG MoodChart: Mood entry recorded ${moodEntry.recordedAt} -> dateKey: $moodKey');
+      // Mood entry recorded ${moodEntry.recordedAt} -> dateKey: $moodKey
       
       if (dailyMoodScores.containsKey(moodKey)) {
         dailyMoodScores[moodKey]!.add(moodEntry.positivityScore);
-        print('DEBUG MoodChart: Added mood score ${moodEntry.positivityScore} to day $moodKey');
+        // Added mood score ${moodEntry.positivityScore} to day $moodKey
       } else {
-        print('DEBUG MoodChart: Date $moodKey not in chart range');
+        // Date $moodKey not in chart range
       }
     }
     
@@ -632,7 +632,8 @@ class _MoodChartState extends State<MoodChart> {
                             ],
                           ),
                         )
-                      : LineChart(
+                      : RepaintBoundary(
+                          child: LineChart(
                     LineChartData(
                       gridData: FlGridData(
                         show: true,
@@ -792,7 +793,7 @@ class _MoodChartState extends State<MoodChart> {
                     ),
                   ),
                 ),
-              ),
+              )),
               
               // Chart footer with motivational text and average mood
               SizedBox(

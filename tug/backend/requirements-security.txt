@@ -1,0 +1,41 @@
+# Security and code quality tools for CI/CD pipeline
+# This file contains tools used specifically for security scanning and code quality
+
+# Security scanning tools
+bandit[toml]>=1.7.5          # Python security vulnerability scanner
+safety>=3.0.0                # Dependency vulnerability scanner  
+semgrep>=1.45.0               # Static analysis for security patterns
+
+# Code quality and type checking
+pylint>=3.0.0                # Python linting
+mypy>=1.5.0                  # Static type checking
+black>=23.9.0                # Code formatting
+isort>=5.12.0                # Import sorting
+
+# Testing and coverage
+pytest>=7.4.0               # Testing framework
+pytest-cov>=4.1.0           # Coverage reporting
+pytest-xdist>=3.3.1         # Parallel test execution
+pytest-html>=3.2.0          # HTML test reports
+pytest-json-report>=1.5.0   # JSON test reports
+pytest-asyncio>=0.21.1      # Async test support
+pytest-mock>=3.11.1         # Mock fixtures
+
+# Performance testing
+locust>=2.17.0              # Load testing framework
+
+# Security headers and validation
+secure>=0.3.0               # Security headers middleware
+python-jose[cryptography]>=3.3.0  # JWT handling (already in main requirements but pinned for security)
+
+# Additional security utilities
+cryptography>=41.0.7        # Secure cryptographic recipes
+bcrypt>=4.0.1               # Password hashing
+passlib[bcrypt]>=1.7.4      # Password hashing utilities
+
+# Dependency scanning and management
+pip-audit>=2.6.1            # Pip dependency vulnerability scanner
+pip-licenses>=4.3           # License compliance checking
+
+# Documentation and reporting
+jinja2>=3.1.2               # Template engine for reports (security patched version)

@@ -18,6 +18,7 @@ from ..schemas.social import (
     SocialStatisticsResponse, PostTypeStats, FriendshipData
 )
 from .notification_service import NotificationService
+from ..utils.validation import InputValidator
 
 logger = logging.getLogger(__name__)
 
@@ -262,17 +263,39 @@ class SocialService:
     
     @staticmethod
     async def search_users(current_user: User, query: str, limit: int = 10) -> List[UserSearchResult]:
-        """Search for users by username or display name"""
+        """Search for users by username or display name with secure query handling"""
         try:
+            # Validate and sanitize search query
+            if not query or len(query.strip()) < 2:
+                return []
+            
+            # Sanitize the query and escape regex special characters
+            sanitized_query = InputValidator.sanitize_string(query.strip(), max_length=100)
+            
+            # Detect potential injection attempts
+            suspicious = InputValidator.detect_injection_attempts(sanitized_query)
+            if suspicious:
+                logger.warning(f"Suspicious search query detected: {suspicious}")
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail={"error": "invalid_search", "message": "Invalid search query"}
+                )
+            
+            # Escape regex special characters to prevent regex injection
+            import re
+            escaped_query = re.escape(sanitized_query)
+            
+            # Validate limit
+            limit = min(max(limit, 1), 50)  # Limit between 1 and 50
+            
             # Search users by username, display_name, or email (case insensitive)
-            # Handle case where username might be None for older users
             users = await User.find({
                 "$and": [
                     {"_id": {"$ne": ObjectId(current_user.id)}},  # Exclude current user
                     {"$or": [
-                        {"username": {"$regex": query, "$options": "i"}},
-                        {"display_name": {"$regex": query, "$options": "i"}},
-                        {"email": {"$regex": query, "$options": "i"}}
+                        {"username": {"$regex": escaped_query, "$options": "i"}},
+                        {"display_name": {"$regex": escaped_query, "$options": "i"}},
+                        {"email": {"$regex": escaped_query, "$options": "i"}}
                     ]}
                 ]
             }).limit(limit).to_list()

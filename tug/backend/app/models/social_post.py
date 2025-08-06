@@ -37,11 +37,34 @@ class SocialPost(Document):
     class Settings:
         collection = "social_posts"
         indexes = [
+            # Core query patterns - high priority
+            [("user_id", 1), ("created_at", -1)],  # User's posts timeline
+            [("is_public", 1), ("created_at", -1)],  # Public feed
+            [("post_type", 1), ("created_at", -1)],  # Posts by type
+            
+            # Feed and discovery queries
+            [("is_public", 1), ("post_type", 1), ("created_at", -1)],  # Filtered public feed
+            [("user_id", 1), ("is_public", 1), ("created_at", -1)],  # User's public posts
+            [("user_id", 1), ("post_type", 1), ("created_at", -1)],  # User's posts by type
+            
+            # Engagement analytics
+            [("comments_count", -1), ("created_at", -1)],  # Popular posts
+            [("user_id", 1), ("comments_count", -1)],  # User's popular posts
+            
+            # Reference lookups
+            [("activity_id", 1)],  # Activity-related posts
+            [("vice_id", 1)],  # Vice-related posts
+            [("achievement_id", 1)],  # Achievement posts
+            
+            # Compound reference queries
+            [("user_id", 1), ("activity_id", 1)],  # User's activity posts
+            [("user_id", 1), ("vice_id", 1)],  # User's vice posts
+            
+            # Basic field indexes
             "user_id",
-            "post_type",
+            "post_type", 
             "created_at",
-            "is_public",
-            [("user_id", 1), ("created_at", -1)],
+            "is_public"
         ]
     
     def update_timestamp(self):

@@ -305,20 +305,20 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: _valueColor.withOpacity(isDarkMode ? 0.25 : 0.15),
+              color: _valueColor.withValues(alpha: isDarkMode ? 0.25 : 0.15),
               blurRadius: 12,
               spreadRadius: 1,
               offset: const Offset(0, 3),
             ),
             BoxShadow(
-              color: _valueColor.withOpacity(isDarkMode ? 0.1 : 0.05),
+              color: _valueColor.withValues(alpha: isDarkMode ? 0.1 : 0.05),
               blurRadius: 3,
               spreadRadius: 0,
               offset: const Offset(0, 0),
             ),
           ],
           border: Border.all(
-            color: _valueColor.withOpacity(isDarkMode ? 0.2 : 0.1),
+            color: _valueColor.withValues(alpha: isDarkMode ? 0.2 : 0.1),
             width: 1.0,
           ),
         ),
@@ -353,17 +353,17 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                               decoration: BoxDecoration(
-                                color: _valueColor.withOpacity(isDarkMode ? 0.2 : 0.1),
+                                color: _valueColor.withValues(alpha: isDarkMode ? 0.2 : 0.1),
                                 borderRadius: BorderRadius.circular(12),
                                 boxShadow: [
                                   BoxShadow(
-                                    color: _valueColor.withOpacity(isDarkMode ? 0.2 : 0.1),
+                                    color: _valueColor.withValues(alpha: isDarkMode ? 0.2 : 0.1),
                                     blurRadius: 4,
                                     spreadRadius: 0,
                                   ),
                                 ],
                                 border: Border.all(
-                                  color: _valueColor.withOpacity(0.3),
+                                  color: _valueColor.withValues(alpha: 0.3),
                                   width: 1
                                 ),
                               ),
@@ -398,21 +398,21 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                         colors: [
-                          _valueColor.withOpacity(isDarkMode ? 0.3 : 0.2),
-                          _valueColor.withOpacity(isDarkMode ? 0.15 : 0.08),
+                          _valueColor.withValues(alpha: isDarkMode ? 0.3 : 0.2),
+                          _valueColor.withValues(alpha: isDarkMode ? 0.15 : 0.08),
                         ],
                       ),
                       borderRadius: BorderRadius.circular(12),
                       boxShadow: [
                         BoxShadow(
-                          color: _valueColor.withOpacity(isDarkMode ? 0.25 : 0.15),
+                          color: _valueColor.withValues(alpha: isDarkMode ? 0.25 : 0.15),
                           blurRadius: 6,
                           spreadRadius: 0,
                           offset: const Offset(0, 2),
                         ),
                       ],
                       border: Border.all(
-                        color: _valueColor.withOpacity(isDarkMode ? 0.3 : 0.2),
+                        color: _valueColor.withValues(alpha: isDarkMode ? 0.3 : 0.2),
                         width: 1,
                       ),
                     ),
@@ -454,14 +454,14 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
                                 colors: [
-                                  _valueColor.withOpacity(0.5),
-                                  Colors.grey.withOpacity(0.6),
-                                  _valueColor.withOpacity(0.5),
+                                  _valueColor.withValues(alpha: 0.5),
+                                  Colors.grey.withValues(alpha: 0.6),
+                                  _valueColor.withValues(alpha: 0.5),
                                 ],
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: _valueColor.withOpacity(0.3),
+                                  color: _valueColor.withValues(alpha: 0.3),
                                   blurRadius: 8,
                                   spreadRadius: 0,
                                   offset: const Offset(0, 0),
@@ -482,8 +482,8 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
                                 begin: Alignment.topCenter,
                                 end: Alignment.bottomCenter,
                                 colors: [
-                                  _valueColor.withOpacity(0.0),
-                                  _valueColor.withOpacity(0.5),
+                                  _valueColor.withValues(alpha: 0.0),
+                                  _valueColor.withValues(alpha: 0.5),
                                 ],
                               ),
                             ),
@@ -640,13 +640,13 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
                                     shape: BoxShape.circle,
                                     boxShadow: [
                                       BoxShadow(
-                                        color: ballColor.withOpacity(isDarkMode ? 0.7 : 0.5),
+                                        color: ballColor.withValues(alpha: isDarkMode ? 0.7 : 0.5),
                                         blurRadius: 15,
                                         spreadRadius: 2,
                                         offset: const Offset(0, 2),
                                       ),
                                       BoxShadow(
-                                        color: Colors.white.withOpacity(0.2),
+                                        color: Colors.white.withValues(alpha: 0.2),
                                         blurRadius: 5,
                                         spreadRadius: -1,
                                         offset: const Offset(-1, -1),
@@ -662,21 +662,21 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
                                         decoration: BoxDecoration(
                                           gradient: RadialGradient(
                                             colors: [
-                                              Colors.white.withOpacity(0.9),
-                                              ballColor.withOpacity(0.7),
+                                              Colors.white.withValues(alpha: 0.9),
+                                              ballColor.withValues(alpha: 0.7),
                                             ],
                                             stops: const [0.3, 1.0],
                                           ),
                                           shape: BoxShape.circle,
                                           boxShadow: [
                                             BoxShadow(
-                                              color: Colors.white.withOpacity(0.7),
+                                              color: Colors.white.withValues(alpha: 0.7),
                                               blurRadius: 4,
                                               spreadRadius: 0,
                                             ),
                                           ],
                                           border: Border.all(
-                                            color: Colors.white.withOpacity(0.8),
+                                            color: Colors.white.withValues(alpha: 0.8),
                                             width: 2,
                                           ),
                                         ),
@@ -699,7 +699,7 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
                               child: Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                                 decoration: BoxDecoration(
-                                  color: _valueColor.withOpacity(0.9),
+                                  color: _valueColor.withValues(alpha: 0.9),
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 child: Row(
@@ -787,10 +787,10 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
               Container(
                 padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
                 decoration: BoxDecoration(
-                  color: _valueColor.withOpacity(isDarkMode ? 0.15 : 0.1),
+                  color: _valueColor.withValues(alpha: isDarkMode ? 0.15 : 0.1),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
-                    color: _valueColor.withOpacity(isDarkMode ? 0.3 : 0.2),
+                    color: _valueColor.withValues(alpha: isDarkMode ? 0.3 : 0.2),
                     width: 1,
                   ),
                 ),
@@ -826,14 +826,14 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
                   Icon(
                     Icons.people_outline,
                     size: 14,
-                    color: _valueColor.withOpacity(0.6),
+                    color: _valueColor.withValues(alpha: 0.6),
                   ),
                   const SizedBox(width: 6),
                   Text(
                     'community average: ${TimeUtils.formatMinutesWithTimeframe(widget.communityAverage, widget.timeframe)}',
                     style: TextStyle(
                       fontSize: 12,
-                      color: _valueColor.withOpacity(0.8),
+                      color: _valueColor.withValues(alpha: 0.8),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -847,7 +847,7 @@ class _EnhancedTugOfWarWidgetState extends State<EnhancedTugOfWarWidget> with Si
                   'try tugging the rope!',
                   style: TextStyle(
                     fontSize: 10,
-                    color: Colors.grey.withOpacity(0.8),
+                    color: Colors.grey.withValues(alpha: 0.8),
                     fontStyle: FontStyle.italic,
                   ),
                 ),
@@ -921,7 +921,7 @@ class RopePainter extends CustomPainter {
     
     // Draw segments with alternating colors for a rope-like effect
     final ropePaint = Paint()
-      ..color = ropeColor.withOpacity(0.7)
+      ..color = ropeColor.withValues(alpha: 0.7)
       ..strokeWidth = 7.0
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.butt;
@@ -939,7 +939,7 @@ class RopePainter extends CustomPainter {
       );
       
       // Draw with varying opacity for texture
-      ropePaint.color = ropeColor.withOpacity(
+      ropePaint.color = ropeColor.withValues(alpha: 
         distance.toInt() % 20 < 10 ? 0.8 : 0.5,
       );
       

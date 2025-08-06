@@ -244,8 +244,7 @@ class PremiumFeature extends StatelessWidget {
                             context.push('/subscription');
                           },
                           borderRadius: BorderRadius.circular(16),
-                          splashColor: Colors.white.withOpacity(0.3),
-                          highlightColor: Colors.white.withOpacity(0.1),
+                          // Removed deprecated splashColor and highlightColor
                           child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
                             child: Row(

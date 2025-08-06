@@ -62,12 +62,7 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
     // Load vices with more aggressive retry logic
     _loadVicesWithRetry();
     
-    // Listen to notes changes to show/hide notes privacy toggle
-    _notesController.addListener(() {
-      setState(() {
-        // Force rebuild to show/hide notes privacy toggle
-      });
-    });
+    // Notes controller listener removed - using ValueListenableBuilder instead for better performance
   }
 
   Future<void> _loadVicesWithRetry() async {
@@ -552,9 +547,9 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
                         padding: const EdgeInsets.all(12),
                         margin: const EdgeInsets.only(bottom: 16),
                         decoration: BoxDecoration(
-                          color: Colors.blue.withOpacity(0.1),
+                          color: Colors.blue.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                          border: Border.all(color: Colors.blue.withValues(alpha: 0.3)),
                         ),
                         child: Row(
                           children: [
@@ -723,7 +718,7 @@ class _IndulgenceScreenState extends State<IndulgenceScreen> {
                                         return Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                                           decoration: BoxDecoration(
-                                            color: viceColor.withOpacity(0.1),
+                                            color: viceColor.withValues(alpha: 0.1),
                                             borderRadius: BorderRadius.circular(16),
                                             border: Border.all(color: viceColor),
                                           ),

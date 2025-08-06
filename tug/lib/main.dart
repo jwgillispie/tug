@@ -1,6 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'services/error_service.dart';
+import 'services/crash_reporting_service.dart';
+import 'services/offline_error_service.dart';
+import 'widgets/common/error_boundary.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:go_router/go_router.dart';
@@ -57,45 +61,54 @@ import 'screens/onboarding/onboarding_screen.dart';
 import 'screens/notifications/notifications_screen.dart';
 
 Future<void> main() async {
-  WidgetsFlutterBinding.ensureInitialized();
+  // Initialize error handling zone first
+  ErrorZone.runGuarded(() async {
+    WidgetsFlutterBinding.ensureInitialized();
 
-  try {
-    // IMPORTANT: Initialize environment config first to avoid the error
-    await EnvConfig.load();
+    try {
+      // Initialize error services first
+      await CrashReportingService().initialize();
+      await OfflineErrorService().initialize();
+      
+      // IMPORTANT: Initialize environment config first to avoid the error
+      await EnvConfig.load();
 
-    // Initialize service locator early
-    await ServiceLocator.initialize();
+      // Initialize service locator early
+      await ServiceLocator.initialize();
 
-    // Initialize local storage next
-    if (!kIsWeb) {
-      await LocalStorage.initialize();
+      // Initialize local storage next
+      if (!kIsWeb) {
+        await LocalStorage.initialize();
+      }
+
+      // Initialize Firebase
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+
+      // Initialize notification service
+      final notificationService = NotificationService();
+      await notificationService.initialize();
+
+      // Create SubscriptionService without initializing (lazy initialization)
+      final subscriptionService = SubscriptionService();
+
+      final authRepository = AuthRepository();
+      final valuesRepository = ValuesRepository();
+      final activityRepository = ActivityRepository();
+
+      runApp(ErrorBoundary(
+        child: TugApp(
+          authRepository: authRepository,
+          valuesRepository: valuesRepository,
+          activityRepository: activityRepository,
+          subscriptionService: subscriptionService,
+        ),
+      ));
+    } catch (e) {
+      runApp(ErrorApp(error: e.toString()));
     }
-
-    // Initialize Firebase
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-
-    // Initialize notification service
-    final notificationService = NotificationService();
-    await notificationService.initialize();
-
-    // Create SubscriptionService without initializing (lazy initialization)
-    final subscriptionService = SubscriptionService();
-
-    final authRepository = AuthRepository();
-    final valuesRepository = ValuesRepository();
-    final activityRepository = ActivityRepository();
-
-    runApp(TugApp(
-      authRepository: authRepository,
-      valuesRepository: valuesRepository,
-      activityRepository: activityRepository,
-      subscriptionService: subscriptionService,
-    ));
-  } catch (e) {
-    runApp(ErrorApp(error: e.toString()));
-  }
+  });
 }
 
 class ErrorApp extends StatelessWidget {

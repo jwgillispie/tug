@@ -15,8 +15,36 @@ from ..schemas.mood import (
     MoodOption, MoodOptionsResponse, MoodStatistics,
     MoodAnalyticsResponse, MoodChartData, MoodChartResponse
 )
+from ..core.graceful_degradation import with_graceful_degradation, degradation_manager
+from ..core.logging_config import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
+
+# Register fallback handlers for mood service
+async def get_default_mood_analytics_fallback(*args, **kwargs):
+    """Fallback when mood analytics service is unavailable"""
+    logger.info("Using fallback for mood analytics")
+    return MoodAnalyticsResponse(
+        current_mood="neutral",
+        mood_trend="stable",
+        positivity_score=5.0,
+        recommendations=[
+            "Focus on activities that bring you joy",
+            "Take time to reflect on your day",
+            "Stay hydrated and get enough rest"
+        ],
+        chart_data=MoodChartResponse(
+            labels=["Today"],
+            datasets=[{
+                "label": "Mood",
+                "data": [5],
+                "backgroundColor": "#999999"
+            }]
+        )
+    )
+
+# Register the fallback
+degradation_manager.register_fallback('mood_analytics', get_default_mood_analytics_fallback)
 
 class MoodService:
     """Service for handling mood-related operations"""

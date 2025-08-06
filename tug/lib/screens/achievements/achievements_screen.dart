@@ -387,6 +387,7 @@ class _AchievementsScreenState extends State<AchievementsScreen> with SingleTick
         final achievement = sortedAchievements[index];
 
         return AchievementCard(
+          key: ValueKey(achievement.id),
           achievement: achievement,
           onTap: () => _showAchievementDetails(achievement),
         );

@@ -1,0 +1,388 @@
+name: Pipeline Monitoring & Alerting
+
+on:
+  workflow_run:
+    workflows: ["Tug CI/CD Pipeline"]
+    types: [completed]
+  schedule:
+    # Run monitoring checks daily at 6 AM UTC
+    - cron: '0 6 * * *'
+
+env:
+  SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+  DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+jobs:
+  pipeline_status_check:
+    name: Pipeline Status Analysis
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion != ''
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Analyze Pipeline Results
+        id: analysis
+        run: |
+          WORKFLOW_CONCLUSION="${{ github.event.workflow_run.conclusion }}"
+          WORKFLOW_ID="${{ github.event.workflow_run.id }}"
+          BRANCH_NAME="${{ github.event.workflow_run.head_branch }}"
+          COMMIT_SHA="${{ github.event.workflow_run.head_sha }}"
+          
+          echo "Pipeline Analysis Results:"
+          echo "workflow_conclusion=$WORKFLOW_CONCLUSION" >> $GITHUB_OUTPUT
+          echo "workflow_id=$WORKFLOW_ID" >> $GITHUB_OUTPUT
+          echo "branch=$BRANCH_NAME" >> $GITHUB_OUTPUT
+          echo "commit=$COMMIT_SHA" >> $GITHUB_OUTPUT
+          
+          # Determine severity based on branch and outcome
+          SEVERITY="info"
+          if [[ "$WORKFLOW_CONCLUSION" == "failure" ]]; then
+            if [[ "$BRANCH_NAME" == "main" ]]; then
+              SEVERITY="critical"
+            elif [[ "$BRANCH_NAME" == "develop" ]]; then
+              SEVERITY="high"
+            else
+              SEVERITY="medium"
+            fi
+          elif [[ "$WORKFLOW_CONCLUSION" == "cancelled" ]]; then
+            SEVERITY="medium"
+          fi
+          
+          echo "severity=$SEVERITY" >> $GITHUB_OUTPUT
+          echo "Severity level: $SEVERITY"
+          
+      - name: Send Slack Notification
+        if: steps.analysis.outputs.severity != 'info' && env.SLACK_WEBHOOK_URL != ''
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          custom_payload: |
+            {
+              "text": "🚨 Tug CI/CD Pipeline Alert",
+              "attachments": [
+                {
+                  "color": "${{ steps.analysis.outputs.severity == 'critical' && 'danger' || steps.analysis.outputs.severity == 'high' && 'warning' || 'good' }}",
+                  "fields": [
+                    {
+                      "title": "Status",
+                      "value": "${{ steps.analysis.outputs.workflow_conclusion }}",
+                      "short": true
+                    },
+                    {
+                      "title": "Branch",
+                      "value": "${{ steps.analysis.outputs.branch }}",
+                      "short": true
+                    },
+                    {
+                      "title": "Severity",
+                      "value": "${{ steps.analysis.outputs.severity }}",
+                      "short": true
+                    },
+                    {
+                      "title": "Commit",
+                      "value": "${{ steps.analysis.outputs.commit }}",
+                      "short": true
+                    },
+                    {
+                      "title": "Workflow",
+                      "value": "<https://github.com/${{ github.repository }}/actions/runs/${{ steps.analysis.outputs.workflow_id }}|View Details>",
+                      "short": false
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          
+      - name: Create GitHub Issue for Critical Failures
+        if: steps.analysis.outputs.severity == 'critical'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `🚨 Critical Pipeline Failure on ${context.payload.workflow_run.head_branch}`;
+            const body = `
+            ## Critical Pipeline Failure Alert
+            
+            **Branch:** \`${context.payload.workflow_run.head_branch}\`
+            **Commit:** \`${context.payload.workflow_run.head_sha}\`
+            **Workflow:** [${context.payload.workflow_run.name}](${context.payload.workflow_run.html_url})
+            **Status:** ${context.payload.workflow_run.conclusion}
+            
+            ### Immediate Actions Required:
+            - [ ] Review failed jobs and error logs
+            - [ ] Check for security vulnerabilities or test failures
+            - [ ] Assess impact on production deployments
+            - [ ] Fix underlying issues
+            - [ ] Re-run pipeline to verify fixes
+            
+            ### Investigation Checklist:
+            - [ ] Security scans passed?
+            - [ ] Test coverage maintained above 60%?
+            - [ ] Docker image builds successfully?
+            - [ ] Dependencies up to date and secure?
+            
+            **Auto-generated by Pipeline Monitoring**
+            `;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['critical', 'ci-cd', 'pipeline-failure', 'bug'],
+              assignees: ['${{ github.repository_owner }}']
+            });
+
+  security_drift_monitoring:
+    name: Security Drift Detection
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check for Security Updates
+        id: security_check
+        run: |
+          echo "🔍 Checking for security updates..."
+          
+          # Check Python dependencies
+          if [ -f "backend/requirements.txt" ]; then
+            pip install safety pip-audit
+            cd backend
+            
+            # Run safety check
+            safety check --json --output ../safety-check.json || true
+            
+            # Run pip-audit
+            pip-audit --format=json --output=../pip-audit.json || true
+            
+            cd ..
+            
+            # Count vulnerabilities
+            SAFETY_VULNS=$(cat safety-check.json | jq '.vulnerabilities | length' 2>/dev/null || echo "0")
+            AUDIT_VULNS=$(cat pip-audit.json | jq '.vulnerabilities | length' 2>/dev/null || echo "0")
+            
+            echo "safety_vulnerabilities=$SAFETY_VULNS" >> $GITHUB_OUTPUT
+            echo "audit_vulnerabilities=$AUDIT_VULNS" >> $GITHUB_OUTPUT
+            
+            TOTAL_VULNS=$((SAFETY_VULNS + AUDIT_VULNS))
+            echo "total_vulnerabilities=$TOTAL_VULNS" >> $GITHUB_OUTPUT
+            
+            echo "Found $TOTAL_VULNS security vulnerabilities"
+          fi
+          
+      - name: Check Dockerfile Security
+        id: docker_security
+        run: |
+          echo "🐳 Checking Docker security..."
+          
+          if [ -f "backend/Dockerfile" ]; then
+            # Install hadolint
+            wget -O hadolint https://github.com/hadolint/hadolint/releases/latest/download/hadolint-Linux-x86_64
+            chmod +x hadolint
+            
+            # Run hadolint
+            ./hadolint backend/Dockerfile --format json > hadolint-report.json || true
+            
+            # Count issues
+            DOCKER_ISSUES=$(cat hadolint-report.json | jq '. | length' 2>/dev/null || echo "0")
+            echo "docker_issues=$DOCKER_ISSUES" >> $GITHUB_OUTPUT
+            echo "Found $DOCKER_ISSUES Docker security issues"
+          fi
+          
+      - name: Generate Security Report
+        id: report
+        run: |
+          cat > security-drift-report.md << 'EOF'
+          # 🛡️ Security Drift Report
+          
+          **Report Date:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          **Repository:** ${{ github.repository }}
+          
+          ## Summary
+          - **Python Vulnerabilities:** ${{ steps.security_check.outputs.total_vulnerabilities }}
+          - **Docker Issues:** ${{ steps.docker_security.outputs.docker_issues }}
+          
+          ## Recommendations
+          
+          ### If vulnerabilities found:
+          1. Review the security scan artifacts
+          2. Update vulnerable dependencies
+          3. Run comprehensive tests after updates
+          4. Consider security patches or workarounds
+          
+          ### If Docker issues found:
+          1. Review Dockerfile best practices
+          2. Update base images to latest secure versions
+          3. Remove unnecessary packages and files
+          4. Implement multi-stage builds if not present
+          
+          ## Next Steps
+          - Monitor for new CVEs affecting our dependencies
+          - Schedule regular security updates
+          - Consider implementing automated dependency updates
+          EOF
+          
+          echo "Security drift report generated"
+          
+      - name: Upload Security Reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-drift-report
+          path: |
+            security-drift-report.md
+            safety-check.json
+            pip-audit.json
+            hadolint-report.json
+          retention-days: 30
+          
+      - name: Alert on High Security Drift
+        if: steps.security_check.outputs.total_vulnerabilities > 5 || steps.docker_security.outputs.docker_issues > 10
+        run: |
+          echo "🚨 High security drift detected!"
+          echo "Vulnerabilities: ${{ steps.security_check.outputs.total_vulnerabilities }}"
+          echo "Docker issues: ${{ steps.docker_security.outputs.docker_issues }}"
+          echo "Please review and address security findings immediately."
+          exit 1
+
+  performance_monitoring:
+    name: Performance Baseline Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    
+    services:
+      mongodb:
+        image: mongo:6
+        ports:
+          - 27017:27017
+          
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          
+      - name: Install Dependencies
+        working-directory: ./backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install locust
+          
+      - name: Start API Server
+        working-directory: ./backend
+        env:
+          MONGODB_URL: mongodb://localhost:27017/perf_test
+        run: |
+          python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+          echo $! > server.pid
+          sleep 10
+          
+      - name: Performance Baseline Test
+        working-directory: ./backend
+        run: |
+          echo "🏃‍♂️ Running performance baseline test..."
+          
+          # Run a short performance test
+          locust -f tests/performance/locustfile.py --host=http://localhost:8000 \
+            --users 5 --spawn-rate 1 --run-time 60s --headless \
+            --html performance-baseline.html \
+            --csv performance-baseline || true
+            
+          echo "Performance test completed"
+          
+      - name: Analyze Performance Results
+        run: |
+          if [ -f "backend/performance-baseline_stats.csv" ]; then
+            echo "📊 Performance Analysis:"
+            
+            # Extract key metrics (simplified analysis)
+            AVG_RESPONSE_TIME=$(tail -n +2 backend/performance-baseline_stats.csv | cut -d',' -f7 | head -1)
+            FAILURE_RATE=$(tail -n +2 backend/performance-baseline_stats.csv | cut -d',' -f4 | head -1)
+            
+            echo "Average Response Time: ${AVG_RESPONSE_TIME}ms"
+            echo "Failure Rate: ${FAILURE_RATE}%"
+            
+            # Set thresholds
+            if (( $(echo "$AVG_RESPONSE_TIME > 1000" | bc -l 2>/dev/null || echo 0) )); then
+              echo "⚠️  Warning: Average response time exceeds 1000ms"
+            fi
+            
+            if (( $(echo "$FAILURE_RATE > 5" | bc -l 2>/dev/null || echo 0) )); then
+              echo "⚠️  Warning: Failure rate exceeds 5%"
+            fi
+          fi
+          
+      - name: Stop API Server
+        if: always()
+        run: |
+          if [ -f backend/server.pid ]; then
+            kill $(cat backend/server.pid) || true
+          fi
+          
+      - name: Upload Performance Reports
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: performance-baseline
+          path: |
+            backend/performance-baseline.html
+            backend/performance-baseline_*.csv
+          retention-days: 30
+
+  dependency_health_check:
+    name: Dependency Health Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check for Outdated Dependencies
+        run: |
+          echo "📦 Checking dependency health..."
+          
+          # Check Python dependencies
+          if [ -f "backend/requirements.txt" ]; then
+            pip install pip-check-reqs
+            cd backend
+            pip-check-reqs --ignore-modules=pytest,coverage requirements.txt || true
+            cd ..
+          fi
+          
+          # Check for unused dependencies (simplified check)
+          echo "✅ Dependency health check completed"
+          
+      - name: Generate Dependency Report
+        run: |
+          cat > dependency-health-report.md << 'EOF'
+          # 📦 Dependency Health Report
+          
+          **Report Date:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")
+          
+          ## Python Dependencies Status
+          - Requirements file exists: $([ -f "backend/requirements.txt" ] && echo "✅ Yes" || echo "❌ No")
+          - Security requirements file: $([ -f "backend/requirements-security.txt" ] && echo "✅ Yes" || echo "❌ No")
+          
+          ## Recommendations
+          1. Regularly update dependencies to latest secure versions
+          2. Remove unused dependencies to reduce attack surface
+          3. Pin dependency versions for reproducible builds
+          4. Monitor for security advisories
+          
+          ## Flutter Dependencies Status
+          - Pubspec file exists: $([ -f "pubspec.yaml" ] && echo "✅ Yes" || echo "❌ No")
+          - Lock file present: $([ -f "pubspec.lock" ] && echo "✅ Yes" || echo "❌ No")
+          EOF
+          
+      - name: Upload Dependency Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: dependency-health-report
+          path: dependency-health-report.md
+          retention-days: 30

@@ -244,7 +244,7 @@ class TugAnimations {
                       decoration: BoxDecoration(
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.2 * value),
+                            color: Colors.black.withValues(alpha: 0.2 * value),
                             blurRadius: 12 * value,
                             spreadRadius: 2 * value,
                             offset: Offset(0, 4 * value),
@@ -376,7 +376,7 @@ class TugAnimations {
                     decoration: BoxDecoration(
                       boxShadow: [
                         BoxShadow(
-                          color: TugColors.primaryPurple.withOpacity(0.08 * value * flicker),
+                          color: TugColors.primaryPurple.withValues(alpha: 0.08 * value * flicker),
                           blurRadius: 10 * value,
                           spreadRadius: 0,
                         ),
@@ -430,7 +430,7 @@ class TugAnimations {
           decoration: BoxDecoration(
             boxShadow: [
               BoxShadow(
-                color: effectiveGlowColor.withOpacity((0.1 + 0.2 * animValue) * glowIntensity),
+                color: effectiveGlowColor.withValues(alpha: (0.1 + 0.2 * animValue) * glowIntensity),
                 blurRadius: (10 + 15 * animValue) * glowIntensity,
                 spreadRadius: (1 + 3 * animValue) * glowIntensity,
               ),
@@ -477,7 +477,7 @@ class TugAnimations {
           final animValue = (math.sin(phase) + 1) / 2; // 0.0 to 1.0
           
           glows.add(BoxShadow(
-            color: effectiveColors[i].withOpacity(0.2 * animValue * glowIntensity),
+            color: effectiveColors[i].withValues(alpha: 0.2 * animValue * glowIntensity),
             blurRadius: 20 * glowIntensity,
             spreadRadius: 2 * animValue * glowIntensity,
           ));
@@ -675,7 +675,7 @@ class TugAnimations {
                 decoration: BoxDecoration(
                   boxShadow: [
                     BoxShadow(
-                      color: TugColors.primaryPurple.withOpacity(glowOpacity),
+                      color: TugColors.primaryPurple.withValues(alpha: glowOpacity),
                       blurRadius: 20,
                       spreadRadius: 2,
                     ),
@@ -708,7 +708,7 @@ class TugAnimations {
     double tiltIntensity = 0.05,
   }) {
     final hoverGlowColor = glowColor ??
-        (isDark ? TugColors.primaryPurpleLight.withOpacity(0.3) : TugColors.primaryPurple.withOpacity(0.2));
+        (isDark ? TugColors.primaryPurpleLight.withValues(alpha: 0.3) : TugColors.primaryPurple.withValues(alpha: 0.2));
 
     return StatefulBuilder(
       builder: (context, setState) {
@@ -795,12 +795,12 @@ class TugAnimations {
         shape: BoxShape.circle,
         boxShadow: addNeonPulse ? [
           BoxShadow(
-            color: defaultColor.withOpacity(0.6),
+            color: defaultColor.withValues(alpha: 0.6),
             blurRadius: 6,
             spreadRadius: 0,
           ),
           BoxShadow(
-            color: defaultColor.withOpacity(0.3),
+            color: defaultColor.withValues(alpha: 0.3),
             blurRadius: 12,
             spreadRadius: 1,
           ),
@@ -841,7 +841,7 @@ class TugAnimations {
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: defaultColor.withOpacity(0.3 * ((value - 0.8) / 0.4)),
+                                color: defaultColor.withValues(alpha: 0.3 * ((value - 0.8) / 0.4)),
                                 blurRadius: 12 * value,
                                 spreadRadius: 1 * value,
                               ),
@@ -929,7 +929,7 @@ class TugAnimations {
                 decoration: BoxDecoration(
                   boxShadow: [
                     BoxShadow(
-                      color: effectiveGlowColor.withOpacity(0.4),
+                      color: effectiveGlowColor.withValues(alpha: 0.4),
                       blurRadius: 10,
                       spreadRadius: 0,
                     ),
@@ -1067,7 +1067,7 @@ class TugAnimations {
                 decoration: BoxDecoration(
                   boxShadow: [
                     BoxShadow(
-                      color: effectiveNeonColor.withOpacity(0.3),
+                      color: effectiveNeonColor.withValues(alpha: 0.3),
                       blurRadius: 8,
                       spreadRadius: 0,
                     ),
@@ -1146,7 +1146,7 @@ class TugAnimations {
             boxShadow: [
               for (var color in gradientColors) 
                 BoxShadow(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   blurRadius: 12,
                   spreadRadius: 0,
                 ),
@@ -1167,8 +1167,8 @@ class TugAnimations {
     bool isDark = false,
   }) {
     final effectiveColor = noiseColor ?? (isDark 
-      ? Colors.white.withOpacity(0.1)
-      : Colors.black.withOpacity(0.05));
+      ? Colors.white.withValues(alpha: 0.1)
+      : Colors.black.withValues(alpha: 0.05));
     
     return Stack(
       children: [
@@ -1248,13 +1248,13 @@ class TugAnimations {
     BoxBorder? border,
   }) {
     final effectiveTintColor = tintColor ?? (isDark
-        ? Colors.white.withOpacity(tintOpacity)
-        : Colors.white.withOpacity(tintOpacity));
+        ? Colors.white.withValues(alpha: tintOpacity)
+        : Colors.white.withValues(alpha: tintOpacity));
         
     final effectiveBorder = border ?? Border.all(
       color: isDark 
-          ? Colors.white.withOpacity(borderOpacity)
-          : Colors.black.withOpacity(borderOpacity),
+          ? Colors.white.withValues(alpha: borderOpacity)
+          : Colors.black.withValues(alpha: borderOpacity),
       width: 0.5,
     );
     
@@ -1427,7 +1427,7 @@ class SpringPressWidgetState extends State<SpringPressWidget> with SingleTickerP
                     height: 40 * value,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.white.withOpacity(0.3 * (1 - value)),
+                      color: Colors.white.withValues(alpha: 0.3 * (1 - value)),
                     ),
                   );
                 },
@@ -1779,7 +1779,7 @@ class TugPageTransitions {
                             decoration: BoxDecoration(
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.2 * curvedAnimation.value),
+                                  color: Colors.black.withValues(alpha: 0.2 * curvedAnimation.value),
                                   blurRadius: 20 * curvedAnimation.value,
                                   spreadRadius: 5 * curvedAnimation.value,
                                 ),
@@ -1940,9 +1940,9 @@ class TugPageTransitions {
                         if (addColorShift && i < 3) {
                           // Create RGB channel shifts
                           final channelColors = [
-                            ColorFilter.mode(Colors.red.withOpacity(0.6), BlendMode.srcATop),
-                            ColorFilter.mode(Colors.green.withOpacity(0.6), BlendMode.srcATop),
-                            ColorFilter.mode(Colors.blue.withOpacity(0.6), BlendMode.srcATop),
+                            ColorFilter.mode(Colors.red.withValues(alpha: 0.6), BlendMode.srcATop),
+                            ColorFilter.mode(Colors.green.withValues(alpha: 0.6), BlendMode.srcATop),
+                            ColorFilter.mode(Colors.blue.withValues(alpha: 0.6), BlendMode.srcATop),
                           ];
                           
                           // Apply different channel filter to each layer

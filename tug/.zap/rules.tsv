@@ -1,0 +1,57 @@
+# OWASP ZAP Rules Configuration for Tug API
+# Format: RULE_ID	THRESHOLD	NEW_LEVEL	DESCRIPTION
+
+# Reduce noise from common false positives
+10021	OFF	OFF	X-Content-Type-Options Header Missing (reduce false positives for API endpoints)
+10020	OFF	OFF	X-Frame-Options Header Missing (not applicable for API)
+10016	MEDIUM	MEDIUM	Web Browser XSS Protection Not Enabled
+10017	MEDIUM	MEDIUM	Cross-Domain JavaScript Source File Inclusion
+
+# Focus on critical security issues
+90001	HIGH	HIGH	Insecure HTTP Method
+90020	HIGH	HIGH	Possible Username Enumeration
+90021	HIGH	HIGH	Possible Password Enumeration  
+90022	HIGH	HIGH	Application Error Disclosure
+
+# Authentication and authorization
+10105	HIGH	HIGH	Weak Authentication Method
+10201	HIGH	HIGH	Absence of Anti-CSRF Tokens
+10202	HIGH	HIGH	Absence of Anti-CSRF Tokens (Script)
+
+# Input validation
+40012	HIGH	HIGH	Cross Site Scripting (Reflected)
+40013	HIGH	HIGH	Cross Site Scripting (Persistent)
+40014	HIGH	HIGH	Cross Site Scripting (Persistent) - Prime
+40016	HIGH	HIGH	Cross Site Scripting (Persistent) - Spider
+40017	HIGH	HIGH	Cross Site Scripting (Persistent) - OtherInfo
+
+# SQL Injection
+40018	HIGH	HIGH	SQL Injection
+40019	HIGH	HIGH	SQL Injection - MySQL
+40020	HIGH	HIGH	SQL Injection - Hypersonic SQL
+40021	HIGH	HIGH	SQL Injection - Oracle
+40022	HIGH	HIGH	SQL Injection - PostgreSQL
+
+# Information disclosure
+10011	MEDIUM	MEDIUM	Cookie Without HttpOnly Flag
+10012	MEDIUM	MEDIUM	Password Autocomplete in Browser
+10015	MEDIUM	MEDIUM	Incomplete or No Cache-control and Pragma HTTP Header Set
+10019	MEDIUM	MEDIUM	Content-Type Header Missing
+10027	MEDIUM	MEDIUM	Information Disclosure - Suspicious Comments
+
+# Server configuration
+10049	MEDIUM	MEDIUM	Non-Storable Content
+10050	MEDIUM	MEDIUM	Retrieved from Cache
+10051	MEDIUM	MEDIUM	Relative Path Confusion
+10052	MEDIUM	MEDIUM	X-ChromeLogger-Data (XCOLD) Header Information Leak
+
+# Custom rules for API security
+# Enable stricter checking for JSON endpoints
+90023	HIGH	HIGH	XML External Entity Attack
+90024	HIGH	HIGH	Generic Padding Oracle
+90025	HIGH	HIGH	Expression Language Injection
+
+# Disable some rules that are not applicable for REST APIs
+10010	OFF	OFF	Cookie No HttpOnly Flag (handled by application logic)
+10011	OFF	OFF	Cookie Without Secure Flag (handled by load balancer/proxy)
+2	OFF	OFF	Private IP Disclosure (false positive in containerized environments)

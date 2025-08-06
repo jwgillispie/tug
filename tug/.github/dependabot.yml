@@ -1,0 +1,120 @@
+# Dependabot configuration for automated dependency updates
+# This helps maintain security by keeping dependencies up to date
+
+version: 2
+updates:
+  # Python dependencies (backend)
+  - package-ecosystem: "pip"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    reviewers:
+      - "backend-team"
+    assignees:
+      - "security-team"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "backend"
+      - "security"
+    ignore:
+      # Ignore major version updates for critical packages that need manual review
+      - dependency-name: "fastapi"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "uvicorn"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "pydantic"
+        update-types: ["version-update:semver-major"]
+    groups:
+      # Group related security updates
+      security-updates:
+        patterns:
+          - "cryptography*"
+          - "urllib3*"
+          - "requests*"
+          - "certifi*"
+      # Group testing dependencies
+      testing-dependencies:
+        patterns:
+          - "pytest*"
+          - "coverage*"
+          - "mock*"
+          - "faker*"
+
+  # Flutter dependencies
+  - package-ecosystem: "pub"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "09:00"
+    reviewers:
+      - "frontend-team"
+    assignees:
+      - "mobile-team"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "flutter"
+      - "mobile"
+    groups:
+      # Group Firebase dependencies
+      firebase-dependencies:
+        patterns:
+          - "firebase*"
+          - "cloud_firestore*"
+          - "firebase_auth*"
+      # Group UI dependencies
+      ui-dependencies:
+        patterns:
+          - "flutter*"
+          - "material*"
+          - "cupertino*"
+
+  # Docker dependencies
+  - package-ecosystem: "docker"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "09:00"
+    reviewers:
+      - "devops-team"
+    assignees:
+      - "security-team"
+    commit-message:
+      prefix: "docker"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "docker"
+      - "infrastructure"
+
+  # GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/.github/workflows"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+      time: "09:00"
+    reviewers:
+      - "devops-team"
+    assignees:
+      - "ci-cd-team"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "ci-cd"

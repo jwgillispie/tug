@@ -24,9 +24,29 @@ class Vice(Document):
     class Settings:
         name = "vices"
         indexes = [
-            [("user_id", 1), ("created_at", -1)],
-            [("user_id", 1), ("active", 1)],
-            [("user_id", 1), ("severity", -1)]
+            # Core user queries - high priority
+            [("user_id", 1), ("active", 1)],  # Active vices lookup
+            [("user_id", 1), ("created_at", -1)],  # Vice timeline
+            [("user_id", 1), ("severity", -1)],  # Vices by severity
+            
+            # Streak and progress analytics
+            [("user_id", 1), ("current_streak", -1)],  # Current streak rankings
+            [("user_id", 1), ("longest_streak", -1)],  # Achievement tracking
+            [("user_id", 1), ("last_indulgence_date", -1)],  # Recent indulgence analysis
+            [("user_id", 1), ("total_indulgences", -1)],  # Total indulgence analytics
+            
+            # Compound indexes for common patterns
+            [("user_id", 1), ("active", 1), ("severity", -1)],  # Active vices by severity
+            [("user_id", 1), ("active", 1), ("current_streak", -1)],  # Active vices by streak
+            [("user_id", 1), ("active", 1), ("created_at", -1)],  # Active vices timeline
+            
+            # Analytics support
+            [("severity", -1), ("current_streak", -1)],  # Global severity vs streak analysis
+            [("active", 1), ("severity", -1)],  # Active vices analytics
+            [("last_indulgence_date", -1)],  # Recent activity across all users
+            
+            # Milestone tracking
+            [("user_id", 1), ("milestone_achievements", 1)],  # Achievement lookups
         ]
 
     class Config:

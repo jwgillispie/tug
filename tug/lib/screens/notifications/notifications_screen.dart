@@ -284,7 +284,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         }
 
         final notification = _notifications[index];
-        return _buildNotificationItem(notification, isDarkMode, isViceMode);
+        return Container(
+          key: ValueKey(notification.id),
+          child: _buildNotificationItem(notification, isDarkMode, isViceMode),
+        );
       },
     );
   }

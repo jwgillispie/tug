@@ -23,9 +23,33 @@ class Indulgence(Document):
     class Settings:
         name = "indulgences"
         indexes = [
-            [("user_id", 1), ("date", -1)],
-            [("vice_ids", 1), ("date", -1)],
-            [("user_id", 1), ("vice_ids", 1), ("date", -1)]
+            # Core query patterns - high priority
+            [("user_id", 1), ("date", -1)],  # User indulgence timeline
+            [("vice_ids", 1), ("date", -1)],  # Vice-specific indulgences
+            [("user_id", 1), ("vice_ids", 1), ("date", -1)],  # User's specific vice indulgences
+            
+            # Analytics and trend analysis
+            [("user_id", 1), ("date", -1), ("severity_at_time", -1)],  # Severity progression
+            [("user_id", 1), ("emotional_state", 1), ("date", -1)],  # Emotional pattern analysis
+            [("date", -1), ("severity_at_time", -1)],  # Global severity trends
+            [("date", -1), ("emotional_state", 1)],  # Global emotional trends
+            
+            # Public/privacy queries
+            [("is_public", 1), ("date", -1)],  # Public indulgence sharing
+            [("user_id", 1), ("is_public", 1), ("date", -1)],  # User's public indulgences
+            
+            # Trigger and pattern analysis
+            [("user_id", 1), ("triggers", 1), ("date", -1)],  # Trigger pattern analysis
+            [("triggers", 1), ("date", -1)],  # Global trigger analysis
+            [("emotional_state", 1), ("severity_at_time", -1)],  # Emotional vs severity correlation
+            
+            # Duration analytics (when tracked)
+            [("user_id", 1), ("duration", 1), ("date", -1)],  # Duration pattern analysis
+            [("vice_ids", 1), ("duration", 1)],  # Vice-specific duration patterns
+            
+            # Time-based analytics
+            [("date", -1), ("duration", 1)],  # Global duration trends
+            [("user_id", 1), ("created_at", -1)],  # Creation timeline
         ]
 
     class Config:

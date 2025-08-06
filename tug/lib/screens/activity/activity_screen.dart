@@ -226,7 +226,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                       }
                     }
 
-                    print('DEBUG: Submitting activity with mood: ${mood?.name ?? 'null'}');
+                    // Submitting activity with mood: ${mood?.name ?? 'null'}
                     context.read<ActivitiesBloc>().add(AddActivityWithSocial(
                       activity: activity,
                       valueModel: selectedValue,
@@ -275,7 +275,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(isDarkMode ? 0.12 : 0.08),
+                  color: color.withValues(alpha: isDarkMode ? 0.12 : 0.08),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -336,8 +336,8 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                   width: double.infinity,
                   decoration: BoxDecoration(
                     color: isDarkMode
-                        ? TugColors.darkSurfaceVariant.withOpacity(0.5)
-                        : TugColors.lightSurfaceVariant.withOpacity(0.5),
+                        ? TugColors.darkSurfaceVariant.withValues(alpha: 0.5)
+                        : TugColors.lightSurfaceVariant.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
                       color: isDarkMode ? Colors.white12 : Colors.black12,
@@ -700,11 +700,11 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
                               decoration: BoxDecoration(
                                 color: isDarkMode 
-                                    ? TugColors.primaryPurple.withOpacity(0.15) 
-                                    : TugColors.primaryPurple.withOpacity(0.08),
+                                    ? TugColors.primaryPurple.withValues(alpha: 0.15) 
+                                    : TugColors.primaryPurple.withValues(alpha: 0.08),
                                 borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color: TugColors.primaryPurple.withOpacity(0.3),
+                                  color: TugColors.primaryPurple.withValues(alpha: 0.3),
                                   width: 1,
                                 ),
                               ),
@@ -816,8 +816,8 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
               ),
               BoxShadow(
                 color: isDarkMode 
-                    ? Colors.black.withOpacity(0.25) 
-                    : Colors.black.withOpacity(0.08),
+                    ? Colors.black.withValues(alpha: 0.25) 
+                    : Colors.black.withValues(alpha: 0.08),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -881,10 +881,10 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                     width: 54,
                     height: 54,
                     decoration: BoxDecoration(
-                      color: color.withOpacity(isDarkMode ? 0.15 : 0.1),
+                      color: color.withValues(alpha: isDarkMode ? 0.15 : 0.1),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(
-                        color: color.withOpacity(isDarkMode ? 0.3 : 0.2),
+                        color: color.withValues(alpha: isDarkMode ? 0.3 : 0.2),
                         width: 1,
                       ),
                     ),
@@ -930,7 +930,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                             Text(
                               valueName,
                               style: TextStyle(
-                                color: color.withOpacity(0.8),
+                                color: color.withValues(alpha: 0.8),
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -971,16 +971,16 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
         boxShadow: [
           BoxShadow(
             color: isDarkMode 
-                ? Colors.black.withOpacity(0.2) 
-                : Colors.black.withOpacity(0.05),
+                ? Colors.black.withValues(alpha: 0.2) 
+                : Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
         ],
         border: Border.all(
           color: isDarkMode 
-              ? Colors.white.withOpacity(0.05) 
-              : Colors.black.withOpacity(0.03),
+              ? Colors.white.withValues(alpha: 0.05) 
+              : Colors.black.withValues(alpha: 0.03),
           width: 0.5,
         ),
       ),
@@ -1104,7 +1104,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
         Container(
           padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
-            color: iconColor.withOpacity(0.1),
+            color: iconColor.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
           child: Icon(
@@ -1197,7 +1197,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                   ),
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   filled: true,
-                  fillColor: isDarkMode ? Colors.black.withOpacity(0.2) : Colors.white,
+                  fillColor: isDarkMode ? Colors.black.withValues(alpha: 0.2) : Colors.white,
                 ),
                 value: _filterValueId,
                 dropdownColor: isDarkMode ? TugColors.darkSurface : Colors.white,
@@ -1319,7 +1319,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                       ),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       filled: true,
-                      fillColor: isDarkMode ? Colors.black.withOpacity(0.2) : Colors.white,
+                      fillColor: isDarkMode ? Colors.black.withValues(alpha: 0.2) : Colors.white,
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1388,7 +1388,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                       ),
                       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       filled: true,
-                      fillColor: isDarkMode ? Colors.black.withOpacity(0.2) : Colors.white,
+                      fillColor: isDarkMode ? Colors.black.withValues(alpha: 0.2) : Colors.white,
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1552,6 +1552,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                       itemBuilder: (context, index) {
                         final vice = vices[index];
                         return Card(
+                          key: ValueKey(vice.id),
                           margin: const EdgeInsets.only(bottom: 12),
                           elevation: 2,
                           shape: RoundedRectangleBorder(
@@ -1565,7 +1566,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                                 end: Alignment.bottomRight,
                                 colors: [
                                   Color(int.parse('0xFF${vice.color.substring(1)}')),
-                                  Color(int.parse('0xFF${vice.color.substring(1)}')).withOpacity(0.7),
+                                  Color(int.parse('0xFF${vice.color.substring(1)}')).withValues(alpha: 0.7),
                                 ],
                               ),
                             ),
@@ -1592,7 +1593,7 @@ class _ActivityScreenState extends State<ActivityScreen> with SingleTickerProvid
                                   context.go('/indulgences/new');
                                 },
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.white.withOpacity(0.2),
+                                  backgroundColor: Colors.white.withValues(alpha: 0.2),
                                   foregroundColor: Colors.white,
                                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                 ),

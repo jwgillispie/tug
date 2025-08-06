@@ -482,7 +482,7 @@ class TugButtons {
     elevation: 6,
     focusElevation: 8,
     hoverElevation: 8,
-    splashColor: Colors.white.withOpacity(0.2),
+    // Removed deprecated splashColor property
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(16),
     ),

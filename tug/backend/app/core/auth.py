@@ -1,7 +1,7 @@
 # app/core/auth.py
 import firebase_admin
 from firebase_admin import auth, credentials
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from ..models.user import User
 from .config import settings
@@ -13,7 +13,7 @@ from datetime import datetime
 logger = logging.getLogger(__name__)
 
 # Initialize security
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 # Initialize Firebase Admin SDK - only once
 try:
@@ -139,3 +139,71 @@ async def get_optional_user(
         return await get_current_user(credentials)
     except HTTPException:
         return None
+
+def extract_bearer_token(request: Request) -> str:
+    """Safely extract Bearer token from Authorization header"""
+    auth_header = request.headers.get('Authorization')
+    
+    if not auth_header:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "error": "authentication_required",
+                "message": "Authorization header is required"
+            },
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+    
+    if not auth_header.startswith('Bearer '):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "error": "invalid_auth_format",
+                "message": "Authorization header must use Bearer token format"
+            },
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+    
+    # Safe token extraction with validation
+    auth_parts = auth_header.split(' ', 1)
+    if len(auth_parts) != 2:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "error": "invalid_auth_format",
+                "message": "Invalid Authorization header format"
+            },
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+    
+    token = auth_parts[1].strip()
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "error": "missing_token",
+                "message": "Bearer token is empty"
+            },
+            headers={"WWW-Authenticate": "Bearer"}
+        )
+    
+    return token
+
+async def authenticate_request(request: Request) -> dict:
+    """Authenticate request and return Firebase token data"""
+    try:
+        token = extract_bearer_token(request)
+        decoded_token = await verify_firebase_token(token)
+        return decoded_token
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Authentication error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "error": "authentication_failed",
+                "message": "Invalid authentication credentials"
+            },
+            headers={"WWW-Authenticate": "Bearer"}
+        )

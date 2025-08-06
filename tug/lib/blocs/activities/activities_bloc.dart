@@ -237,7 +237,7 @@ class ActivitiesBloc extends Bloc<ActivitiesEvent, ActivitiesState> {
       // Create mood entry if mood was provided and activity was successfully created
       if (event.mood != null && createdActivity.id != null) {
         try {
-          print('DEBUG: Creating mood entry for mood: ${event.mood!.name}, activity: ${createdActivity.id}');
+          // Creating mood entry for mood: ${event.mood!.name}, activity: ${createdActivity.id}
           final moodEntry = MoodEntry(
             moodType: event.mood!,
             positivityScore: _getMoodPositivityScore(event.mood!),
@@ -245,14 +245,14 @@ class ActivitiesBloc extends Bloc<ActivitiesEvent, ActivitiesState> {
             activityId: createdActivity.id,
           );
           await moodService.createMoodEntry(moodEntry);
-          print('DEBUG: Mood entry created successfully');
+          // Mood entry created successfully
         } catch (moodError) {
           // Don't fail the entire operation if mood creation fails
           // The activity was already created successfully
-          print('DEBUG: Mood entry creation failed: $moodError');
+          // Mood entry creation failed: $moodError
         }
       } else {
-        print('DEBUG: No mood entry created - mood: ${event.mood}, activityId: ${createdActivity.id}');
+        // No mood entry created - mood: ${event.mood}, activityId: ${createdActivity.id}
       }
       
       // Get updated list of activities

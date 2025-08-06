@@ -12,13 +12,138 @@ services:
     environment:
       - MONGODB_DB_NAME=tug
       - FIREBASE_CREDENTIALS_PATH=/app/firebase-credentials.json
+      - LOG_FILE_PATH=/app/logs/application.log
     volumes:
       - .:/app
       # Copy the Firebase credentials to a more accessible location
       - ./firebase-credentials.json:/app/firebase-credentials.json:ro
-    # depends_on:
-    #   - mongo
+      # Mount logs directory for persistent logging
+      - tug_logs:/app/logs
+    depends_on:
+      - prometheus
+    networks:
+      - tug-network
+    labels:
+      - "monitoring.enabled=true"
+      - "monitoring.scrape_path=/monitoring/metrics"
+      - "monitoring.port=8000"
 
+  # Prometheus for metrics collection
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    container_name: tug-prometheus
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=15d'
+      - '--web.enable-lifecycle'
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - tug-network
+    restart: unless-stopped
+
+  # Grafana for monitoring dashboards
+  grafana:
+    image: grafana/grafana:10.1.0
+    container_name: tug-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-simple-json-datasource
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/etc/grafana/dashboards:ro
+    networks:
+      - tug-network
+    restart: unless-stopped
+
+  # AlertManager for handling alerts
+  alertmanager:
+    image: prom/alertmanager:v0.26.0
+    container_name: tug-alertmanager
+    ports:
+      - "9093:9093"
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.external-url=http://localhost:9093'
+    volumes:
+      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+    networks:
+      - tug-network
+    restart: unless-stopped
+
+  # Redis for caching and session storage
+  redis:
+    image: redis:7-alpine
+    container_name: tug-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - tug-network
+    restart: unless-stopped
+
+  # Log aggregation with Loki
+  loki:
+    image: grafana/loki:2.9.0
+    container_name: tug-loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./monitoring/loki-config.yml:/etc/loki/local-config.yaml:ro
+      - loki_data:/loki
+    networks:
+      - tug-network
+    restart: unless-stopped
+
+  # Promtail for log collection
+  promtail:
+    image: grafana/promtail:2.9.0
+    container_name: tug-promtail
+    volumes:
+      - tug_logs:/var/log/tug:ro
+      - ./monitoring/promtail-config.yml:/etc/promtail/config.yml:ro
+    command: -config.file=/etc/promtail/config.yml
+    networks:
+      - tug-network
+    depends_on:
+      - loki
+    restart: unless-stopped
+
+  # Node exporter for system metrics
+  node-exporter:
+    image: prom/node-exporter:v1.6.1
+    container_name: tug-node-exporter
+    ports:
+      - "9100:9100"
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.rootfs=/rootfs'
+      - '--path.sysfs=/host/sys'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    networks:
+      - tug-network
+    restart: unless-stopped
+
+  # Optional: MongoDB for development
   # mongo:
   #   image: mongo:6
   #   container_name: tug-mongo
@@ -26,6 +151,19 @@ services:
   #     - "27017:27017"
   #   volumes:
   #     - tug_mongo_data:/data/db
+  #   networks:
+  #     - tug-network
+  #   restart: unless-stopped
+
+networks:
+  tug-network:
+    driver: bridge
 
 volumes:
+  tug_logs:
+  prometheus_data:
+  grafana_data:
+  alertmanager_data:
+  redis_data:
+  loki_data:
   tug_mongo_data:

@@ -67,9 +67,24 @@ class Activity(Document):
     class Settings:
         name = "activities"
         indexes = [
-            [("user_id", 1), ("date", -1)],
-            [("value_ids", 1), ("date", -1)],
-            [("user_id", 1), ("value_ids", 1), ("date", -1)]
+            # Core query patterns - high priority
+            [("user_id", 1), ("date", -1)],  # User activity timeline
+            [("user_id", 1), ("value_ids", 1), ("date", -1)],  # Value-specific queries
+            [("value_ids", 1), ("date", -1)],  # Cross-user value analytics
+            
+            # Analytics and aggregation optimization
+            [("user_id", 1), ("date", -1), ("duration", 1)],  # Duration aggregations
+            [("date", -1), ("user_id", 1)],  # Global activity feed and rankings
+            [("user_id", 1), ("created_at", -1)],  # User activity history
+            
+            # Public/privacy queries
+            [("is_public", 1), ("date", -1)],  # Public activity feed
+            [("user_id", 1), ("is_public", 1), ("date", -1)],  # User's public activities
+            
+            # Analytics support indexes
+            [("date", -1), ("duration", 1)],  # Global analytics queries
+            [("user_id", 1), ("date", 1)],  # Ascending date for streak calculations
+            [("value_ids", 1), ("user_id", 1), ("date", -1)],  # Value analytics by user
         ]
 # Add this method to the Activity model in app/models/activity.py if it doesn't exist or update it
 

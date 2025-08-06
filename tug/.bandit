@@ -1,0 +1,42 @@
+[bandit]
+# Bandit configuration for Tug backend security scanning
+
+# Exclude certain directories from scanning
+exclude_dirs = /backend/tests,/backend/migrations
+
+# Skip certain test IDs (customize based on your needs)
+skips = B101,B601
+
+# Set confidence level (LOW, MEDIUM, HIGH)
+confidence = MEDIUM
+
+# Set severity level (LOW, MEDIUM, HIGH)
+severity = MEDIUM
+
+# Output format options: csv, json, txt, html, xml
+format = json
+
+# Additional tests to include
+# tests = B101,B102,B103,B104,B105,B106,B107,B108,B109,B110
+
+# Specify files to exclude (patterns)
+exclude = */tests/*,*/migrations/*,*/venv/*,*/.venv/*
+
+# Additional security rules
+[bandit.any_other_function_with_shell_equals_true]
+shell = false
+
+[bandit.hardcoded_password_string]
+word_list = password,pass,passwd,pwd,token,secret,key
+
+[bandit.assert_used]
+# Skip assert statements in non-test files
+skips = assert_used
+
+# Custom rules
+[bandit.blacklist]
+# Add any specific functions/imports you want to flag
+calls = 
+    eval,
+    exec,
+    compile

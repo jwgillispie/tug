@@ -593,8 +593,8 @@ class _RankingsScreenState extends State<RankingsScreen> {
                                     child: InkWell(
                                       onTap: () => _loadRankings(forceRefresh: true),
                                       borderRadius: BorderRadius.circular(30),
-                                      splashColor: Colors.white.withOpacity(0.1),
-                                      highlightColor: Colors.white.withOpacity(0.2),
+                                      // Removed deprecated splashColor
+                                      // Removed deprecated highlightColor
                                       child: const Padding(
                                         padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                                         child: Row(

@@ -155,7 +155,7 @@ class _CosmicParticlesState extends State<CosmicParticles> with SingleTickerProv
           (random.nextDouble() - 0.5) * widget.maxSpeed * 2,
         ),
         radius: widget.minParticleSize + random.nextDouble() * (widget.maxParticleSize - widget.minParticleSize),
-        color: color.withOpacity(
+        color: color.withValues(alpha: 
           widget.particleOpacity * (0.5 + random.nextDouble() * 0.5),
         ),
         glow: 0.5 + random.nextDouble() * 0.8,
@@ -189,7 +189,8 @@ class _CosmicParticlesState extends State<CosmicParticles> with SingleTickerProv
           widget.child,
           
           // Particle layer
-          AnimatedBuilder(
+          RepaintBoundary(
+            child: AnimatedBuilder(
             animation: _controller,
             builder: (context, _) {
               // Update particles position
@@ -215,7 +216,7 @@ class _CosmicParticlesState extends State<CosmicParticles> with SingleTickerProv
                 ),
               );
             },
-          ),
+          )),
         ],
       ),
     );
@@ -360,8 +361,8 @@ class ParticlesPainter extends CustomPainter {
             final paint = Paint()
               ..shader = LinearGradient(
                 colors: [
-                  particle.color.withOpacity(opacity),
-                  other.color.withOpacity(opacity),
+                  particle.color.withValues(alpha: opacity),
+                  other.color.withValues(alpha: opacity),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -415,14 +416,14 @@ class ParticlesPainter extends CustomPainter {
       
       // Draw particle
       final particlePaint = Paint()
-        ..color = particle.color.withOpacity(effectiveOpacity);
+        ..color = particle.color.withValues(alpha: effectiveOpacity);
       
       // Different drawing based on effect type
       switch (effect) {
         case ParticleEffect.nebula:
           // Draw glow
           final glowPaint = Paint()
-            ..color = particle.color.withOpacity(effectiveOpacity * 0.3)
+            ..color = particle.color.withValues(alpha: effectiveOpacity * 0.3)
             ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12.0);
           
           canvas.drawCircle(
@@ -443,8 +444,8 @@ class ParticlesPainter extends CustomPainter {
           // Radial gradient for cosmic star-like particles
           final shader = RadialGradient(
             colors: [
-              particle.color.withOpacity(effectiveOpacity),
-              particle.color.withOpacity(effectiveOpacity * 0.1),
+              particle.color.withValues(alpha: effectiveOpacity),
+              particle.color.withValues(alpha: effectiveOpacity * 0.1),
               Colors.transparent,
             ],
             stops: const [0.0, 0.5, 1.0],
@@ -467,7 +468,7 @@ class ParticlesPainter extends CustomPainter {
         case ParticleEffect.energy:
           // Draw ring
           final ringPaint = Paint()
-            ..color = particle.color.withOpacity(effectiveOpacity * 0.7)
+            ..color = particle.color.withValues(alpha: effectiveOpacity * 0.7)
             ..style = PaintingStyle.stroke
             ..strokeWidth = particle.effectiveRadius * 0.5;
           
@@ -511,9 +512,9 @@ class ParticlesPainter extends CustomPainter {
           // Create gradient for flame
           final flameShader = RadialGradient(
             colors: [
-              particle.color.withOpacity(effectiveOpacity),
-              particle.color.withOpacity(effectiveOpacity * 0.5),
-              particle.color.withOpacity(0),
+              particle.color.withValues(alpha: effectiveOpacity),
+              particle.color.withValues(alpha: effectiveOpacity * 0.5),
+              particle.color.withValues(alpha: 0),
             ],
             stops: const [0.0, 0.5, 1.0],
             radius: 1.0,

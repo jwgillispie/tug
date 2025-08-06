@@ -183,31 +183,31 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
 
   // Load mood entries for chart
   Future<void> _loadMoodEntries() async {
-    print('DEBUG: Starting _loadMoodEntries()');
+    // Starting _loadMoodEntries()
     try {
       final moodEntries = await _moodService.getMoodEntries();
-      print('DEBUG: Received ${moodEntries.length} mood entries from service');
+      // Received ${moodEntries.length} mood entries from service
       if (mounted) {
         setState(() {
           _moodEntries = moodEntries;
         });
-        print('DEBUG: Updated state with ${moodEntries.length} mood entries');
+        // Updated state with ${moodEntries.length} mood entries
         if (moodEntries.isNotEmpty) {
           final recent = moodEntries.take(3);
           for (final entry in recent) {
-            print('  - ${entry.moodType.name}: ${entry.positivityScore} (activityId: ${entry.activityId}, recorded: ${entry.recordedAt})');
+            // ${entry.moodType.name}: ${entry.positivityScore} (activityId: ${entry.activityId}, recorded: ${entry.recordedAt})
           }
         }
       }
     } catch (e) {
-      print('DEBUG: Error loading mood entries: $e');
+      // Error loading mood entries: $e
       // Silent failure - mood chart will show empty state
     }
   }
 
   // Quick helper to add sample mood entries for existing activities
   Future<void> _addSampleMoodEntries() async {
-    print('DEBUG: Adding sample mood entries for existing activities');
+    // Adding sample mood entries for existing activities
     
     // Get recent activities from the bloc
     final activitiesState = context.read<ActivitiesBloc>().state;
@@ -435,10 +435,10 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         // Swipeable Charts (Activity & Mood)
                         BlocListener<ActivitiesBloc, ActivitiesState>(
                           listener: (context, state) {
-                            print('DEBUG: BlocListener received state: ${state.runtimeType}');
+                            // BlocListener received state: ${state.runtimeType}
                             // Refresh mood entries when activities are updated
                             if (state is ActivityOperationSuccess) {
-                              print('DEBUG: ActivityOperationSuccess - refreshing mood entries');
+                              // ActivityOperationSuccess - refreshing mood entries
                               _loadMoodEntries();
                             }
                           },

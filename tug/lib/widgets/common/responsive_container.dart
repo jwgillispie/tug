@@ -180,18 +180,18 @@ class ResponsiveContainer extends StatelessWidget {
             margin: margin,
             decoration: BoxDecoration(
               color: backgroundColor ?? (isDark 
-                ? Colors.black.withOpacity(0.3) 
-                : Colors.white.withOpacity(0.2)),
+                ? Colors.black.withValues(alpha: 0.3) 
+                : Colors.white.withValues(alpha: 0.2)),
               borderRadius: BorderRadius.circular(borderRadius),
               border: Border.all(
                 color: isDark 
-                  ? Colors.white.withOpacity(0.1) 
-                  : Colors.white.withOpacity(0.3),
+                  ? Colors.white.withValues(alpha: 0.1) 
+                  : Colors.white.withValues(alpha: 0.3),
                 width: 0.5,
               ),
               boxShadow: addShadow ? [
                 BoxShadow(
-                  color: shadowColor ?? Colors.black.withOpacity(0.1),
+                  color: shadowColor ?? Colors.black.withValues(alpha: 0.1),
                   blurRadius: 10,
                   spreadRadius: -5,
                 ),
@@ -237,8 +237,8 @@ class ResponsiveContainer extends StatelessWidget {
       : TugColors.lightSurface);
       
     final effectiveShadowColor = shadowColor ?? (isDark
-      ? Colors.black.withOpacity(0.3)
-      : TugColors.primaryPurple.withOpacity(0.2));
+      ? Colors.black.withValues(alpha: 0.3)
+      : TugColors.primaryPurple.withValues(alpha: 0.2));
     
     // Create default modern decoration
     return BoxDecoration(
@@ -246,8 +246,8 @@ class ResponsiveContainer extends StatelessWidget {
       borderRadius: BorderRadius.circular(borderRadius),
       border: Border.all(
         color: isDark 
-          ? Colors.white.withOpacity(0.1)
-          : Colors.black.withOpacity(0.05),
+          ? Colors.white.withValues(alpha: 0.1)
+          : Colors.black.withValues(alpha: 0.05),
         width: 0.5,
       ),
       boxShadow: addShadow ? [
@@ -260,7 +260,7 @@ class ResponsiveContainer extends StatelessWidget {
         // Subtle secondary shadow for depth
         BoxShadow(
           color: (isDark ? TugColors.primaryPurple : TugColors.primaryPurpleLight)
-              .withOpacity(0.08),
+              .withValues(alpha: 0.08),
           blurRadius: 8,
           spreadRadius: -2,
           offset: const Offset(0, 2),
@@ -272,7 +272,7 @@ class ResponsiveContainer extends StatelessWidget {
         end: Alignment.bottomRight,
         colors: [
           Colors.white,
-          Colors.white.withOpacity(0.8),
+          Colors.white.withValues(alpha: 0.8),
         ],
         stops: const [0.0, 1.0],
       ) : null,
@@ -437,20 +437,20 @@ class GlassContainer extends StatelessWidget {
           margin: margin,
           decoration: BoxDecoration(
             color: color ?? (isDark 
-                ? Colors.black.withOpacity(0.3) 
-                : Colors.white.withOpacity(0.2)),
+                ? Colors.black.withValues(alpha: 0.3) 
+                : Colors.white.withValues(alpha: 0.2)),
             borderRadius: BorderRadius.circular(borderRadius),
             border: Border.all(
               color: borderColor ?? (isDark 
-                  ? Colors.white.withOpacity(0.1) 
-                  : Colors.white.withOpacity(0.3)),
+                  ? Colors.white.withValues(alpha: 0.1) 
+                  : Colors.white.withValues(alpha: 0.3)),
               width: 0.5,
             ),
             boxShadow: addShadow ? [
               BoxShadow(
                 color: shadowColor ?? (isDark
-                  ? Colors.black.withOpacity(0.2)
-                  : Colors.black.withOpacity(0.1)),
+                  ? Colors.black.withValues(alpha: 0.2)
+                  : Colors.black.withValues(alpha: 0.1)),
                 blurRadius: 10,
                 spreadRadius: -5,
               ),
@@ -458,7 +458,7 @@ class GlassContainer extends StatelessWidget {
             gradient: gradientColors != null ? LinearGradient(
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
-              colors: gradientColors!.map((color) => color.withOpacity(isDark ? 0.15 : 0.1)).toList(),
+              colors: gradientColors!.map((color) => color.withValues(alpha: isDark ? 0.15 : 0.1)).toList(),
             ) : null,
           ),
           child: child,

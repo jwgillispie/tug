@@ -20,7 +20,7 @@ class MoodService {
       return _getDefaultMoodOptions();
     } catch (e) {
       // If API is unavailable, return default mood options
-      print('Mood API unavailable, using default options: $e');
+      // Mood API unavailable, using default options
       return _getDefaultMoodOptions();
     }
   }
@@ -186,7 +186,7 @@ class MoodService {
 
   /// Create mood entries for existing activities (retroactive mood assignment)
   Future<void> createRetroactiveMoodEntries(List<Map<String, dynamic>> activityMoodPairs) async {
-    print('DEBUG: Creating ${activityMoodPairs.length} retroactive mood entries');
+    // Creating ${activityMoodPairs.length} retroactive mood entries
     
     for (final pair in activityMoodPairs) {
       try {
@@ -202,9 +202,9 @@ class MoodService {
         );
         
         await createMoodEntry(moodEntry);
-        print('DEBUG: Created mood entry for activity $activityId: ${moodType.name}');
+        // Created mood entry for activity $activityId: ${moodType.name}
       } catch (e) {
-        print('DEBUG: Failed to create mood entry for ${pair['activityId']}: $e');
+        // Failed to create mood entry for ${pair['activityId']}: $e
       }
     }
   }

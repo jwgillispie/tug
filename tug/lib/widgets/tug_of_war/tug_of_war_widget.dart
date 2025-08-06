@@ -190,14 +190,14 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
             borderRadius: BorderRadius.circular(18),
             boxShadow: [
               BoxShadow(
-                color: _valueColor.withOpacity(isDarkMode ? 0.25 : 0.12),
+                color: _valueColor.withValues(alpha: isDarkMode ? 0.25 : 0.12),
                 blurRadius: _isHovered ? 12 : 8,
                 spreadRadius: _isHovered ? 1 : 0,
                 offset: Offset(0, _isHovered ? 4 : 2),
               ),
             ],
             border: Border.all(
-              color: _valueColor.withOpacity(_isHovered ? 0.15 : 0.08),
+              color: _valueColor.withValues(alpha: _isHovered ? 0.15 : 0.08),
               width: _isHovered ? 1.0 : 0.5,
             ),
           ),
@@ -231,10 +231,10 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                             decoration: BoxDecoration(
-                              color: _valueColor.withOpacity(isDarkMode ? 0.15 : 0.08),
+                              color: _valueColor.withValues(alpha: isDarkMode ? 0.15 : 0.08),
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(
-                                color: _valueColor.withOpacity(0.2),
+                                color: _valueColor.withValues(alpha: 0.2),
                                 width: 1
                               ),
                             ),
@@ -264,10 +264,10 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
-                        color: _valueColor.withOpacity(isDarkMode ? 0.15 : 0.08),
+                        color: _valueColor.withValues(alpha: isDarkMode ? 0.15 : 0.08),
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color: _valueColor.withOpacity(isDarkMode ? 0.25 : 0.15),
+                          color: _valueColor.withValues(alpha: isDarkMode ? 0.25 : 0.15),
                           width: 1,
                         ),
                       ),
@@ -298,7 +298,8 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
                 // Tug of War Visualization with enhanced design
                 SizedBox(
                   height: 70,
-                  child: AnimatedBuilder(
+                  child: RepaintBoundary(
+                    child: AnimatedBuilder(
                     animation: _positionAnimation,
                     builder: (context, child) {
                       final position = _positionAnimation.value;
@@ -316,8 +317,8 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
                                   begin: Alignment.topCenter,
                                   end: Alignment.bottomCenter,
                                   colors: [
-                                    _valueColor.withOpacity(0.2),
-                                    _valueColor.withOpacity(0.4),
+                                    _valueColor.withValues(alpha: 0.2),
+                                    _valueColor.withValues(alpha: 0.4),
                                   ],
                                 ),
                               ),
@@ -333,8 +334,8 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   colors: [
-                                    _valueColor.withOpacity(0.6),
-                                    _valueColor.withOpacity(0.8),
+                                    _valueColor.withValues(alpha: 0.6),
+                                    _valueColor.withValues(alpha: 0.8),
                                   ],
                                 ),
                                 borderRadius: BorderRadius.circular(2),
@@ -353,11 +354,11 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
                                 width: 40,
                                 height: 40,
                                 decoration: BoxDecoration(
-                                  color: _valueColor.withOpacity(_getHandleOpacity('stated')),
+                                  color: _valueColor.withValues(alpha: _getHandleOpacity('stated')),
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: _valueColor.withOpacity(_position < 0 ? 0.5 : 0.15),
+                                      color: _valueColor.withValues(alpha: _position < 0 ? 0.5 : 0.15),
                                       blurRadius: 10,
                                       spreadRadius: _position < 0 ? 1 : 0,
                                       offset: const Offset(0, 2),
@@ -366,7 +367,7 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
                                 ),
                                 child: Icon(
                                   Icons.keyboard_double_arrow_left,
-                                  color: Colors.white.withOpacity(_position < 0 ? 1.0 : 0.7),
+                                  color: Colors.white.withValues(alpha: _position < 0 ? 1.0 : 0.7),
                                   size: 20,
                                 ),
                               ),
@@ -384,11 +385,11 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
                                 width: 40,
                                 height: 40,
                                 decoration: BoxDecoration(
-                                  color: _valueColor.withOpacity(_getHandleOpacity('actual')),
+                                  color: _valueColor.withValues(alpha: _getHandleOpacity('actual')),
                                   shape: BoxShape.circle,
                                   boxShadow: [
                                     BoxShadow(
-                                      color: _valueColor.withOpacity(_position > 0 ? 0.5 : 0.15),
+                                      color: _valueColor.withValues(alpha: _position > 0 ? 0.5 : 0.15),
                                       blurRadius: 10,
                                       spreadRadius: _position > 0 ? 1 : 0,
                                       offset: const Offset(0, 2),
@@ -397,7 +398,7 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
                                 ),
                                 child: Icon(
                                   Icons.keyboard_double_arrow_right,
-                                  color: Colors.white.withOpacity(_position > 0 ? 1.0 : 0.7),
+                                  color: Colors.white.withValues(alpha: _position > 0 ? 1.0 : 0.7),
                                   size: 20,
                                 ),
                               ),
@@ -434,7 +435,7 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
                                         shape: BoxShape.circle,
                                         boxShadow: [
                                           BoxShadow(
-                                            color: ballColor.withOpacity(isDarkMode ? 0.6 : 0.4),
+                                            color: ballColor.withValues(alpha: isDarkMode ? 0.6 : 0.4),
                                             blurRadius: 12,
                                             spreadRadius: 2,
                                             offset: const Offset(0, 2),
@@ -448,21 +449,21 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
                                           decoration: BoxDecoration(
                                             gradient: RadialGradient(
                                               colors: [
-                                                Colors.white.withOpacity(0.9),
-                                                ballColor.withOpacity(0.7),
+                                                Colors.white.withValues(alpha: 0.9),
+                                                ballColor.withValues(alpha: 0.7),
                                               ],
                                               stops: const [0.3, 1.0],
                                             ),
                                             shape: BoxShape.circle,
                                             boxShadow: [
                                               BoxShadow(
-                                                color: Colors.white.withOpacity(0.7),
+                                                color: Colors.white.withValues(alpha: 0.7),
                                                 blurRadius: 4,
                                                 spreadRadius: 0,
                                               ),
                                             ],
                                             border: Border.all(
-                                              color: Colors.white.withOpacity(0.8),
+                                              color: Colors.white.withValues(alpha: 0.8),
                                               width: 2,
                                             ),
                                           ),
@@ -477,7 +478,7 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
                         ],
                       );
                     },
-                  ),
+                  )),
                 ),
 
                 const SizedBox(height: 14),
@@ -541,10 +542,10 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
                   child: Container(
                     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                     decoration: BoxDecoration(
-                      color: _valueColor.withOpacity(isDarkMode ? 0.12 : 0.06),
+                      color: _valueColor.withValues(alpha: isDarkMode ? 0.12 : 0.06),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: _valueColor.withOpacity(isDarkMode ? 0.25 : 0.15),
+                        color: _valueColor.withValues(alpha: isDarkMode ? 0.25 : 0.15),
                         width: 1,
                       ),
                     ),
@@ -580,7 +581,7 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: _valueColor.withOpacity(isDarkMode ? 0.08 : 0.04),
+                      color: _valueColor.withValues(alpha: isDarkMode ? 0.08 : 0.04),
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Row(
@@ -589,13 +590,13 @@ class _TugOfWarWidgetState extends State<TugOfWarWidget> with SingleTickerProvid
                         Icon(
                           Icons.people_outline,
                           size: 14,
-                          color: _valueColor.withOpacity(0.7),
+                          color: _valueColor.withValues(alpha: 0.7),
                         ),
                         const SizedBox(width: 6),
                         Text(
                           'community average: ${TimeUtils.formatMinutes(widget.communityAverage)}/day',
                           style: TugTextStyles.caption.copyWith(
-                            color: _valueColor.withOpacity(0.9),
+                            color: _valueColor.withValues(alpha: 0.9),
                             fontWeight: FontWeight.w500,
                           ),
                         ),

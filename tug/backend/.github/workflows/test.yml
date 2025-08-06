@@ -1,0 +1,189 @@
+name: Test Suite
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      mongodb:
+        image: mongo:7.0
+        env:
+          MONGO_INITDB_ROOT_USERNAME: test
+          MONGO_INITDB_ROOT_PASSWORD: test
+        ports:
+          - 27017:27017
+        options: >-
+          --health-cmd "mongosh --eval 'db.adminCommand(\"ping\")'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 3
+
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.10", "3.11"]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache pip packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Set up test environment
+      env:
+        TEST_MONGODB_URL: mongodb://test:test@localhost:27017
+        MONGODB_DB_NAME: tug_test
+        DEBUG: true
+        FIREBASE_CREDENTIALS_PATH: ./firebase-test-credentials.json
+      run: |
+        # Create mock Firebase credentials for testing
+        echo '{"type": "service_account", "project_id": "test"}' > firebase-test-credentials.json
+
+    - name: Run unit tests
+      env:
+        TEST_MONGODB_URL: mongodb://test:test@localhost:27017
+        MONGODB_DB_NAME: tug_test
+        DEBUG: true
+        FIREBASE_CREDENTIALS_PATH: ./firebase-test-credentials.json
+      run: |
+        python run_tests.py --unit --verbose
+
+    - name: Run integration tests
+      env:
+        TEST_MONGODB_URL: mongodb://test:test@localhost:27017
+        MONGODB_DB_NAME: tug_test
+        DEBUG: true
+        FIREBASE_CREDENTIALS_PATH: ./firebase-test-credentials.json
+      run: |
+        python run_tests.py --integration --verbose
+
+    - name: Run security tests
+      env:
+        TEST_MONGODB_URL: mongodb://test:test@localhost:27017
+        MONGODB_DB_NAME: tug_test
+        DEBUG: true
+        FIREBASE_CREDENTIALS_PATH: ./firebase-test-credentials.json
+      run: |
+        python run_tests.py --security --verbose
+
+    - name: Run full test suite with coverage
+      env:
+        TEST_MONGODB_URL: mongodb://test:test@localhost:27017
+        MONGODB_DB_NAME: tug_test
+        DEBUG: true
+        FIREBASE_CREDENTIALS_PATH: ./firebase-test-credentials.json
+      run: |
+        python run_tests.py --verbose --html
+
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+
+    - name: Upload coverage to GitHub
+      uses: actions/upload-artifact@v3
+      with:
+        name: coverage-report-${{ matrix.python-version }}
+        path: htmlcov/
+
+    - name: Comment coverage on PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          try {
+            const coverage = fs.readFileSync('coverage.xml', 'utf8');
+            const match = coverage.match(/line-rate="([^"]+)"/);
+            if (match) {
+              const percentage = (parseFloat(match[1]) * 100).toFixed(2);
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `🧪 **Test Coverage Report**\n\nCoverage: ${percentage}%\n\n${percentage >= 60 ? '✅' : '❌'} Coverage ${percentage >= 60 ? 'meets' : 'below'} minimum requirement (60%)`
+              });
+            }
+          } catch (error) {
+            console.log('Could not read coverage file:', error);
+          }
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+    
+    - name: Install linting dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install flake8 black isort mypy
+    
+    - name: Run Black
+      run: black --check --diff app tests
+    
+    - name: Run isort
+      run: isort --check-only --diff app tests
+    
+    - name: Run Flake8
+      run: flake8 app tests --max-line-length=100 --extend-ignore=E203,W503
+    
+    - name: Run MyPy
+      run: mypy app --ignore-missing-imports
+
+  security:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.10"
+    
+    - name: Install security scanning tools
+      run: |
+        python -m pip install --upgrade pip
+        pip install bandit safety
+        pip install -r requirements.txt
+    
+    - name: Run Bandit security scan
+      run: bandit -r app -f json -o bandit-report.json || true
+    
+    - name: Run Safety check
+      run: safety check --json --output safety-report.json || true
+    
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      with:
+        name: security-reports
+        path: |
+          bandit-report.json
+          safety-report.json

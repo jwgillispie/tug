@@ -167,7 +167,7 @@ class TugTheme {
     chipTheme: ChipThemeData(
       backgroundColor: TugColors.lightSurfaceVariant,
       selectedColor: TugColors.primaryPurple.withOpacity(0.2),
-      disabledColor: Colors.grey.withOpacity(0.1),
+      disabledColor: Colors.grey.withValues(alpha: 0.1),
       labelStyle: TugTextStyles.bodySmall,
       secondaryLabelStyle: TugTextStyles.bodySmall.copyWith(color: Colors.white),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -407,7 +407,7 @@ class TugTheme {
     chipTheme: ChipThemeData(
       backgroundColor: TugColors.darkSurfaceVariant,
       selectedColor: TugColors.primaryPurple.withOpacity(0.3),
-      disabledColor: Colors.grey.shade800.withOpacity(0.2),
+      disabledColor: Colors.grey.shade800.withValues(alpha: 0.2),
       labelStyle: TugTextStyles.bodySmall.copyWith(color: TugColors.darkTextPrimary),
       secondaryLabelStyle: TugTextStyles.bodySmall.copyWith(color: Colors.white),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),

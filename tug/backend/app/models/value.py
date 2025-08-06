@@ -23,8 +23,22 @@ class Value(Document):
     class Settings:
         name = "values"
         indexes = [
-            [("user_id", 1), ("created_at", -1)],
-            [("user_id", 1), ("active", 1)]
+            # Core user queries - high priority
+            [("user_id", 1), ("active", 1)],  # Active values lookup
+            [("user_id", 1), ("created_at", -1)],  # Value timeline
+            [("user_id", 1), ("importance", -1)],  # Sorted by importance
+            
+            # Compound indexes for common patterns
+            [("user_id", 1), ("active", 1), ("importance", -1)],  # Active values by importance
+            [("user_id", 1), ("active", 1), ("created_at", -1)],  # Active values timeline
+            
+            # Analytics support
+            [("user_id", 1), ("current_streak", -1)],  # Streak leaderboards
+            [("user_id", 1), ("longest_streak", -1)],  # Achievement tracking
+            [("user_id", 1), ("last_activity_date", -1)],  # Recent activity analysis
+            
+            # Global analytics (optional, for cross-user insights)
+            [("active", 1), ("importance", -1)],  # Popular values analysis
         ]
 
     class Config:

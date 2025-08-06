@@ -441,7 +441,7 @@ class _ActivityChartState extends State<ActivityChart> {
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
       colors: [
-        TugColors.primaryPurple.withOpacity(isDarkMode ? 0.9 : 0.8),
+        TugColors.primaryPurple.withValues(alpha: isDarkMode ? 0.9 : 0.8),
         TugColors.primaryPurple,
       ],
     );
@@ -538,7 +538,7 @@ class _ActivityChartState extends State<ActivityChart> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3), // Reduced padding
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
+                  color: Colors.white.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10), // Slightly smaller radius
                 ),
                 child: Row(
@@ -569,7 +569,8 @@ class _ActivityChartState extends State<ActivityChart> {
           Expanded(
             child: Padding(
               padding: const EdgeInsets.only(right: 8, top: 8),
-              child: LineChart(
+              child: RepaintBoundary(
+                child: LineChart(
                 LineChartData(
                   gridData: FlGridData(
                     show: true,
@@ -578,7 +579,7 @@ class _ActivityChartState extends State<ActivityChart> {
                     horizontalInterval: _maxY / 3,
                     getDrawingHorizontalLine: (value) {
                       return FlLine(
-                        color: Colors.white.withOpacity(0.15),
+                        color: Colors.white.withValues(alpha: 0.15),
                         strokeWidth: 1,
                       );
                     },
@@ -633,7 +634,7 @@ class _ActivityChartState extends State<ActivityChart> {
                         child: Text(
                           'minutes',
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.8),
+                            color: Colors.white.withValues(alpha: 0.8),
                             fontSize: 11, // Slightly smaller font
                             fontStyle: FontStyle.italic,
                           ),
@@ -650,7 +651,7 @@ class _ActivityChartState extends State<ActivityChart> {
                               child: Text(
                                 TimeUtils.formatMinutes(value.toInt()),
                                 style: TextStyle(
-                                  color: Colors.white.withOpacity(0.8),
+                                  color: Colors.white.withValues(alpha: 0.8),
                                   fontSize: 9, // Smaller font size
                                 ),
                                 textAlign: TextAlign.right,
@@ -690,8 +691,8 @@ class _ActivityChartState extends State<ActivityChart> {
                   lineTouchData: LineTouchData(
                     touchTooltipData: LineTouchTooltipData(
                       getTooltipColor: (_) => isDarkMode 
-                          ? Colors.black.withOpacity(0.8) 
-                          : Colors.white.withOpacity(0.8),
+                          ? Colors.black.withValues(alpha: 0.8) 
+                          : Colors.white.withValues(alpha: 0.8),
                       tooltipRoundedRadius: 8,
                       getTooltipItems: (touchedSpots) {
                         return touchedSpots.map((LineBarSpot touchedSpot) {
@@ -724,7 +725,7 @@ class _ActivityChartState extends State<ActivityChart> {
                 ),
               ),
             ),
-          ),
+          )),
           
           // Chart footer with motivational text and total minutes
           SizedBox(
@@ -738,7 +739,7 @@ class _ActivityChartState extends State<ActivityChart> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), // Reduced padding
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.15),
+                      color: Colors.white.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8), // Smaller radius
                     ),
                     child: Row(
@@ -768,7 +769,7 @@ class _ActivityChartState extends State<ActivityChart> {
                 Text(
                   'keep up the great work!',
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
+                    color: Colors.white.withValues(alpha: 0.8),
                     fontSize: 10, // Smaller font
                     fontStyle: FontStyle.italic,
                   ),

@@ -83,6 +83,31 @@ class MoodEntry(Document):
 
     class Settings:
         name = "mood_entries"
-        # Temporarily disable auto-index creation to avoid conflicts
-        # We'll handle indexes manually after resolving conflicts
-        indexes = []
+        indexes = [
+            # Core query patterns - high priority
+            [("user_id", 1), ("recorded_at", -1)],  # User mood timeline
+            [("user_id", 1), ("mood_type", 1), ("recorded_at", -1)],  # User mood by type
+            [("user_id", 1), ("positivity_score", -1), ("recorded_at", -1)],  # User mood trends
+            
+            # Activity and indulgence correlation
+            [("activity_id", 1)],  # Activity-related moods
+            [("indulgence_id", 1)],  # Indulgence-related moods
+            [("user_id", 1), ("activity_id", 1)],  # User's activity moods
+            [("user_id", 1), ("indulgence_id", 1)],  # User's indulgence moods
+            
+            # Analytics and insights
+            [("mood_type", 1), ("recorded_at", -1)],  # Global mood trends
+            [("positivity_score", -1), ("recorded_at", -1)],  # Positivity trends
+            [("user_id", 1), ("positivity_score", -1)],  # User positivity ranking
+            
+            # Time-based analytics
+            [("recorded_at", -1)],  # Recent moods across all users
+            [("user_id", 1), ("created_at", -1)],  # Creation timeline
+            [("updated_at", -1)],  # Recently updated moods
+            
+            # Correlation analysis indexes
+            [("activity_id", 1), ("mood_type", 1)],  # Activity-mood correlation
+            [("indulgence_id", 1), ("mood_type", 1)],  # Indulgence-mood correlation
+            [("activity_id", 1), ("positivity_score", -1)],  # Activity-positivity correlation
+            [("indulgence_id", 1), ("positivity_score", -1)],  # Indulgence-positivity correlation
+        ]

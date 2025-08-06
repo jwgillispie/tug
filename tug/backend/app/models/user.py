@@ -27,9 +27,20 @@ class User(Document):
     class Settings:
         name = "users"
         indexes = [
-            [("firebase_uid", 1), ("email", 1)],
-            [("username", 1)],
-            [("created_at", -1)]
+            # Authentication and lookup indexes - high priority
+            [("firebase_uid", 1)],  # Primary auth lookup
+            [("email", 1)],  # Email lookup
+            [("username", 1)],  # Username lookup
+            
+            # Compound indexes for common query patterns
+            [("firebase_uid", 1), ("email", 1)],  # Auth verification
+            [("onboarding_completed", 1), ("created_at", -1)],  # Onboarding analytics
+            [("last_login", -1)],  # Recent activity queries
+            [("created_at", -1)],  # User timeline queries
+            
+            # Performance indexes for user discovery
+            [("username", 1), ("display_name", 1)],  # Search functionality
+            [("created_at", -1), ("onboarding_completed", 1)]  # User analytics
         ]
 
     class Config:
