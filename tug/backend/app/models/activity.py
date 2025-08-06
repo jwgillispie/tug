@@ -128,7 +128,7 @@ class Activity(Document):
         return total or 0
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "user_id": "user123",
                 "value_id": "value456",

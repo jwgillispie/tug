@@ -44,7 +44,7 @@ class User(Document):
         ]
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "firebase_uid": "abc123",
                 "email": "user@example.com",

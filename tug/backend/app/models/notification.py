@@ -153,7 +153,7 @@ class NotificationBatch(Document):
     user_names: List[str] = Field(default_factory=list, description="Names of users who triggered notifications")
     
     # Batch metadata
-    count: int = Field(default=1, description="Number of notifications in this batch")
+    notification_count: int = Field(default=1, description="Number of notifications in this batch")
     batch_window_start: datetime = Field(..., description="Start of the batching time window")
     batch_window_end: datetime = Field(..., description="End of the batching time window")
     
@@ -198,39 +198,39 @@ class NotificationBatch(Document):
             if user_id not in self.user_ids:
                 self.user_ids.append(user_id)
                 self.user_names.append(user_name)
-            self.count = len(self.notification_ids)
+            self.notification_count = len(self.notification_ids)
             self._update_batch_message()
             self.update_timestamp()
     
     def _update_batch_message(self):
         """Update the batch message based on current content"""
         if self.batch_type == NotificationType.COMMENT:
-            if self.count == 1:
+            if self.notification_count == 1:
                 self.title = f"{self.user_names[0]} commented on your post"
                 self.message = "Tap to view the comment"
-            elif self.count == 2:
+            elif self.notification_count == 2:
                 self.title = f"{self.user_names[0]} and {self.user_names[1]} commented on your post"
                 self.message = "Tap to view the comments"
             else:
-                others_count = self.count - 1
+                others_count = self.notification_count - 1
                 self.title = f"{self.user_names[0]} and {others_count} others commented on your post"
-                self.message = f"Tap to view all {self.count} comments"
+                self.message = f"Tap to view all {self.notification_count} comments"
         
         elif self.batch_type == NotificationType.FRIEND_REQUEST:
-            if self.count == 1:
+            if self.notification_count == 1:
                 self.title = f"{self.user_names[0]} sent you a friend request"
                 self.message = "Tap to view and respond"
             else:
-                self.title = f"You have {self.count} new friend requests"
-                self.message = f"From {self.user_names[0]} and {self.count - 1} others"
+                self.title = f"You have {self.notification_count} new friend requests"
+                self.message = f"From {self.user_names[0]} and {self.notification_count - 1} others"
         
         elif self.batch_type == NotificationType.FRIEND_ACCEPTED:
-            if self.count == 1:
+            if self.notification_count == 1:
                 self.title = f"{self.user_names[0]} accepted your friend request"
                 self.message = "You are now friends!"
             else:
-                self.title = f"{self.count} people accepted your friend requests"
-                self.message = f"{self.user_names[0]} and {self.count - 1} others are now your friends"
+                self.title = f"{self.notification_count} people accepted your friend requests"
+                self.message = f"{self.user_names[0]} and {self.notification_count - 1} others are now your friends"
     
     @classmethod
     async def find_or_create_batch(

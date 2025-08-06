@@ -53,7 +53,7 @@ class Indulgence(Document):
         ]
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "vice_ids": ["vice123", "vice456"],
                 "user_id": "user123",

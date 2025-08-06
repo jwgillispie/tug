@@ -305,6 +305,12 @@ async def optimize_collection_indexes():
         logger.error(f"Failed to optimize collection indexes: {e}")
         return False
 
+def get_database():
+    """Get the current database client"""
+    if not Database.client:
+        raise RuntimeError("Database not initialized. Call init_db() first.")
+    return Database.client[settings.MONGODB_DB_NAME]
+
 async def close_db():
     """Close database connection gracefully"""
     if Database.client:
