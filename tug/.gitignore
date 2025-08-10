@@ -17,11 +17,30 @@ firebase.json
 .env
 .env.*
 !.env.example
+.env.local
+.env.production
 
-# Firebase
+# Firebase & Authentication
 google-services.json
 */.plist
 */firebase-credentials.json
+firebase-credentials.json
+**/firebase-credentials.json
+firebase-adminsdk-*.json
+**/firebase-adminsdk-*.json
+
+# Database credentials & connection strings
+*mongodb*credentials*
+**/mongodb*credentials*
+*connection_string*
+**/connection_string*
+
+# Sensitive test files & temporary scripts
+*test*credentials*
+*temp*credentials*
+simple_test_*.py
+temp_*.py
+debug_*.py
 
 # IDEs and editors
 .idea/

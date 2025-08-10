@@ -5,6 +5,7 @@ Simplified test for habit suggestion system
 
 import asyncio
 import logging
+import os
 import sys
 from datetime import datetime, timedelta
 
@@ -37,7 +38,7 @@ async def simple_test():
         logger.info("🔌 Connecting to MongoDB...")
         
         # Simple connection
-        client = AsyncIOMotorClient("mongodb+srv://jgillispie:CfEMPkE3iG9ZgYCE@jozo.lea4n.mongodb.net/")
+        client = AsyncIOMotorClient(os.getenv("MONGODB_URL", "mongodb://localhost:27017"))
         
         # Test connection
         await client.admin.command('ping')
