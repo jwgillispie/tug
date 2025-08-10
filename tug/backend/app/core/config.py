@@ -10,6 +10,10 @@ class Settings(BaseSettings):
     API_V1_PREFIX: str = "/api/v1"
     DEBUG: bool = os.environ.get("DEBUG", "False").lower() == "true"
     
+    # Development Settings
+    DEVELOPMENT_MODE: bool = os.environ.get("DEVELOPMENT_MODE", "False").lower() == "true"
+    MOCK_AUTH: bool = os.environ.get("MOCK_AUTH", "False").lower() == "true"
+    
     # Add this line:
     API_URL: str = os.environ.get("API_URL", "http://localhost:8000")
     

@@ -298,6 +298,119 @@ class NotificationService:
             # Don't raise exception to avoid breaking friend acceptance
     
     @staticmethod
+    async def create_group_message_notification(
+        user_id: str,
+        sender_id: str,
+        sender_name: str,
+        group_id: str,
+        group_name: str,
+        message_content: str,
+        is_mention: bool = False
+    ):
+        """Create notification for group message (mention or general notification)"""
+        try:
+            if user_id != sender_id:  # Don't notify sender about their own message
+                # Create individual notification
+                notification_type = NotificationType.POST_MENTION if is_mention else NotificationType.GROUP_ACTIVITY
+                
+                title = f"@{sender_name} mentioned you in {group_name}" if is_mention else f"New message in {group_name}"
+                message = f'"{message_content[:100]}{"..." if len(message_content) > 100 else ""}"'
+                
+                notification = Notification(
+                    user_id=user_id,
+                    type=notification_type,
+                    title=title,
+                    message=message,
+                    related_id=group_id,
+                    related_user_id=sender_id,
+                    metadata={
+                        "group_name": group_name,
+                        "is_mention": is_mention,
+                        "message_preview": message_content[:200]
+                    }
+                )
+                await notification.save()
+                
+                # Add to batch (only for regular messages, not mentions)
+                if not is_mention:
+                    await NotificationService._add_to_batch(
+                        user_id=user_id,
+                        notification_type=notification_type,
+                        notification_id=str(notification.id),
+                        related_user_id=sender_id,
+                        related_user_name=sender_name,
+                        related_id=group_id
+                    )
+                
+                logger.info(f"Created group message notification for user {user_id}")
+                
+        except Exception as e:
+            logger.error(f"Error creating group message notification: {e}", exc_info=True)
+            # Don't raise exception to avoid breaking message sending
+    
+    @staticmethod
+    async def create_group_invitation_notification(
+        user_id: str,
+        inviter_id: str,
+        inviter_name: str,
+        group_id: str,
+        group_name: str
+    ):
+        """Create notification for group invitation"""
+        try:
+            notification = Notification(
+                user_id=user_id,
+                type=NotificationType.GROUP_INVITATION,
+                title=f"{inviter_name} invited you to join {group_name}",
+                message="Tap to view the invitation and respond",
+                related_id=group_id,
+                related_user_id=inviter_id,
+                metadata={
+                    "group_name": group_name,
+                    "invitation_type": "group_invite"
+                }
+            )
+            await notification.save()
+            
+            logger.info(f"Created group invitation notification for user {user_id}")
+            
+        except Exception as e:
+            logger.error(f"Error creating group invitation notification: {e}", exc_info=True)
+    
+    @staticmethod
+    async def create_group_challenge_notification(
+        user_id: str,
+        creator_id: str,
+        creator_name: str,
+        group_id: str,
+        group_name: str,
+        challenge_title: str,
+        challenge_id: str
+    ):
+        """Create notification for new group challenge"""
+        try:
+            if user_id != creator_id:  # Don't notify creator about their own challenge
+                notification = Notification(
+                    user_id=user_id,
+                    type=NotificationType.GROUP_CHALLENGE,
+                    title=f"New challenge in {group_name}: {challenge_title}",
+                    message=f"{creator_name} created a new challenge. Join now!",
+                    related_id=challenge_id,
+                    related_user_id=creator_id,
+                    metadata={
+                        "group_id": group_id,
+                        "group_name": group_name,
+                        "challenge_title": challenge_title
+                    }
+                )
+                await notification.save()
+                
+                logger.info(f"Created group challenge notification for user {user_id}")
+                
+        except Exception as e:
+            logger.error(f"Error creating group challenge notification: {e}", exc_info=True)
+    
+    @staticmethod
     async def _add_to_batch(
         user_id: str,
         notification_type: NotificationType,
@@ -440,3 +553,119 @@ class NotificationService:
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to get batched notification summary"
             )
+
+    # Group-specific notification methods
+    @staticmethod
+    async def create_group_invitation_notification(
+        invitee_id: str,
+        inviter_id: str,
+        inviter_name: str,
+        group_id: str,
+        group_name: str
+    ) -> Notification:
+        """Create notification for group invitation"""
+        try:
+            notification = Notification(
+                user_id=invitee_id,
+                type=NotificationType.GROUP_INVITATION,
+                title="Group Invitation",
+                message=f"{inviter_name} invited you to join '{group_name}'",
+                related_id=group_id,
+                related_user_id=inviter_id,
+                metadata={
+                    "group_name": group_name,
+                    "action_url": f"/premium-groups/{group_id}"
+                }
+            )
+            await notification.save()
+            logger.info(f"Group invitation notification created for user {invitee_id}")
+            return notification
+        except Exception as e:
+            logger.error(f"Error creating group invitation notification: {e}")
+            return None
+
+    @staticmethod
+    async def create_group_notification(
+        user_id: str,
+        group_id: str,
+        notification_type: str,
+        message: str,
+        data: dict
+    ) -> Notification:
+        """Create general group notification"""
+        try:
+            notification = Notification(
+                user_id=user_id,
+                type=NotificationType.GROUP_ACTIVITY,
+                title="Group Activity",
+                message=message,
+                related_id=group_id,
+                metadata={
+                    "notification_type": notification_type,
+                    **data
+                }
+            )
+            await notification.save()
+            return notification
+        except Exception as e:
+            logger.error(f"Error creating group notification: {e}")
+            return None
+
+    @staticmethod
+    async def create_group_post_notification(
+        member_id: str,
+        author_id: str,
+        author_name: str,
+        group_id: str,
+        post_id: str,
+        post_content: str
+    ) -> Notification:
+        """Create notification for new group post"""
+        try:
+            notification = Notification(
+                user_id=member_id,
+                type=NotificationType.GROUP_POST,
+                title="New Group Post",
+                message=f"{author_name} posted in your group: {post_content}",
+                related_id=post_id,
+                related_user_id=author_id,
+                metadata={
+                    "group_id": group_id,
+                    "post_id": post_id,
+                    "action_url": f"/premium-groups/{group_id}/feed"
+                }
+            )
+            await notification.save()
+            return notification
+        except Exception as e:
+            logger.error(f"Error creating group post notification: {e}")
+            return None
+
+    @staticmethod
+    async def create_group_like_notification(
+        post_owner_id: str,
+        liker_id: str,
+        liker_name: str,
+        group_id: str,
+        post_id: str
+    ) -> Notification:
+        """Create notification for group post like"""
+        try:
+            notification = Notification(
+                user_id=post_owner_id,
+                type=NotificationType.LIKE,
+                title="Post Liked",
+                message=f"{liker_name} liked your group post",
+                related_id=post_id,
+                related_user_id=liker_id,
+                metadata={
+                    "group_id": group_id,
+                    "post_id": post_id,
+                    "action_url": f"/premium-groups/{group_id}/feed"
+                }
+            )
+            await notification.save()
+            return notification
+        except Exception as e:
+            logger.error(f"Error creating group like notification: {e}")
+            return None

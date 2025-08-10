@@ -15,21 +15,34 @@ logger = logging.getLogger(__name__)
 # Initialize security
 security = HTTPBearer(auto_error=False)
 
-# Initialize Firebase Admin SDK - only once
-try:
-    # Check if app is already initialized
-    default_app = firebase_admin.get_app()
-except ValueError:
-    # Not initialized, do it now
-    cred_path = settings.FIREBASE_CREDENTIALS_PATH
-    if os.path.exists(cred_path):
-        cred = credentials.Certificate(cred_path)
-        firebase_admin.initialize_app(cred)
-    else:
-        raise FileNotFoundError(f"Firebase credentials file not found at {cred_path}")
+# Initialize Firebase Admin SDK - only once (skip in mock mode)
+if getattr(settings, 'MOCK_AUTH', False):
+    logger.info("Running in MOCK_AUTH mode - Firebase authentication disabled")
+else:
+    try:
+        # Check if app is already initialized
+        default_app = firebase_admin.get_app()
+    except ValueError:
+        # Not initialized, do it now
+        cred_path = settings.FIREBASE_CREDENTIALS_PATH
+        if os.path.exists(cred_path):
+            cred = credentials.Certificate(cred_path)
+            firebase_admin.initialize_app(cred)
+        else:
+            raise FileNotFoundError(f"Firebase credentials file not found at {cred_path}")
 
 async def verify_firebase_token(token: str) -> dict:
     """Verify Firebase ID token and return decoded token data"""
+    # Mock authentication for local development
+    if getattr(settings, 'MOCK_AUTH', False):
+        logger.info(f"Mock auth: using token as user ID: {token}")
+        return {
+            'uid': token or 'mock_user_123',
+            'email': f'{token or "mock_user"}@example.com',
+            'name': f'Mock User {token or "123"}',
+            'email_verified': True,
+        }
+    
     try:
         # Add generous clock skew tolerance (10 seconds)
         decoded_token = auth.verify_id_token(
@@ -104,17 +117,29 @@ async def get_current_user(
     # If user doesn't exist, create a new one
     if not user:
         try:
-            # Get user info from Firebase
-            firebase_user = auth.get_user(firebase_uid)
+            # Mock authentication mode - use token data directly
+            if getattr(settings, 'MOCK_AUTH', False):
+                # Create user in our database with mock data
+                user = User(
+                    firebase_uid=firebase_uid,
+                    email=token_data.get("email", ""),
+                    display_name=token_data.get("name", "User"),
+                    created_at=datetime.utcnow(),
+                    last_login=datetime.utcnow()
+                )
+            else:
+                # Get user info from Firebase
+                firebase_user = auth.get_user(firebase_uid)
+                
+                # Create user in our database
+                user = User(
+                    firebase_uid=firebase_uid,
+                    email=firebase_user.email or token_data.get("email", ""),
+                    display_name=firebase_user.display_name or token_data.get("name", "User"),
+                    created_at=datetime.utcnow(),
+                    last_login=datetime.utcnow()
+                )
             
-            # Create user in our database
-            user = User(
-                firebase_uid=firebase_uid,
-                email=firebase_user.email or token_data.get("email", ""),
-                display_name=firebase_user.display_name or token_data.get("name", "User"),
-                created_at=datetime.utcnow(),
-                last_login=datetime.utcnow()
-            )
             await user.insert()
             await user.ensure_username()
         except Exception as e:

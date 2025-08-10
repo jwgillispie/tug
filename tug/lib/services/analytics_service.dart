@@ -362,6 +362,9 @@ class AnalyticsService {
   Future<Map<String, dynamic>?> exportAnalyticsData({
     String format = 'json',
     int daysBack = 90,
+    List<String> dataTypes = const ['all'],
+    DateTime? startDate,
+    DateTime? endDate,
   }) async {
     if (!hasPremiumAccess) {
       _logger.w('Data export requires premium subscription');
@@ -369,14 +372,23 @@ class AnalyticsService {
     }
 
     try {
-      _logger.i('Exporting analytics data: format=$format, days=$daysBack');
+      _logger.i('Exporting analytics data: format=$format, days=$daysBack, types=${dataTypes.join(',')}');
+      
+      final queryParams = <String, dynamic>{
+        'format': format,
+        'days_back': daysBack,
+        'data_types': dataTypes.join(','),
+      };
+      
+      // Add date range if provided
+      if (startDate != null && endDate != null) {
+        queryParams['start_date'] = startDate.toIso8601String().split('T')[0];
+        queryParams['end_date'] = endDate.toIso8601String().split('T')[0];
+      }
       
       final response = await _apiService.get(
         '/analytics/export',
-        queryParameters: {
-          'format': format,
-          'days_back': daysBack,
-        },
+        queryParameters: queryParams,
       );
 
       if (response['success'] == true) {
@@ -388,6 +400,96 @@ class AnalyticsService {
       }
     } catch (e) {
       _logger.e('Error exporting analytics data: $e');
+      return null;
+    }
+  }
+
+  /// Export analytics data as CSV files using dedicated CSV endpoint
+  Future<Map<String, String>?> exportToCSV({
+    int daysBack = 90,
+    List<String> dataTypes = const ['all'],
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    if (!hasPremiumAccess) {
+      _logger.w('CSV export requires premium subscription');
+      return null;
+    }
+
+    try {
+      _logger.i('Exporting analytics data to CSV: ${dataTypes.join(',')}');
+      
+      final queryParams = <String, dynamic>{
+        'days_back': daysBack,
+        'data_types': dataTypes.join(','),
+      };
+      
+      // Add date range if provided
+      if (startDate != null && endDate != null) {
+        queryParams['start_date'] = startDate.toIso8601String().split('T')[0];
+        queryParams['end_date'] = endDate.toIso8601String().split('T')[0];
+      }
+      
+      final response = await _apiService.get(
+        '/analytics/export/csv',
+        queryParameters: queryParams,
+      );
+
+      if (response['success'] == true && response['data'] is Map<String, dynamic>) {
+        _logger.i('CSV export completed successfully');
+        return Map<String, String>.from(response['data']);
+      } else {
+        _logger.w('CSV export failed: ${response['message'] ?? 'Unknown error'}');
+        return null;
+      }
+    } catch (e) {
+      _logger.e('Error exporting CSV: $e');
+      return null;
+    }
+  }
+
+  /// Export analytics data as PDF using dedicated PDF endpoint
+  Future<Map<String, dynamic>?> exportToPDF({
+    int daysBack = 90,
+    List<String> dataTypes = const ['all'],
+    DateTime? startDate,
+    DateTime? endDate,
+    bool includeCharts = true,
+  }) async {
+    if (!hasPremiumAccess) {
+      _logger.w('PDF export requires premium subscription');
+      return null;
+    }
+
+    try {
+      _logger.i('Exporting analytics data to PDF: ${dataTypes.join(',')}');
+      
+      final queryParams = <String, dynamic>{
+        'days_back': daysBack,
+        'data_types': dataTypes.join(','),
+        'include_charts': includeCharts,
+      };
+      
+      // Add date range if provided
+      if (startDate != null && endDate != null) {
+        queryParams['start_date'] = startDate.toIso8601String().split('T')[0];
+        queryParams['end_date'] = endDate.toIso8601String().split('T')[0];
+      }
+      
+      final response = await _apiService.get(
+        '/analytics/export/pdf',
+        queryParameters: queryParams,
+      );
+
+      if (response['success'] == true && response['data'] is Map<String, dynamic>) {
+        _logger.i('PDF export completed successfully');
+        return Map<String, dynamic>.from(response['data']);
+      } else {
+        _logger.w('PDF export failed: ${response['message'] ?? 'Unknown error'}');
+        return null;
+      }
+    } catch (e) {
+      _logger.e('Error exporting PDF: $e');
       return null;
     }
   }

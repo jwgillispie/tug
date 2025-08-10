@@ -55,15 +55,54 @@ class PremiumFeature extends StatelessWidget {
     return BlocBuilder<SubscriptionBloc, SubscriptionState>(
       builder: (context, state) {
         bool isPremium = false;
+        bool isDataStale = false;
+        bool isOnline = true;
         
         // Check subscription state
         if (state is SubscriptionsLoaded) {
           isPremium = state.isPremium;
+          isDataStale = state.isDataStale;
+          isOnline = state.isOnline;
         }
         
-        // If user has premium, simply return the child
+        // If user has premium, return the child, but show warning if data is stale
         if (isPremium) {
+          if (isDataStale && !isOnline) {
+            // Show premium content with offline warning
+            return Stack(
+              children: [
+                child,
+                Positioned(
+                  top: 8,
+                  right: 8,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withValues(alpha: 0.8),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.wifi_off, size: 16, color: Colors.white),
+                        SizedBox(width: 4),
+                        Text(
+                          'Offline',
+                          style: TextStyle(color: Colors.white, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }
           return child;
+        }
+        
+        // If we can't verify premium status due to network issues, show a different gate
+        if (isDataStale && !isOnline) {
+          return _buildNetworkErrorGate(context);
         }
         
         // Otherwise show premium gate
@@ -130,11 +169,11 @@ class PremiumFeature extends StatelessWidget {
           end: Alignment.bottomCenter,
           colors: [
             isDarkMode 
-                ? Colors.black.withOpacity(0.3)
-                : Colors.white.withOpacity(0.4),
+                ? Colors.black.withValues(alpha: 0.3)
+                : Colors.white.withValues(alpha: 0.4),
             isDarkMode
-                ? TugColors.primaryPurpleDark.withOpacity(0.7)
-                : TugColors.primaryPurple.withOpacity(0.6),
+                ? TugColors.primaryPurpleDark.withValues(alpha: 0.7)
+                : TugColors.primaryPurple.withValues(alpha: 0.6),
           ],
         ),
         borderRadius: BorderRadius.circular(20),
@@ -276,6 +315,113 @@ class PremiumFeature extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+  
+  Widget _buildNetworkErrorGate(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      decoration: BoxDecoration(
+        color: isDarkMode 
+            ? Colors.black.withValues(alpha: 0.8)
+            : Colors.white.withValues(alpha: 0.9),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Network error icon
+          Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: Colors.orange.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Colors.orange,
+                width: 2,
+              ),
+            ),
+            child: const Center(
+              child: Icon(
+                Icons.wifi_off,
+                color: Colors.orange,
+                size: 40,
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          
+          // Error title
+          const Text(
+            'Connection Error',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.orange,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          
+          // Error description
+          Text(
+            'Unable to verify your subscription status. Please check your internet connection and try again.',
+            style: TextStyle(
+              fontSize: 16,
+              color: isDarkMode ? Colors.white70 : Colors.black87,
+              height: 1.5,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 32),
+          
+          // Retry button
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.orange,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () {
+                  // Trigger subscription refresh
+                  context.read<SubscriptionBloc>().add(const RefreshSubscriptionStatus());
+                },
+                borderRadius: BorderRadius.circular(16),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.refresh,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      SizedBox(width: 8),
+                      Text(
+                        'Try Again',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -32,6 +32,10 @@ class LogoutSubscription extends SubscriptionEvent {
   const LogoutSubscription();
 }
 
+class RefreshSubscriptionStatus extends SubscriptionEvent {
+  const RefreshSubscriptionStatus();
+}
+
 // States
 abstract class SubscriptionState extends Equatable {
   const SubscriptionState();
@@ -47,14 +51,18 @@ class SubscriptionLoading extends SubscriptionState {}
 class SubscriptionsLoaded extends SubscriptionState {
   final List<SubscriptionModel> subscriptions;
   final bool isPremium;
+  final bool isDataStale;
+  final bool isOnline;
 
   const SubscriptionsLoaded({
     required this.subscriptions,
     required this.isPremium,
+    this.isDataStale = false,
+    this.isOnline = true,
   });
 
   @override
-  List<Object?> get props => [subscriptions, isPremium];
+  List<Object?> get props => [subscriptions, isPremium, isDataStale, isOnline];
 }
 
 class SubscriptionError extends SubscriptionState {
@@ -109,6 +117,7 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     on<PurchaseSubscription>(_onPurchaseSubscription);
     on<RestorePurchases>(_onRestorePurchases);
     on<LogoutSubscription>(_onLogoutSubscription);
+    on<RefreshSubscriptionStatus>(_onRefreshSubscriptionStatus);
 
     // Note: SubscriptionService will be initialized lazily when first needed
     // Listen to subscription status changes (will initialize when needed)
@@ -188,6 +197,8 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
       emit(SubscriptionsLoaded(
         subscriptions: subscriptions,
         isPremium: _subscriptionService.isPremium,
+        isDataStale: _subscriptionService.isDataStale,
+        isOnline: _subscriptionService.isOnline,
       ));
     } catch (e) {
       emit(SubscriptionError('Failed to load subscriptions: $e'));
@@ -272,7 +283,37 @@ class SubscriptionBloc extends Bloc<SubscriptionEvent, SubscriptionState> {
     // Force reload subscriptions to get fresh state for new user
     // This will check the current user's subscription status
     add(LoadSubscriptions());
-    
+  }
+
+  Future<void> _onRefreshSubscriptionStatus(
+    RefreshSubscriptionStatus event,
+    Emitter<SubscriptionState> emit,
+  ) async {
+    // Don't show loading if we already have subscriptions loaded
+    if (state is! SubscriptionsLoaded) {
+      emit(SubscriptionLoading());
+    }
+
+    try {
+      // Force refresh subscription status from RevenueCat
+      await _subscriptionService.refreshSubscriptionStatus();
+      
+      // Reload subscriptions to get the fresh data
+      add(LoadSubscriptions());
+    } catch (e) {
+      // If refresh fails but we have existing data, keep it but mark as stale
+      if (state is SubscriptionsLoaded) {
+        final currentState = state as SubscriptionsLoaded;
+        emit(SubscriptionsLoaded(
+          subscriptions: currentState.subscriptions,
+          isPremium: _subscriptionService.isPremium,
+          isDataStale: true,
+          isOnline: _subscriptionService.isOnline,
+        ));
+      } else {
+        emit(SubscriptionError('Failed to refresh subscription status: $e'));
+      }
+    }
   }
 
   @override

@@ -20,6 +20,7 @@ from ..models.post_comment import PostComment
 from ..models.notification import Notification, NotificationBatch
 from ..models.mood import MoodEntry
 from ..models.analytics import UserAnalytics, ValueInsights, StreakHistory, ActivityPattern
+from ..models.habit_suggestion import HabitTemplate, PersonalizedSuggestion, SuggestionFeedback, HabitRecommendationConfig
 import logging
 
 logger = logging.getLogger(__name__)
@@ -104,7 +105,7 @@ async def init_db():
         
         # Write and read preferences for performance
         "w": "majority",  # Wait for majority acknowledgment
-        "j": True,  # Journal writes for durability
+        "journal": True,  # Journal writes for durability
         
         # Read preferences for analytics queries
         "readPreference": "secondaryPreferred",  # Prefer secondary for read-heavy workloads
@@ -163,6 +164,10 @@ async def init_db():
                 ValueInsights,
                 StreakHistory,
                 ActivityPattern,
+                HabitTemplate,
+                PersonalizedSuggestion,
+                SuggestionFeedback,
+                HabitRecommendationConfig,
             ]
         )
         logger.info("Successfully initialized Beanie ODM with all models")
@@ -193,7 +198,7 @@ async def log_database_status(client: AsyncIOMotorClient):
         logger.info(f"  - Storage Size: {stats.get('storageSize', 0) / (1024*1024):.2f} MB")
         
         # Check if indexes are properly created for key collections
-        critical_collections = ['users', 'activities', 'values', 'vices', 'social_posts']
+        critical_collections = ['users', 'activities', 'values', 'vices', 'social_posts', 'habit_templates', 'personalized_suggestions']
         for collection_name in critical_collections:
             try:
                 collection = db[collection_name]
@@ -268,7 +273,9 @@ async def optimize_collection_indexes():
         collections_to_optimize = [
             'users', 'activities', 'values', 'vices', 'indulgences',
             'social_posts', 'friendships', 'mood_entries', 'user_analytics',
-            'value_insights', 'streak_history', 'activity_patterns'
+            'value_insights', 'streak_history', 'activity_patterns',
+            'habit_templates', 'personalized_suggestions', 'suggestion_feedback',
+            'habit_recommendation_config'
         ]
         
         for collection_name in collections_to_optimize:

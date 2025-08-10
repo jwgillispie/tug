@@ -247,3 +247,25 @@ class SecurityHeaders:
             "Permissions-Policy": "geolocation=(), microphone=(), camera=()",
             "Strict-Transport-Security": "max-age=31536000; includeSubDomains"
         }
+
+def sanitize_text_content(content: str, max_length: int = 4000) -> str:
+    """Sanitize text content for messages"""
+    return InputValidator.sanitize_string(content, max_length=max_length)
+
+def validate_message_content(content: str) -> str:
+    """Validate message content with enhanced security checks"""
+    content = sanitize_text_content(content)
+    
+    # Check for suspicious patterns
+    suspicious = InputValidator.detect_injection_attempts(content)
+    if suspicious:
+        logger.warning(f"Suspicious patterns detected in message content: {suspicious}")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error": "invalid_content",
+                "message": "Message contains invalid content"
+            }
+        )
+    
+    return content

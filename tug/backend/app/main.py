@@ -214,15 +214,50 @@ app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
 # Event handlers
 @app.on_event("startup")
 async def startup_event():
-    """Initialize database connection on startup"""
+    """Initialize database connection and start services on startup"""
     logger.info("Starting application")
     await init_db()
     logger.info("Database initialized")
+    
+    # Start coaching scheduler
+    try:
+        from .services.coaching_scheduler import start_coaching_scheduler
+        await start_coaching_scheduler()
+        logger.info("Coaching scheduler started")
+    except Exception as e:
+        logger.error(f"Failed to start coaching scheduler: {e}")
+        # Don't fail startup if coaching scheduler fails
+    
+    # Start WebSocket manager
+    try:
+        from .services.websocket_manager import websocket_manager
+        await websocket_manager.start_manager()
+        logger.info("WebSocket manager started")
+    except Exception as e:
+        logger.error(f"Failed to start WebSocket manager: {e}")
+        # Don't fail startup if WebSocket manager fails
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    """Close database connection on shutdown"""
+    """Stop services and close database connection on shutdown"""
     logger.info("Shutting down application")
+    
+    # Stop WebSocket manager
+    try:
+        from .services.websocket_manager import websocket_manager
+        await websocket_manager.stop_manager()
+        logger.info("WebSocket manager stopped")
+    except Exception as e:
+        logger.error(f"Error stopping WebSocket manager: {e}")
+    
+    # Stop coaching scheduler
+    try:
+        from .services.coaching_scheduler import stop_coaching_scheduler
+        stop_coaching_scheduler()
+        logger.info("Coaching scheduler stopped")
+    except Exception as e:
+        logger.error(f"Error stopping coaching scheduler: {e}")
+    
     await close_db()
     logger.info("Database connection closed")
 

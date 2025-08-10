@@ -18,6 +18,8 @@ class SubscriptionService {
   bool _isInitialized = false;
   CustomerInfo? _customerInfo;
   String? _lastPurchaseError;
+  bool _isOnline = true;
+  DateTime? _lastSuccessfulSync;
   
   // Controller for subscription status changes
   final _subscriptionStatusController = StreamController<bool>.broadcast();
@@ -105,16 +107,33 @@ class SubscriptionService {
   
   /// Check if the user has premium access
   bool get isPremium {
-    // In web or testing environments, we can use a debug flag to simulate premium
+    // For web platforms, we need to check if there's a valid customer info
+    // and active entitlements. Web purchases should still work through RevenueCat's web support
     if (kIsWeb) {
-      // For web testing, return true 50% of the time
-      return false; // Change to true to test premium features
+      // If we have customer info from a previous session or successful sync
+      if (_customerInfo != null) {
+        final entitlementId = EnvConfig.revenueCatPremiumEntitlementId;
+        return _customerInfo!.entitlements.active.containsKey(entitlementId);
+      }
+      // Default to false for web if no customer info available
+      return false;
     }
     
     if (_customerInfo == null) return false;
     
     final entitlementId = EnvConfig.revenueCatPremiumEntitlementId;
-    return _customerInfo!.entitlements.active.containsKey(entitlementId);
+    final hasActiveEntitlement = _customerInfo!.entitlements.active.containsKey(entitlementId);
+    
+    // Additional validation: check if the entitlement is not expired
+    if (hasActiveEntitlement) {
+      final entitlement = _customerInfo!.entitlements.active[entitlementId];
+      if (entitlement != null) {
+        // Check if the entitlement is still active (not expired)
+        return entitlement.isActive;
+      }
+    }
+    
+    return false;
   }
   
   /// Get active subscriptions for the user
@@ -158,24 +177,42 @@ class SubscriptionService {
     // Reset last error
     _lastPurchaseError = null;
     
+    // Check network connectivity first
+    if (!await _checkNetworkConnectivity()) {
+      _lastPurchaseError = 'No network connection. Please check your internet and try again.';
+      return false;
+    }
+    
     if (kIsWeb) {
-      _subscriptionStatusController.add(true); // Simulate purchase success
-      return true;
+      // For web, we should attempt to make a real purchase if RevenueCat supports it
+      // or return false to indicate web purchases aren't supported yet
+      _lastPurchaseError = 'Web purchases are not yet supported. Please use the mobile app.';
+      return false;
     }
     
     try {
       final customerInfo = await Purchases.purchasePackage(package);
       _handleCustomerInfoUpdate(customerInfo);
+      _lastSuccessfulSync = DateTime.now();
+      _isOnline = true;
       return true;
     } catch (e) {
       // Store the error message
       _lastPurchaseError = e.toString();
       
+      // Handle specific error cases
       if (e.toString().contains('USER_CANCELLED') || 
           e.toString().contains('PURCHASE_CANCELLED') ||
           e.toString().contains('userCancelled: true')) {
         // User cancelled the purchase - no need to show error
+        _lastPurchaseError = null; // Clear error for cancellations
+      } else if (e.toString().contains('network') || e.toString().contains('timeout')) {
+        _lastPurchaseError = 'Network error. Please check your connection.';
+        _isOnline = false;
+      } else if (e.toString().contains('ITEM_ALREADY_OWNED')) {
+        _lastPurchaseError = 'You already own this subscription. Try restoring purchases.';
       } else {
+        _lastPurchaseError = 'Purchase failed. Please try again later.';
       }
       return false;
     }
@@ -204,15 +241,29 @@ class SubscriptionService {
     if (!_isInitialized) await initialize();
     
     if (kIsWeb) {
-      return true;
+      // For web, we should still attempt to identify the user
+      // even if purchases aren't fully supported
+      try {
+        final loginResult = await Purchases.logIn(userId);
+        _handleCustomerInfoUpdate(loginResult.customerInfo);
+        _lastSuccessfulSync = DateTime.now();
+        return true;
+      } catch (e) {
+        return false;
+      }
     }
     
     try {
       final loginResult = await Purchases.logIn(userId);
       _handleCustomerInfoUpdate(loginResult.customerInfo);
       await Purchases.appUserID;
+      _lastSuccessfulSync = DateTime.now();
+      _isOnline = true;
       return true;
     } catch (e) {
+      if (e.toString().contains('network') || e.toString().contains('timeout')) {
+        _isOnline = false;
+      }
       return false;
     }
   }
@@ -222,21 +273,30 @@ class SubscriptionService {
   Future<bool> logoutUser() async {
     if (!_isInitialized) await initialize();
     
-    if (kIsWeb) {
-      return true;
-    }
-    
     try {
       // Clear internal state first
       _customerInfo = null;
       _lastPurchaseError = null;
+      _lastSuccessfulSync = null;
+      
+      if (kIsWeb) {
+        // For web, clear the user and create a new anonymous session
+        await Purchases.logOut();
+        final customerInfo = await Purchases.getCustomerInfo();
+        _handleCustomerInfoUpdate(customerInfo);
+        return true;
+      }
       
       await Purchases.logOut();
       final customerInfo = await Purchases.getCustomerInfo();
       _handleCustomerInfoUpdate(customerInfo);
       await Purchases.appUserID;
+      _isOnline = true;
       return true;
     } catch (e) {
+      if (e.toString().contains('network') || e.toString().contains('timeout')) {
+        _isOnline = false;
+      }
       return false;
     }
   }
@@ -264,13 +324,20 @@ class SubscriptionService {
   
   /// Check if a specific entitlement is active
   bool hasEntitlement(String entitlementId) {
-    if (kIsWeb) {
-      // For web testing, return false by default
-      return false; // Change to true to test specific entitlements
+    if (_customerInfo == null) return false;
+    
+    final hasActiveEntitlement = _customerInfo!.entitlements.active.containsKey(entitlementId);
+    
+    // Additional validation: check if the entitlement is not expired and is active
+    if (hasActiveEntitlement) {
+      final entitlement = _customerInfo!.entitlements.active[entitlementId];
+      if (entitlement != null) {
+        // Check if the entitlement is active and not expired
+        return entitlement.isActive;
+      }
     }
     
-    if (_customerInfo == null) return false;
-    return _customerInfo!.entitlements.active.containsKey(entitlementId);
+    return false;
   }
   
   /// Get the premium entitlement info
@@ -286,24 +353,85 @@ class SubscriptionService {
   Future<bool> checkForLegacyPurchases() async {
     if (!_isInitialized) await initialize();
     
-    if (kIsWeb) return false;
-    
     try {
       // First try to restore purchases to ensure latest state
       await restorePurchases();
       
-      // Check for any active subscriptions
-      if (_customerInfo != null && _customerInfo!.activeSubscriptions.isNotEmpty) {
-        return true;
+      // Check for any active subscriptions or entitlements
+      if (_customerInfo != null) {
+        final hasActiveSubscriptions = _customerInfo!.activeSubscriptions.isNotEmpty;
+        final hasActiveEntitlements = _customerInfo!.entitlements.active.isNotEmpty;
+        
+        return hasActiveSubscriptions || hasActiveEntitlements;
       }
       
       // No legacy purchases found that need migration
       return false;
     } catch (e) {
+      // If we can't check, assume false to be safe
       return false;
     }
   }
   
+  /// Check network connectivity
+  Future<bool> _checkNetworkConnectivity() async {
+    try {
+      // Simple connectivity check - in production you might want to use connectivity_plus
+      // For now, we'll assume network is available unless we get network errors
+      return true;
+    } catch (e) {
+      _isOnline = false;
+      return false;
+    }
+  }
+  
+  /// Get network status
+  bool get isOnline => _isOnline;
+  
+  /// Get last successful sync time
+  DateTime? get lastSuccessfulSync => _lastSuccessfulSync;
+  
+  /// Force refresh subscription status from RevenueCat
+  Future<bool> refreshSubscriptionStatus() async {
+    if (!_isInitialized) await initialize();
+    
+    try {
+      final customerInfo = await Purchases.getCustomerInfo();
+      _handleCustomerInfoUpdate(customerInfo);
+      _lastSuccessfulSync = DateTime.now();
+      _isOnline = true;
+      return true;
+    } catch (e) {
+      if (e.toString().contains('network') || e.toString().contains('timeout')) {
+        _isOnline = false;
+      }
+      return false;
+    }
+  }
+  
+  /// Check if subscription data is stale (older than 1 hour)
+  bool get isDataStale {
+    if (_lastSuccessfulSync == null) return true;
+    final now = DateTime.now();
+    final difference = now.difference(_lastSuccessfulSync!);
+    return difference.inHours >= 1;
+  }
+  
+  /// Get subscription status with staleness information
+  SubscriptionStatus getSubscriptionStatus() {
+    final premium = isPremium;
+    final stale = isDataStale;
+    final online = _isOnline;
+    
+    if (!premium && stale && !online) {
+      return SubscriptionStatus.unknown; // Can't verify due to network issues
+    } else if (premium) {
+      return SubscriptionStatus.premium;
+    } else {
+      return SubscriptionStatus.free;
+    }
+  }
+
   /// Clean up resources
   void dispose() {
     try {
@@ -316,4 +444,11 @@ class SubscriptionService {
       _subscriptionStatusController.close();
     }
   }
+}
+
+/// Enum for subscription status with uncertainty handling
+enum SubscriptionStatus {
+  premium,
+  free,
+  unknown, // When we can't verify due to network issues or stale data
 }

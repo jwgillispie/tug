@@ -16,6 +16,7 @@ import 'package:tug/utils/quantum_effects.dart';
 import 'package:tug/utils/loading_messages.dart';
 import 'package:tug/widgets/tug_of_war/enhanced_tug_of_war_widget.dart';
 import 'package:tug/widgets/values/streak_overview_widget.dart';
+import 'package:tug/widgets/analytics/export_dialog.dart';
 import 'package:tug/utils/progress_calculator.dart';
 
 class ProgressScreen extends StatefulWidget {
@@ -384,16 +385,29 @@ class _ProgressScreenState extends State<ProgressScreen>
                 : (isDarkMode ? [TugColors.primaryPurple, TugColors.primaryPurpleLight, TugColors.primaryPurpleDark] : [TugColors.primaryPurple, TugColors.primaryPurpleLight]),
           ),
         ),
-        actions: _currentMode == AppMode.vicesMode ? [
+        actions: [
+          // Export button (premium feature)
           IconButton(
-            icon: Icon(Icons.refresh, color: TugColors.viceGreen),
+            icon: const Icon(Icons.file_download),
             onPressed: () {
-              // Clear cache and force refresh
-              context.read<VicesBloc>().add(const ClearVicesCache());
+              showDialog(
+                context: context,
+                builder: (context) => const ExportDialog(),
+              );
             },
-            tooltip: 'Clear cache & refresh',
+            tooltip: 'Export Analytics',
           ),
-        ] : null,
+          // Refresh button for vices mode
+          if (_currentMode == AppMode.vicesMode)
+            IconButton(
+              icon: Icon(Icons.refresh, color: TugColors.viceGreen),
+              onPressed: () {
+                // Clear cache and force refresh
+                context.read<VicesBloc>().add(const ClearVicesCache());
+              },
+              tooltip: 'Clear cache & refresh',
+            ),
+        ],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

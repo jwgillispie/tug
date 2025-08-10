@@ -1,7 +1,7 @@
 # app/models/notification.py
 from beanie import Document
 from pydantic import Field
-from typing import Optional, List
+from typing import Optional, List, Dict, Any
 from datetime import datetime, timedelta
 from enum import Enum
 
@@ -12,6 +12,12 @@ class NotificationType(str, Enum):
     POST_MENTION = "post_mention"
     ACHIEVEMENT = "achievement"
     MILESTONE = "milestone"
+    COACHING = "coaching"
+    LIKE = "like"
+    GROUP_INVITATION = "group_invitation"
+    GROUP_ACTIVITY = "group_activity"
+    GROUP_POST = "group_post"
+    GROUP_CHALLENGE = "group_challenge"
 
 class Notification(Document):
     """Notification model for user activity notifications"""
@@ -24,6 +30,7 @@ class Notification(Document):
     # Related data
     related_id: Optional[str] = Field(None, description="Related entity ID (post, comment, friend request, etc.)")
     related_user_id: Optional[str] = Field(None, description="User who triggered the notification")
+    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional notification metadata")
     
     # Status
     is_read: bool = Field(default=False, description="Whether the notification has been read")
